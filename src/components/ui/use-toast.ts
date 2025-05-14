@@ -38,6 +38,30 @@ const polymathToast = {
   searchComplete: (results: number) => toast({
     title: "Search Complete",
     description: `Found ${results} ${results === 1 ? 'result' : 'results'} matching your query.`
+  }),
+  eventRegistered: () => toast({
+    title: "Event Registration Complete",
+    description: "You've successfully registered for this event. A calendar invite has been sent to your email."
+  }),
+  contentRecommended: () => toast({
+    title: "Recommendation Noted",
+    description: "We'll use your preference to personalize your learning experience."
+  }),
+  notesSaved: () => toast({
+    title: "Notes Saved",
+    description: "Your study notes have been successfully saved and synced."
+  }),
+  connectionMade: (name: string) => toast({
+    title: "New Connection",
+    description: `You are now connected with ${name}. You can now message them directly.`
+  }),
+  achievementUnlocked: (achievement: string) => toast({
+    title: "Achievement Unlocked",
+    description: `Congratulations! You've earned the "${achievement}" badge.`
+  }),
+  studyStreakUpdated: (days: number) => toast({
+    title: "Study Streak Updated",
+    description: `You've maintained a ${days}-day learning streak. Keep it up!`
   })
 };
 
