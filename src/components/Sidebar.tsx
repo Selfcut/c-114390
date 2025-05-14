@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { ChevronRight, HomeIcon, Users, Video, Image, Edit, Palette, Grid, LayoutGrid, Rss, Code, ChevronDown, BookOpen, HelpCircle, Sparkles, Palette as ThemeIcon, Newspaper, Clock, Bookmark, Heart, Album, Boxes } from "lucide-react";
+import { ChevronRight, HomeIcon, Users, MessageSquare, Book, BookOpen, ChevronDown, HelpCircle, Sparkles, Library, Forum, Discord } from "lucide-react";
 
 type SidebarItemProps = {
   icon: React.ReactNode;
@@ -76,7 +75,7 @@ export const Sidebar = () => {
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
           <img src="/lovable-uploads/407e5ec8-9b67-42ee-acf0-b238e194aa64.png" alt="Logo" className="w-8 h-8" />
-          <span className="text-white font-semibold">OpenArt</span>
+          <span className="text-white font-semibold">Polymath</span>
         </div>
         <button
           onClick={() => setIsCollapsed(true)}
@@ -94,59 +93,47 @@ export const Sidebar = () => {
           onClick={() => setActiveItem("Home")}
         />
         <SidebarItem 
-          icon={<Users size={20} />} 
-          label="Characters" 
+          icon={<Forum size={20} />} 
+          label="Discussion Forum" 
           isNew 
-          isActive={activeItem === "Characters"}
-          onClick={() => setActiveItem("Characters")}
+          isActive={activeItem === "Discussion Forum"}
+          onClick={() => setActiveItem("Discussion Forum")}
         />
         <SidebarItem 
-          icon={<Video size={20} />} 
-          label="Videos" 
-          isActive={activeItem === "Videos"}
-          onClick={() => setActiveItem("Videos")}
+          icon={<Library size={20} />} 
+          label="Knowledge Library" 
+          isActive={activeItem === "Knowledge Library"}
+          onClick={() => setActiveItem("Knowledge Library")}
         />
         <SidebarItem 
-          icon={<Image size={20} />} 
-          label="Create Image" 
-          isActive={activeItem === "Create Image"}
-          onClick={() => setActiveItem("Create Image")}
+          icon={<Book size={20} />} 
+          label="Study Guides" 
+          isActive={activeItem === "Study Guides"}
+          onClick={() => setActiveItem("Study Guides")}
         />
         <SidebarItem 
-          icon={<Edit size={20} />} 
-          label="Edit Image" 
-          isActive={activeItem === "Edit Image"}
-          onClick={() => setActiveItem("Edit Image")}
+          icon={<Users size={20} />} 
+          label="Community" 
+          isActive={activeItem === "Community"}
+          onClick={() => setActiveItem("Community")}
         />
         <SidebarItem 
-          icon={<Palette size={20} />} 
-          label="Style Palettes" 
-          isActive={activeItem === "Style Palettes"}
-          onClick={() => setActiveItem("Style Palettes")}
+          icon={<Discord size={20} />} 
+          label="Discord" 
+          isActive={activeItem === "Discord"}
+          onClick={() => setActiveItem("Discord")}
         />
         <SidebarItem 
-          icon={<Grid size={20} />} 
-          label="Models" 
-          isActive={activeItem === "Models"}
-          onClick={() => setActiveItem("Models")}
+          icon={<MessageSquare size={20} />} 
+          label="Expert Q&A" 
+          isActive={activeItem === "Expert Q&A"}
+          onClick={() => setActiveItem("Expert Q&A")}
         />
         <SidebarItem 
-          icon={<LayoutGrid size={20} />} 
-          label="Apps" 
-          isActive={activeItem === "Apps"}
-          onClick={() => setActiveItem("Apps")}
-        />
-        <SidebarItem 
-          icon={<Rss size={20} />} 
-          label="Community Feed" 
-          isActive={activeItem === "Community Feed"}
-          onClick={() => setActiveItem("Community Feed")}
-        />
-        <SidebarItem 
-          icon={<Code size={20} />} 
-          label="ComfyUI Workflows" 
-          isActive={activeItem === "ComfyUI Workflows"}
-          onClick={() => setActiveItem("ComfyUI Workflows")}
+          icon={<BookOpen size={20} />} 
+          label="Disciplines" 
+          isActive={activeItem === "Disciplines"}
+          onClick={() => setActiveItem("Disciplines")}
         />
       </div>
 
@@ -154,46 +141,46 @@ export const Sidebar = () => {
         <div className="py-2 px-3">
           <SidebarItem 
             icon={myStuffOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            label="My stuff" 
-            isActive={activeItem === "My stuff"}
+            label="My Learning" 
+            isActive={activeItem === "My Learning"}
             hasDropdown
             onClick={() => {
               setMyStuffOpen(!myStuffOpen);
-              setActiveItem("My stuff");
+              setActiveItem("My Learning");
             }}
           />
 
           {myStuffOpen && (
             <div className="mt-1 space-y-1 animate-fade-in">
               <DropdownItem 
-                icon={<Clock size={16} />} 
-                label="Creation History" 
-                isActive={activeDropdownItem === "Creation History"}
-                onClick={() => setActiveDropdownItem("Creation History")}
+                icon={<Book size={16} />} 
+                label="Reading List" 
+                isActive={activeDropdownItem === "Reading List"}
+                onClick={() => setActiveDropdownItem("Reading List")}
               />
               <DropdownItem 
-                icon={<Bookmark size={16} />} 
-                label="Bookmarks" 
-                isActive={activeDropdownItem === "Bookmarks"}
-                onClick={() => setActiveDropdownItem("Bookmarks")}
+                icon={<BookOpen size={16} />} 
+                label="Study Notes" 
+                isActive={activeDropdownItem === "Study Notes"}
+                onClick={() => setActiveDropdownItem("Study Notes")}
               />
               <DropdownItem 
-                icon={<Heart size={16} />} 
-                label="Liked" 
-                isActive={activeDropdownItem === "Liked"}
-                onClick={() => setActiveDropdownItem("Liked")}
+                icon={<Forum size={16} />} 
+                label="My Discussions" 
+                isActive={activeDropdownItem === "My Discussions"}
+                onClick={() => setActiveDropdownItem("My Discussions")}
               />
               <DropdownItem 
-                icon={<Album size={16} />} 
-                label="Saved Albums" 
-                isActive={activeDropdownItem === "Saved Albums"}
-                onClick={() => setActiveDropdownItem("Saved Albums")}
+                icon={<Users size={16} />} 
+                label="Study Groups" 
+                isActive={activeDropdownItem === "Study Groups"}
+                onClick={() => setActiveDropdownItem("Study Groups")}
               />
               <DropdownItem 
-                icon={<Boxes size={16} />} 
-                label="Trained Models" 
-                isActive={activeDropdownItem === "Trained Models"}
-                onClick={() => setActiveDropdownItem("Trained Models")}
+                icon={<Library size={16} />} 
+                label="Knowledge Map" 
+                isActive={activeDropdownItem === "Knowledge Map"}
+                onClick={() => setActiveDropdownItem("Knowledge Map")}
               />
             </div>
           )}
@@ -215,9 +202,9 @@ export const Sidebar = () => {
             <div className="mt-1 space-y-1 animate-fade-in">
               <DropdownItem 
                 icon={<BookOpen size={16} />} 
-                label="Tutorials" 
-                isActive={activeDropdownItem === "Tutorials"}
-                onClick={() => setActiveDropdownItem("Tutorials")}
+                label="Learning Guides" 
+                isActive={activeDropdownItem === "Learning Guides"}
+                onClick={() => setActiveDropdownItem("Learning Guides")}
               />
               <DropdownItem 
                 icon={<HelpCircle size={16} />} 
@@ -234,22 +221,22 @@ export const Sidebar = () => {
               />
               <DropdownItem 
                 icon={<Sparkles size={16} />} 
-                label="What's New" 
-                isActive={activeDropdownItem === "What's New"}
-                onClick={() => setActiveDropdownItem("What's New")}
+                label="New Research" 
+                isActive={activeDropdownItem === "New Research"}
+                onClick={() => setActiveDropdownItem("New Research")}
               />
               <DropdownItem 
-                icon={<ThemeIcon size={16} />} 
-                label="Theme Gallery" 
-                isActive={activeDropdownItem === "Theme Gallery"}
-                onClick={() => setActiveDropdownItem("Theme Gallery")}
+                icon={<MessageSquare size={16} />} 
+                label="Academic Journals" 
+                isActive={activeDropdownItem === "Academic Journals"}
+                onClick={() => setActiveDropdownItem("Academic Journals")}
               />
               <DropdownItem 
-                icon={<Newspaper size={16} />} 
-                label="Blog" 
+                icon={<BookOpen size={16} />} 
+                label="Book Reviews" 
                 isExternal 
-                isActive={activeDropdownItem === "Blog"}
-                onClick={() => setActiveDropdownItem("Blog")}
+                isActive={activeDropdownItem === "Book Reviews"}
+                onClick={() => setActiveDropdownItem("Book Reviews")}
               />
             </div>
           )}

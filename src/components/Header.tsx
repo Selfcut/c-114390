@@ -1,7 +1,10 @@
+
 import { useState } from "react";
-import { HelpCircle, MessageSquare, BookOpen, GraduationCap, Plus } from "lucide-react";
+import { HelpCircle, MessageSquare, BookOpen, Library, Plus } from "lucide-react";
+
 const Header = () => {
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
+  
   return <div className="h-16 flex items-center justify-end px-6 border-b border-gray-800">
       <div className="flex items-center gap-4 relative">
         {/* YouTube icon */}
@@ -23,32 +26,32 @@ const Header = () => {
           {helpMenuOpen && <div className="absolute right-0 mt-2 w-48 bg-[#1e1e1e] border border-gray-800 rounded-md shadow-lg py-1 z-50">
               <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">
                 <MessageSquare size={16} />
-                <span>Feedback</span>
+                <span>Ask a Question</span>
               </a>
               <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">
                 <HelpCircle size={16} />
-                <span>Help Center</span>
+                <span>Knowledge Base</span>
               </a>
               <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">
                 <BookOpen size={16} />
-                <span>Tutorials</span>
+                <span>Learning Guides</span>
               </a>
               <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">
-                <GraduationCap size={16} />
-                <span>Wiki</span>
+                <Library size={16} />
+                <span>Wiki Access</span>
               </a>
             </div>}
         </div>
         
-        {/* Upgrade button */}
+        {/* Membership button */}
         <button className="px-4 py-1.5 text-gray-300 text-sm border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-          Upgrade
+          Join Premium
         </button>
         
-        {/* Create button */}
+        {/* Contribute button */}
         <button className="transition-colors text-white flex items-center gap-1 rounded-md px-4 py-1.5 text-sm font-medium bg-blue-700 hover:bg-blue-600">
           <Plus size={16} />
-          Create
+          Contribute
         </button>
         
         {/* Sign In button */}
@@ -58,4 +61,5 @@ const Header = () => {
       </div>
     </div>;
 };
+
 export default Header;
