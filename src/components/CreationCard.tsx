@@ -1,75 +1,42 @@
 
-import { Plus, Edit, UserPlus, Video } from "lucide-react";
+import React from 'react';
+import { BookOpen, MessageSquare } from 'lucide-react';
 
-type CardType = "image" | "storytelling";
+export type CardType = "discussion" | "knowledge";
 
 interface CreationCardProps {
   type: CardType;
 }
 
 export const CreationCard = ({ type }: CreationCardProps) => {
-  const isImage = type === "image";
+  const isDiscussion = type === "discussion";
   
   return (
-    <div 
-      className={`rounded-lg p-6 flex flex-col ${
-        isImage ? "bg-blue-card" : "bg-yellow-card"
-      }`}
-    >
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        {isImage ? "Image" : "Storytelling"}
+    <div className={`p-6 rounded-xl ${isDiscussion ? 'bg-gradient-to-br from-[#00361F] to-[#002817]' : 'bg-gradient-to-br from-[#360036] to-[#280028]'}`}>
+      <div className="mb-4">
+        {isDiscussion ? (
+          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#00A67E]/20">
+            <MessageSquare size={24} className="text-[#00A67E]" />
+          </div>
+        ) : (
+          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#FF3EA5]/20">
+            <BookOpen size={24} className="text-[#FF3EA5]" />
+          </div>
+        )}
+      </div>
+      <h2 className="text-xl font-semibold text-white mb-2">
+        {isDiscussion ? 'Start a Discussion' : 'Add to Knowledge Library'}
       </h2>
-      
-      <div className="flex-grow relative min-h-[160px]">
-        {isImage ? (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-b from-orange-300 to-purple-400 rounded-lg border-4 border-white shadow-lg rotate-3">
-            <div className="absolute top-2 right-2 w-3 h-3 bg-orange-500 rounded-full" />
-          </div>
-        ) : (
-          <div className="absolute right-2 top-8">
-            <div className="relative">
-              <div className="w-28 h-16 bg-black rounded border border-gray-700" />
-              <div className="absolute w-14 h-14 bottom-4 left-2 bg-gray-800 rounded overflow-hidden">
-                <img src="/placeholder.svg" alt="Profile" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                  <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full relative left-0.5" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute bottom-8 right-4 text-xs text-white bg-black/50 px-1 rounded">
-                Generating
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-2 gap-2 mt-4">
-        {isImage ? (
-          <>
-            <button className="bg-black text-white py-3 rounded-md flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition">
-              <Plus size={18} />
-              <span>Create Image</span>
-            </button>
-            <button className="bg-black text-white py-3 rounded-md flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition">
-              <Edit size={18} />
-              <span>Edit Image</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="bg-black text-white py-3 rounded-md flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition">
-              <UserPlus size={18} />
-              <span>Consistent Character</span>
-            </button>
-            <button className="bg-black text-white py-3 rounded-md flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition">
-              <Video size={18} />
-              <span>Image To Video</span>
-            </button>
-          </>
-        )}
-      </div>
+      <p className="text-gray-400 mb-6">
+        {isDiscussion 
+          ? 'Engage with the community in thoughtful intellectual discourse'
+          : 'Contribute to our collective wisdom with research and insights'
+        }
+      </p>
+      <button className={`px-4 py-2 rounded-md text-sm text-white flex items-center gap-2 ${isDiscussion ? 'bg-[#00A67E]' : 'bg-[#FF3EA5]'}`}>
+        {isDiscussion ? 'New Discussion' : 'New Entry'}
+        {isDiscussion ? <MessageSquare size={16} /> : <BookOpen size={16} />}
+      </button>
     </div>
   );
 };

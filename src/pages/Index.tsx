@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
@@ -7,7 +6,7 @@ import { CreationCard } from "../components/CreationCard";
 import { QuickStartItem } from "../components/QuickStartItem";
 import { FeaturedAppCard } from "../components/FeaturedAppCard";
 import { ModelCard } from "../components/ModelCard";
-import { BookOpen, MessageSquare, Users, Library, Book, Forum, Discord } from "lucide-react";
+import { BookOpen, MessageSquare, Users, Library, Book, MessageSquare as ForumIcon, MessageSquare as DiscordIcon } from "lucide-react";
 
 const Index = () => {
   // Add a handler to add the logo.svg file if it's missing
@@ -41,8 +40,8 @@ const Index = () => {
               </h1>
               
               <div className="grid grid-cols-2 gap-6 mb-12">
-                <CreationCard type="forum" />
-                <CreationCard type="library" />
+                <CreationCard type="discussion" />
+                <CreationCard type="knowledge" />
               </div>
               
               <section className="mb-12">
@@ -67,7 +66,7 @@ const Index = () => {
                   
                   <div className="bg-[#1A1A1A] rounded-lg p-4 flex items-start">
                     <div className="p-3 rounded-lg bg-[#00361F] mr-4 flex items-center justify-center">
-                      <Forum size={24} className="text-[#00A67E]" />
+                      <ForumIcon size={24} className="text-[#00A67E]" />
                     </div>
                     <div>
                       <h3 className="font-medium text-white">Discussion Forums</h3>
@@ -87,7 +86,7 @@ const Index = () => {
                   
                   <div className="bg-[#1A1A1A] rounded-lg p-4 flex items-start">
                     <div className="p-3 rounded-lg bg-[#36003B] mr-4 flex items-center justify-center">
-                      <Discord size={24} className="text-[#FF3EA5]" />
+                      <DiscordIcon size={24} className="text-[#FF3EA5]" />
                     </div>
                     <div>
                       <h3 className="font-medium text-white">Discord Community</h3>

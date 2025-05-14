@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, HomeIcon, Users, MessageSquare, Book, BookOpen, ChevronDown, HelpCircle, Sparkles, Library, Forum, Discord } from "lucide-react";
+import { ChevronRight, HomeIcon, Users, MessageSquare, Book, BookOpen, ChevronDown, HelpCircle, Sparkles, Library, MessageSquare as ForumIcon, MessageSquare as DiscordIcon } from "lucide-react";
 
 type SidebarItemProps = {
   icon: React.ReactNode;
@@ -93,7 +93,7 @@ export const Sidebar = () => {
           onClick={() => setActiveItem("Home")}
         />
         <SidebarItem 
-          icon={<Forum size={20} />} 
+          icon={<ForumIcon size={20} />} 
           label="Discussion Forum" 
           isNew 
           isActive={activeItem === "Discussion Forum"}
@@ -118,7 +118,7 @@ export const Sidebar = () => {
           onClick={() => setActiveItem("Community")}
         />
         <SidebarItem 
-          icon={<Discord size={20} />} 
+          icon={<DiscordIcon size={20} />} 
           label="Discord" 
           isActive={activeItem === "Discord"}
           onClick={() => setActiveItem("Discord")}
@@ -165,7 +165,7 @@ export const Sidebar = () => {
                 onClick={() => setActiveDropdownItem("Study Notes")}
               />
               <DropdownItem 
-                icon={<Forum size={16} />} 
+                icon={<ForumIcon size={16} />} 
                 label="My Discussions" 
                 isActive={activeDropdownItem === "My Discussions"}
                 onClick={() => setActiveDropdownItem("My Discussions")}
