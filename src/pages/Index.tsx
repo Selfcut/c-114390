@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
 import Header from "../components/Header";
@@ -7,8 +9,28 @@ import { QuickStartItem } from "../components/QuickStartItem";
 import { FeaturedAppCard } from "../components/FeaturedAppCard";
 import { ModelCard } from "../components/ModelCard";
 import { BookOpen, MessageSquare, Users, Library, Book, MessageSquare as ForumIcon, MessageSquare as DiscordIcon } from "lucide-react";
+import { polymathToast } from "../components/ui/use-toast";
 
 const Index = () => {
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [recentVisit, setRecentVisit] = useState<string | null>(null);
+
+  // Check for recent visit
+  useEffect(() => {
+    const lastVisit = localStorage.getItem('lastVisit');
+    if (lastVisit) {
+      const lastVisitDate = new Date(lastVisit);
+      const currentDate = new Date();
+      const diffTime = Math.abs(currentDate.getTime() - lastVisitDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      setRecentVisit(diffDays === 1 ? 'yesterday' : `${diffDays} days ago`);
+    }
+    
+    // Update last visit timestamp
+    localStorage.setItem('lastVisit', new Date().toISOString());
+  }, []);
+
   // Add a handler to add the logo.svg file if it's missing
   useEffect(() => {
     // Check if the logo exists, if not create a simple one
@@ -26,6 +48,11 @@ const Index = () => {
     checkLogo();
   }, []);
 
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    polymathToast.resourceBookmarked();
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <PromoBar />
@@ -35,13 +62,32 @@ const Index = () => {
           <Header />
           <div className="flex-1 overflow-auto">
             <main className="py-8 px-12">
+              {showWelcome && recentVisit && (
+                <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 flex justify-between items-center">
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">Welcome back!</span> Your last visit was {recentVisit}. 
+                    There have been 14 new discussions and 5 new knowledge entries since then.
+                  </p>
+                  <button 
+                    onClick={dismissWelcome} 
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+            
               <h1 className="text-3xl font-bold text-white mb-8">
                 Explore Intellectual Frontiers
               </h1>
               
               <div className="grid grid-cols-2 gap-6 mb-12">
-                <CreationCard type="discussion" />
-                <CreationCard type="knowledge" />
+                <Link to="/forum">
+                  <CreationCard type="discussion" />
+                </Link>
+                <Link to="/library">
+                  <CreationCard type="knowledge" />
+                </Link>
               </div>
               
               <section className="mb-12">
@@ -117,9 +163,16 @@ const Index = () => {
               </section>
               
               <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Featured Disciplines
-                </h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-white">
+                    Featured Disciplines
+                  </h2>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1 text-sm rounded-md bg-blue-700 text-white">Popular</button>
+                    <button className="px-3 py-1 text-sm rounded-md bg-gray-800 text-gray-300">New</button>
+                    <button className="px-3 py-1 text-sm rounded-md bg-gray-800 text-gray-300">All</button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <FeaturedAppCard 
                     title="Mathematics & Logic"
@@ -220,6 +273,65 @@ const Index = () => {
                     View All Methods
                     <BookOpen size={16} />
                   </button>
+                </div>
+              </section>
+              
+              <section className="mb-12">
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Community Activity
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-[#1A1A1A] p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold text-white mb-4">Recent Discussions</h3>
+                    <div className="space-y-4">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-start gap-3 pb-4 border-b border-gray-800">
+                          <div className="p-2 rounded-full bg-[#00361F]">
+                            <ForumIcon size={16} className="text-[#00A67E]" />
+                          </div>
+                          <div>
+                            <h4 className="text-white font-medium text-sm">
+                              {i === 1 ? "The intersection of quantum physics and consciousness" : 
+                               i === 2 ? "Mathematical patterns in natural phenomena" :
+                               "Ethical implications of AI advancement"}
+                            </h4>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {i === 1 ? "PhilosophicalMind • 24 replies • 2h ago" : 
+                               i === 2 ? "MathExplorer • 18 replies • 5h ago" :
+                               "EthicsScholar • 32 replies • 8h ago"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Link to="/forum" className="inline-block mt-4 text-blue-400 text-sm">View all discussions</Link>
+                  </div>
+                  
+                  <div className="bg-[#1A1A1A] p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold text-white mb-4">New Knowledge Entries</h3>
+                    <div className="space-y-4">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-start gap-3 pb-4 border-b border-gray-800">
+                          <div className="p-2 rounded-full bg-[#360036]">
+                            <Book size={16} className="text-[#FF3EA5]" />
+                          </div>
+                          <div>
+                            <h4 className="text-white font-medium text-sm">
+                              {i === 1 ? "Introduction to Systems Thinking" : 
+                               i === 2 ? "The Mathematics of Music: Harmony and Frequency" :
+                               "Neural Networks: From Biology to Computation"}
+                            </h4>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {i === 1 ? "ComplexityScholar • 15 min read • 2d ago" : 
+                               i === 2 ? "HarmonicsExpert • 12 min read • 1w ago" :
+                               "BioComputation • 20 min read • 3d ago"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Link to="/library" className="inline-block mt-4 text-blue-400 text-sm">View all entries</Link>
+                  </div>
                 </div>
               </section>
             </main>

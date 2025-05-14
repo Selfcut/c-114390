@@ -235,7 +235,7 @@ export const Sidebar = () => {
                 icon={<BookOpen size={16} />} 
                 label="Book Reviews" 
                 isExternal 
-                isActive={activeDropdownItem === "Book Reviews"}
+                isActive={activeDropdownItem === "Academic Journals"}
                 onClick={() => setActiveDropdownItem("Book Reviews")}
               />
             </div>

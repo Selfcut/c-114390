@@ -9,7 +9,14 @@ import NotFound from "./pages/NotFound";
 import Forum from "./pages/Forum";
 import Library from "./pages/Library";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
