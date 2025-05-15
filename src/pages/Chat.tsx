@@ -56,7 +56,12 @@ const Chat = () => {
               groupId={conversationType === 'group' ? selectedConversation.id : undefined}
               groupName={conversationType === 'group' ? selectedConversation.name : undefined}
               groupAvatar={conversationType === 'group' ? selectedConversation.avatar : undefined}
-              groupMembers={conversationType === 'group' ? selectedConversation.members : undefined}
+              groupMembers={conversationType === 'group' && selectedConversation.members ? 
+                selectedConversation.members.map(member => ({
+                  ...member,
+                  status: member.status || 'offline' // Ensure status is always provided
+                })) :
+                undefined}
             />
           ) : (
             <EmptyConversationState />
