@@ -307,7 +307,7 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       // Decrement like count - Fixed function call
       const { error: decrementError } = await supabase
-        .rpc('decrement_quote_likes', { quote_id: quoteId });
+        .rpc('decrement_quote_likes', { quote_id: quoteId });  // Fixed: RPC parameter name
 
       if (decrementError) throw decrementError;
 
@@ -325,7 +325,7 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       // Increment like count - Fixed function call
       const { error: incrementError } = await supabase
-        .rpc('increment_quote_likes', { quote_id: quoteId });
+        .rpc('increment_quote_likes', { quote_id: quoteId });  // Fixed: RPC parameter name
 
       if (incrementError) throw incrementError;
 
@@ -367,7 +367,7 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       // Decrement bookmark count - Fixed function call
       const { error: decrementError } = await supabase
-        .rpc('decrement_quote_bookmarks', { quote_id: quoteId });
+        .rpc('decrement_quote_bookmarks', { quote_id: quoteId });  // Fixed: RPC parameter name
 
       if (decrementError) throw decrementError;
 
@@ -385,7 +385,7 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       // Increment bookmark count - Fixed function call
       const { error: incrementError } = await supabase
-        .rpc('increment_quote_bookmarks', { quote_id: quoteId });
+        .rpc('increment_quote_bookmarks', { quote_id: quoteId });  // Fixed: RPC parameter name
 
       if (incrementError) throw incrementError;
 

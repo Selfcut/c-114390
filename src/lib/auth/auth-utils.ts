@@ -1,4 +1,3 @@
-
 import { User, Session } from "@supabase/supabase-js";
 import { UserProfile, UserStatus } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +52,7 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       email: userEmail,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
       role: 'user',
-      status: 'online', // This now uses the literal value from UserStatus
+      status: 'online' as UserStatus, // Fixed: explicitly cast this as UserStatus
       isGhostMode: false,
       notificationSettings: {
         desktopNotifications: true,
@@ -91,7 +90,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
   }
 };
 
-export const updateUserStatus = async (userId: string, status: string) => {
+export const updateUserStatus = async (userId: string, status: UserStatus) => {
   try {
     const { error } = await supabase
       .from('profiles')
