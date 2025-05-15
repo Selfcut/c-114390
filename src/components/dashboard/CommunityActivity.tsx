@@ -1,6 +1,7 @@
+
 import { Link } from "react-router-dom";
-import { DiscussionTopicItem } from "./DiscussionTopicItem";
-import { KnowledgeEntryItem } from "./KnowledgeEntryItem";
+import { DiscussionTopicItem } from "../DiscussionTopicItem";
+import { KnowledgeEntryItem } from "../KnowledgeEntryItem";
 
 export const CommunityActivity = () => {
   return (
