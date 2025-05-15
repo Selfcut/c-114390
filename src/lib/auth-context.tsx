@@ -62,13 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // In a real app with Supabase, we would fetch profile data
-      // For now using localStorage and session data as a placeholder
+      // Check if user has admin role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      const isAdmin = !!roleData;
       
       // Create basic profile from auth data
       const basicUserData: UserProfile = {
         id: userId,
-        name: session?.user?.user_metadata.full_name || 'User',
+        name: session?.user?.user_metadata.name || 'User',
         username: session?.user?.user_metadata.username || session?.user?.email?.split('@')[0] || 'user',
         email: session?.user?.email || '',
         avatar: session?.user?.user_metadata.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${userId}`,
@@ -78,7 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         xp: 0,
         iq: 100,
         isGhostMode: false,
-        isAdmin: session?.user?.email === 'admin@example.com', // Simple admin check
+        isAdmin: isAdmin,
+        role: isAdmin ? 'admin' : 'user',
         notificationSettings: {
           desktopNotifications: true,
           soundNotifications: true,
@@ -98,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         const basicUserData: UserProfile = {
           id: userId,
-          name: session.user.user_metadata.full_name || 'User',
+          name: session.user.user_metadata.name || 'User',
           username: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'user',
           email: session.user.email || '',
           avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${userId}`,
