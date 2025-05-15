@@ -1,14 +1,12 @@
 
-import { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { BookOpen, Zap, Award, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { ProgressCard } from "../ProgressCard";
+import { BrainCircuit } from "lucide-react";
 
-export interface ProgressItemProps {
+interface ProgressItem {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   progress: number;
   icon: string;
   recentActivity?: string;
@@ -16,77 +14,58 @@ export interface ProgressItemProps {
 }
 
 interface LearningProgressProps {
-  progressData: ProgressItemProps[];
-  onCardClick: (item: ProgressItemProps) => void;
+  progressData: ProgressItem[];
+  onCardClick?: (item: ProgressItem) => void;
 }
 
 export const LearningProgress = ({ progressData, onCardClick }: LearningProgressProps) => {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  // Get icon component based on icon string
-  const getIconComponent = (iconName: string) => {
-    switch (iconName) {
-      case 'book':
-        return <BookOpen size={18} />;
-      case 'brain':
-        return <Zap size={18} />;
-      case 'award':
-        return <Award size={18} />;
-      case 'target':
-        return <Clock size={18} />;
-      case 'trend':
-      default:
-        return <Zap size={18} />;
-    }
-  };
+  if (!progressData || progressData.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="col-span-full flex flex-col items-center justify-center p-8 bg-background/80 rounded-lg border border-border">
+          <BrainCircuit size={48} className="text-muted-foreground mb-4" />
+          <h3 className="text-xl font-medium mb-2">No Learning Progress Yet</h3>
+          <p className="text-center text-muted-foreground">
+            Start your learning journey by exploring topics and resources
+          </p>
+          <button 
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/80 transition-colors"
+            onClick={() => window.location.href = "/library"}
+          >
+            Explore Topics
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-      {progressData.map((item) => (
-        <Card
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {progressData.slice(0, 3).map((item) => (
+        <ProgressCard
           key={item.id}
-          className={cn(
-            "cursor-pointer border border-border overflow-hidden transition-all duration-200",
-            hoveredId === item.id
-              ? "border-primary/50 shadow-md transform scale-[1.02]"
-              : "hover:border-primary/30"
-          )}
-          onClick={() => onCardClick(item)}
-          onMouseEnter={() => setHoveredId(item.id)}
-          onMouseLeave={() => setHoveredId(null)}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="font-medium text-lg">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                {getIconComponent(item.icon)}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <div className="flex justify-between mb-2">
-                <span className="text-xs text-muted-foreground">Progress</span>
-                <span className="text-xs font-medium">{item.progress}%</span>
-              </div>
-              <Progress value={item.progress} className="h-2" />
-            </div>
-
-            {item.recentActivity && (
-              <p className="text-xs text-muted-foreground mt-4">{item.recentActivity}</p>
-            )}
-
-            {item.streakDays !== undefined && (
-              <div className="flex items-center mt-2">
-                <Zap size={14} className="text-yellow-500 mr-1" />
-                <span className="text-xs font-medium">{item.streakDays} day streak</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          title={item.title}
+          description={item.description}
+          progress={item.progress}
+          icon={item.icon as any}
+          recentActivity={item.recentActivity}
+          streakDays={item.streakDays}
+          onClick={() => onCardClick?.(item)}
+        />
       ))}
+      
+      <div 
+        className="bg-[#1A1A1A] hover:bg-[#232323] transition-colors rounded-lg p-4 flex flex-col gap-3 justify-center items-center cursor-pointer"
+        onClick={() => window.location.href = "/library"}
+      >
+        <div className="p-3 rounded-full bg-blue-900">
+          <BrainCircuit size={24} className="text-blue-400" />
+        </div>
+        <p className="text-center font-medium">Explore More Topics</p>
+        <button className="mt-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm py-1.5 px-4 rounded">
+          Browse All
+        </button>
+      </div>
     </div>
   );
 };

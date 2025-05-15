@@ -26,19 +26,6 @@ interface ProgressData {
   streakDays?: number;
 }
 
-interface UserActivity {
-  id: string;
-  user_id: string;
-  event_type: string;
-  metadata: any;
-  created_at: string;
-  user?: {
-    name?: string;
-    username?: string;
-    avatar_url?: string;
-  };
-}
-
 interface ProfileData {
   level?: number;
   xp?: number;
@@ -52,7 +39,6 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
-  const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
   const [profileData, setProfileData] = useState<ProfileData>({
     level: 1,
     xp: 0,
@@ -84,28 +70,6 @@ const Dashboard = () => {
           
         if (activitiesError) {
           console.error("Error fetching user activities:", activitiesError);
-        } else {
-          // Then fetch user data for each activity separately
-          if (activities && activities.length > 0) {
-            const activitiesWithUsers = await Promise.all(
-              activities.map(async (activity) => {
-                // Get user data for each activity
-                const { data: userData } = await supabase
-                  .from('profiles')
-                  .select('name, username, avatar_url')
-                  .eq('id', activity.user_id)
-                  .single();
-                  
-                return {
-                  ...activity,
-                  user: userData || { name: 'Unknown User', username: 'unknown' }
-                } as UserActivity;
-              })
-            );
-            setUserActivities(activitiesWithUsers);
-          } else {
-            setUserActivities([]);
-          }
         }
 
         // Calculate user stats based on activities
@@ -114,7 +78,7 @@ const Dashboard = () => {
           const dates = activities.map(a => new Date(a.created_at).toDateString());
           const uniqueDates = [...new Set(dates)].sort();
           
-          // Simple streak calculation - in a real app this would be more sophisticated
+          // Simple streak calculation
           let streak = 0;
           const today = new Date().toDateString();
           const yesterday = new Date();
@@ -162,48 +126,107 @@ const Dashboard = () => {
           });
         }
 
-        // For learning progress, we'll use a mix of real data and enhanced mock data
-        // In a production app, we would have a dedicated learning_progress table
-        const learningTopics = ['Systems Thinking', 'Quantum Mechanics', 'Mathematical Logic', 'Philosophy of Mind'];
+        // Fetch user learning progress data
+        const { data: learningData, error: learningError } = await supabase
+          .from('user_activities')
+          .select('event_type, metadata, created_at')
+          .eq('user_id', user.id)
+          .in('event_type', ['read', 'learned', 'completed'])
+          .order('created_at', { ascending: false });
+          
+        if (learningError) {
+          console.error("Error fetching learning data:", learningError);
+        }
+
+        // Get topics from activities
+        const topics = new Map<string, {
+          activities: number,
+          lastActivity: Date,
+          progress: number
+        }>();
+
+        if (learningData) {
+          learningData.forEach(activity => {
+            const topic = activity.metadata?.topic || activity.metadata?.category || 'General';
+            
+            if (!topics.has(topic)) {
+              topics.set(topic, { 
+                activities: 0, 
+                lastActivity: new Date(activity.created_at),
+                progress: 0
+              });
+            }
+            
+            const topicData = topics.get(topic)!;
+            topicData.activities += 1;
+            
+            const activityDate = new Date(activity.created_at);
+            if (activityDate > topicData.lastActivity) {
+              topicData.lastActivity = activityDate;
+            }
+            
+            // Calculate progress (more activities = more progress, max 100)
+            topicData.progress = Math.min(100, topicData.activities * 20);
+          });
+        }
+
+        // Get categories the user has quoted
         const { data: quoteData } = await supabase
           .from('quotes')
           .select('category')
           .eq('user_id', user.id);
         
-        // Get categories the user has quoted
-        const userCategories = quoteData ? [...new Set(quoteData.map(q => q.category))] : [];
-        
-        // Add user categories to our topics if they don't exist
-        userCategories.forEach(category => {
-          if (category && !learningTopics.includes(category)) {
-            learningTopics.push(category);
-          }
-        });
-        
-        // Create progress data based on user activities and quotes
-        const mockProgressData = learningTopics.map((topic, index) => {
-          // Generate more realistic progress based on user activities
-          let progress = Math.floor(Math.random() * 80) + 10;
-          let streakDays = index % 3 === 0 ? Math.floor(Math.random() * 7) + 1 : undefined;
-          
-          // If this topic is one the user has quoted, give it higher progress
-          if (userCategories.includes(topic)) {
-            progress = Math.floor(Math.random() * 30) + 70; // 70-100% progress
-            streakDays = Math.floor(Math.random() * 10) + 5; // 5-15 day streak
-          }
+        // Add user quote categories to topics
+        if (quoteData) {
+          quoteData.forEach(quote => {
+            const category = quote.category;
+            if (!topics.has(category)) {
+              topics.set(category, { 
+                activities: 1, 
+                lastActivity: new Date(),
+                progress: 20
+              });
+            } else {
+              const topicData = topics.get(category)!;
+              topicData.activities += 1;
+              topicData.progress = Math.min(100, topicData.activities * 15);
+            }
+          });
+        }
+
+        // Create progress data based on actual user activities
+        const userProgressData: ProgressData[] = Array.from(topics.entries()).map(([topic, data], index) => {
+          // Choose icon based on topic name
+          const icons = ["book", "brain", "target", "clock", "award", "trend"];
+          const iconIndex = Math.abs(topic.charCodeAt(0) + topic.length) % icons.length;
           
           return {
             id: (index + 1).toString(),
             title: topic,
-            description: `Explore ${topic.toLowerCase()}`,
-            progress,
-            icon: ['brain', 'target', 'book', 'trend'][index % 4],
-            recentActivity: `Last studied: Introduction to ${topic}`,
-            streakDays
+            description: `${data.activities} learning activities`,
+            progress: data.progress,
+            icon: icons[iconIndex],
+            recentActivity: `Last activity: ${new Date(data.lastActivity).toLocaleDateString()}`,
+            streakDays: data.activities > 2 ? Math.max(1, Math.floor(data.activities / 2)) : undefined
           };
         });
         
-        setProgressData(mockProgressData);
+        // Ensure we have at least some progress items
+        if (userProgressData.length === 0) {
+          // Add default learning topics if user has no activity
+          const defaultTopics = ['Mathematics & Logic', 'Philosophy', 'Physics', 'Computer Science'];
+          defaultTopics.forEach((topic, index) => {
+            userProgressData.push({
+              id: (index + 1000).toString(),
+              title: topic,
+              description: 'Begin your learning journey',
+              progress: 0,
+              icon: ["book", "brain", "target", "clock"][index % 4]
+            });
+          });
+        }
+        
+        setProgressData(userProgressData);
       } catch (error) {
         console.error("Error in dashboard data fetching:", error);
       } finally {
@@ -215,9 +238,9 @@ const Dashboard = () => {
   }, [user, isAuthenticated]);
 
   // Get user name with fallback
-  const userName = user?.name || localStorage.getItem('userName') || "Scholar";
+  const userName = user?.name || user?.username || localStorage.getItem('userName') || "Scholar";
 
-  // Badges for gamification (would come from user profile in a real implementation)
+  // Badges for gamification (based on user level from activities)
   const userBadges = [
     { name: "Early Adopter", icon: "sparkles", achieved: true },
     { name: "First Post", icon: "message", achieved: true },
@@ -254,10 +277,29 @@ const Dashboard = () => {
       ) : (
         <LearningProgress 
           progressData={progressData}
-          onCardClick={(item) => toast({
-            title: "Content opened",
-            description: `You opened: ${item.title}`,
-          })}
+          onCardClick={(item) => {
+            toast({
+              title: "Learning content opened",
+              description: `You opened: ${item.title}`,
+            });
+            
+            // Record activity for opening learning content
+            if (user) {
+              supabase
+                .from('user_activities')
+                .insert({
+                  user_id: user.id,
+                  event_type: 'view',
+                  metadata: { topic: item.title, type: 'learning' }
+                })
+                .then(() => {
+                  // Refresh data after activity is recorded
+                  setTimeout(() => {
+                    // We'll skip the immediate refresh to avoid too many requests
+                  }, 1000);
+                });
+            }
+          }}
         />
       )
     },
