@@ -1,3 +1,4 @@
+
 // Create a new file with fixed status values
 import React, { useState } from 'react';
 import { PageLayout } from "./layouts/PageLayout";
@@ -11,6 +12,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Search, Filter, SlidersHorizontal, Heart, BookMarked, Bookmark, MessageSquare, Share2 } from "lucide-react";
 
+// Define status type for consistency
+type UserStatus = "online" | "offline" | "away" | "do-not-disturb" | "invisible";
+
 // Mock quotes data
 const quotesData = [
   {
@@ -23,7 +27,7 @@ const quotesData = [
       id: "user1",
       name: "PhilosophyLover",
       avatar: "https://api.dicebear.com/7.x/personas/svg?seed=PhilosophyLover",
-      status: "online" as const
+      status: "online" as UserStatus
     },
     likes: 248,
     bookmarks: 57,
@@ -40,7 +44,7 @@ const quotesData = [
       id: "user2",
       name: "WisdomSeeker",
       avatar: "https://api.dicebear.com/7.x/personas/svg?seed=WisdomSeeker",
-      status: "away" as const
+      status: "away" as UserStatus
     },
     likes: 189,
     bookmarks: 43,
@@ -57,7 +61,7 @@ const quotesData = [
       id: "user3",
       name: "KnowledgeExplorer",
       avatar: "https://api.dicebear.com/7.x/personas/svg?seed=KnowledgeExplorer",
-      status: "do-not-disturb" as const
+      status: "do-not-disturb" as UserStatus
     },
     likes: 145,
     bookmarks: 32,
@@ -74,7 +78,7 @@ const quotesData = [
       id: "user4",
       name: "AristotleFan",
       avatar: "https://api.dicebear.com/7.x/personas/svg?seed=AristotleFan",
-      status: "offline" as const
+      status: "offline" as UserStatus
     },
     likes: 132,
     bookmarks: 28,
@@ -91,7 +95,7 @@ const quotesData = [
       id: "user5",
       name: "PhilosophicalMind",
       avatar: "https://api.dicebear.com/7.x/personas/svg?seed=PhilosophicalMind",
-      status: "offline" as const
+      status: "offline" as UserStatus
     },
     likes: 97,
     bookmarks: 18,
@@ -113,41 +117,42 @@ const popularTags = [
   { id: "10", name: "consciousness", count: 112 },
 ];
 
+// Define contributors with consistent status type
 const topContributors = [
   {
     id: "user1",
     name: "PhilosophyLover",
     avatar: "https://api.dicebear.com/7.x/personas/svg?seed=PhilosophyLover",
     quotesCount: 37,
-    status: "online" as const
+    status: "online" as UserStatus
   },
   {
     id: "user2",
     name: "WisdomSeeker",
     avatar: "https://api.dicebear.com/7.x/personas/svg?seed=WisdomSeeker",
     quotesCount: 28,
-    status: "away" as const
+    status: "away" as UserStatus
   },
   {
     id: "user3",
     name: "KnowledgeExplorer",
     avatar: "https://api.dicebear.com/7.x/personas/svg?seed=KnowledgeExplorer",
     quotesCount: 24,
-    status: "invisible" as const
+    status: "invisible" as UserStatus
   },
   {
     id: "user4",
     name: "AristotleFan",
     avatar: "https://api.dicebear.com/7.x/personas/svg?seed=AristotleFan",
     quotesCount: 21,
-    status: "offline" as const
+    status: "offline" as UserStatus
   },
   {
     id: "user5",
     name: "PhilosophicalMind",
     avatar: "https://api.dicebear.com/7.x/personas/svg?seed=PhilosophicalMind",
     quotesCount: 18,
-    status: "offline" as const
+    status: "offline" as UserStatus
   },
 ];
 
