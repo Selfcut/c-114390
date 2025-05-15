@@ -14,10 +14,6 @@ import {
   BookText
 } from 'lucide-react';
 
-// Update these with your icon imports (make sure they exist)
-// import IconHome from '../assets/icons/icon-home.svg';
-// import IconForum from '../assets/icons/icon-forum.svg';
-
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
