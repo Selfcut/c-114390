@@ -11,7 +11,6 @@ import {
   X,
   BookText,
   Quote,
-  BookOpen
 } from 'lucide-react';
 
 export const Sidebar = () => {
