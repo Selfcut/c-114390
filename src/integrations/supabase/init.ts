@@ -5,7 +5,6 @@ import { initializeSupabaseUtils } from "@/lib/utils/supabase-utils";
 export const initializeSupabase = async () => {
   try {
     // Set up realtime subscriptions for tables using the native channel API
-    // instead of the RPC enable_realtime function which doesn't exist
     
     const userActivitiesChannel = supabase.channel('public:user_activities')
       .on('postgres_changes', { 

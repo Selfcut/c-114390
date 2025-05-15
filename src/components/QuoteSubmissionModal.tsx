@@ -13,12 +13,14 @@ interface QuoteSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onQuoteAdded?: () => void;
+  onSubmit?: () => Promise<void>;
 }
 
 export const QuoteSubmissionModal = ({ 
   isOpen, 
   onClose,
-  onQuoteAdded 
+  onQuoteAdded,
+  onSubmit: externalSubmitHandler
 }: QuoteSubmissionModalProps) => {
   const [quoteText, setQuoteText] = useState("");
   const [author, setAuthor] = useState("");
@@ -86,6 +88,11 @@ export const QuoteSubmissionModal = ({
         // Notify parent component
         if (onQuoteAdded) {
           onQuoteAdded();
+        }
+        
+        // Call external submit handler if provided
+        if (externalSubmitHandler) {
+          await externalSubmitHandler();
         }
         
         // Close modal

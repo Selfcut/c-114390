@@ -85,7 +85,6 @@ export const fetchQuotesWithFilters = async (
   }
 };
 
-// Function to fetch a single quote by ID
 export const fetchQuoteById = async (quoteId: string): Promise<QuoteWithUser | null> => {
   try {
     const { data, error } = await supabase
@@ -113,7 +112,6 @@ export const fetchQuoteById = async (quoteId: string): Promise<QuoteWithUser | n
   }
 };
 
-// Function to fetch all quotes
 export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
   try {
     const { data, error } = await supabase
@@ -141,7 +139,6 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
   }
 };
 
-// Function to fetch user bookmarked quotes
 export const fetchUserBookmarkedQuotes = async (): Promise<QuoteWithUser[]> => {
   try {
     // Get user's bookmarked quote IDs
@@ -182,7 +179,6 @@ export const fetchUserBookmarkedQuotes = async (): Promise<QuoteWithUser[]> => {
   }
 };
 
-// Create a new quote
 export const createQuote = async (
   text: string,
   author: string,
@@ -239,7 +235,6 @@ export const createQuote = async (
   }
 };
 
-// Check if a user has liked a quote
 export const checkUserLikedQuote = async (quoteId: string): Promise<boolean> => {
   try {
     const user = (await supabase.auth.getUser()).data.user;
@@ -302,11 +297,18 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Direct update of the likes count
-      await supabase
+      // Direct update of the likes count using a SQL update
+      const { error: updateError } = await supabase
         .from('quotes')
-        .update({ likes: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'likes' }) as any })
+        .update({ likes: supabase.rpc('decrement_counter', { 
+          row_id: quoteId, 
+          column_name: 'likes' 
+        }) as any })
         .eq('id', quoteId);
+
+      if (updateError) {
+        console.error("Error updating like count:", updateError);
+      }
 
       return false; // Return false to indicate quote is now unliked
     } 
@@ -324,11 +326,18 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Direct update of the likes count
-      await supabase
+      // Direct update of the likes count using a SQL update
+      const { error: updateError } = await supabase
         .from('quotes')
-        .update({ likes: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'likes' }) as any })
+        .update({ likes: supabase.rpc('increment_counter', { 
+          row_id: quoteId, 
+          column_name: 'likes' 
+        }) as any })
         .eq('id', quoteId);
+
+      if (updateError) {
+        console.error("Error updating like count:", updateError);
+      }
 
       // Record activity
       await supabase
@@ -410,11 +419,18 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Direct update of the bookmarks count
-      await supabase
+      // Update bookmark count in quotes table
+      const { error: updateError } = await supabase
         .from('quotes')
-        .update({ bookmarks: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'bookmarks' }) as any })
+        .update({ bookmarks: supabase.rpc('decrement_counter', { 
+          row_id: quoteId, 
+          column_name: 'bookmarks' 
+        }) as any })
         .eq('id', quoteId);
+
+      if (updateError) {
+        console.error("Error updating bookmark count:", updateError);
+      }
 
       return false; // Return false to indicate quote is now unbookmarked
     } 
@@ -432,11 +448,18 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Direct update of the bookmarks count
-      await supabase
+      // Update bookmark count in quotes table
+      const { error: updateError } = await supabase
         .from('quotes')
-        .update({ bookmarks: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'bookmarks' }) as any })
+        .update({ bookmarks: supabase.rpc('increment_counter', { 
+          row_id: quoteId, 
+          column_name: 'bookmarks' 
+        }) as any })
         .eq('id', quoteId);
+
+      if (updateError) {
+        console.error("Error updating bookmark count:", updateError);
+      }
 
       // Record activity
       await supabase
