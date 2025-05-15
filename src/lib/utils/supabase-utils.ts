@@ -9,11 +9,12 @@ export const ensureRpcFunctionsExist = async () => {
     
     // First try to use the increment_counter function
     try {
-      // Use proper type casting for RPC calls
-      await supabase.rpc('increment_counter', {
+      // TypeScript doesn't understand custom RPC functions by default
+      // We need to cast to any to bypass type checking for custom RPCs
+      const result = await (supabase.rpc as any)('increment_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
-      } as any);
+      });
       console.log("increment_counter function exists");
     } catch (error) {
       console.log("Creating increment_counter function...");
@@ -25,11 +26,12 @@ export const ensureRpcFunctionsExist = async () => {
     
     // Check if the decrement_counter function exists
     try {
-      // Use proper type casting for RPC calls
-      await supabase.rpc('decrement_counter', {
+      // TypeScript doesn't understand custom RPC functions by default
+      // We need to cast to any to bypass type checking for custom RPCs
+      const result = await (supabase.rpc as any)('decrement_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
-      } as any);
+      });
       console.log("decrement_counter function exists");
     } catch (error) {
       console.log("Creating decrement_counter function...");

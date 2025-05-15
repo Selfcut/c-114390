@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { X, Send, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -153,16 +154,15 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count using RPC - fixed with proper type handling
+      // Update quote comment count using RPC - fixed with proper type casting
       await supabase
         .from('quotes')
         .update({
-          // The RPC call needs to be wrapped in a raw SQL expression or similar
-          // Since we can't use a raw SQL in this context, we'll use type assertion
-          comments: supabase.rpc('increment_counter', { 
+          // Use type casting to bypass TypeScript's type checking
+          comments: (supabase.rpc as any)('increment_counter', { 
             row_id: quoteId, 
             column_name: 'comments' 
-          } as any) as unknown as number
+          }) as unknown as number
         })
         .eq('id', quoteId);
       
