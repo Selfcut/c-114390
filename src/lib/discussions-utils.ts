@@ -1,18 +1,3 @@
-export interface DiscussionTopic {
-  id: string;
-  title: string;
-  author: string;
-  authorAvatar?: string;
-  date: string;
-  tags: string[];
-  upvotes: number;
-  replies: number;
-  views: number;
-  isPinned?: boolean;
-  isPopular?: boolean;
-  isNew?: boolean;
-  excerpt: string;
-}
 
 export const mockDiscussions: DiscussionTopic[] = [
   {
@@ -27,7 +12,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     views: 1024,
     isPinned: true,
     isPopular: true,
-    excerpt: 'An exploration of the hard problem of consciousness and its implications for our understanding of reality and the mind-body problem.'
+    excerpt: 'An exploration of the hard problem of consciousness and its implications for our understanding of reality and the mind-body problem.',
+    createdAt: new Date('2023-11-15')
   },
   {
     id: '2',
@@ -40,7 +26,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     replies: 37,
     views: 876,
     isPopular: true,
-    excerpt: 'Discussing the role of observation in quantum mechanics and how it challenges our classical understanding of reality.'
+    excerpt: 'Discussing the role of observation in quantum mechanics and how it challenges our classical understanding of reality.',
+    createdAt: new Date('2023-11-12')
   },
   {
     id: '3',
@@ -52,7 +39,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     upvotes: 87,
     replies: 29,
     views: 742,
-    excerpt: 'Examining the contradiction between the high probability of extraterrestrial civilizations and the lack of contact or evidence.'
+    excerpt: 'Examining the contradiction between the high probability of extraterrestrial civilizations and the lack of contact or evidence.',
+    createdAt: new Date('2023-11-10')
   },
   {
     id: '4',
@@ -64,7 +52,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     upvotes: 76,
     replies: 23,
     views: 651,
-    excerpt: 'How complex systems give rise to emergent properties that cannot be predicted from the behavior of individual components.'
+    excerpt: 'How complex systems give rise to emergent properties that cannot be predicted from the behavior of individual components.',
+    createdAt: new Date('2023-11-08')
   },
   {
     id: '5',
@@ -77,7 +66,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     replies: 45,
     views: 932,
     isNew: true,
-    excerpt: 'Discussing the moral implications and responsibilities in developing increasingly autonomous AI systems.'
+    excerpt: 'Discussing the moral implications and responsibilities in developing increasingly autonomous AI systems.',
+    createdAt: new Date('2023-11-05')
   },
   {
     id: '6',
@@ -89,7 +79,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     upvotes: 92,
     replies: 38,
     views: 814,
-    excerpt: 'Can free will exist in a universe governed by deterministic physical laws? Exploring compatibilism and libertarian perspectives.'
+    excerpt: 'Can free will exist in a universe governed by deterministic physical laws? Exploring compatibilism and libertarian perspectives.',
+    createdAt: new Date('2023-11-03')
   },
   {
     id: '7',
@@ -101,7 +92,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     upvotes: 68,
     replies: 21,
     views: 573,
-    excerpt: 'Exploring different sizes of infinity, Cantor\'s diagonal argument, and the continuum hypothesis.'
+    excerpt: 'Exploring different sizes of infinity, Cantor\'s diagonal argument, and the continuum hypothesis.',
+    createdAt: new Date('2023-10-30')
   },
   {
     id: '8',
@@ -114,7 +106,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     replies: 27,
     views: 682,
     isNew: true,
-    excerpt: 'How does altruistic behavior evolve when natural selection favors self-interest? Examining kin selection and group selection theories.'
+    excerpt: 'How does altruistic behavior evolve when natural selection favors self-interest? Examining kin selection and group selection theories.',
+    createdAt: new Date('2023-10-28')
   },
   {
     id: '9',
@@ -127,7 +120,8 @@ export const mockDiscussions: DiscussionTopic[] = [
     replies: 41,
     views: 897,
     isPopular: true,
-    excerpt: 'Examining the philosophical and scientific arguments for and against the simulation hypothesis proposed by Nick Bostrom.'
+    excerpt: 'Examining the philosophical and scientific arguments for and against the simulation hypothesis proposed by Nick Bostrom.',
+    createdAt: new Date('2023-10-25')
   },
   {
     id: '10',
@@ -139,64 +133,7 @@ export const mockDiscussions: DiscussionTopic[] = [
     upvotes: 89,
     replies: 34,
     views: 762,
-    excerpt: 'Why explaining subjective experience is so difficult for science and philosophy. Exploring the explanatory gap between physical processes and qualia.'
+    excerpt: 'Why explaining subjective experience is so difficult for science and philosophy. Exploring the explanatory gap between physical processes and qualia.',
+    createdAt: new Date('2023-10-22')
   }
 ];
-
-export const getSortedDiscussions = (discussions: DiscussionTopic[], sortOption: 'popular' | 'new' | 'upvotes'): DiscussionTopic[] => {
-  const sortedDiscussions = [...discussions];
-  
-  switch (sortOption) {
-    case 'popular':
-      return sortedDiscussions.sort((a, b) => {
-        // First sort by pinned status
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        
-        // Then by popularity
-        if (a.isPopular && !b.isPopular) return -1;
-        if (!a.isPopular && b.isPopular) return 1;
-        
-        // Then by views
-        return b.views - a.views;
-      });
-    
-    case 'new':
-      return sortedDiscussions.sort((a, b) => {
-        // First sort by pinned status
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        
-        // Then by date (newest first)
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      });
-    
-    case 'upvotes':
-      return sortedDiscussions.sort((a, b) => {
-        // First sort by pinned status
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        
-        // Then by upvotes
-        return b.upvotes - a.upvotes;
-      });
-    
-    default:
-      return sortedDiscussions;
-  }
-};
-
-export const filterDiscussionsByTag = (discussions: DiscussionTopic[], tag: string): DiscussionTopic[] => {
-  return discussions.filter(discussion => discussion.tags.includes(tag));
-};
-
-export const searchDiscussions = (discussions: DiscussionTopic[], query: string): DiscussionTopic[] => {
-  const lowerCaseQuery = query.toLowerCase();
-  
-  return discussions.filter(discussion => 
-    discussion.title.toLowerCase().includes(lowerCaseQuery) ||
-    discussion.author.toLowerCase().includes(lowerCaseQuery) ||
-    discussion.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)) ||
-    discussion.excerpt.toLowerCase().includes(lowerCaseQuery)
-  );
-};
