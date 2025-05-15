@@ -433,3 +433,69 @@ button:focus, a:focus, input:focus, textarea:focus, select:focus {
   width: 3px;
   background: linear-gradient(to bottom, hsla(var(--primary), 1), transparent);
 }
+
+/* Accordion animations */
+@keyframes slideDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.radix-collapsible-content[data-state="open"] {
+  animation: slideDown 300ms ease-out;
+}
+
+.radix-collapsible-content[data-state="closed"] {
+  animation: slideUp 300ms ease-out;
+}
+
+/* Progress bar animation */
+@keyframes progress {
+  0% { width: 0; }
+  100% { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress 1s ease-out forwards;
+}
+
+/* Floating effect */
+.hover-float {
+  transition: transform 0.3s ease;
+}
+
+.hover-float:hover {
+  transform: translateY(-5px);
+}
+
+/* Shimmer loading effect */
+.shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.03) 0%, 
+    rgba(255, 255, 255, 0.08) 50%, 
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

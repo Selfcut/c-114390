@@ -1,14 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
 import Header from "../components/Header";
 import { CreationCard } from "../components/CreationCard";
-import { QuickStartItem } from "../components/QuickStartItem";
-import { FeaturedAppCard } from "../components/FeaturedAppCard";
-import { ModelCard } from "../components/ModelCard";
-import { UserProgressCard } from "../components/UserProgressCard";
 import { BookOpen, MessageSquare, Users, Library, Book, Sparkles, Calendar, BrainCircuit, Search, Quote } from "lucide-react";
 import { polymathToast } from "../components/ui/use-toast";
 import { disciplines, formatDaysAgo } from "../lib/utils";
@@ -17,6 +12,9 @@ import { MysticalTopicsSection } from "../components/MysticalTopicsSection";
 import { FeaturedBooksSection } from "../components/FeaturedBooksSection";
 import { CommunitySection } from "../components/CommunitySection";
 import { MembershipBenefits } from "../components/MembershipBenefits";
+import { CollapsibleSection } from "../components/CollapsibleSection";
+import { KnowledgeBrowser } from "../components/KnowledgeBrowser";
+import { ReadingList } from "../components/ReadingProgress";
 
 // Create a new component for discussion topics
 const DiscussionTopicItem = ({ title, author, replies, timeAgo }: { title: string, author: string, replies: number, timeAgo: string }) => (
@@ -128,7 +126,7 @@ const Index = () => {
           <div className="flex-1 overflow-auto">
             <main className="py-8 px-12">
               {showWelcome && recentVisit && (
-                <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 flex justify-between items-center">
+                <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 flex justify-between items-center animate-fade-in">
                   <p className="text-gray-300">
                     <span className="font-medium text-white">Welcome back!</span> Your last visit was {recentVisit}. 
                     There have been {newDiscussions} new discussions and {newEntries} new knowledge entries since then.
@@ -142,14 +140,14 @@ const Index = () => {
                 </div>
               )}
             
-              <h1 className="text-3xl font-bold text-white mb-8">
+              <h1 className="text-3xl font-bold text-white mb-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 Explore Intellectual Frontiers
               </h1>
               
               {/* Welcome and Exploration Banner */}
               <WelcomeExploration />
               
-              <div className="grid grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-3 gap-6 mb-12 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                 <Link to="/forum">
                   <CreationCard type="discussion" />
                 </Link>
@@ -157,7 +155,7 @@ const Index = () => {
                   <CreationCard type="knowledge" />
                 </Link>
                 <Link to="/quotes">
-                  <div className="creation-card bg-gradient-to-br from-[#36003B] to-[#500056] rounded-lg p-6 h-full flex flex-col">
+                  <div className="creation-card bg-gradient-to-br from-[#36003B] to-[#500056] rounded-lg p-6 h-full flex flex-col hover-lift">
                     <div className="mb-4 p-3 rounded-full bg-[#FF3EA5]/20 w-fit">
                       <Quote size={24} className="text-[#FF3EA5]" />
                     </div>
@@ -173,22 +171,37 @@ const Index = () => {
               </div>
               
               {/* Membership Benefits */}
-              <MembershipBenefits />
+              <CollapsibleSection title="Membership Benefits" defaultOpen={true}>
+                <MembershipBenefits />
+              </CollapsibleSection>
+              
+              {/* Knowledge Browser */}
+              <CollapsibleSection title="Explore Knowledge" defaultOpen={false}>
+                <KnowledgeBrowser />
+              </CollapsibleSection>
               
               {/* Mystical Topics */}
-              <MysticalTopicsSection />
+              <CollapsibleSection title="Mystical Topics" defaultOpen={true}>
+                <MysticalTopicsSection />
+              </CollapsibleSection>
               
               {/* Featured Books */}
-              <FeaturedBooksSection />
+              <CollapsibleSection title="Featured Books" defaultOpen={true}>
+                <FeaturedBooksSection />
+              </CollapsibleSection>
+              
+              {/* Reading Progress */}
+              <CollapsibleSection title="Reading Progress" defaultOpen={true}>
+                <ReadingList />
+              </CollapsibleSection>
               
               {/* Community Section */}
-              <CommunitySection />
+              <CollapsibleSection title="Community" defaultOpen={true}>
+                <CommunitySection />
+              </CollapsibleSection>
               
               {/* User Progress Section */}
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Your Learning Progress
-                </h2>
+              <CollapsibleSection title="Your Learning Progress" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.3s" }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <UserProgressCard 
                     discipline="Mathematics & Logic"
@@ -218,12 +231,10 @@ const Index = () => {
                     </button>
                   </div>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Knowledge Pathways
-                </h2>
+              {/* Knowledge Pathways */}
+              <CollapsibleSection title="Knowledge Pathways" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="bg-[#1A1A1A] rounded-lg p-4 flex items-start">
                     <div className="p-3 rounded-lg bg-[#3A3600] mr-4 flex items-center justify-center">
@@ -290,13 +301,11 @@ const Index = () => {
                     </div>
                   </div>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    Featured Disciplines
-                  </h2>
+              {/* Featured Disciplines */}
+              <CollapsibleSection title="Featured Disciplines" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
+                <div className="flex justify-end mb-4">
                   <div className="flex gap-2">
                     <button 
                       className={`px-3 py-1 text-sm rounded-md ${sortOption === 'popular' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-300'}`}
@@ -400,12 +409,10 @@ const Index = () => {
                     <BookOpen size={16} />
                   </button>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Learning Methodologies
-                </h2>
+              {/* Learning Methodologies */}
+              <CollapsibleSection title="Learning Methodologies" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.6s" }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <ModelCard 
                     title="Create Your Learning Path"
@@ -451,19 +458,17 @@ const Index = () => {
                     <BookOpen size={16} />
                   </button>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Wisdom Highlights
-                </h2>
+              {/* Wisdom Highlights */}
+              <CollapsibleSection title="Wisdom Highlights" defaultOpen={true} className="animate-fade-in" style={{ animationDelay: "0.7s" }}>
                 <div className="bg-[#1A1A1A] p-6 rounded-lg">
                   <div className="flex items-start gap-4 mb-6">
                     <div className="p-3 rounded-full bg-[#360036]">
                       <Quote size={24} className="text-[#FF3EA5]" />
                     </div>
                     <div>
-                      <blockquote className="text-white text-lg font-medium italic mb-2">
+                      <blockquote className="text-white text-lg font-medium italic mb-2 quote-highlight">
                         "The unexamined life is not worth living."
                       </blockquote>
                       <p className="text-gray-400">— Socrates</p>
@@ -475,14 +480,12 @@ const Index = () => {
                     <BookOpen size={16} />
                   </Link>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Community Activity
-                </h2>
+              {/* Community Activity */}
+              <CollapsibleSection title="Community Activity" defaultOpen={true} className="animate-fade-in" style={{ animationDelay: "0.8s" }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-[#1A1A1A] p-6 rounded-lg">
+                  <div className="bg-[#1A1A1A] p-6 rounded-lg hover-lift">
                     <h3 className="text-xl font-semibold text-white mb-4">Recent Discussions</h3>
                     <div className="space-y-4">
                       <DiscussionTopicItem
@@ -504,10 +507,10 @@ const Index = () => {
                         timeAgo="8h ago"
                       />
                     </div>
-                    <Link to="/forum" className="inline-block mt-4 text-blue-400 text-sm">View all discussions</Link>
+                    <Link to="/forum" className="inline-block mt-4 text-blue-400 text-sm hover:underline">View all discussions</Link>
                   </div>
                   
-                  <div className="bg-[#1A1A1A] p-6 rounded-lg">
+                  <div className="bg-[#1A1A1A] p-6 rounded-lg hover-lift">
                     <h3 className="text-xl font-semibold text-white mb-4">New Knowledge Entries</h3>
                     <div className="space-y-4">
                       <KnowledgeEntryItem
@@ -529,15 +532,13 @@ const Index = () => {
                         timeAgo="3d ago"
                       />
                     </div>
-                    <Link to="/library" className="inline-block mt-4 text-blue-400 text-sm">View all entries</Link>
+                    <Link to="/library" className="inline-block mt-4 text-blue-400 text-sm hover:underline">View all entries</Link>
                   </div>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Upcoming Events
-                </h2>
+              {/* Upcoming Events */}
+              <CollapsibleSection title="Upcoming Events" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.9s" }}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-[#1A1A1A] p-6 rounded-lg">
                     <div className="flex justify-between items-start">
@@ -609,9 +610,10 @@ const Index = () => {
                     <Calendar size={16} />
                   </button>
                 </div>
-              </section>
+              </CollapsibleSection>
               
-              <section className="mb-12">
+              {/* Quick Search */}
+              <CollapsibleSection title="Quick Search" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "1s" }}>
                 <div className="bg-[#1A1A1A] rounded-lg p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold text-white">Quick Search</h3>
@@ -676,7 +678,7 @@ const Index = () => {
                     />
                   </div>
                 </div>
-              </section>
+              </CollapsibleSection>
             </main>
           </div>
         </div>
