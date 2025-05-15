@@ -14,7 +14,8 @@ import { Link } from "react-router-dom";
 export interface UserHoverCardProps {
   children: React.ReactNode;
   username: string;
-  avatar: string;
+  avatar?: string;
+  avatarUrl?: string; // Added this to support the property name used in UserProfile.tsx
   status: "online" | "offline" | "away" | "do_not_disturb";
   displayName: string;
 }
@@ -23,9 +24,13 @@ export const UserHoverCard = ({
   children, 
   username, 
   avatar,
+  avatarUrl, // Added this property
   status,
   displayName
 }: UserHoverCardProps) => {
+  // Use avatarUrl as a fallback if avatar is not provided
+  const avatarSrc = avatar || avatarUrl;
+
   // Function to determine the color of the status indicator
   const getStatusColor = (status: "online" | "offline" | "away" | "do_not_disturb") => {
     switch (status) {
@@ -53,7 +58,7 @@ export const UserHoverCard = ({
           <div className="flex items-end gap-4 -mt-10">
             <div className="relative">
               <Avatar className="h-16 w-16 border-4 border-background">
-                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarImage src={avatarSrc} alt={displayName} />
                 <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
               </Avatar>
               <span 
