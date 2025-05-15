@@ -30,6 +30,7 @@ export const QuoteCard = ({
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleLike = () => {
     if (liked) {
@@ -46,16 +47,24 @@ export const QuoteCard = ({
   };
 
   return (
-    <div className="bg-[#1A1A1A] rounded-lg overflow-hidden flex flex-col">
+    <div 
+      className="bg-[#1A1A1A] rounded-lg overflow-hidden flex flex-col enhanced-card hover-lift"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {imageUrl && (
         <div className="w-full h-40 relative">
           <AspectRatio ratio={16/9}>
             <img 
               src={imageUrl} 
               alt={`Visual for quote by ${author}`} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700"
+              style={{
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+              }}
             />
           </AspectRatio>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent opacity-50"></div>
         </div>
       )}
 
@@ -82,19 +91,20 @@ export const QuoteCard = ({
           <div className="flex gap-4">
             <button 
               onClick={handleLike}
-              className={`flex items-center gap-1 text-sm ${liked ? 'text-blue-400' : 'text-gray-400'}`}
+              className={`flex items-center gap-1 text-sm ${liked ? 'text-blue-400' : 'text-gray-400'} hover:text-blue-400 transition-colors`}
             >
               <ThumbsUp size={16} className={liked ? "fill-blue-400" : ""} />
               <span>{likeCount}</span>
             </button>
-            <button className="flex items-center gap-1 text-sm text-gray-400">
+            <button className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors">
               <MessageSquare size={16} />
               <span>{comments}</span>
             </button>
           </div>
           <button 
             onClick={handleBookmark}
-            className={`p-1.5 rounded-full ${bookmarked ? 'bg-blue-900/30 text-blue-400' : 'text-gray-400 hover:text-white'}`}
+            className={`p-1.5 rounded-full transition-all ${bookmarked ? 'bg-blue-900/30 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+            aria-label={bookmarked ? "Remove bookmark" : "Bookmark quote"}
           >
             <BookmarkPlus size={18} className={bookmarked ? "fill-blue-400" : ""} />
           </button>

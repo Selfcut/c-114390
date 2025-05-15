@@ -1,167 +1,352 @@
 
-import { useState } from 'react';
-import { Quote, X, Image } from 'lucide-react';
-import { polymathToast } from "./ui/use-toast";
+import { useState } from "react";
+import { X, Upload, Info, Image, AlertTriangle } from "lucide-react";
+import { polymathToast } from "@/components/ui/use-toast";
 
-interface EnhancedQuoteSubmissionProps {
+interface QuoteSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const EnhancedQuoteSubmission = ({ isOpen, onClose }: EnhancedQuoteSubmissionProps) => {
-  const [quoteText, setQuoteText] = useState('');
-  const [author, setAuthor] = useState('');
-  const [source, setSource] = useState('');
-  const [category, setCategory] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  
-  const categories = [
-    "Philosophy", "Mysticism", "Hermeticism", "Gnosticism", 
-    "Kabbalah", "Alchemy", "Astrology", "Sacred Geometry"
-  ];
-  
+export const EnhancedQuoteSubmission = ({ isOpen, onClose }: QuoteSubmissionModalProps) => {
+  const [quoteText, setQuoteText] = useState("");
+  const [author, setAuthor] = useState("");
+  const [source, setSource] = useState("");
+  const [category, setCategory] = useState("philosophy");
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [step, setStep] = useState<'quote' | 'details' | 'preview'>('quote');
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  if (!isOpen) return null;
+
+  const validateQuote = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (quoteText.trim().length < 10) {
+      newErrors.quoteText = "Quote must be at least 10 characters";
+    }
+    
+    if (step === 'details' && author.trim().length < 2) {
+      newErrors.author = "Author name is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedImage(file);
+      
+      // Create image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleNext = () => {
+    if (validateQuote()) {
+      if (step === 'quote') setStep('details');
+      else if (step === 'details') setStep('preview');
+    }
+  };
+
+  const handleBack = () => {
+    if (step === 'details') setStep('quote');
+    else if (step === 'preview') setStep('details');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, we would save to the database
-    console.log({ quoteText, author, source, category, imageUrl });
+    if (!validateQuote()) return;
+    
+    // In a real app, we would send this data to the server
+    console.log({
+      quoteText,
+      author,
+      source,
+      category,
+      uploadedImage
+    });
     
     // Show success toast
-    polymathToast.quoteSubmitted();
+    polymathToast.contributionSaved();
     
-    // Reset form
-    setQuoteText('');
-    setAuthor('');
-    setSource('');
-    setCategory('');
-    setImageUrl('');
-    
-    // Close modal
+    // Reset form and close modal
+    setQuoteText("");
+    setAuthor("");
+    setSource("");
+    setCategory("philosophy");
+    setUploadedImage(null);
+    setImagePreview(null);
+    setStep('quote');
     onClose();
   };
-  
-  if (!isOpen) return null;
-  
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1A1A1A] rounded-xl w-full max-w-2xl relative overflow-hidden animate-fade-in">
-        <button 
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
-          onClick={onClose}
-        >
-          <X size={20} />
-        </button>
-        
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 rounded-full bg-[#360036]">
-              <Quote size={20} className="text-[#FF3EA5]" />
-            </div>
-            <h2 className="text-xl font-bold text-white">Share Wisdom</h2>
+
+  const categories = [
+    { value: "philosophy", label: "Philosophy" },
+    { value: "mysticism", label: "Mysticism" },
+    { value: "science", label: "Science" },
+    { value: "literature", label: "Literature" },
+    { value: "alchemy", label: "Alchemy" },
+    { value: "hermeticism", label: "Hermeticism" },
+    { value: "gnosticism", label: "Gnosticism" },
+    { value: "kabbalah", label: "Kabbalah" },
+    { value: "astrology", label: "Astrology" },
+    { value: "sacred-geometry", label: "Sacred Geometry" },
+  ];
+
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center mb-6">
+      <div className={`w-3 h-3 rounded-full ${step === 'quote' ? 'bg-blue-600' : 'bg-gray-600'} mr-1`}></div>
+      <div className={`w-12 h-1 ${step === 'quote' || step === 'details' ? 'bg-blue-600' : 'bg-gray-600'} mr-1`}></div>
+      <div className={`w-3 h-3 rounded-full ${step === 'details' ? 'bg-blue-600' : 'bg-gray-600'} mr-1`}></div>
+      <div className={`w-12 h-1 ${step === 'preview' ? 'bg-blue-600' : 'bg-gray-600'} mr-1`}></div>
+      <div className={`w-3 h-3 rounded-full ${step === 'preview' ? 'bg-blue-600' : 'bg-gray-600'}`}></div>
+    </div>
+  );
+
+  const renderQuoteStep = () => (
+    <div className="space-y-4 fade-in">
+      <div className="space-y-2">
+        <label htmlFor="quoteText" className="block text-sm font-medium text-gray-300">
+          Quote Text*
+        </label>
+        <textarea
+          id="quoteText"
+          value={quoteText}
+          onChange={(e) => setQuoteText(e.target.value)}
+          className={`w-full bg-gray-800 text-white border ${errors.quoteText ? 'border-red-500' : 'border-gray-700'} rounded-md p-3 min-h-[150px]`}
+          placeholder="Enter the quote text..."
+          required
+        ></textarea>
+        {errors.quoteText && (
+          <div className="text-red-500 text-xs flex items-center mt-1">
+            <AlertTriangle size={12} className="mr-1" />
+            {errors.quoteText}
           </div>
-          
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="quote-text" className="block text-sm text-gray-400 mb-1">Quote Text</label>
-                <textarea
-                  id="quote-text"
-                  value={quoteText}
-                  onChange={(e) => setQuoteText(e.target.value)}
-                  placeholder="Enter the quote text..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white min-h-[100px]"
-                  required
+        )}
+      </div>
+      
+      <div className="flex justify-between pt-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleNext}
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md transition-colors button-hover-effect"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderDetailsStep = () => (
+    <div className="space-y-4 fade-in">
+      <div className="space-y-2">
+        <label htmlFor="author" className="block text-sm font-medium text-gray-300">
+          Author*
+        </label>
+        <input
+          type="text"
+          id="author"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          className={`w-full bg-gray-800 text-white border ${errors.author ? 'border-red-500' : 'border-gray-700'} rounded-md p-3`}
+          placeholder="Who said or wrote this?"
+          required
+        />
+        {errors.author && (
+          <div className="text-red-500 text-xs flex items-center mt-1">
+            <AlertTriangle size={12} className="mr-1" />
+            {errors.author}
+          </div>
+        )}
+      </div>
+      
+      <div className="space-y-2">
+        <label htmlFor="source" className="block text-sm font-medium text-gray-300">
+          Source
+        </label>
+        <input
+          type="text"
+          id="source"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
+          placeholder="Book, speech, etc. (optional)"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <label htmlFor="category" className="block text-sm font-medium text-gray-300">
+          Category*
+        </label>
+        <select
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
+          required
+        >
+          {categories.map((cat) => (
+            <option key={cat.value} value={cat.value}>
+              {cat.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-300">
+          Add Image (optional)
+        </label>
+        <div className={`border border-dashed ${imagePreview ? 'border-blue-500' : 'border-gray-700'} rounded-md p-6 text-center`}>
+          <input
+            type="file"
+            id="imageUpload"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+          <label
+            htmlFor="imageUpload"
+            className="flex flex-col items-center cursor-pointer"
+          >
+            {imagePreview ? (
+              <div className="mb-2">
+                <img 
+                  src={imagePreview} 
+                  alt="Quote backdrop preview" 
+                  className="max-h-32 rounded"
                 />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="author" className="block text-sm text-gray-400 mb-1">Author</label>
-                  <input
-                    id="author"
-                    type="text"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Who said this?"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="source" className="block text-sm text-gray-400 mb-1">Source (Optional)</label>
-                  <input
-                    id="source"
-                    type="text"
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    placeholder="Book, speech, etc."
-                    className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="category" className="block text-sm text-gray-400 mb-1">Category</label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white appearance-none"
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label htmlFor="image-url" className="block text-sm text-gray-400 mb-1">Background Image URL (Optional)</label>
-                <div className="flex gap-2">
-                  <input
-                    id="image-url"
-                    type="text"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-md p-3 text-white"
-                  />
-                  <button
-                    type="button"
-                    className="bg-gray-700 p-3 rounded-md text-gray-300 hover:bg-gray-600"
-                    title="Choose from library"
-                  >
-                    <Image size={20} />
-                  </button>
-                </div>
-              </div>
-              
-              {imageUrl && (
-                <div className="border border-gray-700 rounded-md p-2">
-                  <img src={imageUrl} alt="Preview" className="w-full h-40 object-cover rounded" />
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-end mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-700 rounded-md text-white mr-2"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors rounded-md text-white"
-              >
-                Submit Quote
-              </button>
-            </div>
-          </form>
+            ) : (
+              <Image className="h-10 w-10 text-gray-400 mb-2" />
+            )}
+            <span className="text-sm text-gray-300">
+              {uploadedImage ? uploadedImage.name : "Click to upload an image"}
+            </span>
+            <span className="text-xs text-gray-500 mt-1">
+              PNG, JPG, GIF up to 5MB
+            </span>
+          </label>
         </div>
+      </div>
+      
+      <div className="flex justify-between pt-4">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={handleNext}
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md transition-colors button-hover-effect"
+        >
+          Preview
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderPreviewStep = () => (
+    <div className="space-y-6 fade-in">
+      <div className="bg-gray-800 rounded-lg overflow-hidden">
+        {imagePreview && (
+          <div className="relative w-full h-40">
+            <img 
+              src={imagePreview} 
+              alt="Quote backdrop" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        
+        <div className="p-4">
+          <blockquote className="text-white text-lg font-medium mb-2 italic">
+            "{quoteText}"
+          </blockquote>
+          
+          <div className="text-gray-400 text-sm">
+            <span className="font-medium text-white">{author}</span>
+            {source && <span> • {source}</span>}
+          </div>
+          
+          <div className="mt-3">
+            <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded">
+              {categories.find(cat => cat.value === category)?.label}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-gray-800/50 rounded-lg p-3 flex items-start">
+        <Info size={18} className="text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-gray-300">
+          By sharing this quote, you certify that it doesn't violate any intellectual property rights.
+          Please ensure proper attribution is given to the author.
+        </p>
+      </div>
+      
+      <div className="flex justify-between pt-4">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md transition-colors button-hover-effect"
+        >
+          Submit Quote
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-[#1A1A1A] rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            {step === 'quote' && "Share a Quote"}
+            {step === 'details' && "Quote Details"}
+            {step === 'preview' && "Preview Your Quote"}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        
+        {renderStepIndicator()}
+        
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+          {step === 'quote' && renderQuoteStep()}
+          {step === 'details' && renderDetailsStep()}
+          {step === 'preview' && renderPreviewStep()}
+        </form>
       </div>
     </div>
   );
