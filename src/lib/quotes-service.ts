@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -291,8 +290,7 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (unlikeError) throw unlikeError;
 
-      // Decrement like count using the specific function
-      // Fix: Use raw SQL query with execute RPC call
+      // Decrement like count using the correctly formatted RPC call
       const { error: decrementError } = await supabase.rpc(
         'decrement_quote_likes',
         { quote_id: quoteId }
@@ -312,8 +310,7 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (likeError) throw likeError;
 
-      // Increment like count using the specific function
-      // Fix: Use raw SQL query with execute RPC call
+      // Increment like count using the correctly formatted RPC call
       const { error: incrementError } = await supabase.rpc(
         'increment_quote_likes',
         { quote_id: quoteId }
@@ -357,8 +354,7 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (removeError) throw removeError;
 
-      // Decrement bookmark count using the specific function
-      // Fix: Use raw SQL query with execute RPC call
+      // Decrement bookmark count using the correctly formatted RPC call
       const { error: decrementError } = await supabase.rpc(
         'decrement_quote_bookmarks',
         { quote_id: quoteId }
@@ -378,8 +374,7 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (bookmarkError) throw bookmarkError;
 
-      // Increment bookmark count using the specific function
-      // Fix: Use raw SQL query with execute RPC call
+      // Increment bookmark count using the correctly formatted RPC call
       const { error: incrementError } = await supabase.rpc(
         'increment_quote_bookmarks',
         { quote_id: quoteId }
