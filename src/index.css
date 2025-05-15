@@ -33,3 +33,26 @@
 .dark .border {
   border-color: hsl(var(--border)) !important;
 }
+
+/* Fix for borders in dark mode */
+.dark .border-white {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .border-gray-100, 
+.dark .border-gray-200, 
+.dark .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix for PromoBar in dark mode */
+.dark .bg-purple-800 {
+  background-color: hsl(var(--promo)) !important;
+}
+
+/* Ensure proper contrast in dark mode */
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-800 {
+  color: hsl(var(--muted-foreground)) !important;
+}

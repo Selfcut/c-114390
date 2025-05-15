@@ -1,84 +1,74 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/types/user";
-import { Session } from "@supabase/supabase-js";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
+// This function will fetch the user profile from Supabase
+// Or create a mock profile for demo purposes if Supabase fetch fails
 export const fetchUserProfile = async (userId: string, session: Session | null): Promise<UserProfile> => {
   try {
-    // Check if user has admin role
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+    // Try to fetch user profile from Supabase profiles table
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
     
-    const isAdmin = !!roleData;
+    if (error || !data) {
+      console.warn("Could not fetch user profile, generating one from auth data");
+      throw new Error("Profile not found");
+    }
     
-    // Create basic profile from auth data
-    const basicUserData: UserProfile = {
-      id: userId,
-      name: session?.user?.user_metadata.name || 'User',
-      username: session?.user?.user_metadata.username || session?.user?.email?.split('@')[0] || 'user',
-      email: session?.user?.email || '',
-      avatar: session?.user?.user_metadata.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${userId}`,
-      coverImage: session?.user?.user_metadata.cover_image,
-      status: 'online',
-      level: 1,
-      xp: 0,
-      iq: 100,
-      isGhostMode: false,
-      isAdmin: isAdmin,
-      role: isAdmin ? 'admin' : 'user',
-      notificationSettings: {
-        desktopNotifications: true,
-        soundNotifications: true,
+    // Return the profile data from Supabase
+    return {
+      id: data.id,
+      email: session?.user?.email || 'user@example.com',
+      name: data.name || session?.user?.user_metadata?.full_name || 'User',
+      avatar: data.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}`,
+      role: data.role || 'user',
+      status: data.status || 'online',
+      bio: data.bio || '',
+      skills: data.skills || [],
+      interests: data.interests || [],
+      isGhostMode: data.is_ghost_mode || false,
+      notificationSettings: data.notification_settings || {
         emailNotifications: true,
+        pushNotifications: true,
+        soundNotifications: true,
+        desktopNotifications: true
       },
-      badges: []
+      createdAt: data.created_at || new Date().toISOString()
     };
-    
-    // Store user info in localStorage for quick access
-    localStorage.setItem('userName', basicUserData.name);
-    if (basicUserData.avatar) {
-      localStorage.setItem('userAvatar', basicUserData.avatar);
-    }
-    
-    return basicUserData;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    // Fallback to session data if profile doesn't exist yet
+    const userEmail = session?.user?.email || 'user@example.com';
+    const userName = session?.user?.user_metadata?.full_name || userEmail.split('@')[0];
     
-    // Fallback to basic profile
-    if (session?.user) {
-      const basicUserData: UserProfile = {
-        id: userId,
-        name: session.user.user_metadata.name || 'User',
-        username: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'user',
-        email: session.user.email || '',
-        avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${userId}`,
-        status: 'online',
-        isGhostMode: false,
-        notificationSettings: {
-          desktopNotifications: true,
-          soundNotifications: true,
-          emailNotifications: true,
-        }
-      };
-      
-      localStorage.setItem('userName', basicUserData.name);
-      if (basicUserData.avatar) {
-        localStorage.setItem('userAvatar', basicUserData.avatar);
-      }
-      
-      return basicUserData;
-    }
-    
-    throw error;
+    // Return a minimal profile with data from auth
+    return {
+      id: userId,
+      email: userEmail,
+      name: userName,
+      avatar: localStorage.getItem('userAvatar') || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
+      role: localStorage.getItem('userRole') || 'user',
+      status: 'online',
+      bio: '',
+      skills: [],
+      interests: [],
+      isGhostMode: false,
+      notificationSettings: {
+        emailNotifications: true,
+        pushNotifications: true,
+        soundNotifications: true,
+        desktopNotifications: true
+      },
+      createdAt: new Date().toISOString()
+    };
   }
 };
 
 export const clearUserData = () => {
   localStorage.removeItem('userName');
   localStorage.removeItem('userAvatar');
+  localStorage.removeItem('userRole');
 };
