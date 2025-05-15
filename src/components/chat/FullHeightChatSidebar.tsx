@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface ChatMessage {
   id: string;
@@ -38,24 +39,7 @@ export interface Conversation {
 
 export const FullHeightChatSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([
-    {
-      id: "global",
-      name: "Global Chat",
-      avatar: "/placeholder.svg",
-      lastMessage: "Welcome to the Polymath community!",
-      unread: 0,
-      isGlobal: true
-    },
-    {
-      id: "philosophy", 
-      name: "Philosophy Group",
-      avatar: "/placeholder.svg",
-      lastMessage: "What's everyone's take on existentialism?",
-      unread: 0,
-      isGroup: true
-    }
-  ]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const { user, isAuthenticated } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState("global"); // Default to Global Chat
   const [message, setMessage] = useState("");
@@ -80,6 +64,56 @@ export const FullHeightChatSidebar = () => {
       emojis: ["📚", "💡", "🔍", "🧠", "📝", "📊", "🌐", "💭", "🎓", "⏱️"]
     }
   ];
+
+  // Fetch conversations
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .order('is_global', { ascending: false })
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          const formattedConversations = data.map(convo => ({
+            id: convo.id,
+            name: convo.name,
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${convo.name}`,
+            lastMessage: convo.last_message || "No messages yet",
+            unread: 0,
+            isGlobal: convo.is_global,
+            isGroup: convo.is_group
+          }));
+          setConversations(formattedConversations);
+        }
+      } catch (err) {
+        console.error("Error fetching conversations:", err);
+      }
+    };
+
+    fetchConversations();
+
+    // Subscribe to changes in conversations table
+    const conversationsSubscription = supabase
+      .channel('conversations_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversations' },
+        (payload) => {
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(conversationsSubscription);
+    };
+  }, []);
 
   // Toggle sidebar
   const toggleSidebar = () => {
@@ -219,7 +253,7 @@ export const FullHeightChatSidebar = () => {
         messagesSubscriptionRef.current.unsubscribe();
       }
     };
-  }, [selectedConversation]);
+  }, [selectedConversation, toast]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -247,6 +281,8 @@ export const FullHeightChatSidebar = () => {
     if (!message.trim()) return;
 
     try {
+      const guestName = localStorage.getItem('guestName') || "Guest";
+      
       // For authenticated users, send with their ID
       if (isAuthenticated && user) {
         const { error } = await supabase
@@ -268,13 +304,21 @@ export const FullHeightChatSidebar = () => {
         }
       } else {
         // For guests, send as anonymous
+        // First, generate a random guest name if one doesn't exist
+        const randomGuestId = localStorage.getItem('guestId') || 
+          `guest_${Math.random().toString(36).substring(2, 10)}`;
+        
+        const guestDisplayName = `Guest_${randomGuestId.substring(6, 10)}`;
+        
+        localStorage.setItem('guestId', randomGuestId);
+        localStorage.setItem('guestName', guestDisplayName);
+        
         const { error } = await supabase
           .from('chat_messages')
           .insert({
             conversation_id: selectedConversation,
-            user_id: "00000000-0000-0000-0000-000000000000", // Guest user ID
+            sender_name: guestDisplayName,
             content: message,
-            sender_name: "Guest User"
           });
 
         if (error) {
@@ -286,21 +330,13 @@ export const FullHeightChatSidebar = () => {
           });
           return;
         }
-
-        // For guests, we need to manually add the message since they may not have
-        // subscription permissions to see their own messages in real-time
-        const newMessage: ChatMessage = {
-          id: `local-${Date.now()}`,
-          sender: {
-            name: "Guest User",
-            avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Guest"
-          },
-          content: message,
-          timestamp: new Date()
-        };
-        
-        setMessages([...messages, newMessage]);
       }
+
+      // Update last message in conversation
+      await supabase
+        .from('conversations')
+        .update({ last_message: message })
+        .eq('id', selectedConversation);
 
       // Clear input after successful send
       setMessage("");
@@ -339,6 +375,7 @@ export const FullHeightChatSidebar = () => {
         <Button
           onClick={toggleSidebar}
           className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg z-50 bg-primary hover:bg-primary/90"
+          aria-label="Open chat"
         >
           <MessageSquare className="h-6 w-6" />
         </Button>
@@ -356,7 +393,7 @@ export const FullHeightChatSidebar = () => {
             <MessageSquare className="mr-2 h-5 w-5" />
             Community Chat
           </h2>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Close chat">
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -365,36 +402,42 @@ export const FullHeightChatSidebar = () => {
         <div className="border-b p-2">
           <ScrollArea className="h-[120px]">
             <div className="space-y-2">
-              {conversations.map((convo) => (
-                <Card 
-                  key={convo.id} 
-                  className={`p-2 hover:bg-accent/30 cursor-pointer ${selectedConversation === convo.id ? 'bg-accent/50' : ''}`}
-                  onClick={() => handleSelectConversation(convo.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={convo.avatar} alt={convo.name} />
-                      <AvatarFallback>{convo.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center">
-                        <div className="font-medium text-sm flex items-center">
-                          {convo.name}
-                          {convo.isGlobal && (
-                            <Badge variant="secondary" className="ml-2 text-xs">Global</Badge>
-                          )}
-                          {convo.isGroup && (
-                            <Badge variant="outline" className="ml-2 text-xs">Group</Badge>
+              {conversations.length > 0 ? (
+                conversations.map((convo) => (
+                  <Card 
+                    key={convo.id} 
+                    className={`p-2 hover:bg-accent/30 cursor-pointer ${selectedConversation === convo.id ? 'bg-accent/50' : ''}`}
+                    onClick={() => handleSelectConversation(convo.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={convo.avatar} alt={convo.name} />
+                        <AvatarFallback>{convo.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium text-sm flex items-center">
+                            {convo.name}
+                            {convo.isGlobal && (
+                              <Badge variant="secondary" className="ml-2 text-xs">Global</Badge>
+                            )}
+                            {convo.isGroup && (
+                              <Badge variant="outline" className="ml-2 text-xs">Group</Badge>
+                            )}
+                          </div>
+                          {convo.unread > 0 && (
+                            <Badge className="bg-primary">{convo.unread}</Badge>
                           )}
                         </div>
-                        {convo.unread > 0 && (
-                          <Badge className="bg-primary">{convo.unread}</Badge>
-                        )}
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))
+              ) : (
+                <div className="flex justify-center items-center h-20">
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              )}
             </div>
           </ScrollArea>
         </div>
