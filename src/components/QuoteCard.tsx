@@ -11,9 +11,12 @@ interface QuoteCardProps {
   source?: string;
   category: string;
   likes: number;
-  comments: number;
+  comments?: number;
   imageUrl?: string;
   isBookmarked?: boolean;
+  quote?: any; // For backward compatibility with the old API
+  animationDelay?: string;
+  onLike?: () => void;
 }
 
 export const QuoteCard = ({
@@ -23,12 +26,18 @@ export const QuoteCard = ({
   source,
   category,
   likes,
-  comments,
+  comments = 0,
   imageUrl,
   isBookmarked = false,
+  quote,
+  animationDelay,
+  onLike,
 }: QuoteCardProps) => {
+  // If the quote object is provided, extract properties from it
+  const quoteData = quote || { id, text, author, category, likes };
+  
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(likes);
+  const [likeCount, setLikeCount] = useState(quoteData.likes);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -39,6 +48,11 @@ export const QuoteCard = ({
       setLikeCount(likeCount + 1);
     }
     setLiked(!liked);
+    
+    // If an external onLike handler is provided, call it
+    if (onLike) {
+      onLike();
+    }
   };
 
   const handleBookmark = () => {
@@ -49,6 +63,7 @@ export const QuoteCard = ({
   return (
     <div 
       className="bg-[#1A1A1A] rounded-lg overflow-hidden flex flex-col enhanced-card hover-lift"
+      style={animationDelay ? { animationDelay } : undefined}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -57,7 +72,7 @@ export const QuoteCard = ({
           <AspectRatio ratio={16/9}>
             <img 
               src={imageUrl} 
-              alt={`Visual for quote by ${author}`} 
+              alt={`Visual for quote by ${quoteData.author}`} 
               className="w-full h-full object-cover transition-transform duration-700"
               style={{
                 transform: isHovered ? 'scale(1.05)' : 'scale(1)'
@@ -74,16 +89,16 @@ export const QuoteCard = ({
             <Quote size={18} className="text-[#FF3EA5]" />
           </div>
           <span className="text-xs text-[#FF3EA5] font-medium bg-[#360036]/30 px-2 py-0.5 rounded">
-            {category}
+            {quoteData.category}
           </span>
         </div>
 
         <blockquote className="text-white text-lg font-medium mb-4 italic">
-          "{text}"
+          "{quoteData.text}"
         </blockquote>
         
         <div className="text-gray-400 text-sm mb-6">
-          <span className="font-medium text-white">{author}</span>
+          <span className="font-medium text-white">{quoteData.author}</span>
           {source && <span> • {source}</span>}
         </div>
         

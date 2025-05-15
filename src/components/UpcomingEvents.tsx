@@ -1,15 +1,14 @@
-
 import { Calendar, Users, BrainCircuit } from "lucide-react";
 import { polymathToast } from "./ui/use-toast";
 
 export const UpcomingEvents = () => {
   // Functions to handle event interactions
   const handleJoinGroup = () => {
-    polymathToast.joinedStudyGroup();
+    polymathToast.contentRecommended();
   };
 
   const handleEventRegistration = () => {
-    polymathToast.eventRegistered();
+    polymathToast.contentRecommended();
   };
 
   return (

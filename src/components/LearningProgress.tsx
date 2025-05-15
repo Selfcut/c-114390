@@ -6,22 +6,25 @@ export const LearningProgress = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <UserProgressCard 
-        discipline="Mathematics & Logic"
+        title="Mathematics & Logic"
         progress={65}
-        nextMilestone="Advanced Set Theory"
+        description="Advanced Set Theory"
         daysStreak={12}
+        icon="book"
       />
       <UserProgressCard 
-        discipline="Philosophy"
+        title="Philosophy"
         progress={38}
-        nextMilestone="Ethics & Moral Philosophy"
+        description="Ethics & Moral Philosophy"
         daysStreak={7}
+        icon="award"
       />
       <UserProgressCard 
-        discipline="Physics"
+        title="Physics"
         progress={27}
-        nextMilestone="Quantum Mechanics Basics"
+        description="Quantum Mechanics Basics"
         daysStreak={3}
+        icon="clock"
       />
       <div className="bg-[#1A1A1A] rounded-lg p-4 flex flex-col gap-3 justify-center items-center">
         <div className="p-3 rounded-full bg-blue-900">

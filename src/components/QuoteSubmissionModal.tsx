@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { polymathToast } from "@/components/ui/use-toast";
@@ -6,9 +5,16 @@ import { polymathToast } from "@/components/ui/use-toast";
 interface QuoteSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit?: (text: string, author: string, category: string) => void;
+  categories?: string[];
 }
 
-export const QuoteSubmissionModal = ({ isOpen, onClose }: QuoteSubmissionModalProps) => {
+export const QuoteSubmissionModal = ({ 
+  isOpen, 
+  onClose,
+  onSubmit,
+  categories = []
+}: QuoteSubmissionModalProps) => {
   const [quoteText, setQuoteText] = useState("");
   const [author, setAuthor] = useState("");
   const [source, setSource] = useState("");
@@ -29,8 +35,12 @@ export const QuoteSubmissionModal = ({ isOpen, onClose }: QuoteSubmissionModalPr
       uploadedImage
     });
     
-    // Show success toast - Fixed: using a specific method from polymathToast object
-    // instead of trying to call it as a function
+    // Call the provided onSubmit if it exists
+    if (onSubmit) {
+      onSubmit(quoteText, author, category);
+    }
+    
+    // Show success toast
     polymathToast.contributionSaved();
     
     // Reset form and close modal
@@ -42,7 +52,7 @@ export const QuoteSubmissionModal = ({ isOpen, onClose }: QuoteSubmissionModalPr
     onClose();
   };
 
-  const categories = [
+  const defaultCategories = [
     { value: "philosophy", label: "Philosophy" },
     { value: "mysticism", label: "Mysticism" },
     { value: "science", label: "Science" },
@@ -54,6 +64,10 @@ export const QuoteSubmissionModal = ({ isOpen, onClose }: QuoteSubmissionModalPr
     { value: "astrology", label: "Astrology" },
     { value: "sacred-geometry", label: "Sacred Geometry" },
   ];
+
+  const categoryOptions = categories.length > 0 
+    ? categories.map(cat => ({ value: cat.toLowerCase(), label: cat }))
+    : defaultCategories;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -123,7 +137,7 @@ export const QuoteSubmissionModal = ({ isOpen, onClose }: QuoteSubmissionModalPr
               className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
               required
             >
-              {categories.map((cat) => (
+              {categoryOptions.map((cat) => (
                 <option key={cat.value} value={cat.value}>
                   {cat.label}
                 </option>

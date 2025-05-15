@@ -1,53 +1,70 @@
-import { toast } from "@/components/ui/toast"
+
+import { toast as internalToast } from "@/hooks/use-toast"
 
 // Extend the toast API with specialized notification types
 export const polymathToast = {
   welcomeBack: (days: number) => {
-    toast({
+    internalToast({
       title: "Welcome back!",
       description: `It's been ${days} days since your last visit. We've missed you!`,
     });
   },
   
   contentRecommended: () => {
-    toast({
+    internalToast({
       title: "Content Recommended",
       description: "New content recommendations ready for you.",
     });
   },
   
   resourceBookmarked: () => {
-    toast({
+    internalToast({
       title: "Resource Bookmarked",
       description: "This resource has been added to your bookmarks.",
     });
   },
   
   discussionCreated: () => {
-    toast({
+    internalToast({
       title: "Discussion Created",
       description: "Your discussion topic has been posted successfully.",
     });
   },
   
   contributionSaved: () => {
-    toast({
+    internalToast({
       title: "Contribution Saved",
       description: "Thank you for your contribution to the knowledge base!",
     });
   },
   
   notificationCleared: () => {
-    toast({
+    internalToast({
       title: "Notifications Cleared",
       description: "All notifications have been marked as read.",
     });
   },
   
   searchComplete: (resultsCount: number) => {
-    toast({
+    internalToast({
       title: "Search Complete",
       description: `Found ${resultsCount} results matching your search.`,
     });
+  },
+  
+  joinedStudyGroup: () => {
+    internalToast({
+      title: "Study Group Joined",
+      description: "You have successfully joined this study group.",
+    });
+  },
+  
+  eventRegistered: () => {
+    internalToast({
+      title: "Event Registration Complete",
+      description: "You have successfully registered for this event.",
+    });
   }
 };
+
+export { internalToast as toast };

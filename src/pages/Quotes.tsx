@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
@@ -17,7 +16,8 @@ const mockQuotes = [
     category: "Mythology",
     likes: 156,
     submittedBy: "MythExplorer",
-    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    comments: 12
   },
   {
     id: "2",
@@ -111,15 +111,13 @@ const Quotes = () => {
       category,
       likes: 0,
       submittedBy: "CurrentUser", // In a real app, this would be the logged-in user
-      timestamp: new Date()
+      timestamp: new Date(),
+      comments: 0
     };
     
     setQuotes(prev => [...prev, newQuote]);
     setShowSubmissionForm(false);
-    polymathToast({
-      title: "Quote Submitted",
-      description: "Your quote has been added to the collection.",
-    });
+    polymathToast.contributionSaved();
   };
   
   const handleLike = (id: string) => {
@@ -204,9 +202,14 @@ const Quotes = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredQuotes.map((quote, index) => (
                   <QuoteCard 
-                    key={quote.id} 
-                    quote={quote} 
-                    onLike={() => handleLike(quote.id)} 
+                    key={quote.id}
+                    id={quote.id}
+                    text={quote.text}
+                    author={quote.author}
+                    category={quote.category}
+                    likes={quote.likes}
+                    comments={12}
+                    onLike={() => handleLike(quote.id)}
                     animationDelay={`${index * 0.1}s`}
                   />
                 ))}

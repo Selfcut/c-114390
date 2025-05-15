@@ -7,21 +7,25 @@ import { polymathToast } from "@/components/ui/use-toast";
 interface ModelCardProps {
   title: string;
   subtitle: string;
-  image: string;
+  imageSrc: string;
   isNew?: boolean;
   likes?: number;
   className?: string;
   animationDelay?: string;
+  tags?: { label: string; variant: string }[];
+  isTrainYourOwn?: boolean;
 }
 
 export const ModelCard = ({ 
   title, 
   subtitle, 
-  image, 
+  imageSrc, 
   isNew = false,
   likes = 0,
   className,
-  animationDelay
+  animationDelay,
+  tags = [],
+  isTrainYourOwn = false
 }: ModelCardProps) => {
   const [liked, setLiked] = React.useState(false);
   const [likeCount, setLikeCount] = React.useState(likes);
@@ -32,18 +36,12 @@ export const ModelCard = ({
     setLikeCount(prev => liked ? prev - 1 : prev + 1);
     
     if (!liked) {
-      polymathToast({
-        title: "Content Liked",
-        description: `You liked "${title}"`,
-      });
+      polymathToast.contentRecommended();
     }
   };
   
   const handlePlay = () => {
-    polymathToast({
-      title: "Starting Content",
-      description: `Now playing "${title}"`,
-    });
+    polymathToast.contentRecommended();
   };
   
   return (
@@ -55,7 +53,7 @@ export const ModelCard = ({
       style={animationDelay ? { animationDelay } : undefined}
     >
       <div className="relative">
-        <img src={image} alt={title} className="w-full h-40 object-cover" />
+        <img src={imageSrc} alt={title} className="w-full h-40 object-cover" />
         {isNew && (
           <span className="absolute top-2 right-2 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">
             New
@@ -66,6 +64,25 @@ export const ModelCard = ({
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="font-medium text-white">{title}</h3>
         <p className="text-sm text-gray-400 mt-1">{subtitle}</p>
+        
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {tags.map((tag, index) => (
+              <span 
+                key={index} 
+                className={`text-xs px-2 py-0.5 rounded ${
+                  tag.variant === 'blue' ? 'bg-blue-900/50 text-blue-300' :
+                  tag.variant === 'green' ? 'bg-green-900/50 text-green-300' :
+                  tag.variant === 'orange' ? 'bg-orange-900/50 text-orange-300' :
+                  tag.variant === 'yellow' ? 'bg-yellow-900/50 text-yellow-300' :
+                  'bg-gray-800 text-gray-300'
+                }`}
+              >
+                {tag.label}
+              </span>
+            ))}
+          </div>
+        )}
         
         <div className="flex justify-between items-center mt-auto pt-4">
           <button 
@@ -84,7 +101,7 @@ export const ModelCard = ({
             onClick={handlePlay}
           >
             <Play size={14} className="fill-white" />
-            <span>Explore</span>
+            <span>{isTrainYourOwn ? "Create" : "Explore"}</span>
           </button>
         </div>
       </div>

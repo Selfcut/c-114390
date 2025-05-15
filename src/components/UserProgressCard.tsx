@@ -6,22 +6,33 @@ import { cn } from "@/lib/utils";
 import { polymathToast } from "@/components/ui/use-toast";
 
 interface UserProgressCardProps {
-  title: string;
+  title?: string;
   progress: number;
-  icon: "book" | "award" | "clock";
-  description: string;
+  icon?: "book" | "award" | "clock";
+  description?: string;
   className?: string;
   animationDelay?: string;
+  discipline?: string;
+  nextMilestone?: string;
+  daysStreak?: number;
 }
 
 export const UserProgressCard = ({ 
   title, 
   progress, 
-  icon, 
+  icon = "book", 
   description,
   className,
-  animationDelay
+  animationDelay,
+  discipline,
+  nextMilestone,
+  daysStreak
 }: UserProgressCardProps) => {
+  // Use discipline as title if provided
+  const displayTitle = title || discipline || "Progress";
+  // Use nextMilestone as description if provided
+  const displayDescription = description || nextMilestone || "Next milestone";
+  
   const getIcon = () => {
     switch(icon) {
       case "book":
@@ -36,10 +47,7 @@ export const UserProgressCard = ({
   };
 
   const handleClick = () => {
-    polymathToast({
-      title: "Progress Update",
-      description: `Your progress on "${title}" was updated`,
-    });
+    polymathToast.contentRecommended();
   };
 
   return (
@@ -55,7 +63,7 @@ export const UserProgressCard = ({
         <div className="p-2 rounded-full bg-gray-800">
           {getIcon()}
         </div>
-        <h3 className="font-medium text-white">{title}</h3>
+        <h3 className="font-medium text-white">{displayTitle}</h3>
       </div>
       
       <div className="mb-2">
@@ -63,9 +71,18 @@ export const UserProgressCard = ({
       </div>
       
       <div className="flex justify-between items-center">
-        <span className="text-sm text-gray-400">{description}</span>
+        <span className="text-sm text-gray-400">{displayDescription}</span>
         <span className="text-sm font-medium text-white">{progress}%</span>
       </div>
+      
+      {daysStreak && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <div className="p-1 rounded-full bg-orange-900/30">
+            <Award size={12} className="text-orange-400" />
+          </div>
+          <span className="text-xs text-orange-300">{daysStreak} day streak</span>
+        </div>
+      )}
     </div>
   );
 };
