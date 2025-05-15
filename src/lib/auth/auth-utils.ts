@@ -7,62 +7,60 @@ import { supabase } from "@/integrations/supabase/client";
 // Or create a mock profile for demo purposes if Supabase fetch fails
 export const fetchUserProfile = async (userId: string, session: Session | null): Promise<UserProfile> => {
   try {
-    // Try to fetch user profile from Supabase profiles table
-    const { data, error } = await supabase
-      .from('profiles')
+    // Try to fetch user role from user_roles table (which exists in Supabase)
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
       .select('*')
-      .eq('id', userId)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
     
-    if (error || !data) {
-      console.warn("Could not fetch user profile, generating one from auth data");
-      throw new Error("Profile not found");
+    if (roleError) {
+      console.warn("Could not fetch user role:", roleError);
     }
     
-    // Return the profile data from Supabase
+    // Since there's no profiles table, we'll create a profile from session data
+    // and user_roles if available
+    
+    const userEmail = session?.user?.email || 'user@example.com';
+    const userName = session?.user?.user_metadata?.full_name || userEmail.split('@')[0];
+    const userRole = roleData?.role || 'user';
+    
+    // Return a profile with data from auth and role
     return {
-      id: data.id,
-      email: session?.user?.email || 'user@example.com',
-      name: data.name || session?.user?.user_metadata?.full_name || 'User',
-      avatar: data.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}`,
-      role: data.role || 'user',
-      status: data.status || 'online',
-      bio: data.bio || '',
-      skills: data.skills || [],
-      interests: data.interests || [],
-      isGhostMode: data.is_ghost_mode || false,
-      notificationSettings: data.notification_settings || {
-        emailNotifications: true,
-        pushNotifications: true,
+      id: userId,
+      name: userName,
+      username: userName.toLowerCase().replace(/\s+/g, '-'),
+      email: userEmail,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
+      status: 'online',
+      isGhostMode: false,
+      role: userRole as 'admin' | 'moderator' | 'user',
+      notificationSettings: {
+        desktopNotifications: true,
         soundNotifications: true,
-        desktopNotifications: true
-      },
-      createdAt: data.created_at || new Date().toISOString()
+        emailNotifications: true
+      }
     };
   } catch (error) {
-    // Fallback to session data if profile doesn't exist yet
+    // Fallback to basic profile with data from auth
     const userEmail = session?.user?.email || 'user@example.com';
     const userName = session?.user?.user_metadata?.full_name || userEmail.split('@')[0];
     
     // Return a minimal profile with data from auth
     return {
       id: userId,
-      email: userEmail,
       name: userName,
+      username: userName.toLowerCase().replace(/\s+/g, '-'),
+      email: userEmail,
       avatar: localStorage.getItem('userAvatar') || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
-      role: localStorage.getItem('userRole') || 'user',
+      role: (localStorage.getItem('userRole') || 'user') as 'admin' | 'moderator' | 'user',
       status: 'online',
-      bio: '',
-      skills: [],
-      interests: [],
       isGhostMode: false,
       notificationSettings: {
-        emailNotifications: true,
-        pushNotifications: true,
+        desktopNotifications: true,
         soundNotifications: true,
-        desktopNotifications: true
-      },
-      createdAt: new Date().toISOString()
+        emailNotifications: true
+      }
     };
   }
 };
