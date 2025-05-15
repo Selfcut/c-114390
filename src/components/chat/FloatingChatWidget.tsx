@@ -122,7 +122,8 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   groupMembers={conversationType === 'group' && selectedConversation.members ? 
                     selectedConversation.members.map(member => ({
                       ...member,
-                      status: member.status || 'offline' // Ensure status is always provided
+                      // Add a default status since the member object doesn't have one
+                      status: 'offline'
                     })) : 
                     undefined}
                 />
