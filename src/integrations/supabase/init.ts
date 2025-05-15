@@ -4,23 +4,28 @@ import { initializeSupabaseUtils } from "@/lib/utils/supabase-utils";
 
 export const initializeSupabase = async () => {
   try {
-    // Enable PostgreSQL changes for realtime subscriptions
-    const { error: realtimeError } = await supabase.rpc('enable_realtime', {
-      table_name: 'user_activities'
-    });
+    // Set up realtime subscriptions for tables using the native channel API
+    // instead of the RPC enable_realtime function which doesn't exist
     
-    if (realtimeError) {
-      console.error("Error enabling realtime for user_activities:", realtimeError);
-    }
-    
-    // Enable realtime for quote comments
-    const { error: commentsRealtimeError } = await supabase.rpc('enable_realtime', {
-      table_name: 'quote_comments'
-    });
-    
-    if (commentsRealtimeError) {
-      console.error("Error enabling realtime for quote_comments:", commentsRealtimeError);
-    }
+    const userActivitiesChannel = supabase.channel('public:user_activities')
+      .on('postgres_changes', { 
+        event: '*',
+        schema: 'public',
+        table: 'user_activities'
+      }, payload => {
+        console.log('User activities change received:', payload);
+      })
+      .subscribe();
+      
+    const quoteCommentsChannel = supabase.channel('public:quote_comments')
+      .on('postgres_changes', { 
+        event: '*',
+        schema: 'public',
+        table: 'quote_comments'
+      }, payload => {
+        console.log('Quote comments change received:', payload);
+      })
+      .subscribe();
     
     // Initialize any required RPC functions or utilities
     initializeSupabaseUtils();

@@ -325,7 +325,7 @@ const Dashboard = () => {
               <Badge className="ml-2 bg-primary/20 text-primary">New</Badge>
             </h2>
           </div>
-          <ActivityFeed userActivities={userActivities} isLoading={isLoading} />
+          <ActivityFeed limit={10} />
         </div>
       </main>
     </PageLayout>

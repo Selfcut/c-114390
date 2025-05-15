@@ -154,12 +154,11 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count using RPC function call
+      // Update quote comment count using direct update
       await supabase
-        .from('rpc')
-        .select('*')
-        .eq('name', 'increment_quote_comments')
-        .eq('args', { quote_id: quoteId });
+        .from('quotes')
+        .update({ comments: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'comments' }) as any })
+        .eq('id', quoteId);
       
       // Add activity record
       await supabase

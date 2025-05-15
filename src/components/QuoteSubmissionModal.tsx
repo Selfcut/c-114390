@@ -1,80 +1,105 @@
-
 import { useState } from "react";
-import { X, Upload } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { X, Send, Tag, Plus } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { toast } from "./ui/use-toast";
+import { Badge } from "./ui/badge";
 import { createQuote } from "@/lib/quotes-service";
 
 interface QuoteSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: () => void;
-  categories?: string[];
+  onQuoteAdded?: () => void;
 }
 
 export const QuoteSubmissionModal = ({ 
   isOpen, 
   onClose,
-  onSubmit,
-  categories = []
+  onQuoteAdded 
 }: QuoteSubmissionModalProps) => {
   const [quoteText, setQuoteText] = useState("");
   const [author, setAuthor] = useState("");
   const [source, setSource] = useState("");
-  const [category, setCategory] = useState("philosophy");
-  const [tags, setTags] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [category, setCategory] = useState("Philosophy");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isAuthenticated } = useAuth();
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddTag = () => {
+    if (!tagInput.trim()) return;
     
-    if (!quoteText.trim() || !author.trim() || !category.trim()) {
+    // Don't add duplicate tags
+    if (!tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+    }
+    
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleSubmitQuote = async () => {
+    if (!isAuthenticated) {
       toast({
-        title: "Missing required fields",
-        description: "Please fill in all required fields",
+        title: "Authentication required",
+        description: "Please log in to submit quotes",
         variant: "destructive"
       });
       return;
     }
     
-    setIsSubmitting(true);
-    try {
-      // Convert tags string to array
-      const tagsArray = tags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag !== '');
-        
-      // Create the quote in the database
-      await createQuote({
-        text: quoteText,
-        author,
-        source: source || null,
-        category,
-        tags: tagsArray
-      });
-      
-      // Notify parent component
-      if (onSubmit) {
-        onSubmit();
-      } else {
-        // If no callback provided, just close the modal
-        onClose();
-      }
-      
-      // Reset form
-      setQuoteText("");
-      setAuthor("");
-      setSource("");
-      setCategory("philosophy");
-      setTags("");
-      setUploadedImage(null);
-    } catch (error) {
-      console.error("Error submitting quote:", error);
+    if (!quoteText.trim() || !author.trim()) {
       toast({
-        title: "Failed to save quote",
+        title: "Required fields missing",
+        description: "Please provide both the quote text and author",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Create the quote using the service function
+      const success = await createQuote(
+        quoteText.trim(),
+        author.trim(),
+        source.trim(),
+        category,
+        tags
+      );
+      
+      if (success) {
+        // Reset form
+        setQuoteText("");
+        setAuthor("");
+        setSource("");
+        setCategory("Philosophy");
+        setTags([]);
+        
+        // Notify parent component
+        if (onQuoteAdded) {
+          onQuoteAdded();
+        }
+        
+        // Close modal
+        onClose();
+        
+        toast({
+          title: "Quote submitted successfully",
+          description: "Your quote has been added to the collection"
+        });
+      }
+    } catch (err) {
+      console.error("Error submitting quote:", err);
+      toast({
+        title: "Failed to submit quote",
         description: "Please try again later",
         variant: "destructive"
       });
@@ -83,157 +108,149 @@ export const QuoteSubmissionModal = ({
     }
   };
 
-  const defaultCategories = [
-    { value: "philosophy", label: "Philosophy" },
-    { value: "mysticism", label: "Mysticism" },
-    { value: "science", label: "Science" },
-    { value: "literature", label: "Literature" },
-    { value: "alchemy", label: "Alchemy" },
-    { value: "hermeticism", label: "Hermeticism" },
-    { value: "gnosticism", label: "Gnosticism" },
-    { value: "kabbalah", label: "Kabbalah" },
-    { value: "astrology", label: "Astrology" },
-    { value: "sacred-geometry", label: "Sacred Geometry" },
-  ];
+  if (!isOpen) return null;
 
-  const categoryOptions = categories.length > 0 
-    ? categories.map(cat => ({ value: cat.toLowerCase(), label: cat }))
-    : defaultCategories;
+  // Available categories
+  const categories = [
+    "Philosophy", "Science", "Literature", "History", 
+    "Psychology", "Mathematics", "Art", "Politics",
+    "Religion", "Technology", "Education", "Other"
+  ];
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#1A1A1A] rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">Share a Quote</h2>
+      <div className="bg-background rounded-lg max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-semibold">Submit a Quote</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1"
-            disabled={isSubmitting}
+            className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/30"
+            aria-label="Close"
           >
             <X size={20} />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="quoteText" className="block text-sm font-medium text-gray-300">
-              Quote Text*
-            </label>
-            <textarea
-              id="quoteText"
-              value={quoteText}
-              onChange={(e) => setQuoteText(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3 min-h-[100px]"
-              placeholder="Enter the quote text..."
-              required
-              disabled={isSubmitting}
-            ></textarea>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="author" className="block text-sm font-medium text-gray-300">
-              Author*
-            </label>
-            <input
-              type="text"
-              id="author"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
-              placeholder="Who said or wrote this?"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="source" className="block text-sm font-medium text-gray-300">
-              Source
-            </label>
-            <input
-              type="text"
-              id="source"
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
-              placeholder="Book, speech, etc. (optional)"
-              disabled={isSubmitting}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="category" className="block text-sm font-medium text-gray-300">
-              Category*
-            </label>
-            <select
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
-              required
-              disabled={isSubmitting}
-            >
-              {categoryOptions.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-300">
-              Tags (comma separated)
-            </label>
-            <input
-              type="text"
-              id="tags"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
-              placeholder="wisdom, reflection, knowledge"
-              disabled={isSubmitting}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">
-              Add Image (optional)
-            </label>
-            <div className="border border-dashed border-gray-700 rounded-md p-6 text-center">
-              <input
-                type="file"
-                id="imageUpload"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => setUploadedImage(e.target.files ? e.target.files[0] : null)}
+        <div className="p-4 overflow-y-auto flex-1">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="quote-text">Quote Text</Label>
+              <Textarea
+                id="quote-text"
+                value={quoteText}
+                onChange={(e) => setQuoteText(e.target.value)}
+                placeholder="Enter the quote text..."
+                className="resize-none w-full mt-1"
+                rows={4}
                 disabled={isSubmitting}
               />
-              <label
-                htmlFor="imageUpload"
-                className="flex flex-col items-center cursor-pointer"
+            </div>
+            
+            <div>
+              <Label htmlFor="author">Author</Label>
+              <Input
+                id="author"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                placeholder="Who said or wrote this quote?"
+                className="w-full mt-1"
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="source">Source (Optional)</Label>
+              <Input
+                id="source"
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                placeholder="Book, article, speech, etc."
+                className="w-full mt-1"
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full mt-1 p-2 rounded-md border border-input bg-background"
+                disabled={isSubmitting}
               >
-                <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-300">
-                  {uploadedImage ? uploadedImage.name : "Click to upload an image"}
-                </span>
-                <span className="text-xs text-gray-500 mt-1">
-                  PNG, JPG, GIF up to 5MB
-                </span>
-              </label>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <Label htmlFor="tags">Tags (Optional)</Label>
+              <div className="flex mt-1">
+                <Input
+                  id="tags"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  placeholder="Add a tag..."
+                  className="flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim() || isSubmitting}
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+              
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                      <Tag size={12} />
+                      {tag}
+                      <button
+                        onClick={() => handleRemoveTag(tag)}
+                        className="ml-1 text-muted-foreground hover:text-foreground"
+                        disabled={isSubmitting}
+                      >
+                        <X size={12} />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          
-          <div className="pt-4">
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Quote"}
-            </button>
-          </div>
-        </form>
+        </div>
+        
+        <div className="p-4 border-t flex justify-end">
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="mr-2"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmitQuote}
+            disabled={!quoteText.trim() || !author.trim() || isSubmitting}
+          >
+            <Send size={16} className="mr-2" />
+            {isSubmitting ? 'Submitting...' : 'Submit Quote'}
+          </Button>
+        </div>
       </div>
     </div>
   );

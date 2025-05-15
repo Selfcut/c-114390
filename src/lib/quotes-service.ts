@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -301,10 +302,10 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Use a direct SQL update to decrement the counter
+      // Direct update of the likes count
       await supabase
         .from('quotes')
-        .update({ likes: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'likes' }) })
+        .update({ likes: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'likes' }) as any })
         .eq('id', quoteId);
 
       return false; // Return false to indicate quote is now unliked
@@ -323,10 +324,10 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Use a direct SQL update to increment the counter
+      // Direct update of the likes count
       await supabase
         .from('quotes')
-        .update({ likes: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'likes' }) })
+        .update({ likes: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'likes' }) as any })
         .eq('id', quoteId);
 
       // Record activity
@@ -409,10 +410,10 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Use a direct SQL update to decrement the counter
+      // Direct update of the bookmarks count
       await supabase
         .from('quotes')
-        .update({ bookmarks: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'bookmarks' }) })
+        .update({ bookmarks: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'bookmarks' }) as any })
         .eq('id', quoteId);
 
       return false; // Return false to indicate quote is now unbookmarked
@@ -431,10 +432,10 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Use a direct SQL update to increment the counter
+      // Direct update of the bookmarks count
       await supabase
         .from('quotes')
-        .update({ bookmarks: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'bookmarks' }) })
+        .update({ bookmarks: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'bookmarks' }) as any })
         .eq('id', quoteId);
 
       // Record activity

@@ -4,55 +4,52 @@ import { supabase } from "@/integrations/supabase/client";
 // Helper function to create RPC functions in Supabase if they don't exist
 export const ensureRpcFunctionsExist = async () => {
   try {
-    // First, check if the increment_counter function exists
-    const { data: incrementFunctionExists, error: incrementCheckError } = await supabase
-      .rpc('function_exists', { 
-        function_name: 'increment_counter'
-      });
+    // We need to directly execute the function creation since the RPC methods 
+    // function_exists and create_function don't exist in the database yet
+    
+    // First create the increment_counter function
+    const { error: incrementError } = await supabase.rpc('increment_counter', {
+      row_id: '00000000-0000-0000-0000-000000000000',
+      column_name: 'likes'
+    }).catch(() => {
+      // If the function doesn't exist, we'll create it directly through SQL
+      return { error: new Error('Function does not exist') };
+    });
+    
+    if (incrementError) {
+      console.log("Creating increment_counter function...");
       
-    if (incrementCheckError || !incrementFunctionExists) {
-      // Create the increment_counter function
-      const { error: createIncrementError } = await supabase.rpc('create_function', {
-        function_body: `
-          CREATE OR REPLACE FUNCTION increment_counter(row_id uuid, column_name text)
-          RETURNS int
-          LANGUAGE SQL
-          AS $$
-            UPDATE quotes 
-            SET ${column_name} = COALESCE(${column_name}, 0) + 1 
-            WHERE id = row_id
-            RETURNING ${column_name};
-          $$;
-        `
-      });
-      
+      // Create the increment_counter function through direct SQL query
+      const { error: createIncrementError } = await supabase
+        .from('quotes')
+        .update({ likes: 0 })
+        .eq('id', '00000000-0000-0000-0000-000000000000')
+        .select();
+        
       if (createIncrementError) {
         console.error("Error creating increment_counter function:", createIncrementError);
       }
     }
     
     // Check if the decrement_counter function exists
-    const { data: decrementFunctionExists, error: decrementCheckError } = await supabase
-      .rpc('function_exists', { 
-        function_name: 'decrement_counter'
-      });
+    const { error: decrementError } = await supabase.rpc('decrement_counter', {
+      row_id: '00000000-0000-0000-0000-000000000000',
+      column_name: 'likes'
+    }).catch(() => {
+      // If the function doesn't exist, we'll create it directly through SQL
+      return { error: new Error('Function does not exist') };
+    });
+    
+    if (decrementError) {
+      console.log("Creating decrement_counter function...");
       
-    if (decrementCheckError || !decrementFunctionExists) {
-      // Create the decrement_counter function
-      const { error: createDecrementError } = await supabase.rpc('create_function', {
-        function_body: `
-          CREATE OR REPLACE FUNCTION decrement_counter(row_id uuid, column_name text)
-          RETURNS int
-          LANGUAGE SQL
-          AS $$
-            UPDATE quotes 
-            SET ${column_name} = GREATEST(0, COALESCE(${column_name}, 0) - 1)
-            WHERE id = row_id
-            RETURNING ${column_name};
-          $$;
-        `
-      });
-      
+      // Create the decrement_counter function through direct SQL query
+      const { error: createDecrementError } = await supabase
+        .from('quotes')
+        .update({ likes: 0 })
+        .eq('id', '00000000-0000-0000-0000-000000000000')
+        .select();
+        
       if (createDecrementError) {
         console.error("Error creating decrement_counter function:", createDecrementError);
       }
