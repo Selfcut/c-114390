@@ -151,7 +151,7 @@ export const ConversationList = ({
                       <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <span 
-                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(conversation.status || '')}`}
+                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(conversation.status)}`}
                     ></span>
                   </div>
                   <div className="flex-1 min-w-0">

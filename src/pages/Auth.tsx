@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -294,7 +293,7 @@ const Auth = () => {
                         className="w-full"
                         onClick={() => handleOAuthLogin('github')}
                       >
-                        <GitHub size={16} className="mr-2" />
+                        <Github size={16} className="mr-2" />
                         GitHub
                       </Button>
                       <Button 
@@ -398,7 +397,7 @@ const Auth = () => {
                       className="w-full"
                       onClick={() => handleOAuthLogin('github')}
                     >
-                      <GitHub size={16} className="mr-2" />
+                      <Github size={16} className="mr-2" />
                       GitHub
                     </Button>
                   </form>
