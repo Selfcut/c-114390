@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateAdminAccount } from "@/components/admin/CreateAdminAccount";
 import { BarChart, Users, Settings, Shield, Database, FileText, Bell } from "lucide-react";
 
 const Admin = () => {
@@ -20,10 +21,12 @@ const Admin = () => {
               <CardDescription>Manage your application settings and view analytics</CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Welcome to the admin dashboard. This is a work in progress.</p>
-              <p className="text-muted-foreground mt-2">More functionality coming soon.</p>
+              <p>Welcome to the admin dashboard. Use the tabs to access different admin functions.</p>
+              <p className="text-muted-foreground mt-2">You can create additional admin accounts below.</p>
             </CardContent>
           </Card>
+          
+          <CreateAdminAccount />
         </div>
       )
     },

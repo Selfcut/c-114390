@@ -109,6 +109,11 @@ const Root = () => {
             <AI />
           </ProtectedRoute>
         } />
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin>
+            <Admin />
+          </ProtectedRoute>
+        } />
         <Route path="/admin/*" element={
           <ProtectedRoute requireAdmin>
             <AdminPanel />

@@ -48,9 +48,6 @@ window.addEventListener('load', () => {
   }, 100);
 });
 
-// Debug styles
-console.log('Styles loading check: index.css loaded');
-
 // Create root and render app
 const root = document.getElementById('root');
 if (!root) {
