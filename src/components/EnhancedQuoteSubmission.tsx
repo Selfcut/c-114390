@@ -3,6 +3,11 @@ import { useState } from "react";
 import { X, Upload, Info, Image, AlertTriangle } from "lucide-react";
 import { polymathToast } from "@/components/ui/use-toast";
 
+interface CategoryOption {
+  value: string;
+  label: string;
+}
+
 interface QuoteSubmissionModalProps {
   isOpen?: boolean;
   onClose: () => void;
@@ -101,7 +106,7 @@ export const EnhancedQuoteSubmission = ({
     onClose();
   };
 
-  const categories = [
+  const categoryOptions: CategoryOption[] = [
     { value: "philosophy", label: "Philosophy" },
     { value: "mysticism", label: "Mysticism" },
     { value: "science", label: "Science" },
@@ -113,6 +118,11 @@ export const EnhancedQuoteSubmission = ({
     { value: "astrology", label: "Astrology" },
     { value: "sacred-geometry", label: "Sacred Geometry" },
   ];
+
+  // If categories are passed as props, convert them to CategoryOption[] format
+  const availableCategories: CategoryOption[] = categories.length > 0 
+    ? categories.map(cat => ({ value: cat.toLowerCase(), label: cat }))
+    : categoryOptions;
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center mb-6">
@@ -213,7 +223,7 @@ export const EnhancedQuoteSubmission = ({
           className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
           required
         >
-          {categories.map((cat) => (
+          {availableCategories.map((cat) => (
             <option key={cat.value} value={cat.value}>
               {cat.label}
             </option>
@@ -302,7 +312,7 @@ export const EnhancedQuoteSubmission = ({
           
           <div className="mt-3">
             <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded">
-              {categories.find(cat => cat.value === category)?.label}
+              {availableCategories.find(cat => cat.value === category)?.label}
             </span>
           </div>
         </div>
