@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FloatingChatWidget } from '@/components/chat/FloatingChatWidget';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { StylesDebugger } from '@/components/StylesDebugger';
 
 // Pages
 import Landing from './pages/Landing';
@@ -34,7 +35,7 @@ const AuthCallback = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <div className="flex items-center justify-center h-screen">
+  return <div className="flex items-center justify-center h-screen bg-background text-foreground">
     <div className="animate-pulse text-center">
       <h2 className="text-xl font-semibold mb-2">Processing authentication...</h2>
       <p className="text-muted-foreground">Please wait while we log you in.</p>
@@ -47,7 +48,7 @@ const Root = () => {
   const { user, isLoading } = useAuth();
   
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">
+    return <div className="flex items-center justify-center h-screen bg-background text-foreground">
       <div className="animate-pulse flex flex-col items-center">
         <div className="w-16 h-16 bg-primary/20 rounded-full mb-4"></div>
         <div className="h-4 w-24 bg-primary/20 rounded"></div>
@@ -56,7 +57,7 @@ const Root = () => {
   }
   
   return (
-    <>
+    <div className="min-h-screen bg-background text-foreground">
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
@@ -113,7 +114,10 @@ const Root = () => {
       </Routes>
       
       {user && <FloatingChatWidget currentUser={user} />}
-    </>
+      
+      {/* Add StylesDebugger to help troubleshoot */}
+      <StylesDebugger />
+    </div>
   );
 };
 

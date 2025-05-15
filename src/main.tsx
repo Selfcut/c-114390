@@ -2,8 +2,15 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/variables.css'  // Import CSS variables first
-import './index.css'
-import './App.css'
+import './styles/tailwind.css'   // Load Tailwind before other styles
+import './styles/base.css'       // Base styles
+import './styles/layout.css'     // Layout styles
+import './styles/components.css'  // Component styles
+import './styles/animations.css'  // Animation styles
+import './styles/effects.css'    // Effects styles
+import './styles/stagger.css'    // Stagger styles
+import './styles/light-mode.css' // Light mode styles
+import './App.css'               // App specific styles
 import App from './App.tsx'
 
 // Set document title
