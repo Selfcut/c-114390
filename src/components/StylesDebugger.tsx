@@ -8,7 +8,8 @@ export const StylesDebugger = () => {
     button: false,
     colors: false,
     fonts: false,
-    cssVariables: false
+    cssVariables: false,
+    layout: false
   });
   
   const [fontLoaded, setFontLoaded] = useState(false);
@@ -51,12 +52,17 @@ export const StylesDebugger = () => {
       const cssVarsWorking = window.getComputedStyle(cssVarTest).backgroundColor !== 'rgba(0, 0, 0, 0)';
       document.body.removeChild(cssVarTest);
       
+      // Check if layout is full width
+      const rootElement = document.getElementById('root');
+      const layoutWorking = rootElement ? rootElement.offsetWidth === window.innerWidth : false;
+      
       setStyleStatus({
         tailwind: tailwindWorking,
         button: buttonStylesWorking,
         colors: colorsWorking,
         fonts: fontWorking,
-        cssVariables: cssVarsWorking
+        cssVariables: cssVarsWorking,
+        layout: layoutWorking
       });
     });
 
@@ -65,6 +71,21 @@ export const StylesDebugger = () => {
       buttonStylesWorking,
       colorsWorking
     });
+    
+    // Debug specific elements
+    console.log('Root element dimensions:', {
+      width: document.getElementById('root')?.offsetWidth,
+      windowWidth: window.innerWidth
+    });
+    
+    // Log out computed styles of sidebar
+    const sidebarEl = document.querySelector('.bg-sidebar');
+    if (sidebarEl) {
+      console.log('Sidebar computed styles:', {
+        background: window.getComputedStyle(sidebarEl).backgroundColor,
+        width: window.getComputedStyle(sidebarEl).width
+      });
+    }
   }, []);
 
   const toggleDetails = () => {
@@ -95,6 +116,7 @@ export const StylesDebugger = () => {
             <div className="bg-orange-500 h-6 w-full"></div>
             <div className="h-6 w-full" style={{ backgroundColor: 'hsl(var(--primary))' }}></div>
             <div className="h-6 w-full" style={{ backgroundColor: 'hsl(var(--secondary))' }}></div>
+            <div className="h-6 w-full" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}></div>
           </div>
           
           <div className="mb-4">
@@ -126,6 +148,15 @@ export const StylesDebugger = () => {
             <p className={`text-xs ${styleStatus.cssVariables ? 'text-green-500' : 'text-red-500'}`}>
               CSS Variables: {styleStatus.cssVariables ? '✓' : '✗'}
             </p>
+            <p className={`text-xs ${styleStatus.layout ? 'text-green-500' : 'text-red-500'}`}>
+              Full Width Layout: {styleStatus.layout ? '✓' : '✗'}
+            </p>
+          </div>
+          
+          <div className="mt-4 pt-2 border-t border-gray-700">
+            <p className="text-xs text-gray-500">Layout Debug:</p>
+            <p className="text-xs">Root Width: {document.getElementById('root')?.offsetWidth || 'Unknown'}</p>
+            <p className="text-xs">Window Width: {window.innerWidth}</p>
           </div>
         </>
       )}

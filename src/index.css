@@ -13,6 +13,26 @@ body {
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+}
+
+html {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 /* Typography */
@@ -51,19 +71,9 @@ a:hover {
   color: #7E69AB;
 }
 
-/* Utility Classes */
-.container {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
 /* Layout Components */
 .sidebar {
-  width: 250px;
   background-color: #1A1A1A;
-  padding: 2rem;
   border-right: 1px solid #222;
 }
 
@@ -147,6 +157,20 @@ th {
   font-weight: bold;
 }
 
+/* Application Layout */
+.app-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebar {
@@ -154,16 +178,6 @@ th {
     border-right: none;
     border-bottom: 1px solid #222;
   }
-}
-
-/* Dark Mode Specifics (if not using Tailwind's dark mode) */
-.dark-mode {
-  background-color: #000;
-  color: #eee;
-}
-
-.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
-  color: #fff;
 }
 
 /* Enhanced Animation Effects */
