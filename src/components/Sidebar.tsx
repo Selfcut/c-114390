@@ -279,8 +279,8 @@ export const Sidebar = () => {
             )}
           </div>
 
-          {/* Resources Section */}
-          <div className="bg-gray-900 rounded-md">
+          {/* Resources Section - Removing the bg-gray-900 class that was making it blue */}
+          <div className="rounded-md">
             <button
               onClick={() => toggleSection('resources')}
               className={`flex items-center ${
