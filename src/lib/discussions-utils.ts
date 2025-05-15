@@ -1,4 +1,22 @@
 
+// Define the DiscussionTopic interface
+export interface DiscussionTopic {
+  id: string;
+  title: string;
+  author: string;
+  authorAvatar?: string;
+  date: string;
+  tags: string[];
+  upvotes: number;
+  replies: number;
+  views: number;
+  isPinned?: boolean;
+  isPopular?: boolean;
+  isNew?: boolean;
+  excerpt?: string;
+  createdAt: Date;
+}
+
 export const mockDiscussions: DiscussionTopic[] = [
   {
     id: '1',
@@ -137,3 +155,71 @@ export const mockDiscussions: DiscussionTopic[] = [
     createdAt: new Date('2023-10-22')
   }
 ];
+
+// Format time ago function
+export const formatTimeAgo = (date: Date): string => {
+  const now = new Date();
+  const secondsAgo = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (secondsAgo < 60) {
+    return `${secondsAgo}s ago`;
+  }
+  
+  const minutesAgo = Math.floor(secondsAgo / 60);
+  if (minutesAgo < 60) {
+    return `${minutesAgo}m ago`;
+  }
+  
+  const hoursAgo = Math.floor(minutesAgo / 60);
+  if (hoursAgo < 24) {
+    return `${hoursAgo}h ago`;
+  }
+  
+  const daysAgo = Math.floor(hoursAgo / 24);
+  if (daysAgo < 30) {
+    return `${daysAgo}d ago`;
+  }
+  
+  const monthsAgo = Math.floor(daysAgo / 30);
+  if (monthsAgo < 12) {
+    return `${monthsAgo}mo ago`;
+  }
+  
+  const yearsAgo = Math.floor(monthsAgo / 12);
+  return `${yearsAgo}y ago`;
+};
+
+// Sort discussions based on option
+export const getSortedDiscussions = (discussions: DiscussionTopic[], sortOption: 'popular' | 'new' | 'upvotes'): DiscussionTopic[] => {
+  const sortedDiscussions = [...discussions];
+  
+  switch (sortOption) {
+    case 'popular':
+      return sortedDiscussions.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        if (a.isPopular && !b.isPopular) return -1;
+        if (!a.isPopular && b.isPopular) return 1;
+        return b.views - a.views;
+      });
+    case 'new':
+      return sortedDiscussions.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      });
+    case 'upvotes':
+      return sortedDiscussions.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.upvotes - a.upvotes;
+      });
+    default:
+      return sortedDiscussions;
+  }
+};
+
+// Filter discussions by tag
+export const filterDiscussionsByTag = (discussions: DiscussionTopic[], tag: string): DiscussionTopic[] => {
+  return discussions.filter(discussion => discussion.tags.includes(tag));
+};
