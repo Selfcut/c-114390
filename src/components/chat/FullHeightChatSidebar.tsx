@@ -103,8 +103,7 @@ export const FullHeightChatSidebar = () => {
             created_at,
             user_id,
             sender_name,
-            conversation_id,
-            profiles:user_id (name, avatar_url)
+            conversation_id
           `)
           .eq("conversation_id", selectedConversation)
           .order("created_at", { ascending: true })
@@ -121,18 +120,37 @@ export const FullHeightChatSidebar = () => {
         }
 
         // Transform data into ChatMessage format
-        const formattedMessages: ChatMessage[] = data.map(msg => ({
-          id: msg.id,
-          sender: {
-            id: msg.user_id,
-            name: msg.profiles?.name || msg.sender_name || "Anonymous User",
-            avatar: msg.profiles?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${msg.user_id || msg.sender_name}`,
-          },
-          content: msg.content,
-          timestamp: new Date(msg.created_at)
+        const messagesWithProfiles = await Promise.all(data.map(async (msg) => {
+          let userName = msg.sender_name || "Anonymous User";
+          let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${msg.user_id || msg.sender_name || "anonymous"}`;
+          
+          // If we have a user_id, try to fetch their profile
+          if (msg.user_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('name, avatar_url')
+              .eq('id', msg.user_id)
+              .maybeSingle();
+              
+            if (profileData) {
+              userName = profileData.name || userName;
+              avatarUrl = profileData.avatar_url || avatarUrl;
+            }
+          }
+          
+          return {
+            id: msg.id,
+            sender: {
+              id: msg.user_id,
+              name: userName,
+              avatar: avatarUrl,
+            },
+            content: msg.content,
+            timestamp: new Date(msg.created_at)
+          } as ChatMessage;
         }));
 
-        setMessages(formattedMessages);
+        setMessages(messagesWithProfiles);
       } catch (err) {
         console.error("Error in messages fetch:", err);
       } finally {
@@ -161,19 +179,29 @@ export const FullHeightChatSidebar = () => {
           },
           async (payload) => {
             // Fetch user profile for the new message
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('name, avatar_url')
-              .eq('id', payload.new.user_id)
-              .maybeSingle();
+            let userName = payload.new.sender_name || "Anonymous User";
+            let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${payload.new.user_id || payload.new.sender_name || "anonymous"}`;
+            
+            if (payload.new.user_id) {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('name, avatar_url')
+                .eq('id', payload.new.user_id)
+                .maybeSingle();
+                
+              if (profileData) {
+                userName = profileData.name || userName;
+                avatarUrl = profileData.avatar_url || avatarUrl;
+              }
+            }
             
             // Add the new message to the state
             const newMessage: ChatMessage = {
               id: payload.new.id,
               sender: {
                 id: payload.new.user_id,
-                name: profileData?.name || payload.new.sender_name || "Anonymous User",
-                avatar: profileData?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${payload.new.user_id || payload.new.sender_name}`,
+                name: userName,
+                avatar: avatarUrl,
               },
               content: payload.new.content,
               timestamp: new Date(payload.new.created_at)
