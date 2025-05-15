@@ -57,7 +57,7 @@ export const KnowledgeBrowser = () => {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         <input 
           type="text"
-          className="w-full bg-[#222] border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white focus:border-gray-600 transition-colors"
+          className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white focus:border-gray-600 transition-colors"
           placeholder="Search knowledge base..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -136,7 +136,7 @@ export const KnowledgeBrowser = () => {
       
       <button
         onClick={handleSearch}
-        className="w-full bg-[#6E59A5] hover:bg-[#7E69AB] text-white py-2 rounded-md transition-colors flex items-center justify-center gap-2"
+        className="w-full bg-blue-700 hover:bg-blue-600 text-white py-2 rounded-md transition-colors flex items-center justify-center gap-2"
       >
         <BookOpen size={18} />
         <span>Explore Knowledge</span>

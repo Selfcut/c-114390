@@ -51,7 +51,7 @@
   /* Sidebar colors - updated to ensure proper theming */
   --sidebar-background: 240 10% 10%;
   --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 265 84% 61%;
+  --sidebar-primary: 240 3.7% 15.9%; /* Changed from purple to dark gray */
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 240 3.7% 15.9%;
   --sidebar-accent-foreground: 0 0% 98%;

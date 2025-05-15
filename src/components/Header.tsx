@@ -36,7 +36,7 @@ const Header = () => {
   
   return (
     <div className="h-16 flex items-center justify-between px-6 border-b border-gray-800">
-      {/* Search Bar */}
+      {/* Search Bar - Updated styling to be more sleek */}
       {searchOpen ? (
         <div className="flex-1 max-w-xl">
           <div className="relative">
@@ -44,7 +44,7 @@ const Header = () => {
             <input
               type="text"
               placeholder="Search disciplines, discussions, knowledge base..."
-              className="w-full bg-[#1A1A1A] border border-gray-800 rounded-md py-2 pl-10 pr-4 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white"
               autoFocus
               onBlur={() => setSearchOpen(false)}
             />
@@ -61,17 +61,16 @@ const Header = () => {
       )}
       
       <div className="flex items-center gap-4 relative">
-        {/* YouTube icon */}
+        {/* Social media icons */}
         <a href="#" className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-white transition-colors rounded-md hover:bg-gray-800">
           <img src="/lovable-uploads/739ab3ed-442e-42fb-9219-25ee697b73ba.png" alt="YouTube" className="w-6 h-6" />
         </a>
         
-        {/* Discord icon */}
         <a href="#" className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-white transition-colors rounded-md hover:bg-gray-800">
           <img src="/lovable-uploads/92333427-5a32-4cf8-b110-afc5b57c9f27.png" alt="Discord" className="w-6 h-6" />
         </a>
         
-        {/* Notifications */}
+        {/* Notifications - Fixed styling */}
         <div className="relative">
           <button 
             className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-white transition-colors rounded-md hover:bg-gray-800"
@@ -166,7 +165,7 @@ const Header = () => {
           Join Premium
         </button>
         
-        {/* Contribute button */}
+        {/* Contribute button - Using a more consistent blue instead of purple */}
         <button 
           onClick={handleContribute}
           className="transition-colors text-white flex items-center gap-1 rounded-md px-4 py-1.5 text-sm font-medium bg-blue-700 hover:bg-blue-600"

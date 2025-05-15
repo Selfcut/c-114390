@@ -233,7 +233,7 @@ export const Sidebar = () => {
             </Link>
           ))}
 
-          {/* My Learning Section */}
+          {/* My Learning Section - Fixed to remove purple background */}
           <div>
             <button
               onClick={() => toggleSection('myLearning')}
@@ -241,13 +241,14 @@ export const Sidebar = () => {
                 collapsed ? 'justify-center' : 'justify-between'
               } text-white hover:bg-gray-800`}
             >
-              <div className="text-gray-300">
+              <div className="flex items-center gap-3">
+                <BookText size={20} className="text-gray-300" />
                 {!collapsed && (
                   <span className="text-white text-sm font-medium flex-1 text-left">My Learning</span>
                 )}
               </div>
               {!collapsed && (
-                <ChevronDown size={16} className={expandedSections.myLearning ? 'transform rotate-180' : ''} />
+                <ChevronDown size={16} className={`text-gray-400 ${expandedSections.myLearning ? 'transform rotate-180' : ''}`} />
               )}
             </button>
             
@@ -281,7 +282,7 @@ export const Sidebar = () => {
             )}
           </div>
 
-          {/* Resources Section */}
+          {/* Resources Section - Fixed to remove purple background */}
           <div>
             <button
               onClick={() => toggleSection('resources')}
@@ -289,13 +290,14 @@ export const Sidebar = () => {
                 collapsed ? 'justify-center' : 'justify-between'
               } text-white hover:bg-gray-800`}
             >
-              <div className="text-gray-300">
+              <div className="flex items-center gap-3">
+                <Library size={20} className="text-gray-300" />
                 {!collapsed && (
                   <span className="text-white text-sm font-medium flex-1 text-left">Resources</span>
                 )}
               </div>
               {!collapsed && (
-                <ChevronDown size={16} className={expandedSections.resources ? 'transform rotate-180' : ''} />
+                <ChevronDown size={16} className={`text-gray-400 ${expandedSections.resources ? 'transform rotate-180' : ''}`} />
               )}
             </button>
             
