@@ -36,11 +36,7 @@ const App = () => {
       if (daysSinceLastLogin > 7) {
         // Delayed toast to ensure it appears after page load
         setTimeout(() => {
-          polymathToast({
-            title: "Welcome back!",
-            description: `It's been ${daysSinceLastLogin} days since your last visit. New content is waiting for you.`,
-            variant: "default",
-          });
+          polymathToast.welcomeBack(daysSinceLastLogin);
         }, 2000);
       }
     }

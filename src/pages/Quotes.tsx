@@ -6,7 +6,7 @@ import { Sidebar } from "../components/Sidebar";
 import Header from "../components/Header";
 import { QuoteCard } from "../components/QuoteCard";
 import { EnhancedQuoteSubmission } from "../components/EnhancedQuoteSubmission";
-import { Plus, Search, Filter, Quote, BookOpen, MessageSquare, Users } from "lucide-react";
+import { Plus, Search, Filter, Quote, BookOpen, MessageSquare, Users, Star } from "lucide-react";
 import { polymathToast } from "../components/ui/use-toast";
 import { TopicCard } from "../components/TopicCard";
 import { CommunityCircleCard } from "../components/CommunityCircleCard";

@@ -62,6 +62,10 @@ const polymathToast = {
   studyStreakUpdated: (days: number) => toast({
     title: "Study Streak Updated",
     description: `You've maintained a ${days}-day learning streak. Keep it up!`
+  }),
+  quoteSubmitted: () => toast({
+    title: "Quote submitted",
+    description: "Your wisdom has been added to our collection."
   })
 };
 

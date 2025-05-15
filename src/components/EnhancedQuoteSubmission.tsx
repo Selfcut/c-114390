@@ -27,11 +27,7 @@ export const EnhancedQuoteSubmission = ({ isOpen, onClose }: EnhancedQuoteSubmis
     console.log({ quoteText, author, source, category, imageUrl });
     
     // Show success toast
-    polymathToast({
-      title: "Quote submitted",
-      description: "Your wisdom has been added to our collection.",
-      variant: "default",
-    });
+    polymathToast.quoteSubmitted();
     
     // Reset form
     setQuoteText('');
