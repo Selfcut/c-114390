@@ -21,6 +21,8 @@ import AdminPanel from './pages/admin/AdminPanel';
 import Quotes from './components/Quotes';
 import Admin from './pages/Admin';
 import AI from './pages/AI';
+import NotFound from './pages/NotFound';
+import Index from './pages/Index';
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {
@@ -60,7 +62,8 @@ const Root = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
@@ -120,8 +123,8 @@ const Root = () => {
           </ProtectedRoute>
         } />
         
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Fallback route - 404 page */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       
       {user && <FloatingChatWidget currentUser={user} />}

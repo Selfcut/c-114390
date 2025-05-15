@@ -23,16 +23,18 @@ export function ThemeToggle() {
       size="icon" 
       onClick={toggleTheme}
       aria-label="Toggle theme"
-      className="relative h-9 w-9 rounded-full overflow-hidden"
+      className="relative w-9 h-9"
     >
-      <Sun
-        className="absolute h-[1.2rem] w-[1.2rem] inset-0 m-auto rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-        aria-hidden="true"
-      />
-      <Moon
-        className="absolute h-[1.2rem] w-[1.2rem] inset-0 m-auto rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-        aria-hidden="true"
-      />
+      <div className="relative w-full h-full flex items-center justify-center">
+        <Sun
+          className="h-[1.2rem] w-[1.2rem] transition-all rotate-0 scale-100 dark:-rotate-90 dark:scale-0"
+          aria-hidden="true"
+        />
+        <Moon
+          className="absolute h-[1.2rem] w-[1.2rem] transition-all rotate-90 scale-0 dark:rotate-0 dark:scale-100"
+          aria-hidden="true"
+        />
+      </div>
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
