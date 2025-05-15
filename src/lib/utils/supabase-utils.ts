@@ -12,7 +12,7 @@ export const ensureRpcFunctionsExist = async () => {
       await supabase.rpc('increment_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
-      });
+      } as any);
       console.log("increment_counter function exists");
     } catch (error) {
       console.log("Creating increment_counter function...");
@@ -27,7 +27,7 @@ export const ensureRpcFunctionsExist = async () => {
       await supabase.rpc('decrement_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
-      });
+      } as any);
       console.log("decrement_counter function exists");
     } catch (error) {
       console.log("Creating decrement_counter function...");

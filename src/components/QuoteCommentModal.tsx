@@ -153,13 +153,15 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count using direct update instead of RPC
+      // Update quote comment count using RPC 
       await supabase
         .from('quotes')
-        .update({ comments: supabase.rpc('increment_counter', { 
-          row_id: quoteId, 
-          column_name: 'comments' 
-        }) as any })
+        .update({
+          comments: supabase.rpc('increment_counter', { 
+            row_id: quoteId, 
+            column_name: 'comments' 
+          } as any)
+        })
         .eq('id', quoteId);
       
       // Add activity record
