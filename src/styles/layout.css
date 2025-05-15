@@ -33,3 +33,39 @@
     border-bottom: 1px solid hsl(var(--border));
   }
 }
+
+/* PromoBar styling */
+.promo-bar {
+  background-color: hsl(var(--promo));
+  color: hsl(var(--promo-foreground));
+  text-align: center;
+  padding: 0.5rem 1rem;
+  position: relative;
+}
+
+.light-mode .promo-bar {
+  background-color: #6366f1;
+  color: white;
+}
+
+/* Content Container */
+.content-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page layout */
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Footer styling */
+.footer {
+  margin-top: auto;
+  padding: 1.5rem;
+  background-color: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+}

@@ -67,3 +67,14 @@ a {
 a:hover {
   color: hsl(var(--primary) / 0.8);
 }
+
+/* Ensure consistent backgrounds in both themes */
+.light-mode body {
+  background-color: white;
+  color: #1a202c;
+}
+
+.dark-mode body {
+  background-color: #121212;
+  color: white;
+}

@@ -11,6 +11,7 @@ export const ThemeToggle: React.FC = () => {
   
   const handleToggle = () => {
     toggleTheme();
+    
     toast({
       title: `${theme === "dark" ? "Light" : "Dark"} mode activated`,
       description: `Switched to ${theme === "dark" ? "light" : "dark"} mode`,
@@ -23,16 +24,14 @@ export const ThemeToggle: React.FC = () => {
       variant="ghost"
       size="icon"
       onClick={handleToggle}
-      className="w-9 px-0"
+      className="w-9 h-9 p-0 rounded-full"
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
       {theme === "dark" ? (
         <Sun className="h-5 w-5 text-yellow-500" />
       ) : (
         <Moon className="h-5 w-5 text-blue-700" />
       )}
-      <span className="sr-only">
-        {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      </span>
     </Button>
   );
 };

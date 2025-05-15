@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Search, Menu as MenuIcon } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -14,166 +14,181 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useTheme } from "@/lib/theme-context";
+import { 
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIndicator,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 export const Header: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
-  
+
   return (
     <header className="sticky top-0 z-40 w-full bg-background/90 backdrop-blur-sm border-b border-border">
-      <div className="container flex h-16 items-center px-4 sm:px-8">
-        <div className="flex gap-6 md:gap-10">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="Polymath Logo" className="h-8 w-8" />
-            <span className="hidden font-bold sm:inline-block">Polymath</span>
+            <span className="font-bold text-foreground">Polymath</span>
           </Link>
-          <nav className="hidden gap-6 sm:flex">
-            <Link
-              to="/"
-              className={`font-medium transition-colors hover:text-primary ${
-                location.pathname === "/" ? "text-primary" : "text-foreground"
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/forum"
-              className={`font-medium transition-colors hover:text-primary ${
-                location.pathname === "/forum" ? "text-primary" : "text-foreground"
-              }`}
-            >
-              Forum
-            </Link>
-            <Link
-              to="/library"
-              className={`font-medium transition-colors hover:text-primary ${
-                location.pathname === "/library" ? "text-primary" : "text-foreground"
-              }`}
-            >
-              Library
-            </Link>
-            <Link
-              to="/quotes"
-              className={`font-medium transition-colors hover:text-primary ${
-                location.pathname === "/quotes" ? "text-primary" : "text-foreground"
-              }`}
-            >
-              Quotes
-            </Link>
-          </nav>
+          
+          <div className="hidden md:flex items-center ml-6">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <Link to="/">
+                    <NavigationMenuLink 
+                      className={`${navigationMenuTriggerStyle()} ${
+                        isActive("/") ? "text-primary" : ""
+                      }`}
+                    >
+                      Home
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <Link to="/forum">
+                    <NavigationMenuLink 
+                      className={`${navigationMenuTriggerStyle()} ${
+                        isActive("/forum") ? "text-primary" : ""
+                      }`}
+                    >
+                      Discussion Forum
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <Link to="/library">
+                    <NavigationMenuLink 
+                      className={`${navigationMenuTriggerStyle()} ${
+                        isActive("/library") ? "text-primary" : ""
+                      }`}
+                    >
+                      Knowledge Library
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <Link to="/quotes">
+                    <NavigationMenuLink 
+                      className={`${navigationMenuTriggerStyle()} ${
+                        isActive("/quotes") ? "text-primary" : ""
+                      }`}
+                    >
+                      Quotes
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
         </div>
         
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-2">
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={toggleMenu}
-            >
-              <MenuIcon className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-            
-            {/* Theme toggle */}
-            <ThemeToggle />
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Search"
-              className="w-9 px-0"
-            >
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Button>
-            
-            <Button
-              variant="ghost" 
-              size="icon"
-              aria-label="Notifications"
-              className="w-9 px-0"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="sr-only">Notifications</span>
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem>
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </nav>
+        <div className="flex items-center gap-3">
+          <div className="relative rounded-md">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-4 w-4 text-gray-500" aria-hidden="true" />
+            </div>
+            <input
+              type="text"
+              className={`block w-full md:w-[240px] rounded-md border-0 ${
+                isDark 
+                  ? "bg-gray-800 text-white placeholder:text-gray-400" 
+                  : "bg-gray-100 text-gray-900 placeholder:text-gray-500"
+              } py-1.5 pl-10 pr-3 text-sm focus:ring-1 focus:ring-primary`}
+              placeholder="Search Polymath..."
+            />
+          </div>
+          
+          <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
+              1
+            </span>
+          </Button>
+          
+          <ThemeToggle />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button size="sm" className="hidden sm:flex">Join Premium</Button>
+          <Button variant="outline" size="sm" className="hidden sm:flex">Contribute</Button>
         </div>
       </div>
       
-      {/* Mobile menu (shown when isMenuOpen is true) */}
-      {isMenuOpen && (
-        <div className="md:hidden border-t border-border">
-          <div className="container py-2 px-4">
-            <nav className="flex flex-col space-y-2">
-              <Link 
-                to="/" 
-                className={`p-2 rounded-md font-medium ${
-                  location.pathname === "/" ? "text-primary bg-muted" : "text-foreground"
-                }`}
-                onClick={toggleMenu}
-              >
-                Home
-              </Link>
-              <Link 
-                to="/forum" 
-                className={`p-2 rounded-md font-medium ${
-                  location.pathname === "/forum" ? "text-primary bg-muted" : "text-foreground"
-                }`}
-                onClick={toggleMenu}
-              >
-                Forum
-              </Link>
-              <Link 
-                to="/library" 
-                className={`p-2 rounded-md font-medium ${
-                  location.pathname === "/library" ? "text-primary bg-muted" : "text-foreground"
-                }`}
-                onClick={toggleMenu}
-              >
-                Library
-              </Link>
-              <Link 
-                to="/quotes" 
-                className={`p-2 rounded-md font-medium ${
-                  location.pathname === "/quotes" ? "text-primary bg-muted" : "text-foreground"
-                }`}
-                onClick={toggleMenu}
-              >
-                Quotes
-              </Link>
-            </nav>
-          </div>
-        </div>
-      )}
+      {/* Mobile Navigation - Only shown on small screens */}
+      <div className="md:hidden border-t border-border">
+        <nav className="flex justify-between px-4 py-2">
+          <Link 
+            to="/" 
+            className={`flex flex-col items-center justify-center text-xs ${
+              isActive("/") ? "text-primary" : "text-foreground"
+            }`}
+          >
+            <span>Home</span>
+          </Link>
+          <Link 
+            to="/forum" 
+            className={`flex flex-col items-center justify-center text-xs ${
+              isActive("/forum") ? "text-primary" : "text-foreground"
+            }`}
+          >
+            <span>Forum</span>
+          </Link>
+          <Link 
+            to="/library" 
+            className={`flex flex-col items-center justify-center text-xs ${
+              isActive("/library") ? "text-primary" : "text-foreground"
+            }`}
+          >
+            <span>Library</span>
+          </Link>
+          <Link 
+            to="/quotes" 
+            className={`flex flex-col items-center justify-center text-xs ${
+              isActive("/quotes") ? "text-primary" : "text-foreground"
+            }`}
+          >
+            <span>Quotes</span>
+          </Link>
+        </nav>
+      </div>
     </header>
   );
 };

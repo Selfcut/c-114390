@@ -32,25 +32,30 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   useEffect(() => {
+    // Apply theme changes immediately when component mounts and when theme changes
+    applyTheme(theme);
+    
     // Save theme preference
     localStorage.setItem("theme", theme);
     
-    // Apply theme to document
+    console.log(`Theme set to: ${theme}`);
+  }, [theme]);
+
+  const applyTheme = (currentTheme: Theme) => {
     const root = document.documentElement;
-    if (theme === "light") {
+    
+    if (currentTheme === "light") {
       root.classList.add("light-mode");
       root.classList.remove("dark-mode");
-      document.body.style.backgroundColor = "white";
-      document.body.style.color = "#1a202c";
     } else {
       root.classList.add("dark-mode");
       root.classList.remove("light-mode");
-      document.body.style.backgroundColor = "#121212";
-      document.body.style.color = "white";
     }
     
-    console.log(`Theme set to: ${theme}`);
-  }, [theme]);
+    // Force color updates on all relevant elements
+    document.body.style.backgroundColor = currentTheme === "light" ? "#ffffff" : "#121212";
+    document.body.style.color = currentTheme === "light" ? "#1a202c" : "#ffffff";
+  };
 
   const toggleTheme = () => {
     setTheme(prev => {

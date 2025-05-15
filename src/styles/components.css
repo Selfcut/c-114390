@@ -43,9 +43,13 @@ button:hover {
 .card {
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   padding: 1.5rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* List Styles */
@@ -72,4 +76,76 @@ th, td {
 
 th {
   font-weight: bold;
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  background-color: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.light-mode .dropdown-menu {
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Navigation styling */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  font-weight: medium;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: hsl(var(--accent));
+}
+
+.light-mode .nav-link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Badge component */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Avatar component */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Button variants */
+.btn-primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.light-mode .btn-primary {
+  background-color: #3182ce;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.light-mode .btn-secondary {
+  background-color: #e2e8f0;
+  color: #2d3748;
 }

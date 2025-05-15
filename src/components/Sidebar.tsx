@@ -171,11 +171,28 @@ export const Sidebar = () => {
     },
   ];
 
+  // Determine active, hover, and text colors based on theme
+  const activeClass = isDark 
+    ? 'bg-gray-800 text-white' 
+    : 'bg-gray-200 text-gray-900';
+  
+  const hoverClass = isDark 
+    ? 'hover:bg-gray-800 hover:text-white' 
+    : 'hover:bg-gray-200 hover:text-gray-900';
+  
+  const textClass = isDark 
+    ? 'text-white' 
+    : 'text-gray-800';
+  
+  const mutedTextClass = isDark 
+    ? 'text-gray-300' 
+    : 'text-gray-700';
+
   return (
     <div 
-      className={`bg-sidebar flex flex-col ${
+      className={`sidebar transition-all duration-300 ${
         collapsed ? 'w-16' : 'w-64'
-      } transition-all duration-300`}
+      }`}
     >
       <div className="flex items-center justify-between p-4">
         {!collapsed && (
@@ -183,7 +200,7 @@ export const Sidebar = () => {
             <div className={`${isDark ? 'bg-white' : 'bg-gray-800'} w-6 h-6 rounded flex items-center justify-center`}>
               <Infinity size={16} className={isDark ? 'text-black' : 'text-white'} />
             </div>
-            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Polymath</h2>
+            <h2 className={`text-xl font-bold ${textClass}`}>Polymath</h2>
           </div>
         )}
         <button
@@ -205,15 +222,15 @@ export const Sidebar = () => {
               to={item.path}
               className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 isActive(item.path)
-                  ? isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
-                  : isDark ? 'text-white hover:text-white hover:bg-gray-800' : 'text-gray-800 hover:text-gray-900 hover:bg-gray-200'
+                  ? activeClass
+                  : `${textClass} ${hoverClass}`
               }`}
             >
-              <div className={isDark ? "text-gray-300" : "text-gray-700"}>
+              <div className={mutedTextClass}>
                 {item.icon}
               </div>
               {!collapsed && (
-                <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-sm font-medium flex-1 text-left`}>
+                <span className={`${textClass} text-sm font-medium flex-1 text-left`}>
                   {item.title}
                 </span>
               )}
@@ -242,12 +259,12 @@ export const Sidebar = () => {
               onClick={() => toggleSection('myLearning')}
               className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } ${isDark ? 'text-white hover:bg-gray-800' : 'text-gray-800 hover:bg-gray-200'}`}
+              } ${textClass} ${hoverClass}`}
             >
               <div className="flex items-center gap-3">
-                <BookText size={20} className={isDark ? "text-gray-300" : "text-gray-700"} />
+                <BookText size={20} className={mutedTextClass} />
                 {!collapsed && (
-                  <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-sm font-medium flex-1 text-left`}>My Learning</span>
+                  <span className={`${textClass} text-sm font-medium flex-1 text-left`}>My Learning</span>
                 )}
               </div>
               {!collapsed && (
@@ -263,14 +280,14 @@ export const Sidebar = () => {
                     to={item.path}
                     className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
                       isActive(item.path)
-                        ? isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
-                        : isDark ? 'text-white hover:text-white hover:bg-gray-800' : 'text-gray-800 hover:text-gray-900 hover:bg-gray-200'
+                        ? activeClass
+                        : `${textClass} ${hoverClass}`
                     }`}
                   >
-                    <div className={isDark ? "text-gray-300" : "text-gray-700"}>
+                    <div className={mutedTextClass}>
                       {item.icon}
                     </div>
-                    <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-xs font-medium flex-1 text-left`}>
+                    <span className={`${textClass} text-xs font-medium flex-1 text-left`}>
                       {item.title}
                     </span>
                     
@@ -291,12 +308,12 @@ export const Sidebar = () => {
               onClick={() => toggleSection('resources')}
               className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } ${isDark ? 'text-white hover:bg-gray-800' : 'text-gray-800 hover:bg-gray-200'}`}
+              } ${textClass} ${hoverClass}`}
             >
               <div className="flex items-center gap-3">
-                <Library size={20} className={isDark ? "text-gray-300" : "text-gray-700"} />
+                <Library size={20} className={mutedTextClass} />
                 {!collapsed && (
-                  <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-sm font-medium flex-1 text-left`}>Resources</span>
+                  <span className={`${textClass} text-sm font-medium flex-1 text-left`}>Resources</span>
                 )}
               </div>
               {!collapsed && (
@@ -312,14 +329,14 @@ export const Sidebar = () => {
                     to={item.path}
                     className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
                       isActive(item.path)
-                        ? isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
-                        : isDark ? 'text-white hover:text-white hover:bg-gray-800' : 'text-gray-800 hover:text-gray-900 hover:bg-gray-200'
+                        ? activeClass
+                        : `${textClass} ${hoverClass}`
                     }`}
                   >
-                    <div className={isDark ? "text-gray-300" : "text-gray-700"}>
+                    <div className={mutedTextClass}>
                       {item.icon}
                     </div>
-                    <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-xs font-medium flex-1 text-left`}>
+                    <span className={`${textClass} text-xs font-medium flex-1 text-left`}>
                       {item.title}
                     </span>
                     
@@ -348,13 +365,13 @@ export const Sidebar = () => {
 
       <div className="p-4">
         {!collapsed ? (
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-200'} rounded-md p-3 text-sm ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>Pro Tip</div>
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-200'} rounded-md p-3 text-sm ${textClass}`}>
+            <div className={`font-medium ${textClass} mb-1`}>Pro Tip</div>
             <p>Press <kbd className={`${isDark ? 'bg-gray-700' : 'bg-gray-300'} px-1.5 py-0.5 rounded`}>⌘</kbd> + <kbd className={`${isDark ? 'bg-gray-700' : 'bg-gray-300'} px-1.5 py-0.5 rounded`}>K</kbd> to search</p>
           </div>
         ) : (
           <div className="flex justify-center">
-            <BookText size={20} className={isDark ? "text-white" : "text-gray-800"} />
+            <BookText size={20} className={textClass} />
           </div>
         )}
       </div>

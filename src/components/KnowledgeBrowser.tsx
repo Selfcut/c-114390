@@ -53,19 +53,52 @@ export const KnowledgeBrowser = () => {
 
   const isDark = theme === 'dark';
 
+  // Define styles based on theme
+  const containerStyle = isDark 
+    ? 'bg-[#1A1A1A] border-gray-800' 
+    : 'bg-white border-gray-200';
+    
+  const headingStyle = isDark 
+    ? 'text-white' 
+    : 'text-gray-800';
+    
+  const inputStyle = isDark 
+    ? 'bg-gray-800 border-gray-700 text-white focus:border-gray-600' 
+    : 'bg-gray-100 border-gray-300 text-gray-800 focus:border-gray-400';
+    
+  const buttonActiveStyle = isDark 
+    ? 'bg-gray-700 text-white' 
+    : 'bg-blue-100 text-blue-800';
+    
+  const buttonInactiveStyle = isDark 
+    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+    : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+    
+  const searchButtonStyle = isDark 
+    ? 'bg-blue-700 hover:bg-blue-600' 
+    : 'bg-blue-600 hover:bg-blue-500';
+    
+  const searchIconStyle = isDark 
+    ? 'text-gray-400' 
+    : 'text-gray-500';
+    
+  const filterTextStyle = isDark 
+    ? 'text-gray-400 hover:text-white' 
+    : 'text-gray-500 hover:text-gray-800';
+    
+  const borderStyle = isDark 
+    ? 'border-gray-800' 
+    : 'border-gray-200';
+
   return (
-    <div className={`knowledge-browser ${isDark ? 'bg-[#1A1A1A] border-gray-800' : 'bg-white border-gray-200'} rounded-lg p-6 border`}>
-      <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} mb-4`}>Knowledge Explorer</h3>
+    <div className={`knowledge-browser rounded-lg p-6 border ${containerStyle}`}>
+      <h3 className={`text-xl font-bold ${headingStyle} mb-4`}>Knowledge Explorer</h3>
       
       <div className="relative mb-6">
-        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${searchIconStyle}`} size={18} />
         <input 
           type="text"
-          className={`w-full ${
-            isDark 
-              ? 'bg-gray-800 border-gray-700 text-white focus:border-gray-600' 
-              : 'bg-gray-100 border-gray-300 text-gray-800 focus:border-gray-400'
-          } border rounded-md py-2 pl-10 pr-4 transition-colors`}
+          className={`w-full ${inputStyle} border rounded-md py-2 pl-10 pr-4 transition-colors`}
           placeholder="Search knowledge base..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -74,11 +107,9 @@ export const KnowledgeBrowser = () => {
       </div>
       
       <div className="flex items-center justify-between mb-4">
-        <h4 className={isDark ? 'text-white' : 'text-gray-800'}>Categories</h4>
+        <h4 className={headingStyle}>Categories</h4>
         <button 
-          className={`flex items-center gap-1 ${
-            isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'
-          } transition-colors text-sm`}
+          className={`flex items-center gap-1 ${filterTextStyle} transition-colors text-sm`}
           onClick={() => setShowFilters(!showFilters)}
         >
           <Filter size={16} />
@@ -93,12 +124,8 @@ export const KnowledgeBrowser = () => {
             onClick={() => handleCategoryToggle(category)}
             className={`px-3 py-2 rounded-md text-sm transition-all duration-200 ${
               selectedCategories.includes(category)
-                ? isDark 
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-blue-100 text-blue-800'
-                : isDark
-                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? buttonActiveStyle
+                : buttonInactiveStyle
             }`}
           >
             {category}
@@ -107,9 +134,9 @@ export const KnowledgeBrowser = () => {
       </div>
       
       {showFilters && (
-        <div className="space-y-4 mb-6 animate-fade-in border-t border-gray-800 pt-4">
+        <div className={`space-y-4 mb-6 animate-fade-in border-t pt-4 ${borderStyle}`}>
           <div>
-            <h4 className={isDark ? 'text-white' : 'text-gray-800'}>Difficulty Level</h4>
+            <h4 className={headingStyle}>Difficulty Level</h4>
             <div className="flex flex-wrap gap-2 mt-2">
               {difficultiesOptions.map(difficulty => (
                 <button
@@ -117,12 +144,8 @@ export const KnowledgeBrowser = () => {
                   onClick={() => handleDifficultyToggle(difficulty)}
                   className={`px-3 py-1 rounded-md text-xs transition-all duration-200 ${
                     difficulties.includes(difficulty)
-                      ? isDark 
-                        ? 'bg-gray-700 text-white'
-                        : 'bg-blue-100 text-blue-800'
-                      : isDark
-                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? buttonActiveStyle
+                      : buttonInactiveStyle
                   }`}
                 >
                   {difficulty}
@@ -132,7 +155,7 @@ export const KnowledgeBrowser = () => {
           </div>
           
           <div>
-            <h4 className={isDark ? 'text-white' : 'text-gray-800'}>Time Period</h4>
+            <h4 className={headingStyle}>Time Period</h4>
             <div className="flex flex-wrap gap-2 mt-2">
               {timePeriodsOptions.map(period => (
                 <button
@@ -140,12 +163,8 @@ export const KnowledgeBrowser = () => {
                   onClick={() => handleTimePeriodToggle(period)}
                   className={`px-3 py-1 rounded-md text-xs transition-all duration-200 ${
                     timePeriods.includes(period)
-                      ? isDark 
-                        ? 'bg-gray-700 text-white'
-                        : 'bg-blue-100 text-blue-800'
-                      : isDark
-                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? buttonActiveStyle
+                      : buttonInactiveStyle
                   }`}
                 >
                   {period}
@@ -158,7 +177,7 @@ export const KnowledgeBrowser = () => {
       
       <button
         onClick={handleSearch}
-        className={`w-full ${isDark ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-500'} text-white py-2 rounded-md transition-colors flex items-center justify-center gap-2`}
+        className={`w-full ${searchButtonStyle} text-white py-2 rounded-md transition-colors flex items-center justify-center gap-2`}
       >
         <BookOpen size={18} />
         <span>Explore Knowledge</span>
