@@ -96,12 +96,13 @@ export const FullHeightChatSidebar = () => {
       try {
         // Fetch messages for the selected conversation
         const { data, error } = await supabase
-          .from("chat_messages")
+          .from('chat_messages')
           .select(`
             id,
             content,
             created_at,
             user_id,
+            sender_name,
             conversation_id,
             profiles:user_id (name, avatar_url)
           `)
@@ -124,8 +125,8 @@ export const FullHeightChatSidebar = () => {
           id: msg.id,
           sender: {
             id: msg.user_id,
-            name: msg.profiles?.name || "Anonymous User",
-            avatar: msg.profiles?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${msg.user_id}`,
+            name: msg.profiles?.name || msg.sender_name || "Anonymous User",
+            avatar: msg.profiles?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${msg.user_id || msg.sender_name}`,
           },
           content: msg.content,
           timestamp: new Date(msg.created_at)
@@ -164,15 +165,15 @@ export const FullHeightChatSidebar = () => {
               .from('profiles')
               .select('name, avatar_url')
               .eq('id', payload.new.user_id)
-              .single();
+              .maybeSingle();
             
             // Add the new message to the state
             const newMessage: ChatMessage = {
               id: payload.new.id,
               sender: {
                 id: payload.new.user_id,
-                name: profileData?.name || "Anonymous User",
-                avatar: profileData?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${payload.new.user_id}`,
+                name: profileData?.name || payload.new.sender_name || "Anonymous User",
+                avatar: profileData?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${payload.new.user_id || payload.new.sender_name}`,
               },
               content: payload.new.content,
               timestamp: new Date(payload.new.created_at)
