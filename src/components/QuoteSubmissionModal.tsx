@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { polymathToast } from "@/components/ui/use-toast";
@@ -29,12 +28,9 @@ export const QuoteSubmissionModal = ({ isOpen, onClose }: QuoteSubmissionModalPr
       uploadedImage
     });
     
-    // Show success toast
-    polymathToast({
-      title: "Quote Submitted",
-      description: "Your quote has been submitted for review.",
-      variant: "default",
-    });
+    // Show success toast - Fixed: using a specific method from polymathToast object
+    // instead of trying to call it as a function
+    polymathToast.contributionSaved();
     
     // Reset form and close modal
     setQuoteText("");
