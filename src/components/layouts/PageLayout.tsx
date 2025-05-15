@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { PromoBar } from "../PromoBar";
-import { Sidebar } from "../Sidebar";
+import { CollapsibleSidebar } from "../CollapsibleSidebar";
 import Header from "../Header";
 import { subscribeToChatSidebarToggle } from "@/lib/utils/event-utils";
 import { useAuth } from "@/lib/auth-context";
@@ -13,6 +13,7 @@ interface PageLayoutProps {
   showSidebar?: boolean;
   showHeader?: boolean;
   sectionName?: string;
+  allowGuests?: boolean;
 }
 
 export const PageLayout = ({ 
@@ -20,11 +21,17 @@ export const PageLayout = ({
   showPromo = true, 
   showSidebar = true, 
   showHeader = true,
-  sectionName
+  sectionName,
+  allowGuests = false
 }: PageLayoutProps) => {
   // Create a state to track if the chat sidebar is open
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(() => {
+    const saved = localStorage.getItem('chatSidebarOpen');
+    return saved === 'true' ? true : false;
+  });
+  
   const { user } = useAuth();
+  const isAuthenticated = !!user;
   
   // Track section view if section name is provided
   useEffect(() => {
@@ -44,6 +51,7 @@ export const PageLayout = ({
   useEffect(() => {
     const unsubscribe = subscribeToChatSidebarToggle((isOpen) => {
       setIsChatOpen(isOpen);
+      localStorage.setItem('chatSidebarOpen', String(isOpen));
     });
 
     return () => {
@@ -54,9 +62,11 @@ export const PageLayout = ({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {showPromo && <PromoBar />}
-      <div className={`flex flex-1 relative transition-all duration-300 ${isChatOpen ? 'mr-[400px]' : ''}`}>
-        {showSidebar && <Sidebar />}
-        <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-64' : ''} transition-all duration-300`}>
+      <div className={`flex flex-1 relative transition-all duration-300 ${isChatOpen ? 'mr-[350px]' : ''}`}>
+        {showSidebar && (allowGuests || isAuthenticated) && <CollapsibleSidebar />}
+        <div className={`flex-1 flex flex-col transition-width duration-300 ${
+          showSidebar && (allowGuests || isAuthenticated) ? 'ml-[var(--sidebar-width,64px)]' : ''
+        }`}>
           {showHeader && <Header />}
           <main className="flex-1 overflow-auto p-0">
             {children}

@@ -57,6 +57,16 @@ const AuthCallback = () => {
 const Root = () => {
   const { user, isLoading, isAuthenticated } = useAuth();
   
+  // Load the sidebar state from localStorage
+  useEffect(() => {
+    // Set CSS variable for sidebar width based on collapsed state
+    const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      sidebarCollapsed ? '64px' : '256px'
+    );
+  }, []);
+  
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen bg-background text-foreground">
       <div className="animate-pulse flex flex-col items-center">

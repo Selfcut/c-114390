@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GifPicker } from "./GifPicker";
+import { MessageReactions } from "./MessageReactions";
 
 interface ChatInputAreaProps {
   message: string;
@@ -36,8 +38,12 @@ export const ChatInputArea = ({
   ];
 
   const handleInsertEmoji = (emoji: string) => {
-    // Fix: Change from passing a function to directly concatenating the strings
     setMessage(message + emoji);
+  };
+
+  const handleGifSelect = (gif: { url: string; alt: string }) => {
+    // Insert the GIF URL as a markdown image
+    setMessage(message + `\n![${gif.alt}](${gif.url})\n`);
   };
 
   return (
@@ -76,6 +82,9 @@ export const ChatInputArea = ({
             </Tabs>
           </PopoverContent>
         </Popover>
+        
+        {/* GIF Picker */}
+        <GifPicker onGifSelect={handleGifSelect} />
         
         <Textarea
           placeholder="Type a message..."

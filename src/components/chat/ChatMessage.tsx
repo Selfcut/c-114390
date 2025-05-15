@@ -2,11 +2,13 @@
 import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ChatMessage as ChatMessageType } from "./types";
+import { parseMarkdown } from "@/lib/utils/message-utils";
+import { MessageReactions } from "./MessageReactions";
 
 interface ChatMessageProps {
   message: ChatMessageType;
   formatTime: (date: Date) => string;
-  id?: string; // Added to match the prop being passed
+  id?: string;
   content?: string;
   sender?: {
     id?: string;
@@ -55,11 +57,18 @@ export const ChatMessage = ({
   const messageSender = sender || message.sender;
   const messageTimestamp = timestamp || message.timestamp;
   
+  // Handle reaction click
+  const handleReact = (emoji: string) => {
+    if (onReactionAdd) {
+      onReactionAdd(messageId, emoji);
+    }
+  };
+  
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 p-2 hover:bg-muted/20 rounded-md group">
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={messageSender.avatar} />
-        <AvatarFallback>{messageSender.name[0]}</AvatarFallback>
+        <AvatarFallback>{messageSender.name?.[0]}</AvatarFallback>
       </Avatar>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
@@ -69,56 +78,65 @@ export const ChatMessage = ({
           <span className="text-xs text-muted-foreground">
             {formatTime(messageTimestamp)}
           </span>
+          {isEdited && <span className="text-xs text-muted-foreground">(edited)</span>}
         </div>
-        <p className="text-sm break-words">{messageContent}</p>
-        
-        {/* Add support for reactions, replies, etc. if those props are provided */}
-        {reactions && reactions.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {reactions.map((reaction, idx) => (
-              <span key={`${reaction.emoji}-${idx}`} className="text-xs bg-muted/50 px-1.5 py-0.5 rounded-full">
-                {reaction.emoji} {reaction.count}
-              </span>
-            ))}
-          </div>
-        )}
         
         {/* Display reply information if available */}
         {replyTo && (
-          <div className="ml-2 pl-2 border-l-2 border-muted mt-1 text-xs text-muted-foreground">
-            <span>Reply to {replyTo.sender.name}</span>
+          <div className="ml-2 pl-2 border-l-2 border-muted mt-1 mb-2 text-xs text-muted-foreground">
+            <span className="font-medium">{replyTo.sender.name}:</span> {replyTo.content.length > 50 ? `${replyTo.content.substring(0, 50)}...` : replyTo.content}
           </div>
         )}
         
-        {/* Action buttons if the handlers are provided */}
-        {(onEdit || onDelete || onReply) && isCurrentUser && (
-          <div className="flex gap-2 mt-1">
-            {onReply && (
-              <button 
-                onClick={() => onReply(messageId)} 
-                className="text-xs text-muted-foreground hover:underline"
-              >
-                Reply
-              </button>
-            )}
-            {onEdit && (
-              <button 
-                onClick={() => onEdit(messageId)} 
-                className="text-xs text-muted-foreground hover:underline"
-              >
-                Edit
-              </button>
-            )}
-            {onDelete && (
-              <button 
-                onClick={() => onDelete(messageId)} 
-                className="text-xs text-muted-foreground hover:underline"
-              >
-                Delete
-              </button>
-            )}
-          </div>
+        {/* Render message content with support for mentions and markdown */}
+        <div className="text-sm break-words">{parseMarkdown(messageContent)}</div>
+        
+        {/* Message reactions */}
+        {reactions && reactions.length > 0 && (
+          <MessageReactions 
+            reactions={reactions} 
+            messageId={messageId}
+            onReactionAdd={onReactionAdd || (() => {})}
+            onReactionRemove={onReactionRemove}
+            onReact={handleReact}
+          />
         )}
+        
+        {/* Action buttons */}
+        <div className="flex gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onReply && (
+            <button 
+              onClick={() => onReply(messageId)} 
+              className="text-xs text-muted-foreground hover:underline"
+            >
+              Reply
+            </button>
+          )}
+          {onReactionAdd && (
+            <button 
+              onClick={() => onReactionAdd(messageId, '👍')} 
+              className="text-xs text-muted-foreground hover:underline"
+            >
+              React
+            </button>
+          )}
+          {isCurrentUser && onEdit && (
+            <button 
+              onClick={() => onEdit(messageId)} 
+              className="text-xs text-muted-foreground hover:underline"
+            >
+              Edit
+            </button>
+          )}
+          {isCurrentUser && onDelete && (
+            <button 
+              onClick={() => onDelete(messageId)} 
+              className="text-xs text-muted-foreground hover:underline"
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
