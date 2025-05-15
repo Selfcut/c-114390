@@ -23,8 +23,26 @@ interface ChatInterfaceProps {
   groupMembers?: Array<{ id: string; name: string; avatar: string; status: string }>;
 }
 
+// Define a proper interface for the message type
+interface MessageType {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string;
+    status: "online" | "offline" | "away" | "do_not_disturb";
+  };
+  timestamp: Date;
+  reactions: Reaction[];
+  isCurrentUser: boolean;
+  mentions?: Array<{ id: string; name: string }>;
+  attachments?: Array<{ id: string; type: 'image' | 'gif' | 'file'; url: string; name?: string }>;
+}
+
 // Mock messages for demonstration
-const generateMockMessages = () => {
+const generateMockMessages = (): MessageType[] => {
   const currentTime = new Date();
   
   return [
@@ -36,7 +54,7 @@ const generateMockMessages = () => {
         name: 'Jane Smith',
         username: 'janesmith',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(currentTime.getTime() - 1000 * 60 * 30), // 30 minutes ago
       reactions: [
@@ -53,7 +71,7 @@ const generateMockMessages = () => {
         name: 'John Doe',
         username: 'johndoe',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(currentTime.getTime() - 1000 * 60 * 25), // 25 minutes ago
       reactions: [],
@@ -67,7 +85,7 @@ const generateMockMessages = () => {
         name: 'Jane Smith',
         username: 'janesmith',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(currentTime.getTime() - 1000 * 60 * 20), // 20 minutes ago
       reactions: [],
@@ -81,7 +99,7 @@ const generateMockMessages = () => {
         name: 'John Doe',
         username: 'johndoe',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(currentTime.getTime() - 1000 * 60 * 15), // 15 minutes ago
       reactions: [
@@ -92,7 +110,7 @@ const generateMockMessages = () => {
       attachments: [
         { 
           id: 'att-1', 
-          type: 'image' as const, 
+          type: 'image', 
           url: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb',
           name: 'quantum-diagram.jpg' 
         }
@@ -106,7 +124,7 @@ const generateMockMessages = () => {
         name: 'Jane Smith',
         username: 'janesmith',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(currentTime.getTime() - 1000 * 60 * 5), // 5 minutes ago
       reactions: [],
@@ -127,7 +145,7 @@ export const ChatInterface = ({
   groupAvatar,
   groupMembers
 }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState(generateMockMessages());
+  const [messages, setMessages] = useState<MessageType[]>(generateMockMessages());
   const [messageInput, setMessageInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -141,8 +159,8 @@ export const ChatInterface = ({
   // Group messages by sender and time
   const groupedMessages = React.useMemo(() => {
     const groups: Array<{
-      sender: typeof messages[0]['sender'];
-      messages: Array<typeof messages[0] & {
+      sender: MessageType['sender'];
+      messages: Array<MessageType & {
         isFirstInGroup: boolean;
         isLastInGroup: boolean;
       }>;
@@ -187,7 +205,7 @@ export const ChatInterface = ({
   const handleSendMessage = () => {
     if (!messageInput.trim()) return;
 
-    const newMessage = {
+    const newMessage: MessageType = {
       id: `msg-${Date.now()}`,
       content: messageInput,
       sender: {
@@ -195,13 +213,13 @@ export const ChatInterface = ({
         name: 'John Doe',
         username: 'johndoe',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(),
-      reactions: [] as Reaction[],
+      reactions: [],
       isCurrentUser: true,
-      mentions: [] as Array<{ id: string; name: string }>,
-      attachments: [] as Array<{ id: string; type: 'image' | 'gif' | 'file'; url: string; name?: string }>,
+      mentions: [],
+      attachments: [],
     };
     
     setMessages([...messages, newMessage]);
@@ -222,7 +240,7 @@ export const ChatInterface = ({
 
   const handleGifSelect = (gif: { url: string; alt: string }) => {
     // In a real app, this would send a message with a GIF attachment
-    const newMessage = {
+    const newMessage: MessageType = {
       id: `msg-${Date.now()}`,
       content: "",
       sender: {
@@ -230,14 +248,14 @@ export const ChatInterface = ({
         name: 'John Doe',
         username: 'johndoe',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-        status: 'online' as const,
+        status: 'online',
       },
       timestamp: new Date(),
-      reactions: [] as Reaction[],
+      reactions: [],
       isCurrentUser: true,
       attachments: [{
         id: `gif-${Date.now()}`,
-        type: 'gif' as const,
+        type: 'gif',
         url: gif.url,
         name: gif.alt
       }]
