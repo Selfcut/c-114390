@@ -1,16 +1,8 @@
 
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import './styles/variables.css'  // Import CSS variables first
-import './styles/tailwind.css'   // Load Tailwind before other styles
-import './styles/base.css'       // Base styles
-import './styles/layout.css'     // Layout styles
-import './styles/components.css'  // Component styles
-import './styles/animations.css'  // Animation styles
-import './styles/effects.css'    // Effects styles
-import './styles/stagger.css'    // Stagger styles
-import './styles/light-mode.css' // Light mode styles
-import './App.css'               // App specific styles
+import './index.css'  // Import index.css which will handle all CSS imports
+import './App.css'    // App specific styles
 import App from './App.tsx'
 
 // Set document title
@@ -39,25 +31,10 @@ const initScrollAnimations = () => {
   });
 };
 
-// Force CSS reload if needed
-const forceStylesReload = () => {
-  const links = document.querySelectorAll('link[rel="stylesheet"]');
-  links.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href) {
-      const newHref = href.includes('?') ? 
-        `${href}&forceReload=${Date.now()}` : 
-        `${href}?forceReload=${Date.now()}`;
-      link.setAttribute('href', newHref);
-    }
-  });
-};
-
 // Execute after initial render
 window.addEventListener('load', () => {
   setTimeout(() => {
     initScrollAnimations();
-    forceStylesReload();
     console.log('Styles loaded: Tailwind and CSS initialized');
   }, 100);
 });

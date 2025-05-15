@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "./ModeToggle";
 import { UserHoverCard } from "./UserHoverCard";
+import { EnhancedSearch } from "./EnhancedSearch";
 import {
   Bell,
   HelpCircle,
@@ -13,13 +13,12 @@ import {
   User,
   Settings,
   LogOut,
-  Search,
-  X
+  X,
+  Search
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useDebounce } from "@/hooks/useDebounce";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,37 +74,10 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [notifications, setNotifications] = useState(mockNotifications);
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
+  
   // Count unread notifications
   const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
-
-  // Handle search query changes
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      // In a real app, this would be an API call
-      const filtered = mockSearchSuggestions.filter(item => 
-        item.text.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      );
-      setSearchResults(filtered);
-    } else {
-      setSearchResults([]);
-    }
-  }, [debouncedSearchTerm]);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-    
-    toast({
-      title: "Search initiated",
-      description: `Searching for "${searchTerm}"`,
-    });
-    // In a real app, this would navigate to search results
-  };
 
   const markAllNotificationsAsRead = () => {
     setNotifications(prevNotifications =>
@@ -139,69 +111,10 @@ const Header = () => {
             <span className="font-bold text-xl hidden md:inline">Polymath</span>
           </Link>
           
-          {/* Enhanced Search with autocomplete */}
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search knowledge, discussions, users..."
-                className="pl-10 pr-4 w-full bg-muted/30 border-muted focus-visible:ring-1 focus-visible:ring-primary"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button 
-                  type="button" 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSearchTerm('')}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            
-            {/* Search results dropdown */}
-            {searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 overflow-hidden">
-                <div className="p-2 max-h-60 overflow-y-auto">
-                  {searchResults.map(result => (
-                    <div 
-                      key={`${result.type}-${result.id}`} 
-                      className="flex items-center gap-2 p-2 hover:bg-accent rounded-md cursor-pointer"
-                      onClick={() => {
-                        toast({
-                          description: `You selected: ${result.text}`,
-                        });
-                        setSearchTerm('');
-                        setSearchResults([]);
-                      }}
-                    >
-                      {result.type === 'user' && (
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={result.avatar} />
-                          <AvatarFallback>{result.text[0]}</AvatarFallback>
-                        </Avatar>
-                      )}
-                      <div>
-                        <p className="text-sm">{result.text}</p>
-                        <p className="text-xs text-muted-foreground">{result.category || result.author || result.type}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-2 border-t">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full text-sm text-center justify-center text-muted-foreground hover:text-foreground"
-                    onClick={handleSearchSubmit}
-                  >
-                    See all results for "{searchTerm}"
-                  </Button>
-                </div>
-              </div>
-            )}
-          </form>
+          {/* Replace simple search with EnhancedSearch component */}
+          <div className="relative flex-1 max-w-md hidden md:block">
+            <EnhancedSearch />
+          </div>
           
           {/* Mobile search trigger */}
           <Button 
@@ -227,49 +140,11 @@ const Header = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-10 pr-4"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-              />
-            </form>
-            {/* Mobile search results */}
-            {searchResults.length > 0 && (
-              <div className="mt-4 overflow-y-auto flex-1">
-                {searchResults.map(result => (
-                  <div 
-                    key={`${result.type}-${result.id}`} 
-                    className="flex items-center gap-2 p-2 hover:bg-accent rounded-md cursor-pointer"
-                    onClick={() => {
-                      toast({
-                        description: `You selected: ${result.text}`,
-                      });
-                      setSearchTerm('');
-                      setIsSearchOpen(false);
-                    }}
-                  >
-                    {result.type === 'user' && (
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={result.avatar} />
-                        <AvatarFallback>{result.text[0]}</AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div>
-                      <p>{result.text}</p>
-                      <p className="text-sm text-muted-foreground">{result.category || result.author || result.type}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <EnhancedSearch />
           </div>
         )}
         
+        {/* Rest of header content */}
         <div className="flex items-center gap-2">
           {/* Theme Toggle */}
           <ModeToggle />
