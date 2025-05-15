@@ -57,30 +57,30 @@
 
 /* Light mode specific overrides */
 .light-mode {
-  background-color: white !important;
-  color: #1a202c !important;
+  background-color: white;
+  color: #1a202c;
 }
 
 .light-mode body {
-  background-color: white !important;
-  color: #1a202c !important;
+  background-color: white;
+  color: #1a202c;
 }
 
 .light-mode header {
-  background-color: white !important;
+  background-color: white;
   border-color: #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .light-mode .sidebar {
-  background-color: hsl(var(--sidebar-background)) !important;
-  color: hsl(var(--sidebar-foreground)) !important;
+  background-color: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
   border-right-color: #e2e8f0;
 }
 
 .light-mode .sidebar a,
 .light-mode .sidebar button {
-  color: #1a202c !important;
+  color: #1a202c;
 }
 
 .light-mode .sidebar a:hover,
@@ -89,16 +89,16 @@
 }
 
 .light-mode .sidebar .bg-gray-800 {
-  background-color: #e2e8f0 !important;
+  background-color: #e2e8f0;
 }
 
 .light-mode .sidebar .text-white {
-  color: #1a202c !important;
+  color: #1a202c;
 }
 
 .light-mode .sidebar .text-gray-300, 
 .light-mode .sidebar .text-gray-400 {
-  color: #4a5568 !important;
+  color: #4a5568;
 }
 
 /* Typography in light mode */
@@ -108,55 +108,151 @@
 .light-mode h4, 
 .light-mode h5, 
 .light-mode h6 {
-  color: #1a202c !important;
+  color: #1a202c;
 }
 
 .light-mode p {
-  color: #4a5568 !important;
+  color: #4a5568;
 }
 
 .light-mode .text-foreground {
-  color: #1a202c !important;
+  color: #1a202c;
 }
 
 .light-mode .bg-background {
-  background-color: white !important;
+  background-color: white;
 }
 
 .light-mode .border-border {
-  border-color: #e2e8f0 !important;
+  border-color: #e2e8f0;
 }
 
 /* Fix dropdown menus in light mode */
 .light-mode .dropdown-content,
 .light-mode [role="menu"],
 .light-mode [data-radix-popper-content-wrapper] > div {
-  background-color: white !important;
-  border-color: #e2e8f0 !important;
-  color: #1a202c !important;
+  background-color: white;
+  border-color: #e2e8f0;
+  color: #1a202c;
 }
 
 .light-mode button.bg-blue-600,
 .light-mode button.bg-blue-700 {
-  background-color: #3182ce !important;
+  background-color: #3182ce;
 }
 
 /* Fix navigation styling for light mode */
 .light-mode nav a {
-  color: #1a202c !important;
+  color: #1a202c;
 }
 
 .light-mode nav a:hover {
-  color: #3182ce !important;
+  color: #3182ce;
 }
 
 .light-mode nav a.text-primary {
-  color: #3182ce !important;
+  color: #3182ce;
 }
 
 /* Fix searchbar and other inputs */
 .light-mode input {
-  background-color: #f7fafc !important;
-  color: #1a202c !important;
-  border-color: #e2e8f0 !important;
+  background-color: #f7fafc;
+  color: #1a202c;
+  border-color: #e2e8f0;
+}
+
+/* Card styling in light mode */
+.light-mode .card {
+  background-color: white;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* PromoBar styling for light mode */
+.light-mode .promo-bar {
+  background-color: #3182ce;
+}
+
+/* Button styling for light mode */
+.light-mode .button-primary {
+  background-color: #3182ce;
+  color: white;
+}
+
+.light-mode .button-secondary {
+  background-color: #e2e8f0;
+  color: #1a202c;
+}
+
+/* Creation card background fixes */
+.light-mode .creation-card {
+  background: linear-gradient(135deg, #f0f4f8, #e5e9f0);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Gradient background fixes */
+.light-mode .bg-gradient-to-br {
+  background: linear-gradient(135deg, #f7fafc, #edf2f7);
+}
+
+/* Ensure proper contrast for text on light backgrounds */
+.light-mode .text-gray-300 {
+  color: #4a5568;
+}
+
+.light-mode .text-gray-400 {
+  color: #718096;
+}
+
+/* Fix dark-mode specific components */
+.light-mode .bg-[#1A1A1A],
+.light-mode .bg-[#222222] {
+  background-color: #f7fafc;
+}
+
+.light-mode .from-[#1A1A1A],
+.light-mode .to-[#222222] {
+  --tw-gradient-from: #f7fafc;
+  --tw-gradient-to: #edf2f7;
+}
+
+.light-mode .bg-[#333333] {
+  background-color: #e2e8f0;
+}
+
+.light-mode .border-gray-700,
+.light-mode .border-gray-800 {
+  border-color: #e2e8f0;
+}
+
+.light-mode .text-white {
+  color: #1a202c;
+}
+
+.light-mode .text-gray-300 {
+  color: #4a5568;
+}
+
+/* Navigation menu fixes for light mode */
+.light-mode .NavigationMenuContent,
+.light-mode .NavigationMenuList {
+  background-color: white;
+  border-color: #e2e8f0;
+}
+
+.light-mode .NavigationMenuItem a {
+  color: #1a202c;
+}
+
+/* Enhanced card light mode */
+.light-mode .enhanced-card {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.light-mode .enhanced-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
 }

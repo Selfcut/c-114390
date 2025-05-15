@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from '@/components/ThemeToggle';
-
 import logo from '../../public/logo.svg';
 import {
   DropdownMenu,
@@ -15,24 +14,38 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "@/lib/theme-context";
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { 
   NavigationMenu,
   NavigationMenuContent,
-  NavigationMenuIndicator,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const Header: React.FC = () => {
   const location = useLocation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
   
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
   };
 
   return (
@@ -94,6 +107,30 @@ export const Header: React.FC = () => {
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link to="/wiki">
+                    <NavigationMenuLink 
+                      className={`${navigationMenuTriggerStyle()} ${
+                        isActive("/wiki") ? "text-primary" : ""
+                      }`}
+                    >
+                      Wiki
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link to="/chat">
+                    <NavigationMenuLink 
+                      className={`${navigationMenuTriggerStyle()} ${
+                        isActive("/chat") ? "text-primary" : ""
+                      }`}
+                    >
+                      Chat
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
@@ -102,15 +139,11 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="relative rounded-md">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-4 w-4 text-gray-500" aria-hidden="true" />
+              <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </div>
             <input
               type="text"
-              className={`block w-full md:w-[240px] rounded-md border-0 ${
-                isDark 
-                  ? "bg-gray-800 text-white placeholder:text-gray-400" 
-                  : "bg-gray-100 text-gray-900 placeholder:text-gray-500"
-              } py-1.5 pl-10 pr-3 text-sm focus:ring-1 focus:ring-primary`}
+              className="block w-full md:w-[240px] rounded-md border-0 bg-muted py-1.5 pl-10 pr-3 text-sm focus:ring-1 focus:ring-primary"
               placeholder="Search Polymath..."
             />
           </div>
@@ -141,14 +174,53 @@ export const Header: React.FC = () => {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button size="sm" className="hidden sm:flex">Join Premium</Button>
-          <Button variant="outline" size="sm" className="hidden sm:flex">Contribute</Button>
+          <div className="hidden sm:flex items-center gap-2">
+            <Button size="sm">Join Premium</Button>
+            <Button variant="outline" size="sm">Contribute</Button>
+          </div>
+
+          {/* Mobile Menu Trigger */}
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-4 mt-6">
+                <Link to="/" className={`${isActive("/") ? "text-primary" : ""} font-medium`}>
+                  Home
+                </Link>
+                <Link to="/forum" className={`${isActive("/forum") ? "text-primary" : ""} font-medium`}>
+                  Discussion Forum
+                </Link>
+                <Link to="/library" className={`${isActive("/library") ? "text-primary" : ""} font-medium`}>
+                  Knowledge Library  
+                </Link>
+                <Link to="/quotes" className={`${isActive("/quotes") ? "text-primary" : ""} font-medium`}>
+                  Quotes
+                </Link>
+                <Link to="/wiki" className={`${isActive("/wiki") ? "text-primary" : ""} font-medium`}>
+                  Wiki
+                </Link>
+                <Link to="/chat" className={`${isActive("/chat") ? "text-primary" : ""} font-medium`}>
+                  Chat
+                </Link>
+                <div className="border-t border-border my-4"></div>
+                <Button className="w-full">Join Premium</Button>
+                <Button variant="outline" className="w-full mt-2">Contribute</Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
       
@@ -186,6 +258,14 @@ export const Header: React.FC = () => {
             }`}
           >
             <span>Quotes</span>
+          </Link>
+          <Link 
+            to="/wiki" 
+            className={`flex flex-col items-center justify-center text-xs ${
+              isActive("/wiki") ? "text-primary" : "text-foreground"
+            }`}
+          >
+            <span>Wiki</span>
           </Link>
         </nav>
       </div>
