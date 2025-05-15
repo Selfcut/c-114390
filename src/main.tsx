@@ -32,10 +32,25 @@ const initScrollAnimations = () => {
   });
 };
 
+// Force CSS reload if needed
+const forceStylesReload = () => {
+  const links = document.querySelectorAll('link[rel="stylesheet"]');
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href) {
+      const newHref = href.includes('?') ? 
+        `${href}&forceReload=${Date.now()}` : 
+        `${href}?forceReload=${Date.now()}`;
+      link.setAttribute('href', newHref);
+    }
+  });
+};
+
 // Execute after initial render
 window.addEventListener('load', () => {
   setTimeout(() => {
     initScrollAnimations();
+    forceStylesReload();
     console.log('Styles loaded: Tailwind and CSS initialized');
   }, 100);
 });
@@ -43,9 +58,14 @@ window.addEventListener('load', () => {
 // Debug styles
 console.log('Styles loading check: index.css loaded');
 
-// Force re-render to ensure styles are applied
-createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Create root and render app
+const root = document.getElementById('root');
+if (!root) {
+  console.error('Root element not found!');
+} else {
+  createRoot(root).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}

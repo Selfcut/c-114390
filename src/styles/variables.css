@@ -1,7 +1,7 @@
 
 :root {
   /* Base colors */
-  --promo: 265 84% 61%;
+  --promo: 210 100% 50%; /* Changed from purple to blue */
   --promo-foreground: 0 0% 100%;
   
   /* Background colors */
@@ -16,8 +16,8 @@
   --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
   
-  /* Primary colors */
-  --primary: 265 84% 61%;
+  /* Primary colors - changed to blue */
+  --primary: 210 100% 50%;
   --primary-foreground: 0 0% 100%;
   
   /* Secondary colors */
@@ -48,10 +48,10 @@
   /* Radius */
   --radius: 0.5rem;
   
-  /* Sidebar colors - updated to ensure proper theming */
+  /* Sidebar colors - updated to match dark theme */
   --sidebar-background: 240 10% 10%;
   --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 240 3.7% 15.9%; /* Changed from purple to dark gray */
+  --sidebar-primary: 240 3.7% 15.9%; 
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 240 3.7% 15.9%;
   --sidebar-accent-foreground: 0 0% 98%;

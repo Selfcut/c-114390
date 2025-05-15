@@ -3,17 +3,20 @@ import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 
 export const StylesDebugger = () => {
-  const [styleStatus, setStyleStatus] = useState<{[key: string]: boolean}>({
+  const [styleStatus, setStyleStatus] = useState<{[key: string]: boolean | string}>({
     tailwind: false,
     button: false,
     colors: false,
     fonts: false,
     cssVariables: false,
-    layout: false
+    layout: false,
+    primaryColor: 'unknown',
+    secondaryColor: 'unknown',
+    sidebarColor: 'unknown'
   });
   
   const [fontLoaded, setFontLoaded] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
 
   useEffect(() => {
     // Check if Tailwind is working by testing a simple class
@@ -45,16 +48,35 @@ export const StylesDebugger = () => {
         window.getComputedStyle(fontTest).fontFamily : '';
       const fontWorking = fontFamily.includes('Inter') || fontFamily.includes('Arial');
       
-      // Check if CSS variables are working
+      // Check CSS variables
       const cssVarTest = document.createElement('div');
       cssVarTest.style.backgroundColor = 'hsl(var(--primary))';
       document.body.appendChild(cssVarTest);
       const cssVarsWorking = window.getComputedStyle(cssVarTest).backgroundColor !== 'rgba(0, 0, 0, 0)';
       document.body.removeChild(cssVarTest);
       
+      // Create test elements for each color
+      const primaryVarTest = document.createElement('div');
+      primaryVarTest.style.backgroundColor = 'hsl(var(--primary))';
+      document.body.appendChild(primaryVarTest);
+      const primaryColor = window.getComputedStyle(primaryVarTest).backgroundColor;
+      document.body.removeChild(primaryVarTest);
+
+      const secondaryVarTest = document.createElement('div');
+      secondaryVarTest.style.backgroundColor = 'hsl(var(--secondary))';
+      document.body.appendChild(secondaryVarTest);
+      const secondaryColor = window.getComputedStyle(secondaryVarTest).backgroundColor;
+      document.body.removeChild(secondaryVarTest);
+
+      const sidebarVarTest = document.createElement('div');
+      sidebarVarTest.style.backgroundColor = 'hsl(var(--sidebar-background))';
+      document.body.appendChild(sidebarVarTest);
+      const sidebarColor = window.getComputedStyle(sidebarVarTest).backgroundColor;
+      document.body.removeChild(sidebarVarTest);
+      
       // Check if layout is full width
       const rootElement = document.getElementById('root');
-      const layoutWorking = rootElement ? rootElement.offsetWidth === window.innerWidth : false;
+      const layoutWorking = rootElement ? rootElement.offsetWidth >= window.innerWidth - 5 : false;
       
       setStyleStatus({
         tailwind: tailwindWorking,
@@ -62,7 +84,10 @@ export const StylesDebugger = () => {
         colors: colorsWorking,
         fonts: fontWorking,
         cssVariables: cssVarsWorking,
-        layout: layoutWorking
+        layout: layoutWorking,
+        primaryColor,
+        secondaryColor,
+        sidebarColor
       });
     });
 
@@ -93,7 +118,7 @@ export const StylesDebugger = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 p-4 bg-[#1A1A1A] rounded-lg border border-gray-800 shadow-lg">
+    <div className="fixed bottom-4 right-4 z-50 p-4 bg-[#1A1A1A] rounded-lg border border-gray-800 shadow-lg max-w-sm">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-white font-bold">Styles Debugger</h2>
         <Button 
@@ -151,6 +176,13 @@ export const StylesDebugger = () => {
             <p className={`text-xs ${styleStatus.layout ? 'text-green-500' : 'text-red-500'}`}>
               Full Width Layout: {styleStatus.layout ? '✓' : '✗'}
             </p>
+          </div>
+          
+          <div className="mt-4 pt-2 border-t border-gray-700">
+            <p className="text-xs text-gray-500">Color Values:</p>
+            <p className="text-xs">Primary: {styleStatus.primaryColor?.toString()}</p>
+            <p className="text-xs">Secondary: {styleStatus.secondaryColor?.toString()}</p>
+            <p className="text-xs">Sidebar: {styleStatus.sidebarColor?.toString()}</p>
           </div>
           
           <div className="mt-4 pt-2 border-t border-gray-700">

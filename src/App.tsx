@@ -54,7 +54,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="w-full min-h-screen m-0 p-0">
+          <div className="w-full min-h-screen m-0 p-0 max-w-full overflow-x-hidden">
             <WelcomeOverlay />
             <StylesDebugger />
             <Routes>
