@@ -9,3 +9,6 @@ verify_jwt = true
 
 [functions.track-user-activity]
 verify_jwt = true
+
+[functions.generate-analytics-report]
+verify_jwt = true
