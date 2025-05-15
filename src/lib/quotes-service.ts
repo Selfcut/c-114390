@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -291,8 +292,11 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       if (unlikeError) throw unlikeError;
 
       // Decrement like count using the specific function
-      const { error: decrementError } = await supabase
-        .rpc('decrement_quote_likes', { quote_id: quoteId });
+      // Fix: Use raw SQL query with execute RPC call
+      const { error: decrementError } = await supabase.rpc(
+        'decrement_quote_likes',
+        { quote_id: quoteId }
+      );
 
       if (decrementError) throw decrementError;
 
@@ -309,8 +313,11 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       if (likeError) throw likeError;
 
       // Increment like count using the specific function
-      const { error: incrementError } = await supabase
-        .rpc('increment_quote_likes', { quote_id: quoteId });
+      // Fix: Use raw SQL query with execute RPC call
+      const { error: incrementError } = await supabase.rpc(
+        'increment_quote_likes',
+        { quote_id: quoteId }
+      );
 
       if (incrementError) throw incrementError;
 
@@ -351,8 +358,11 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       if (removeError) throw removeError;
 
       // Decrement bookmark count using the specific function
-      const { error: decrementError } = await supabase
-        .rpc('decrement_quote_bookmarks', { quote_id: quoteId });
+      // Fix: Use raw SQL query with execute RPC call
+      const { error: decrementError } = await supabase.rpc(
+        'decrement_quote_bookmarks',
+        { quote_id: quoteId }
+      );
 
       if (decrementError) throw decrementError;
 
@@ -369,8 +379,11 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       if (bookmarkError) throw bookmarkError;
 
       // Increment bookmark count using the specific function
-      const { error: incrementError } = await supabase
-        .rpc('increment_quote_bookmarks', { quote_id: quoteId });
+      // Fix: Use raw SQL query with execute RPC call
+      const { error: incrementError } = await supabase.rpc(
+        'increment_quote_bookmarks',
+        { quote_id: quoteId }
+      );
 
       if (incrementError) throw incrementError;
 
