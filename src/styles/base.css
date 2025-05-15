@@ -1,111 +1,121 @@
 
-@layer base {
-  :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 252 59% 48%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 252 59% 48%;
-    --sidebar-background: 240 10% 3.9%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 252 59% 48%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 252 59% 48%;
-    --promo: 252 59% 48%;
-    --promo-foreground: 0 0% 98%;
-    --radius: 0.75rem;
-  }
-  
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 252 59% 48%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 252 59% 48%;
-    --sidebar-background: 252 59% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 252 59% 48%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 252 59% 48%;
-    --promo: 252 59% 48%;
-    --promo-foreground: 0 0% 98%;
-  }
-  
-  * {
-    @apply border-border selection:bg-primary/20 selection:text-foreground;
-    outline: none !important;
-  }
-  
-  body {
-    @apply bg-background text-foreground antialiased overflow-hidden;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
-  }
+/* Base Elements */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 
-  html {
-    @apply scroll-smooth;
-  }
-  
-  /* Remove focus outlines */
-  :focus {
-    outline: none !important;
-  }
-  
-  /* Hide scrollbars but keep functionality */
-  .hide-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
-  }
-  
-  /* Glass morphism effects */
-  .glass {
-    @apply backdrop-blur-xl bg-background/60 border border-border shadow-lg;
-  }
-  
-  /* Fix button text contrast issues */
-  button.bg-primary {
-    @apply text-primary-foreground hover:bg-primary/90;
-  }
-  
-  /* Image covers */
-  .img-cover {
-    @apply object-cover w-full h-full;
-  }
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: hsl(var(--primary));
+  transition: color var(--transition-fast) ease-in-out;
+}
+
+a:hover {
+  color: hsl(var(--primary), 0.8);
+}
+
+/* Focus Styles - No blue outlines! */
+*:focus {
+  outline: 2px solid hsl(var(--primary), 0.5);
+  outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Selection */
+::selection {
+  background-color: hsl(var(--primary), 0.2);
+  color: hsl(var(--foreground));
+}
+
+/* Scrollbar - consistent across the application */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground), 0.5);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground), 0.7);
+}
+
+/* Remove focus outline for mouse users but keep for keyboard */
+button:focus:not(:focus-visible), 
+[tabindex]:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Fix button color issues */
+button.bg-primary, 
+button.bg-[#6E59A5], 
+button.bg-[#7E69B5] {
+  color: white !important;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Code blocks */
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  padding: 0.2em 0.4em;
+  background-color: hsl(var(--accent), 0.3);
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+/* Horizontal Rules */
+hr {
+  border: none;
+  height: 1px;
+  background-color: hsl(var(--border));
+  margin: 1.5rem 0;
 }

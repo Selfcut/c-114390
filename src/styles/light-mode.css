@@ -1,258 +1,55 @@
 
-/* Light mode styles */
-:root.light-mode {
-  /* Base colors */
-  --promo: 210 100% 50%;
-  --promo-foreground: 0 0% 100%;
-  
-  /* Background colors */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  
-  /* Card colors */
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  
-  /* Popover colors */
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  
-  /* Primary colors */
-  --primary: 210 100% 50%;
-  --primary-foreground: 0 0% 100%;
-  
-  /* Secondary colors */
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  
-  /* Muted colors */
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  
-  /* Accent colors */
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  
-  /* Destructive colors */
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  
-  /* Border colors */
-  --border: 214.3 31.8% 91.4%;
-  
-  /* Input colors */
-  --input: 214.3 31.8% 91.4%;
-  
-  /* Ring color */
-  --ring: 222.2 84% 4.9%;
-  
-  /* Radius */
-  --radius: 0.5rem;
-  
-  /* Sidebar colors */
-  --sidebar-background: 0 0% 96%;
-  --sidebar-foreground: 222.2 84% 4.9%;
-  --sidebar-border: 214.3 31.8% 91.4%;
+/* Light Mode Overrides */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    
+    --primary: 263 67% 58%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 240 3.7% 93.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    
+    --muted: 240 3.7% 93.9%;
+    --muted-foreground: 240 3.8% 40.1%;
+    
+    --accent: 240 3.7% 93.9%;
+    --accent-foreground: 240 5.9% 10%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 5.9% 90%;
+    
+    --input: 240 5.9% 90%;
+    --ring: 263 67% 58%;
+    
+    --sidebar-background: 0 0% 96%;
+    --sidebar-border: 240 5% 90%;
+  }
 }
 
-/* Light mode specific overrides */
-.light-mode {
-  background-color: white;
-  color: #1a202c;
+/* Override specific elements for light mode */
+.light .sidebar-item.active {
+  background-color: hsl(var(--primary), 0.1);
+  color: hsl(var(--primary));
 }
 
-.light-mode body {
-  background-color: white;
-  color: #1a202c;
+.light .enhanced-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.light-mode header {
-  background-color: white;
-  border-color: #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+.light .enhanced-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-.light-mode .sidebar {
-  background-color: hsl(var(--sidebar-background));
-  color: hsl(var(--sidebar-foreground));
-  border-right-color: #e2e8f0;
-}
-
-.light-mode .sidebar a,
-.light-mode .sidebar button {
-  color: #1a202c;
-}
-
-.light-mode .sidebar a:hover,
-.light-mode .sidebar button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.light-mode .sidebar .bg-gray-800 {
-  background-color: #e2e8f0;
-}
-
-.light-mode .sidebar .text-white {
-  color: #1a202c;
-}
-
-.light-mode .sidebar .text-gray-300, 
-.light-mode .sidebar .text-gray-400 {
-  color: #4a5568;
-}
-
-/* Typography in light mode */
-.light-mode h1, 
-.light-mode h2, 
-.light-mode h3, 
-.light-mode h4, 
-.light-mode h5, 
-.light-mode h6 {
-  color: #1a202c;
-}
-
-.light-mode p {
-  color: #4a5568;
-}
-
-.light-mode .text-foreground {
-  color: #1a202c;
-}
-
-.light-mode .bg-background {
-  background-color: white;
-}
-
-.light-mode .border-border {
-  border-color: #e2e8f0;
-}
-
-/* Fix dropdown menus in light mode */
-.light-mode .dropdown-content,
-.light-mode [role="menu"],
-.light-mode [data-radix-popper-content-wrapper] > div {
-  background-color: white;
-  border-color: #e2e8f0;
-  color: #1a202c;
-}
-
-.light-mode button.bg-blue-600,
-.light-mode button.bg-blue-700 {
-  background-color: #3182ce;
-}
-
-/* Fix navigation styling for light mode */
-.light-mode nav a {
-  color: #1a202c;
-}
-
-.light-mode nav a:hover {
-  color: #3182ce;
-}
-
-.light-mode nav a.text-primary {
-  color: #3182ce;
-}
-
-/* Fix searchbar and other inputs */
-.light-mode input {
-  background-color: #f7fafc;
-  color: #1a202c;
-  border-color: #e2e8f0;
-}
-
-/* Card styling in light mode */
-.light-mode .card {
-  background-color: white;
-  border-color: #e2e8f0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-/* PromoBar styling for light mode */
-.light-mode .promo-bar {
-  background-color: #3182ce;
-}
-
-/* Button styling for light mode */
-.light-mode .button-primary {
-  background-color: #3182ce;
-  color: white;
-}
-
-.light-mode .button-secondary {
-  background-color: #e2e8f0;
-  color: #1a202c;
-}
-
-/* Creation card background fixes */
-.light-mode .creation-card {
-  background: linear-gradient(135deg, #f0f4f8, #e5e9f0);
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-/* Gradient background fixes */
-.light-mode .bg-gradient-to-br {
-  background: linear-gradient(135deg, #f7fafc, #edf2f7);
-}
-
-/* Ensure proper contrast for text on light backgrounds */
-.light-mode .text-gray-300 {
-  color: #4a5568;
-}
-
-.light-mode .text-gray-400 {
-  color: #718096;
-}
-
-/* Fix dark-mode specific components */
-.light-mode .bg-[#1A1A1A],
-.light-mode .bg-[#222222] {
-  background-color: #f7fafc;
-}
-
-.light-mode .from-[#1A1A1A],
-.light-mode .to-[#222222] {
-  --tw-gradient-from: #f7fafc;
-  --tw-gradient-to: #edf2f7;
-}
-
-.light-mode .bg-[#333333] {
-  background-color: #e2e8f0;
-}
-
-.light-mode .border-gray-700,
-.light-mode .border-gray-800 {
-  border-color: #e2e8f0;
-}
-
-.light-mode .text-white {
-  color: #1a202c;
-}
-
-.light-mode .text-gray-300 {
-  color: #4a5568;
-}
-
-/* Navigation menu fixes for light mode */
-.light-mode .NavigationMenuContent,
-.light-mode .NavigationMenuList {
-  background-color: white;
-  border-color: #e2e8f0;
-}
-
-.light-mode .NavigationMenuItem a {
-  color: #1a202c;
-}
-
-/* Enhanced card light mode */
-.light-mode .enhanced-card {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-.light-mode .enhanced-card:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
+.light .hover-lift:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
 }

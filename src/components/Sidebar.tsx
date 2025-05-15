@@ -1,379 +1,97 @@
 
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 import {
   Home,
-  MessageSquare,
-  Library,
-  Users,
-  Settings,
-  Menu,
-  X,
-  BookText,
-  Quote,
   BookOpen,
-  FileText,
-  Landmark,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  HelpCircle,
-  Infinity,
-  BadgeInfo,
-  BookOpenCheck
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { useTheme } from '@/lib/theme-context';
+  MessageSquare,
+  Users,
+  BarChart2,
+  Settings,
+  LogOut,
+  Layers,
+  Shield
+} from "lucide-react";
 
 export const Sidebar = () => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const [collapsed, setCollapsed] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    myLearning: false,
-    resources: false
-  });
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Main navigation items
-  const mainNavItems = [
-    {
-      title: 'Home',
-      icon: <Home size={20} />,
-      path: '/',
-    },
-    {
-      title: 'Discussion Forum',
-      icon: <MessageSquare size={20} />,
-      path: '/forum',
-      badge: { type: 'new', content: 'NEW' },
-      count: 5
-    },
-    {
-      title: 'Knowledge Library',
-      icon: <Library size={20} />,
-      path: '/library',
-    },
-    {
-      title: 'Study Guides',
-      icon: <BookOpen size={20} />,
-      path: '/study-guides',
-    },
-    {
-      title: 'Community',
-      icon: <Users size={20} />,
-      path: '/community',
-    },
-    {
-      title: 'Discord',
-      icon: <MessageSquare size={20} />,
-      path: '/discord',
-    },
-    {
-      title: 'Expert Q&A',
-      icon: <MessageSquare size={20} />,
-      path: '/expert-qa',
-    },
-    {
-      title: 'Disciplines',
-      icon: <Landmark size={20} />,
-      path: '/disciplines',
-    },
-    {
-      title: 'Events',
-      icon: <Calendar size={20} />,
-      path: '/events',
-      count: 2,
-      hasSubmenu: true
-    },
+  const navItems = [
+    { path: "/dashboard", icon: <Home size={20} />, label: "Dashboard" },
+    { path: "/library", icon: <BookOpen size={20} />, label: "Library" },
+    { path: "/forum", icon: <MessageSquare size={20} />, label: "Forum" },
+    { path: "/chat", icon: <Users size={20} />, label: "Chat" },
+    { path: "/analytics", icon: <BarChart2 size={20} />, label: "Analytics" },
+    { path: "/settings", icon: <Settings size={20} />, label: "Settings" },
   ];
-
-  // My Learning submenu items
-  const myLearningItems = [
-    {
-      title: 'Reading List',
-      icon: <FileText size={16} />,
-      path: '/reading-list',
-    },
-    {
-      title: 'Study Notes',
-      icon: <BookText size={16} />,
-      path: '/study-notes',
-    },
-    {
-      title: 'My Discussions',
-      icon: <MessageSquare size={16} />,
-      path: '/my-discussions',
-    },
-    {
-      title: 'Study Groups',
-      icon: <Users size={16} />,
-      path: '/study-groups',
-    },
-    {
-      title: 'Knowledge Map',
-      icon: <Library size={16} />,
-      path: '/knowledge-map',
-    },
-    {
-      title: 'Learning Analytics',
-      icon: <Infinity size={16} />,
-      path: '/learning-analytics',
-      badge: { type: 'new', content: 'NEW' }
-    },
-  ];
-
-  // Resources submenu items
-  const resourcesItems = [
-    {
-      title: 'Learning Guides',
-      icon: <BookOpenCheck size={16} />,
-      path: '/learning-guides',
-    },
-    {
-      title: 'Wiki',
-      icon: <HelpCircle size={16} />,
-      path: '/wiki',
-      hasEditIcon: true
-    },
-    {
-      title: 'Help Center',
-      icon: <HelpCircle size={16} />,
-      path: '/help-center',
-    },
-    {
-      title: 'New Research',
-      icon: <Infinity size={16} />,
-      path: '/new-research',
-      badge: { type: 'new', content: 'NEW' }
-    },
-    {
-      title: 'Academic Journals',
-      icon: <MessageSquare size={16} />,
-      path: '/academic-journals',
-    },
-    {
-      title: 'Book Reviews',
-      icon: <BookText size={16} />,
-      path: '/book-reviews',
-      hasEditIcon: true
-    },
-  ];
-
-  // Determine active, hover, and text colors based on theme
-  const activeClass = isDark 
-    ? 'bg-gray-800 text-white' 
-    : 'bg-gray-200 text-gray-900';
   
-  const hoverClass = isDark 
-    ? 'hover:bg-gray-800 hover:text-white' 
-    : 'hover:bg-gray-200 hover:text-gray-900';
-  
-  const textClass = isDark 
-    ? 'text-white' 
-    : 'text-gray-800';
-  
-  const mutedTextClass = isDark 
-    ? 'text-gray-300' 
-    : 'text-gray-700';
+  // Show admin link only for admin users
+  const isAdmin = user?.role === 'admin';
 
   return (
-    <div 
-      className={`sidebar transition-all duration-300 ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      <div className="flex items-center justify-between p-4">
-        {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className={`${isDark ? 'bg-white' : 'bg-gray-800'} w-6 h-6 rounded flex items-center justify-center`}>
-              <Infinity size={16} className={isDark ? 'text-black' : 'text-white'} />
-            </div>
-            <h2 className={`text-xl font-bold ${textClass}`}>Polymath</h2>
-          </div>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={`${
-            collapsed ? 'mx-auto' : ''
-          } p-1.5 rounded-md ${isDark ? 'bg-gray-800 text-white hover:text-white' : 'bg-gray-200 text-gray-800 hover:text-gray-900'} transition-colors`}
-        >
-          {collapsed ? <Menu size={18} /> : <X size={18} />}
-        </button>
+    <div className="sidebar w-64 bg-background border-r border-border h-screen flex flex-col flex-shrink-0">
+      <div className="p-4 border-b border-border flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/logo.svg" alt="Polymath Logo" className="h-8 w-8" />
+          <span className="font-bold text-xl">Polymath</span>
+        </Link>
       </div>
-
-      <div className="flex-1 overflow-y-auto py-2">
-        <nav className="space-y-1 px-2">
-          {/* Main Navigation Items */}
-          {mainNavItems.map((item) => (
-            <Link
-              key={item.title}
-              to={item.path}
-              className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
-                isActive(item.path)
-                  ? activeClass
-                  : `${textClass} ${hoverClass}`
-              }`}
-            >
-              <div className={mutedTextClass}>
-                {item.icon}
-              </div>
-              {!collapsed && (
-                <span className={`${textClass} text-sm font-medium flex-1 text-left`}>
-                  {item.title}
-                </span>
-              )}
-              
-              {!collapsed && (
-                <div className="flex items-center space-x-1">
-                  {item.badge && (
-                    <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded">
-                      {item.badge.content}
-                    </span>
-                  )}
-                  {item.count && (
-                    <span className="bg-blue-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                      {item.count}
-                    </span>
-                  )}
-                  {item.hasSubmenu && <ChevronRight size={16} />}
-                </div>
-              )}
-            </Link>
+      
+      <nav className="flex-1 p-4 overflow-auto">
+        <ul className="space-y-1">
+          {navItems.map((item, index) => (
+            <li key={item.path} className={`animate-fade-in delay-${index * 100}`}>
+              <NavLink to={item.path} className="block">
+                <Button 
+                  variant={isActive(item.path) ? "default" : "ghost"} 
+                  className="w-full justify-start"
+                >
+                  {item.icon}
+                  <span className="ml-2">{item.label}</span>
+                </Button>
+              </NavLink>
+            </li>
           ))}
-
-          {/* My Learning Section */}
-          <div>
-            <button
-              onClick={() => toggleSection('myLearning')}
-              className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
-                collapsed ? 'justify-center' : 'justify-between'
-              } ${textClass} ${hoverClass}`}
-            >
-              <div className="flex items-center gap-3">
-                <BookText size={20} className={mutedTextClass} />
-                {!collapsed && (
-                  <span className={`${textClass} text-sm font-medium flex-1 text-left`}>My Learning</span>
-                )}
-              </div>
-              {!collapsed && (
-                <ChevronDown size={16} className={`${isDark ? 'text-gray-400' : 'text-gray-600'} ${expandedSections.myLearning ? 'transform rotate-180' : ''}`} />
-              )}
-            </button>
-            
-            {!collapsed && expandedSections.myLearning && (
-              <div className="ml-2 space-y-1 mt-1">
-                {myLearningItems.map((item) => (
-                  <Link
-                    key={item.title}
-                    to={item.path}
-                    className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
-                      isActive(item.path)
-                        ? activeClass
-                        : `${textClass} ${hoverClass}`
-                    }`}
-                  >
-                    <div className={mutedTextClass}>
-                      {item.icon}
-                    </div>
-                    <span className={`${textClass} text-xs font-medium flex-1 text-left`}>
-                      {item.title}
-                    </span>
-                    
-                    {item.badge && (
-                      <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded">
-                        {item.badge.content}
-                      </span>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            )}
+          
+          {isAdmin && (
+            <li className="animate-fade-in" style={{ animationDelay: `${navItems.length * 100}ms` }}>
+              <NavLink to="/admin" className="block">
+                <Button 
+                  variant={isActive("/admin") ? "default" : "ghost"} 
+                  className="w-full justify-start"
+                >
+                  <Shield size={20} />
+                  <span className="ml-2">Admin Panel</span>
+                  <span className="ml-auto bg-primary/20 text-primary text-xs px-1.5 rounded-full">
+                    New
+                  </span>
+                </Button>
+              </NavLink>
+            </li>
+          )}
+        </ul>
+      </nav>
+      
+      <div className="p-4 border-t border-border">
+        <div className="flex items-center">
+          <div className="text-sm">
+            <p className="font-medium">Level {user?.level || 1}</p>
+            <div className="h-1.5 w-32 bg-gray-200 dark:bg-gray-700 rounded-full mt-1.5 overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full" 
+                style={{ width: "45%" }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">550 XP to next level</p>
           </div>
-
-          {/* Resources Section */}
-          <div>
-            <button
-              onClick={() => toggleSection('resources')}
-              className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
-                collapsed ? 'justify-center' : 'justify-between'
-              } ${textClass} ${hoverClass}`}
-            >
-              <div className="flex items-center gap-3">
-                <Library size={20} className={mutedTextClass} />
-                {!collapsed && (
-                  <span className={`${textClass} text-sm font-medium flex-1 text-left`}>Resources</span>
-                )}
-              </div>
-              {!collapsed && (
-                <ChevronDown size={16} className={`${isDark ? 'text-gray-400' : 'text-gray-600'} ${expandedSections.resources ? 'transform rotate-180' : ''}`} />
-              )}
-            </button>
-            
-            {!collapsed && expandedSections.resources && (
-              <div className="ml-2 space-y-1 mt-1">
-                {resourcesItems.map((item) => (
-                  <Link
-                    key={item.title}
-                    to={item.path}
-                    className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
-                      isActive(item.path)
-                        ? activeClass
-                        : `${textClass} ${hoverClass}`
-                    }`}
-                  >
-                    <div className={mutedTextClass}>
-                      {item.icon}
-                    </div>
-                    <span className={`${textClass} text-xs font-medium flex-1 text-left`}>
-                      {item.title}
-                    </span>
-                    
-                    <div className="flex items-center space-x-1">
-                      {item.badge && (
-                        <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded">
-                          {item.badge.content}
-                        </span>
-                      )}
-                      {item.hasEditIcon && (
-                        <span className={isDark ? "text-gray-400" : "text-gray-600"}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                          </svg>
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </nav>
-      </div>
-
-      <div className="p-4">
-        {!collapsed ? (
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-200'} rounded-md p-3 text-sm ${textClass}`}>
-            <div className={`font-medium ${textClass} mb-1`}>Pro Tip</div>
-            <p>Press <kbd className={`${isDark ? 'bg-gray-700' : 'bg-gray-300'} px-1.5 py-0.5 rounded`}>⌘</kbd> + <kbd className={`${isDark ? 'bg-gray-700' : 'bg-gray-300'} px-1.5 py-0.5 rounded`}>K</kbd> to search</p>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <BookText size={20} className={textClass} />
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

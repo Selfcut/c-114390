@@ -1,647 +1,655 @@
-import React, { useState } from "react";
-import { PromoBar } from "../components/PromoBar";
-import { Sidebar } from "../components/Sidebar";
-import Header from "../components/Header";
+
+import { useState } from "react";
+import { PageLayout } from "../components/layouts/PageLayout";
+import { useAuth } from "@/lib/auth-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   User, 
   Bell, 
+  Eye, 
   Shield, 
-  Palette, 
-  MessageSquare, 
-  Mail, 
-  LogOut,
-  Upload,
-  Trash2,
-  BellOff
+  Key, 
+  Upload, 
+  Trash,
+  Save,
+  X,
+  Ghost
 } from "lucide-react";
-import { useTheme, Theme } from "@/lib/theme-context";
-import { supabase } from "../integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Settings = () => {
-  const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
-  
-  // User settings state
-  const [userSettings, setUserSettings] = useState({
-    name: "Alex Morgan",
-    username: "alexmorgan",
-    email: "alex@example.com",
-    bio: "Philosopher, mathematician, and science enthusiast. Exploring the intersection of quantum physics and consciousness.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-    coverImage: "/lovable-uploads/739ab3ed-442e-42fb-9219-25ee697b73ba.png",
-    notifications: {
-      email: true,
-      push: true,
-      mentions: true,
-      replies: true,
-      messages: true,
-      newsletters: false,
-      doNotDisturb: false,
-      ghostMode: false
-    },
-    privacy: {
-      profileVisibility: "public",
-      activityVisibility: "followers",
-      allowMessages: "anyone",
-      showOnlineStatus: true,
-      allowTagging: true
-    },
-    preferences: {
-      contentLanguage: "english",
-      emailDigest: "weekly",
-      contentFilters: "moderate"
-    }
+  const { user, updateProfile, updateUserStatus, toggleGhostMode } = useAuth();
+  const [activeTab, setActiveTab] = useState("profile");
+  const [profileForm, setProfileForm] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    bio: "",
+    avatar: user?.avatar || "",
+    coverImage: "",
+    fieldOfStudy: [],
   });
-  
-  // Handle form changes
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setUserSettings(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  // Handle notification toggle
-  const handleNotificationToggle = (key: string) => {
-    setUserSettings(prev => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [key]: !prev.notifications[key as keyof typeof prev.notifications]
-      }
-    }));
-  };
-  
-  // Handle privacy setting changes
-  const handlePrivacyChange = (key: string, value: string) => {
-    setUserSettings(prev => ({
-      ...prev,
-      privacy: {
-        ...prev.privacy,
-        [key]: value
-      }
-    }));
-  };
-  
-  // Handle privacy toggle
-  const handlePrivacyToggle = (key: string) => {
-    setUserSettings(prev => ({
-      ...prev,
-      privacy: {
-        ...prev.privacy,
-        [key]: !prev.privacy[key as keyof typeof prev.privacy]
-      }
-    }));
-  };
-  
-  // Handle preferences change
-  const handlePreferenceChange = (key: string, value: string) => {
-    setUserSettings(prev => ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        [key]: value
-      }
-    }));
-  };
-  
-  // Handle theme change
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-  };
-  
-  // Handle save settings
-  const handleSaveSettings = () => {
-    // In a real app, this would send data to Supabase
-    toast({
-      title: "Settings saved",
-      description: "Your settings have been updated successfully.",
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Notification settings state
+  const [notificationSettings, setNotificationSettings] = useState({
+    desktopNotifications: user?.notificationSettings?.desktopNotifications ?? true,
+    soundNotifications: user?.notificationSettings?.soundNotifications ?? true,
+    emailNotifications: user?.notificationSettings?.emailNotifications ?? true,
+    mentionNotifications: true,
+    newMessageNotifications: true,
+    forumNotifications: true,
+    systemNotifications: true,
+  });
+
+  // Privacy settings state
+  const [privacySettings, setPrivacySettings] = useState({
+    showOnlineStatus: true,
+    showLastSeen: true,
+    allowDirectMessages: true,
+    showReadingActivity: true,
+    allowProfileViews: true,
+  });
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Update profile in Supabase and local state
+    await updateProfile({
+      name: profileForm.name,
+      avatar: profileForm.avatar,
     });
   };
-  
-  // Handle avatar upload
-  const handleAvatarUpload = () => {
-    // In a real app, this would open a file picker and upload to Supabase storage
-    toast({
-      title: "Upload feature",
-      description: "Avatar upload functionality would be implemented here.",
+
+  const handleNotificationSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Update notification settings
+    await updateProfile({
+      notificationSettings: {
+        desktopNotifications: notificationSettings.desktopNotifications,
+        soundNotifications: notificationSettings.soundNotifications,
+        emailNotifications: notificationSettings.emailNotifications,
+      },
     });
   };
-  
-  // Handle cover image upload
-  const handleCoverUpload = () => {
-    // In a real app, this would open a file picker and upload to Supabase storage
-    toast({
-      title: "Upload feature",
-      description: "Cover image upload functionality would be implemented here.",
-    });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+
+    try {
+      // In a real app, you would upload the file to Supabase storage
+      // For now, we'll simulate this with a timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create a data URL from the file for preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfileForm({
+          ...profileForm,
+          avatar: e.target?.result as string,
+        });
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setIsUploading(false);
+    }
   };
-  
-  // Handle logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-    // Redirect would happen via the auth state listener in App.tsx
-  };
-  
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <PromoBar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <div className="flex-1 overflow-auto">
-            <main className="container py-8 px-4 md:px-6 lg:px-8">
-              <h1 className="text-3xl font-bold mb-6">Settings</h1>
-              
-              <Tabs defaultValue="profile" className="space-y-6">
-                <TabsList className="grid grid-cols-5 mb-4">
-                  <TabsTrigger value="profile" className="flex items-center gap-2">
-                    <User size={16} />
-                    <span className="hidden md:inline">Profile</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="notifications" className="flex items-center gap-2">
-                    <Bell size={16} />
-                    <span className="hidden md:inline">Notifications</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="privacy" className="flex items-center gap-2">
-                    <Shield size={16} />
-                    <span className="hidden md:inline">Privacy</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="appearance" className="flex items-center gap-2">
-                    <Palette size={16} />
-                    <span className="hidden md:inline">Appearance</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="account" className="flex items-center gap-2">
-                    <User size={16} />
-                    <span className="hidden md:inline">Account</span>
-                  </TabsTrigger>
-                </TabsList>
+    <PageLayout>
+      <div className="py-8 px-4 md:px-8 lg:px-12 max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
+          {/* Sidebar */}
+          <div className="flex flex-col space-y-1">
+            <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
+              <TabsList className="flex flex-col h-auto bg-transparent space-y-1">
+                <TabsTrigger 
+                  value="profile" 
+                  className="w-full justify-start data-[state=active]:bg-accent data-[state=active]:text-accent-foreground hover:bg-accent/50"
+                >
+                  <User size={16} className="mr-2" />
+                  Profile
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="notifications" 
+                  className="w-full justify-start data-[state=active]:bg-accent data-[state=active]:text-accent-foreground hover:bg-accent/50"
+                >
+                  <Bell size={16} className="mr-2" />
+                  Notifications
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="privacy" 
+                  className="w-full justify-start data-[state=active]:bg-accent data-[state=active]:text-accent-foreground hover:bg-accent/50"
+                >
+                  <Eye size={16} className="mr-2" />
+                  Privacy
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="security" 
+                  className="w-full justify-start data-[state=active]:bg-accent data-[state=active]:text-accent-foreground hover:bg-accent/50"
+                >
+                  <Shield size={16} className="mr-2" />
+                  Security
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          
+          {/* Content */}
+          <div>
+            <TabsContent value="profile" className="mt-0 space-y-6">
+              <form onSubmit={handleProfileSubmit}>
+                {/* Profile Picture */}
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Profile Picture</CardTitle>
+                    <CardDescription>
+                      Update your profile picture
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage src={profileForm.avatar} />
+                      <AvatarFallback>{profileForm.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="relative"
+                          disabled={isUploading}
+                        >
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            onChange={handleFileUpload}
+                          />
+                          <Upload size={14} className="mr-1" />
+                          {isUploading ? "Uploading..." : "Upload Image"}
+                        </Button>
+                        {profileForm.avatar && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setProfileForm({ ...profileForm, avatar: "" })}
+                          >
+                            <Trash size={14} className="mr-1" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Recommended size: 256x256px. Max size: 2MB.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
                 
-                {/* Profile Settings */}
-                <TabsContent value="profile">
-                  <div className="grid gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Profile Information</CardTitle>
-                        <CardDescription>
-                          Update your personal information and how it appears to others.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="flex flex-col md:flex-row gap-6">
-                          <div className="md:w-1/3">
-                            <Label htmlFor="avatar">Profile Picture</Label>
-                            <div className="mt-2 flex flex-col items-center md:items-start gap-4">
-                              <Avatar className="h-24 w-24">
-                                <AvatarImage src={userSettings.avatar} alt="Profile picture" />
-                                <AvatarFallback>{userSettings.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={handleAvatarUpload}>
-                                  <Upload size={14} className="mr-1" />
-                                  Upload
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                                  <Trash2 size={14} className="mr-1" />
-                                  Remove
-                                </Button>
-                              </div>
-                            </div>
+                {/* Profile Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Profile Information</CardTitle>
+                    <CardDescription>
+                      Update your personal information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Display Name</Label>
+                      <Input
+                        id="name"
+                        value={profileForm.name}
+                        onChange={(e) =>
+                          setProfileForm({ ...profileForm, name: e.target.value })
+                        }
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profileForm.email}
+                        disabled
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        To change your email, please go to security settings.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        placeholder="Tell us about yourself..."
+                        value={profileForm.bio}
+                        onChange={(e) =>
+                          setProfileForm({ ...profileForm, bio: e.target.value })
+                        }
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="field">Primary Field of Study</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a field" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="philosophy">Philosophy</SelectItem>
+                          <SelectItem value="physics">Physics</SelectItem>
+                          <SelectItem value="mathematics">Mathematics</SelectItem>
+                          <SelectItem value="computer-science">Computer Science</SelectItem>
+                          <SelectItem value="biology">Biology</SelectItem>
+                          <SelectItem value="psychology">Psychology</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button variant="outline" type="button">Cancel</Button>
+                    <Button type="submit">Save Changes</Button>
+                  </CardFooter>
+                </Card>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="notifications" className="mt-0">
+              <form onSubmit={handleNotificationSettingsSubmit}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Notification Settings</CardTitle>
+                    <CardDescription>
+                      Manage how and when you receive notifications
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Notification Methods</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="desktop-notifications">Desktop Notifications</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Receive notifications on your desktop when you're using the app
+                            </p>
                           </div>
-                          <div className="md:w-1/3">
-                            <Label htmlFor="coverImage">Cover Image</Label>
-                            <div className="mt-2 flex flex-col items-center md:items-start gap-4">
-                              <div 
-                                className="w-full h-32 rounded bg-cover bg-center relative"
-                                style={{ backgroundImage: `url(${userSettings.coverImage})` }}
-                              ></div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={handleCoverUpload}>
-                                  <Upload size={14} className="mr-1" />
-                                  Upload
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                                  <Trash2 size={14} className="mr-1" />
-                                  Remove
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
+                          <Switch
+                            id="desktop-notifications"
+                            checked={notificationSettings.desktopNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                desktopNotifications: checked,
+                              })
+                            }
+                          />
                         </div>
-                        
-                        <div className="grid gap-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="name">Full Name</Label>
-                              <Input 
-                                id="name"
-                                name="name" 
-                                value={userSettings.name}
-                                onChange={handleProfileChange}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="username">Username</Label>
-                              <Input 
-                                id="username"
-                                name="username" 
-                                value={userSettings.username}
-                                onChange={handleProfileChange}
-                              />
-                            </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="sound-notifications">Sound Notifications</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Play a sound when you receive new notifications
+                            </p>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input 
-                              id="email"
-                              name="email"
-                              type="email" 
-                              value={userSettings.email}
-                              onChange={handleProfileChange}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="bio">Bio</Label>
-                            <Textarea 
-                              id="bio"
-                              name="bio" 
-                              rows={4}
-                              value={userSettings.bio}
-                              onChange={handleProfileChange}
-                              placeholder="Tell others about yourself..."
-                            />
-                          </div>
+                          <Switch
+                            id="sound-notifications"
+                            checked={notificationSettings.soundNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                soundNotifications: checked,
+                              })
+                            }
+                          />
                         </div>
-                        
-                        <div className="flex justify-end">
-                          <Button onClick={handleSaveSettings}>Save Changes</Button>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="email-notifications">Email Notifications</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Receive important updates via email
+                            </p>
+                          </div>
+                          <Switch
+                            id="email-notifications"
+                            checked={notificationSettings.emailNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                emailNotifications: checked,
+                              })
+                            }
+                          />
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Notification Types</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="mention-notifications">Mentions</Label>
+                            <p className="text-sm text-muted-foreground">
+                              When someone mentions you in a comment or post
+                            </p>
+                          </div>
+                          <Switch
+                            id="mention-notifications"
+                            checked={notificationSettings.mentionNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                mentionNotifications: checked,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="message-notifications">Direct Messages</Label>
+                            <p className="text-sm text-muted-foreground">
+                              When you receive a new direct message
+                            </p>
+                          </div>
+                          <Switch
+                            id="message-notifications"
+                            checked={notificationSettings.newMessageNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                newMessageNotifications: checked,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="forum-notifications">Forum Activity</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Replies to your discussions and topics you follow
+                            </p>
+                          </div>
+                          <Switch
+                            id="forum-notifications"
+                            checked={notificationSettings.forumNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                forumNotifications: checked,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="system-notifications">System Updates</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Important announcements and system updates
+                            </p>
+                          </div>
+                          <Switch
+                            id="system-notifications"
+                            checked={notificationSettings.systemNotifications}
+                            onCheckedChange={(checked) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                systemNotifications: checked,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Do Not Disturb</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="do-not-disturb">Do Not Disturb Mode</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Temporarily mute all notifications and sounds
+                            </p>
+                          </div>
+                          <Switch
+                            id="do-not-disturb"
+                            checked={user?.status === 'do-not-disturb'}
+                            onCheckedChange={(checked) =>
+                              updateUserStatus(checked ? 'do-not-disturb' : 'online')
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button variant="outline" type="button">Reset to Default</Button>
+                    <Button type="submit">Save Changes</Button>
+                  </CardFooter>
+                </Card>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="privacy" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Privacy Settings</CardTitle>
+                  <CardDescription>
+                    Control who can see your information and activity
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Profile Visibility</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="online-status">Online Status</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Show others when you're online
+                          </p>
+                        </div>
+                        <Switch
+                          id="online-status"
+                          checked={privacySettings.showOnlineStatus}
+                          onCheckedChange={(checked) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showOnlineStatus: checked,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="last-seen">Last Seen</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Show when you were last active
+                          </p>
+                        </div>
+                        <Switch
+                          id="last-seen"
+                          checked={privacySettings.showLastSeen}
+                          onCheckedChange={(checked) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showLastSeen: checked,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="reading-activity">Reading Activity</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Show others what content you're currently reading
+                          </p>
+                        </div>
+                        <Switch
+                          id="reading-activity"
+                          checked={privacySettings.showReadingActivity}
+                          onCheckedChange={(checked) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showReadingActivity: checked,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
                   </div>
-                </TabsContent>
-                
-                {/* Notification Settings */}
-                <TabsContent value="notifications">
-                  <div className="grid gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Notification Preferences</CardTitle>
-                        <CardDescription>
-                          Configure how and when you want to be notified.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Email Notifications</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Receive email notifications about activity relevant to you
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.email}
-                              onCheckedChange={() => handleNotificationToggle('email')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Push Notifications</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Receive push notifications on your device
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.push}
-                              onCheckedChange={() => handleNotificationToggle('push')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Mentions</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Notify when someone mentions you in a discussion
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.mentions}
-                              onCheckedChange={() => handleNotificationToggle('mentions')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Replies</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Notify when someone replies to your posts
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.replies}
-                              onCheckedChange={() => handleNotificationToggle('replies')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Direct Messages</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Notify when you receive new messages
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.messages}
-                              onCheckedChange={() => handleNotificationToggle('messages')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Do Not Disturb</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Temporarily mute all notification sounds and alerts
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.doNotDisturb}
-                              onCheckedChange={() => handleNotificationToggle('doNotDisturb')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Ghost Mode</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Hide your online status while browsing
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.notifications.ghostMode}
-                              onCheckedChange={() => handleNotificationToggle('ghostMode')}
-                            />
-                          </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Communication</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="direct-messages">Direct Messages</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow others to send you direct messages
+                          </p>
                         </div>
-                        
-                        <div className="flex justify-end">
-                          <Button onClick={handleSaveSettings}>Save Changes</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        <Select defaultValue="everyone">
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Everyone" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="everyone">Everyone</SelectItem>
+                            <SelectItem value="following">Following Only</SelectItem>
+                            <SelectItem value="nobody">Nobody</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                </TabsContent>
-                
-                {/* Privacy Settings */}
-                <TabsContent value="privacy">
-                  <div className="grid gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Privacy Settings</CardTitle>
-                        <CardDescription>
-                          Control who can see your content and how people can interact with you.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="profileVisibility">Profile Visibility</Label>
-                            <Select 
-                              value={userSettings.privacy.profileVisibility}
-                              onValueChange={(value) => handlePrivacyChange('profileVisibility', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select who can see your profile" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="public">Public</SelectItem>
-                                <SelectItem value="followers">Followers Only</SelectItem>
-                                <SelectItem value="private">Private</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="activityVisibility">Activity Visibility</Label>
-                            <Select 
-                              value={userSettings.privacy.activityVisibility}
-                              onValueChange={(value) => handlePrivacyChange('activityVisibility', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select who can see your activity" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="public">Public</SelectItem>
-                                <SelectItem value="followers">Followers Only</SelectItem>
-                                <SelectItem value="private">Private</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="allowMessages">Who can message you</Label>
-                            <Select 
-                              value={userSettings.privacy.allowMessages}
-                              onValueChange={(value) => handlePrivacyChange('allowMessages', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select who can message you" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="anyone">Anyone</SelectItem>
-                                <SelectItem value="followers">Followers Only</SelectItem>
-                                <SelectItem value="none">No One</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Show Online Status</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Let others see when you're active on the platform
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.privacy.showOnlineStatus}
-                              onCheckedChange={() => handlePrivacyToggle('showOnlineStatus')}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>Allow Tagging</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Allow others to tag you in posts and comments
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={userSettings.privacy.allowTagging}
-                              onCheckedChange={() => handlePrivacyToggle('allowTagging')}
-                            />
-                          </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Ghost Mode</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="ghost-mode">Invisible Browsing</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Browse without appearing in 'Currently Online' lists
+                          </p>
                         </div>
-                        
-                        <div className="flex justify-end">
-                          <Button onClick={handleSaveSettings}>Save Changes</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        <Switch
+                          id="ghost-mode"
+                          checked={user?.isGhostMode}
+                          onCheckedChange={() => toggleGhostMode()}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </TabsContent>
-                
-                {/* Appearance Settings */}
-                <TabsContent value="appearance">
-                  <div className="grid gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Appearance Settings</CardTitle>
-                        <CardDescription>
-                          Customize how the application looks for you.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="theme">Theme</Label>
-                            <Select 
-                              value={theme}
-                              onValueChange={handleThemeChange}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a theme" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="system">System</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="contentLanguage">Content Language</Label>
-                            <Select 
-                              value={userSettings.preferences.contentLanguage}
-                              onValueChange={(value) => handlePreferenceChange('contentLanguage', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select your preferred language" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="english">English</SelectItem>
-                                <SelectItem value="spanish">Spanish</SelectItem>
-                                <SelectItem value="french">French</SelectItem>
-                                <SelectItem value="german">German</SelectItem>
-                                <SelectItem value="chinese">Chinese</SelectItem>
-                                <SelectItem value="japanese">Japanese</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-end">
-                          <Button onClick={handleSaveSettings}>Save Changes</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+                <CardFooter>
+                  <Button>Save Changes</Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="security" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Security Settings</CardTitle>
+                  <CardDescription>
+                    Manage your account security and login options
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Change Password</h3>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="current-password">Current Password</Label>
+                        <Input id="current-password" type="password" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password">New Password</Label>
+                        <Input id="new-password" type="password" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                        <Input id="confirm-password" type="password" />
+                      </div>
+                      <Button type="button">Update Password</Button>
+                    </div>
                   </div>
-                </TabsContent>
-                
-                {/* Account Settings */}
-                <TabsContent value="account">
-                  <div className="grid gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Account Settings</CardTitle>
-                        <CardDescription>
-                          Manage your account details and subscription.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Change Password</Label>
-                            <div className="grid gap-2">
-                              <Input type="password" placeholder="Current password" />
-                              <Input type="password" placeholder="New password" />
-                              <Input type="password" placeholder="Confirm new password" />
-                              <Button className="w-full sm:w-auto">Change Password</Button>
-                            </div>
-                          </div>
-                          
-                          <div className="pt-4 border-t">
-                            <Label className="text-base font-medium">Subscription</Label>
-                            <div className="mt-3 p-4 rounded-lg bg-primary/10 border border-primary/20">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h4 className="font-medium">Free Plan</h4>
-                                  <p className="text-sm text-muted-foreground">Basic features with limitations</p>
-                                </div>
-                                <Button>Upgrade to Premium</Button>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="pt-4 border-t">
-                            <Label className="text-base font-medium text-destructive">Danger Zone</Label>
-                            <div className="mt-3 space-y-4">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                                <div>
-                                  <h4 className="font-medium">Delete Account</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    Permanently delete your account and all your data. This action cannot be undone.
-                                  </p>
-                                </div>
-                                <Button variant="destructive" size="sm">
-                                  Delete Account
-                                </Button>
-                              </div>
-                              
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg bg-muted">
-                                <div>
-                                  <h4 className="font-medium">Log Out</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    Log out of your account on this device.
-                                  </p>
-                                </div>
-                                <Button variant="outline" size="sm" onClick={handleLogout}>
-                                  <LogOut size={16} className="mr-2" />
-                                  Log Out
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Two-Factor Authentication</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="two-factor">Two-Factor Authentication</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Add an extra layer of security to your account
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
+                        <Switch id="two-factor" disabled />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Two-factor authentication is coming soon. Stay tuned for updates.
+                      </p>
+                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </main>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Session Management</h3>
+                    <p className="text-sm text-muted-foreground">
+                      You're currently signed in on this device. To sign out of other devices, click below.
+                    </p>
+                    <Button variant="outline">
+                      Sign Out From All Other Devices
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

@@ -1,66 +1,52 @@
 
-/* CSS Variables */
 :root {
-  /* Base colors */
-  --promo: 265 65% 60%;
-  --promo-foreground: 0 0% 100%;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Custom Colors */
+  --primary-rgb: 123, 104, 238; /* Purple */
+  --primary-light: rgb(143, 124, 245);
+  --primary-dark: rgb(103, 84, 218);
   
-  /* Background colors */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  /* Animation Speeds */
+  --transition-slow: 0.5s;
+  --transition-medium: 0.3s;
+  --transition-fast: 0.15s;
+
+  /* Z-indices */
+  --z-modal: 100;
+  --z-popover: 50;
+  --z-tooltip: 40;
+  --z-sticky: 30;
+  --z-fixed: 20;
+  --z-elevated: 10;
+  --z-base: 1;
+  --z-below: -1;
   
-  /* Card colors */
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
+  /* Sidebar */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 64px;
+
+  /* Promo Bar */
+  --promo: 246 100% 59%;
+  --promo-foreground: 210 20% 98%;
   
-  /* Popover colors */
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  
-  /* Primary colors - Purple theme */
-  --primary: 267 37% 51%;  /* #6E59A5 */
-  --primary-foreground: 0 0% 100%;
-  
-  /* Secondary colors */
-  --secondary: 267 45% 55%;  /* #7E69B5 */
-  --secondary-foreground: 0 0% 98%;
-  
-  /* Muted colors */
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  
-  /* Accent colors */
-  --accent: 267 37% 51%;
-  --accent-foreground: 0 0% 98%;
-  
-  /* Destructive colors */
-  --destructive: 0 62.8% 50.6%;
-  --destructive-foreground: 0 0% 98%;
-  
-  /* Border colors */
-  --border: 240 3.7% 15.9%;
-  
-  /* Input colors */
-  --input: 240 3.7% 15.9%;
-  
-  /* Ring color */
-  --ring: 265 65% 60%;
-  
-  /* Radius */
-  --radius: 0.5rem;
-  
-  /* Sidebar colors */
-  --sidebar-background: 240 10% 9%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 240 3.7% 20.9%;
-  
-  /* Custom colors */
-  --success: 142 69% 58%;
-  --success-foreground: 0 0% 98%;
-  
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 98%;
-  
-  --info: 217 91% 60%;
-  --info-foreground: 0 0% 98%;
+  /* Spaces */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+}
+
+/* Dark Theme Variables */
+.dark-theme {
+  --sidebar-background: 240 17% 14%;
+  --sidebar-border: 240 17% 18%;
+}
+
+/* Light Theme Variables */
+.light-theme {
+  --sidebar-background: 0 0% 96%;
+  --sidebar-border: 240 5% 90%;
 }

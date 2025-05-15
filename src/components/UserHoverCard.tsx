@@ -6,126 +6,140 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Brain, Award, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export interface UserHoverCardProps {
-  children: React.ReactNode;
+interface UserHoverCardProps {
   username: string;
   avatar?: string;
-  avatarUrl?: string;
-  status?: "online" | "offline" | "away" | "do_not_disturb";
   displayName: string;
-  isOnline?: boolean;
+  status?: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
   bio?: string;
-  joinedDate?: string;
-  mutualFriends?: number;
-  mutualServers?: number;
+  joinDate?: string;
+  level?: number;
+  iq?: number;
+  badges?: { id: string; name: string }[];
+  fieldOfStudy?: string[];
+  children: React.ReactNode;
 }
 
-export const UserHoverCard = ({ 
-  children, 
-  username, 
+export function UserHoverCard({
+  username,
   avatar,
-  avatarUrl,
-  status = "offline",
   displayName,
-  isOnline = false,
-  bio = "No bio set",
-  joinedDate = "Recently joined",
-  mutualFriends = 0,
-  mutualServers = 0
-}: UserHoverCardProps) => {
-  // Use avatarUrl as a fallback if avatar is not provided
-  const avatarSrc = avatar || avatarUrl;
-  
-  // If isOnline is true and status is not explicitly set, use "online"
-  const effectiveStatus = isOnline && status === "offline" ? "online" : status;
-
-  // Function to determine the color of the status indicator
-  const getStatusColor = (status: "online" | "offline" | "away" | "do_not_disturb") => {
+  status = "offline",
+  bio = "Polymath member",
+  joinDate = "January 2025",
+  level = 1,
+  iq = 100,
+  badges = [],
+  fieldOfStudy = [],
+  children,
+}: UserHoverCardProps) {
+  // Generate status color based on status
+  const getStatusColor = () => {
     switch (status) {
       case "online":
         return "bg-green-500";
       case "away":
         return "bg-yellow-500";
-      case "do_not_disturb":
+      case "do-not-disturb":
         return "bg-red-500";
+      case "invisible":
+      case "offline":
       default:
         return "bg-gray-500";
     }
   };
 
+  const getStatusText = () => {
+    if (status === "do-not-disturb") return "Do Not Disturb";
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <div className="cursor-pointer">
-          {children}
-        </div>
+        <div>{children}</div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 p-0">
-        <div className="bg-gradient-to-b from-primary/30 to-transparent h-12 rounded-t-md relative"></div>
-        <div className="px-4 pb-4 pt-10 relative">
-          <div className="absolute -top-6 left-4 flex items-end">
-            <div className="relative">
-              <Avatar className="h-16 w-16 border-4 border-background shadow-md">
-                <AvatarImage src={avatarSrc} />
-                <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span 
-                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(effectiveStatus)}`}
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 ml-3 mb-1">
-                <div className="flex flex-col">
-                  <h4 className="font-semibold text-base">{displayName}</h4>
-                  <span className="text-xs text-muted-foreground">@{username}</span>
+      <HoverCardContent className="w-80" align="start">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-16 w-16 rounded-md">
+              <AvatarImage src={avatar} />
+              <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <h4 className="font-semibold">{displayName}</h4>
+                <div className={`h-2 w-2 rounded-full ml-2 ${getStatusColor()}`} />
+                <span className="text-xs text-muted-foreground ml-1">
+                  {getStatusText()}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">@{username}</p>
+              <div className="flex gap-2">
+                <div className="flex items-center text-xs">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                    Level {level}
+                  </Badge>
                 </div>
-                <Badge 
-                  variant="outline" 
-                  className={`${effectiveStatus === "online" ? "bg-green-500/10 text-green-500 border-green-500/20" : 
-                    effectiveStatus === "away" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" : 
-                    effectiveStatus === "do_not_disturb" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                    "bg-gray-500/10 text-gray-500 border-gray-500/20"}`}
-                >
-                  {effectiveStatus.replace(/_/g, ' ')}
-                </Badge>
+                <div className="flex items-center text-xs">
+                  <Brain size={12} className="mr-1 text-amber-500" />
+                  <span className="text-muted-foreground">IQ {iq}</span>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="mt-6 mb-4">
-            <p className="text-sm text-muted-foreground">{bio}</p>
-            <p className="text-xs text-muted-foreground mt-2">Joined {joinedDate}</p>
-          </div>
-          
-          {(mutualFriends > 0 || mutualServers > 0) && (
-            <div className="border-t border-border pt-3 mt-3">
-              <div className="flex gap-4 text-xs text-muted-foreground">
-                {mutualFriends > 0 && (
-                  <span>{mutualFriends} mutual friend{mutualFriends !== 1 ? 's' : ''}</span>
-                )}
-                {mutualServers > 0 && (
-                  <span>{mutualServers} mutual server{mutualServers !== 1 ? 's' : ''}</span>
-                )}
-              </div>
+
+          {bio && <p className="text-sm">{bio}</p>}
+
+          {fieldOfStudy && fieldOfStudy.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {fieldOfStudy.map((field, i) => (
+                <Badge key={i} variant="secondary" className="text-xs">
+                  {field}
+                </Badge>
+              ))}
             </div>
           )}
-          
-          <div className="flex gap-2 mt-4">
-            <Button size="sm" className="w-full">
-              <MessageSquare size={14} className="mr-1" />
-              Message
+
+          {badges && badges.length > 0 && (
+            <div className="flex space-x-1">
+              {badges.slice(0, 3).map((badge) => (
+                <div
+                  key={badge.id}
+                  className="flex items-center bg-accent/50 rounded-full px-2 py-0.5"
+                >
+                  <Award size={12} className="mr-1 text-primary" />
+                  <span className="text-xs">{badge.name}</span>
+                </div>
+              ))}
+              {badges.length > 3 && (
+                <div className="flex items-center bg-accent/50 rounded-full px-2 py-0.5">
+                  <span className="text-xs">+{badges.length - 3} more</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center text-xs text-muted-foreground">
+            <Calendar size={14} className="mr-1" />
+            <span>Joined {joinDate}</span>
+          </div>
+
+          <div className="flex space-x-2">
+            <Button size="sm" asChild className="flex-1">
+              <Link to={`/profile/${username}`}>View Profile</Link>
             </Button>
-            <Button size="sm" variant="outline" className="w-full">
-              <UserPlus size={14} className="mr-1" />
-              Add Friend
+            <Button size="sm" variant="outline" asChild className="flex-1">
+              <Link to={`/chat?direct=${username}`}>Message</Link>
             </Button>
           </div>
         </div>
       </HoverCardContent>
     </HoverCard>
   );
-};
+}
