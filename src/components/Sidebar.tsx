@@ -233,7 +233,7 @@ export const Sidebar = () => {
             </Link>
           ))}
 
-          {/* My Learning Section - Fixed to remove purple background */}
+          {/* My Learning Section */}
           <div>
             <button
               onClick={() => toggleSection('myLearning')}
@@ -282,7 +282,7 @@ export const Sidebar = () => {
             )}
           </div>
 
-          {/* Resources Section - Fixed to remove purple background */}
+          {/* Resources Section */}
           <div>
             <button
               onClick={() => toggleSection('resources')}

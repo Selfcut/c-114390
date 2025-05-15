@@ -1,7 +1,7 @@
 
 :root {
   /* Base colors */
-  --promo: 210 100% 50%; /* Changed from purple to blue */
+  --promo: 210 100% 50%; /* Blue */
   --promo-foreground: 0 0% 100%;
   
   /* Background colors */
@@ -16,7 +16,7 @@
   --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
   
-  /* Primary colors - changed to blue */
+  /* Primary colors - blue */
   --primary: 210 100% 50%;
   --primary-foreground: 0 0% 100%;
   
