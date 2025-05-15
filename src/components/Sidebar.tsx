@@ -11,6 +11,7 @@ import {
   Quote,
   Brain,
   ShieldCheck,
+  GraduationCap
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -39,6 +40,11 @@ export const Sidebar = () => {
       icon: <BookOpen className="h-5 w-5" />,
       label: "Library",
       path: "/library",
+    },
+    {
+      icon: <GraduationCap className="h-5 w-5" />,
+      label: "Wiki",
+      path: "/wiki",
     },
     {
       icon: <Quote className="h-5 w-5" />,

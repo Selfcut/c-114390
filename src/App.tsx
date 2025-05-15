@@ -23,6 +23,7 @@ import Admin from './pages/Admin';
 import AI from './pages/AI';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
+import Wiki from './pages/Wiki';
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {
@@ -85,6 +86,11 @@ const Root = () => {
         <Route path="/library" element={
           <ProtectedRoute>
             <Library />
+          </ProtectedRoute>
+        } />
+        <Route path="/wiki" element={
+          <ProtectedRoute>
+            <Wiki />
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
