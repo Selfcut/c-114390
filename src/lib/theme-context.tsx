@@ -36,12 +36,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("theme", theme);
     
     // Apply theme to document
+    const root = document.documentElement;
     if (theme === "light") {
-      document.documentElement.classList.add("light-mode");
-      document.documentElement.classList.remove("dark-mode");
+      root.classList.add("light-mode");
+      root.classList.remove("dark-mode");
     } else {
-      document.documentElement.classList.add("dark-mode");
-      document.documentElement.classList.remove("light-mode");
+      root.classList.add("dark-mode");
+      root.classList.remove("light-mode");
     }
   }, [theme]);
 

@@ -49,7 +49,7 @@
   /* Radius */
   --radius: 0.5rem;
   
-  /* Sidebar colors */
+  /* Sidebar colors - IMPORTANT: Ensure sidebar is light in light mode */
   --sidebar-background: 210 40% 98%;
   --sidebar-foreground: 222.2 84% 4.9%;
   --sidebar-primary: 210 40% 96.1%;
@@ -64,6 +64,16 @@
 .light-mode .sidebar {
   background-color: hsl(var(--sidebar-background));
   color: hsl(var(--sidebar-foreground));
+}
+
+.light-mode .sidebar a,
+.light-mode .sidebar button {
+  color: hsl(var(--sidebar-foreground));
+}
+
+.light-mode .sidebar a:hover,
+.light-mode .sidebar button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .light-mode .knowledge-browser {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export const Header: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
   
   return (
     <header className="sticky top-0 z-40 w-full bg-background/90 backdrop-blur-sm border-b border-border">
@@ -68,7 +64,7 @@ export const Header: React.FC = () => {
         
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
-            {/* Add theme toggle before search button */}
+            {/* Theme toggle */}
             <ThemeToggle />
             
             <Button
