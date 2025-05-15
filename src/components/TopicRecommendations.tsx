@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { BookOpen, ArrowRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { polymathToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface Topic {
   id: string;
@@ -57,7 +56,7 @@ export const TopicRecommendations = ({ className }: TopicRecommendationsProps) =
 
   const handleTopicClick = (topic: Topic) => {
     // In a real app, this would navigate to the topic page
-    polymathToast({
+    toast({
       title: `Topic selected: ${topic.title}`,
       description: 'Starting your learning journey.'
     });
@@ -139,7 +138,7 @@ export const TopicRecommendations = ({ className }: TopicRecommendationsProps) =
         <button 
           className="w-full py-2 bg-[#6E59A5] hover:bg-[#7E69AB] text-white rounded transition-colors flex items-center justify-center gap-2"
           onClick={() => {
-            polymathToast({
+            toast({
               title: "More recommendations",
               description: "Loading personalized recommendations based on your interests."
             });

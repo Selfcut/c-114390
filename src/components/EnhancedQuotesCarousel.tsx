@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Quote, Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { polymathToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 interface QuoteItem {
   id: string;
@@ -137,7 +136,7 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
       const updated = [...likedQuotes, id];
       setLikedQuotes(updated);
       saveToLocalStorage(updated);
-      polymathToast({
+      toast({
         title: "Quote liked",
         description: "This quote has been added to your favorites."
       });

@@ -21,23 +21,40 @@ export function useProgressTracking(userId?: string | null) {
       
       if (userId) {
         try {
-          // Fetch from Supabase if we have a user ID
-          const { data, error } = await supabase
-            .from('user_progress')
-            .select('*')
-            .eq('user_id', userId);
-            
-          if (error) {
-            console.error('Error fetching progress:', error);
-            // Fallback to local storage
+          // Check if the user_progress table exists before trying to query it
+          const { data: tables, error: tablesError } = await supabase
+            .from('information_schema.tables')
+            .select('table_name')
+            .eq('table_name', 'user_progress')
+            .eq('table_schema', 'public');
+          
+          if (tablesError) {
+            console.error('Error checking for table:', tablesError);
             loadFromLocalStorage();
-          } else if (data) {
-            setProgressData(data.map(item => ({
-              topicId: item.topic_id,
-              progress: item.progress,
-              lastViewed: new Date(item.last_viewed),
-              completed: item.completed
-            })));
+            return;
+          }
+          
+          // If the table exists, query it
+          if (tables && tables.length > 0) {
+            const { data, error } = await supabase
+              .from('user_progress')
+              .select('*')
+              .eq('user_id', userId);
+              
+            if (error) {
+              console.error('Error fetching progress:', error);
+              loadFromLocalStorage();
+            } else if (data) {
+              setProgressData(data.map(item => ({
+                topicId: item.topic_id || '',
+                progress: item.progress || 0,
+                lastViewed: new Date(item.last_viewed || new Date()),
+                completed: item.completed || false
+              })));
+            }
+          } else {
+            console.log('Table user_progress does not exist, using localStorage');
+            loadFromLocalStorage();
           }
         } catch (error) {
           console.error('Error in progress tracking:', error);
@@ -95,7 +112,20 @@ export function useProgressTracking(userId?: string | null) {
     // Then persist to storage
     if (userId) {
       try {
-        // Store in Supabase if authenticated
+        // Check if the user_progress table exists before trying to update it
+        const { data: tables, error: tablesError } = await supabase
+          .from('information_schema.tables')
+          .select('table_name')
+          .eq('table_name', 'user_progress')
+          .eq('table_schema', 'public');
+        
+        if (tablesError || !tables || tables.length === 0) {
+          console.log('user_progress table does not exist, using localStorage');
+          saveToLocalStorage([...progressData, updatedItem]);
+          return;
+        }
+        
+        // Store in Supabase if authenticated and table exists
         const { error } = await supabase
           .from('user_progress')
           .upsert({

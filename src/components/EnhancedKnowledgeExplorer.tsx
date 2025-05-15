@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { Search, Filter, BookOpen, ChevronRight, Star, Clock, Users } from 'lucide-react';
-import { polymathToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
 interface CategoryOption {
@@ -191,7 +190,7 @@ export const EnhancedKnowledgeExplorer = ({ className, onItemSelect }: EnhancedK
       setIsLoading(false);
       
       // Show toast with results count
-      polymathToast({
+      toast({
         title: "Search complete",
         description: `Found ${filtered.length} resources matching your criteria.`
       });
@@ -214,7 +213,7 @@ export const EnhancedKnowledgeExplorer = ({ className, onItemSelect }: EnhancedK
     if (onItemSelect) {
       onItemSelect(item);
     } else {
-      polymathToast({
+      toast({
         title: "Resource selected",
         description: `You selected "${item.title}"`
       });

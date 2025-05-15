@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { MessageCircle, BookOpen, Heart, ArrowRight, User, Calendar } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { polymathToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 interface ActivityItem {
   id: string;
@@ -173,7 +172,7 @@ export const EnhancedCommunityActivity = ({ className }: EnhancedCommunityActivi
   const navigateToActivity = (activity: ActivityItem) => {
     markAsRead(activity.id);
     
-    polymathToast({
+    toast({
       title: "Opening activity",
       description: `Navigating to ${activity.title}`
     });
@@ -331,7 +330,7 @@ export const EnhancedCommunityActivity = ({ className }: EnhancedCommunityActivi
         <button 
           className="text-[#6E59A5] hover:text-[#7E69AB] font-medium transition-colors text-sm w-full text-center"
           onClick={() => {
-            polymathToast({
+            toast({
               title: "Loading more activities",
               description: "Fetching additional community updates"
             });
