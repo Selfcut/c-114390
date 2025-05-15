@@ -2,7 +2,7 @@
 import { UserProfile, UserStatus } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
 
-export const usePresenceManagement = (user: UserProfile | null, setUser: (user: UserProfile | null) => void) => {
+export const usePresenceManagement = (user: UserProfile | null, setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>) => {
   const { toast } = useToast();
 
   const toggleGhostMode = async () => {
