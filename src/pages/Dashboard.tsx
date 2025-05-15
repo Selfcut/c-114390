@@ -8,7 +8,7 @@ import { PromoBar } from "@/components/PromoBar";
 import { Sidebar } from "@/components/Sidebar";
 import { BookOpen, MessageSquare, Users, Database, Calendar, Target, BookMarked, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
