@@ -14,6 +14,8 @@ import { CommunityActivity } from "@/components/dashboard/CommunityActivity";
 import { RecommendationsRow } from "../components/RecommendationsRow";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Json } from "@/integrations/supabase/types";
+import { getUserActivityStats } from "@/lib/utils/supabase-utils";
 
 // Define interfaces for our data
 interface ProgressData {
@@ -72,57 +74,16 @@ const Dashboard = () => {
           console.error("Error fetching user activities:", activitiesError);
         }
 
-        // Calculate user stats based on activities
-        if (activities) {
-          // Calculate streak based on activities in consecutive days
-          const dates = activities.map(a => new Date(a.created_at).toDateString());
-          const uniqueDates = [...new Set(dates)].sort();
-          
-          // Simple streak calculation
-          let streak = 0;
-          const today = new Date().toDateString();
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayString = yesterday.toDateString();
-          
-          if (uniqueDates.includes(today)) {
-            streak = 1;
-            let checkDate = yesterday;
-            let dateString = checkDate.toDateString();
-            
-            while (uniqueDates.includes(dateString)) {
-              streak++;
-              checkDate.setDate(checkDate.getDate() - 1);
-              dateString = checkDate.toDateString();
-            }
-          } else if (uniqueDates.includes(yesterdayString)) {
-            streak = 1;
-            let checkDate = new Date(yesterday);
-            checkDate.setDate(checkDate.getDate() - 1);
-            let dateString = checkDate.toDateString();
-            
-            while (uniqueDates.includes(dateString)) {
-              streak++;
-              checkDate.setDate(checkDate.getDate() - 1);
-              dateString = checkDate.toDateString();
-            }
-          }
-          
-          // Calculate XP - 10 points per activity
-          const xp = activities.length * 10;
-          const level = Math.max(1, Math.floor(xp / 100) + 1);
-          const nextLevelXp = level * 100;
-          
-          // Count "achievements" as activities with type 'achievement'
-          const badgeCount = activities.filter(a => a.event_type === 'achievement').length;
-          
+        // Use the utility function to get user stats
+        const stats = await getUserActivityStats(user.id);
+        if (stats) {
           setProfileData({
-            level,
-            xp,
-            nextLevelXp,
-            badges: badgeCount,
+            level: stats.level,
+            xp: stats.xp,
+            nextLevelXp: stats.nextLevelXp,
+            badges: stats.badges,
             totalBadges: 5,
-            activityStreak: streak
+            activityStreak: stats.streak
           });
         }
 
@@ -147,7 +108,11 @@ const Dashboard = () => {
 
         if (learningData) {
           learningData.forEach(activity => {
-            const topic = activity.metadata?.topic || activity.metadata?.category || 'General';
+            // Safely access metadata properties with type checking
+            const metadata = activity.metadata as Record<string, any> | null;
+            const topic = metadata && typeof metadata === 'object' ? 
+              (metadata.topic as string || metadata.category as string || 'General') : 
+              'General';
             
             if (!topics.has(topic)) {
               topics.set(topic, { 
