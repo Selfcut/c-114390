@@ -36,6 +36,15 @@ window.addEventListener('load', () => {
   setTimeout(() => {
     initScrollAnimations();
     console.log('Styles loaded: Tailwind and CSS initialized');
+    
+    // Set theme class on document
+    const storedTheme = localStorage.getItem('polymath-ui-theme') || 'dark';
+    if (storedTheme === 'system') {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.add(isDark ? 'dark' : 'light');
+    } else {
+      document.documentElement.classList.add(storedTheme);
+    }
   }, 100);
 });
 

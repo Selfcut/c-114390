@@ -102,3 +102,54 @@
   --sidebar-background: 0 0% 96%;
   --sidebar-border: 240 5% 90%;
 }
+
+/* Additional dark mode specific overrides to fix white borders and other issues */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .border,
+.dark [class*="border-"] {
+  border-color: hsl(var(--border));
+}
+
+.dark .bg-white {
+  background-color: hsl(var(--background));
+}
+
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: hsl(var(--foreground));
+}
+
+.dark .shadow,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  --tw-shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted));
+}
+
+.dark ::-webkit-scrollbar-track {
+  background-color: hsl(var(--background));
+}
+
+/* Fix for dropdown menus */
+.dark .dropdown-content,
+.dark [data-radix-popper-content-wrapper] > div {
+  background-color: hsl(var(--popover));
+  border-color: hsl(var(--border));
+}
+
+/* Card fixes */
+.dark .card {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--border));
+}

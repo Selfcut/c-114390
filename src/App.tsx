@@ -19,6 +19,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import AdminPanel from './pages/admin/AdminPanel';
 import Quotes from './components/Quotes';
+import Admin from './pages/Admin';
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {

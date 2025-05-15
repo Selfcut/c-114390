@@ -23,6 +23,7 @@ export function ThemeToggle() {
       size="icon" 
       onClick={toggleTheme}
       aria-label="Toggle theme"
+      className="hover:bg-accent hover:text-accent-foreground"
     >
       {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
     </Button>

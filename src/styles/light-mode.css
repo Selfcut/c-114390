@@ -38,7 +38,7 @@
 
 /* Override specific elements for light mode */
 .light .sidebar-item.active {
-  background-color: hsl(var(--primary), 0.1);
+  background-color: hsla(var(--primary), 0.1);
   color: hsl(var(--primary));
 }
 
