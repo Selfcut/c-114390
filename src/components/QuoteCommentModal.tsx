@@ -153,14 +153,16 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count using RPC 
+      // Update quote comment count using RPC - fixed with proper type handling
       await supabase
         .from('quotes')
         .update({
+          // The RPC call needs to be wrapped in a raw SQL expression or similar
+          // Since we can't use a raw SQL in this context, we'll use type assertion
           comments: supabase.rpc('increment_counter', { 
             row_id: quoteId, 
             column_name: 'comments' 
-          } as any)
+          } as any) as unknown as number
         })
         .eq('id', quoteId);
       

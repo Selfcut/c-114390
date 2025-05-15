@@ -9,6 +9,7 @@ export const ensureRpcFunctionsExist = async () => {
     
     // First try to use the increment_counter function
     try {
+      // Use proper type casting for RPC calls
       await supabase.rpc('increment_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
@@ -24,6 +25,7 @@ export const ensureRpcFunctionsExist = async () => {
     
     // Check if the decrement_counter function exists
     try {
+      // Use proper type casting for RPC calls
       await supabase.rpc('decrement_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'

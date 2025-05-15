@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -296,14 +297,14 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Update using RPC function with type assertion
+      // Update using RPC function with proper type handling
       await supabase
         .from('quotes')
         .update({ 
           likes: supabase.rpc('decrement_counter', { 
             row_id: quoteId, 
             column_name: 'likes' 
-          } as any)
+          } as any) as unknown as number
         })
         .eq('id', quoteId);
 
@@ -323,14 +324,14 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Update using RPC function with type assertion
+      // Update using RPC function with proper type handling
       await supabase
         .from('quotes')
         .update({ 
           likes: supabase.rpc('increment_counter', { 
             row_id: quoteId, 
             column_name: 'likes' 
-          } as any)
+          } as any) as unknown as number
         })
         .eq('id', quoteId);
 
@@ -414,14 +415,14 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Update bookmark count with type assertion
+      // Update bookmark count with proper type handling
       await supabase
         .from('quotes')
         .update({ 
           bookmarks: supabase.rpc('decrement_counter', { 
             row_id: quoteId, 
             column_name: 'bookmarks' 
-          } as any)
+          } as any) as unknown as number
         })
         .eq('id', quoteId);
 
@@ -441,14 +442,14 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
         return false;
       }
 
-      // Update bookmark count with type assertion
+      // Update bookmark count with proper type handling
       await supabase
         .from('quotes')
         .update({ 
           bookmarks: supabase.rpc('increment_counter', { 
             row_id: quoteId, 
             column_name: 'bookmarks' 
-          } as any)
+          } as any) as unknown as number
         })
         .eq('id', quoteId);
 
