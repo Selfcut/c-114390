@@ -9,6 +9,7 @@ interface CollapsibleSectionProps {
   defaultOpen?: boolean;
   className?: string;
   titleClassName?: string;
+  style?: React.CSSProperties;
 }
 
 export const CollapsibleSection = ({
@@ -16,7 +17,8 @@ export const CollapsibleSection = ({
   children,
   defaultOpen = true,
   className = "",
-  titleClassName = ""
+  titleClassName = "",
+  style
 }: CollapsibleSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -25,6 +27,7 @@ export const CollapsibleSection = ({
       open={isOpen}
       onOpenChange={setIsOpen}
       className={`mb-8 bg-[#1A1A1A] rounded-lg p-6 border border-gray-800 transition-all duration-300 ${className}`}
+      style={style}
     >
       <div className="flex items-center justify-between">
         <h2 className={`text-2xl font-bold text-white ${titleClassName}`}>{title}</h2>

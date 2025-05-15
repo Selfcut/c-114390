@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { BookOpen, Award, Clock } from 'lucide-react';
-import { polymathToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface ReadingProgressProps {
   bookTitle: string;
@@ -32,7 +32,7 @@ export const ReadingProgress = ({
       
       // If completed, show congrats toast
       if (newPage === totalPages && currentPage !== totalPages) {
-        polymathToast({
+        toast({
           title: "Achievement Unlocked!",
           description: `You've completed "${bookTitle}". Great work!`,
           variant: "default",

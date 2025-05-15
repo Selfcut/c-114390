@@ -1,76 +1,60 @@
 
-import { ArrowRight, Plus, Lock } from "lucide-react";
+import { Sparkles } from 'lucide-react';
+
+interface Tag {
+  label: string;
+  variant: 'blue' | 'green' | 'orange' | 'yellow' | 'red';
+}
 
 interface ModelCardProps {
   title: string;
   subtitle: string;
   imageSrc: string;
+  tags?: Tag[];
   isTrainYourOwn?: boolean;
-  tags?: Array<{
-    label: string;
-    variant: 'blue' | 'green' | 'orange' | 'yellow';
-  }>;
 }
 
-export const ModelCard = ({ 
-  title, 
-  subtitle, 
-  imageSrc, 
-  isTrainYourOwn = false,
-  tags = []
-}: ModelCardProps) => {
+export const ModelCard = ({ title, subtitle, imageSrc, tags = [], isTrainYourOwn = false }: ModelCardProps) => {
+  const getTagColorClass = (variant: string): string => {
+    switch (variant) {
+      case 'blue': return 'bg-blue-100 text-blue-800';
+      case 'green': return 'bg-green-100 text-green-800';
+      case 'orange': return 'bg-orange-100 text-orange-800';
+      case 'yellow': return 'bg-yellow-100 text-yellow-800';
+      case 'red': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <div className={`rounded-lg overflow-hidden flex flex-col relative ${isTrainYourOwn ? 'border border-blue-500 border-opacity-50' : 'bg-[#1A1A1A]'}`}>
+    <div className="bg-muted rounded-lg overflow-hidden border border-gray-800 hover-lift transition-transform">
       {isTrainYourOwn ? (
-        <div className="flex-1 flex flex-col">
-          <div className="h-[225px] flex items-center justify-center bg-[#0E1526]">
-            <Plus size={50} className="text-blue-500" />
-            {/* Lock icon in top right */}
-            <div className="absolute top-2 right-2 bg-[#312200] p-2 rounded-md">
-              <Lock size={20} className="text-yellow-500" />
-            </div>
-          </div>
-          <div className="p-4 flex flex-col flex-grow">
-            <h3 className="font-medium text-white text-xl">{title}</h3>
-            <p className="text-sm text-gray-400 mt-1">{subtitle}</p>
-          </div>
+        <div className="h-40 bg-gradient-to-br from-blue-800 to-purple-900 flex items-center justify-center">
+          <Sparkles className="text-white h-12 w-12" />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="h-[225px]">
-            <img src={imageSrc} alt={title} className="w-full h-full object-cover" />
-          </div>
-          <div className="p-4 flex flex-col flex-grow">
-            <h3 className="font-medium text-white text-xl">{title}</h3>
-            <p className="text-sm text-gray-400 mt-1">{subtitle}</p>
-            
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {tags.map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className={`px-3 py-1 rounded-full text-xs font-medium
-                      ${tag.variant === 'blue' ? 'bg-blue-900 text-blue-300' : ''}
-                      ${tag.variant === 'green' ? 'bg-green-900 text-green-300' : ''}
-                      ${tag.variant === 'orange' ? 'bg-orange-900 text-orange-300' : ''}
-                      ${tag.variant === 'yellow' ? 'bg-yellow-900 text-yellow-300' : ''}
-                    `}
-                  >
-                    {tag.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        imageSrc && <img src={imageSrc} alt={title} className="w-full h-40 object-cover" />
       )}
       
-      <div className="flex border-t border-gray-800 divide-x divide-gray-800">
-        <button className="flex-1 py-3 text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors text-center">
-          Create
-        </button>
-        <button className="flex-1 py-3 text-white font-medium hover:bg-gray-800 transition-colors text-center">
-          Gallery
+      <div className="p-4">
+        <h3 className="font-medium text-white">{title}</h3>
+        <p className="text-sm text-gray-400 mt-1">{subtitle}</p>
+        
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {tags.map((tag, index) => (
+              <span 
+                key={index} 
+                className={`text-xs px-2 py-0.5 rounded ${getTagColorClass(tag.variant)}`}
+              >
+                {tag.label}
+              </span>
+            ))}
+          </div>
+        )}
+        
+        <button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm py-2 rounded-md">
+          {isTrainYourOwn ? 'Create Now' : 'Explore'}
         </button>
       </div>
     </div>
