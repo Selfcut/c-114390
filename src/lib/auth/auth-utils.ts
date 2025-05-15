@@ -53,7 +53,7 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       email: userEmail,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
       role: 'user',
-      status: 'online' as UserStatus,
+      status: 'online', // This now uses the literal value from UserStatus
       isGhostMode: false,
       notificationSettings: {
         desktopNotifications: true,
