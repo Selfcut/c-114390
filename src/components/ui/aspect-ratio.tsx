@@ -4,11 +4,24 @@ import { cn } from "@/lib/utils"
 
 interface AspectRatioProps extends React.ComponentPropsWithoutRef<typeof AspectRatioPrimitive.Root> {
   className?: string;
+  hoverEffect?: boolean;
+  animationDelay?: string;
 }
 
-const AspectRatio = ({ className, ...props }: AspectRatioProps) => (
+const AspectRatio = ({ 
+  className, 
+  hoverEffect = false,
+  animationDelay,
+  ...props 
+}: AspectRatioProps) => (
   <AspectRatioPrimitive.Root 
-    className={cn("relative overflow-hidden rounded-md", className)} 
+    className={cn(
+      "relative overflow-hidden rounded-md", 
+      hoverEffect && "transition-all duration-300 transform hover:scale-[1.02]",
+      animationDelay && "animate-fade-in",
+      className
+    )} 
+    style={animationDelay ? { animationDelay } : undefined} 
     {...props} 
   />
 )
