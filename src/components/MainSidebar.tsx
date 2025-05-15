@@ -20,7 +20,6 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 export const MainSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -192,7 +191,7 @@ export const MainSidebar = () => {
             className="w-full flex items-center gap-3 p-3 rounded-md transition-colors hover:bg-gray-800"
           >
             <div className="text-gray-300">
-              <ChevronDown size={16} />
+              <ChevronDown size={16} className={expandedSections.myLearning ? "transform rotate-180" : ""} />
             </div>
             <span className="text-white text-sm font-medium flex-1 text-left">My Learning</span>
             <ChevronRight size={16} className="text-gray-300" />
@@ -264,16 +263,14 @@ export const MainSidebar = () => {
           )}
         </div>
         
-        {/* Resources Section */}
+        {/* Resources Section - Remove bg-gray-800 class to fix the blue background */}
         <div className="py-2 px-3">
           <button
             onClick={() => toggleSection('resources')}
-            className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
-              expandedSections.resources ? "bg-gray-800" : "hover:bg-gray-800"
-            }`}
+            className="w-full flex items-center gap-3 p-3 rounded-md transition-colors hover:bg-gray-800"
           >
-            <div className={expandedSections.resources ? "text-white" : "text-gray-300"}>
-              <ChevronDown size={16} />
+            <div className="text-gray-300">
+              <ChevronDown size={16} className={expandedSections.resources ? "transform rotate-180" : ""} />
             </div>
             <span className="text-white text-sm font-medium flex-1 text-left">Resources</span>
             <ChevronDown size={16} className="text-gray-300" />
