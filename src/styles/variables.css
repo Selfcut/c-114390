@@ -1,12 +1,13 @@
 
+/* CSS Variables */
 :root {
   /* Base colors */
-  --promo: 210 100% 50%; /* Blue */
+  --promo: 265 65% 60%;
   --promo-foreground: 0 0% 100%;
   
   /* Background colors */
   --background: 240 10% 3.9%;
-  --foreground: 0 0% 100%;
+  --foreground: 0 0% 98%;
   
   /* Card colors */
   --card: 240 10% 3.9%;
@@ -16,12 +17,12 @@
   --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
   
-  /* Primary colors - blue */
-  --primary: 210 100% 50%;
+  /* Primary colors - Purple theme */
+  --primary: 267 37% 51%;  /* #6E59A5 */
   --primary-foreground: 0 0% 100%;
   
   /* Secondary colors */
-  --secondary: 240 3.7% 15.9%;
+  --secondary: 267 45% 55%;  /* #7E69B5 */
   --secondary-foreground: 0 0% 98%;
   
   /* Muted colors */
@@ -29,11 +30,11 @@
   --muted-foreground: 240 5% 64.9%;
   
   /* Accent colors */
-  --accent: 240 3.7% 15.9%;
+  --accent: 267 37% 51%;
   --accent-foreground: 0 0% 98%;
   
   /* Destructive colors */
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 62.8% 50.6%;
   --destructive-foreground: 0 0% 98%;
   
   /* Border colors */
@@ -43,18 +44,23 @@
   --input: 240 3.7% 15.9%;
   
   /* Ring color */
-  --ring: 240 4.9% 83.9%;
+  --ring: 265 65% 60%;
   
   /* Radius */
   --radius: 0.5rem;
   
-  /* Sidebar colors - updated to match dark theme */
-  --sidebar-background: 240 10% 10%;
+  /* Sidebar colors */
+  --sidebar-background: 240 10% 9%;
   --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 240 3.7% 15.9%; 
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 240 4.9% 83.9%;
+  --sidebar-border: 240 3.7% 20.9%;
+  
+  /* Custom colors */
+  --success: 142 69% 58%;
+  --success-foreground: 0 0% 98%;
+  
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 98%;
+  
+  --info: 217 91% 60%;
+  --info-foreground: 0 0% 98%;
 }

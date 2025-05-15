@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { polymathToast } from "./components/ui/use-toast";
-import { StylesDebugger } from "./components/StylesDebugger";
 import { ThemeProvider } from "./lib/theme-context";
 import { supabase } from "./integrations/supabase/client";
 
@@ -98,7 +97,14 @@ const App = () => {
   // Route guard component
   const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
     if (authState.loading) {
-      return <div className="flex items-center justify-center h-screen">Loading...</div>;
+      return (
+        <div className="flex items-center justify-center h-screen bg-background">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-16 h-16 bg-primary/20 rounded-full mb-4"></div>
+            <div className="h-4 w-24 bg-primary/20 rounded"></div>
+          </div>
+        </div>
+      );
     }
     
     return authState.authenticated ? <>{element}</> : <Navigate to="/auth" replace />;
@@ -111,53 +117,19 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div className="w-full min-h-screen m-0 p-0 max-w-full overflow-x-hidden">
+            <div className="w-full min-h-screen m-0 p-0 max-w-full overflow-hidden">
               <WelcomeOverlay />
-              <StylesDebugger />
               <Routes>
                 <Route path="/" element={authState.authenticated ? <Dashboard /> : <Landing />} />
-                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth" element={authState.authenticated ? <Navigate to="/" replace /> : <Auth />} />
                 <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
-                <Route path="/forum" element={<Forum />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/quotes" element={<Quotes />} />
-                <Route path="/wiki" element={<Wiki />} />
+                <Route path="/forum" element={<ProtectedRoute element={<Forum />} />} />
+                <Route path="/library" element={<ProtectedRoute element={<Library />} />} />
+                <Route path="/quotes" element={<ProtectedRoute element={<Quotes />} />} />
+                <Route path="/wiki" element={<ProtectedRoute element={<Wiki />} />} />
                 <Route path="/chat" element={<ProtectedRoute element={<Chat />} />} />
                 
-                {/* Mystic topic routes */}
-                <Route path="/topics/alchemy" element={<NotFound />} />
-                <Route path="/topics/hermeticism" element={<NotFound />} />
-                <Route path="/topics/gnosticism" element={<NotFound />} />
-                <Route path="/topics/kabbalah" element={<NotFound />} />
-                <Route path="/topics/astrology" element={<NotFound />} />
-                <Route path="/topics/sacred-geometry" element={<NotFound />} />
-                {/* Book routes */}
-                <Route path="/books/alchemists-path" element={<NotFound />} />
-                <Route path="/books/shadows-of-anubis" element={<NotFound />} />
-                <Route path="/books/ninth-dot" element={<NotFound />} />
-                <Route path="/books" element={<NotFound />} />
-                {/* Community routes */}
-                <Route path="/community" element={<NotFound />} />
-                <Route path="/discord" element={<NotFound />} />
-                <Route path="/expert-qa" element={<NotFound />} />
-                <Route path="/disciplines" element={<NotFound />} />
-                <Route path="/events" element={<NotFound />} />
-                <Route path="/study-guides" element={<NotFound />} />
-                <Route path="/reading-list" element={<NotFound />} />
-                <Route path="/study-notes" element={<NotFound />} />
-                <Route path="/my-discussions" element={<NotFound />} />
-                <Route path="/study-groups" element={<NotFound />} />
-                <Route path="/knowledge-map" element={<NotFound />} />
-                <Route path="/learning-analytics" element={<NotFound />} />
-                <Route path="/learning-guides" element={<NotFound />} />
-                <Route path="/help-center" element={<NotFound />} />
-                <Route path="/new-research" element={<NotFound />} />
-                <Route path="/academic-journals" element={<NotFound />} />
-                <Route path="/book-reviews" element={<NotFound />} />
-                <Route path="/settings" element={<NotFound />} />
-                <Route path="/art-poetry" element={<NotFound />} />
-                <Route path="/youtube" element={<NotFound />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                {/* Catch-all route for 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

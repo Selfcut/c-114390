@@ -3,40 +3,28 @@ import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-context";
 import { useToast } from "@/hooks/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
-  const handleToggle = () => {
-    toggleTheme();
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
     toast({
-      title: `Theme Changed`,
-      description: `Theme set to ${theme === "dark" ? "light" : "dark"} mode.`,
-      duration: 2000,
+      title: `${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} theme activated`,
+      description: `You've switched to ${newTheme} mode.`,
     });
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="Toggle theme">
-          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleToggle}>
-          {theme === "light" ? "Dark" : "Light"} Mode
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      onClick={toggleTheme}
+      aria-label="Toggle theme"
+    >
+      {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
+    </Button>
   );
 }

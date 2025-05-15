@@ -1,21 +1,19 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Search, Bell, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Bell, Menu, LogOut, Settings, User, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from '@/components/ThemeToggle';
-import logo from '../../public/logo.svg';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-context";
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 import { 
   NavigationMenu,
   NavigationMenuContent,
@@ -31,13 +29,19 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export const Header: React.FC = () => {
   const location = useLocation();
   const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -46,6 +50,28 @@ export const Header: React.FC = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account.",
+    });
+  };
+
+  const handleSearchFocus = () => {
+    setIsSearchExpanded(true);
+  };
+
+  const handleSearchBlur = () => {
+    setIsSearchExpanded(false);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const query = (form.elements.namedItem('search') as HTMLInputElement).value;
+    toast({
+      title: "Search Results",
+      description: `Found 8 results for "${query}"`,
+    });
   };
 
   return (
@@ -53,7 +79,7 @@ export const Header: React.FC = () => {
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Polymath Logo" className="h-8 w-8" />
+            <img src="/logo.svg" alt="Polymath Logo" className="h-8 w-8" />
             <span className="font-bold text-foreground">Polymath</span>
           </Link>
           
@@ -64,7 +90,7 @@ export const Header: React.FC = () => {
                   <Link to="/">
                     <NavigationMenuLink 
                       className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/") ? "text-primary" : ""
+                        isActive("/") || isActive("/dashboard") ? "text-primary bg-primary/10" : ""
                       }`}
                     >
                       Home
@@ -76,10 +102,10 @@ export const Header: React.FC = () => {
                   <Link to="/forum">
                     <NavigationMenuLink 
                       className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/forum") ? "text-primary" : ""
+                        isActive("/forum") ? "text-primary bg-primary/10" : ""
                       }`}
                     >
-                      Discussion Forum
+                      Forum
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -88,10 +114,10 @@ export const Header: React.FC = () => {
                   <Link to="/library">
                     <NavigationMenuLink 
                       className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/library") ? "text-primary" : ""
+                        isActive("/library") ? "text-primary bg-primary/10" : ""
                       }`}
                     >
-                      Knowledge Library
+                      Library
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -100,7 +126,7 @@ export const Header: React.FC = () => {
                   <Link to="/quotes">
                     <NavigationMenuLink 
                       className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/quotes") ? "text-primary" : ""
+                        isActive("/quotes") ? "text-primary bg-primary/10" : ""
                       }`}
                     >
                       Quotes
@@ -112,7 +138,7 @@ export const Header: React.FC = () => {
                   <Link to="/wiki">
                     <NavigationMenuLink 
                       className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/wiki") ? "text-primary" : ""
+                        isActive("/wiki") ? "text-primary bg-primary/10" : ""
                       }`}
                     >
                       Wiki
@@ -124,7 +150,7 @@ export const Header: React.FC = () => {
                   <Link to="/chat">
                     <NavigationMenuLink 
                       className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/chat") ? "text-primary" : ""
+                        isActive("/chat") ? "text-primary bg-primary/10" : ""
                       }`}
                     >
                       Chat
@@ -137,23 +163,97 @@ export const Header: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="relative rounded-md">
+          <form 
+            className={cn(
+              "relative rounded-md transition-all duration-300",
+              isSearchExpanded ? "w-64" : "w-40"
+            )}
+            onSubmit={handleSearchSubmit}
+          >
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </div>
-            <input
-              type="text"
-              className="block w-full md:w-[240px] rounded-md border-0 bg-muted py-1.5 pl-10 pr-3 text-sm focus:ring-1 focus:ring-primary"
-              placeholder="Search Polymath..."
+            <Input
+              type="search"
+              name="search"
+              className="block w-full rounded-md border-0 bg-muted py-1.5 pl-10 pr-3 text-sm focus:ring-1 focus:ring-primary"
+              placeholder="Search..."
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
             />
-          </div>
+          </form>
           
-          <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
-              1
-            </span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+                <Bell className="h-5 w-5" />
+                <Badge 
+                  className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center p-0"
+                >
+                  3
+                </Badge>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <div className="flex justify-between items-center px-4 py-2 border-b">
+                <h3 className="font-medium">Notifications</h3>
+                <Button variant="ghost" size="sm" className="text-xs">
+                  Mark all as read
+                </Button>
+              </div>
+              <div className="max-h-80 overflow-y-auto py-2">
+                <DropdownMenuItem className="p-3 cursor-pointer hover:bg-muted focus:bg-muted">
+                  <div className="flex gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" />
+                      <AvatarFallback>JD</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm">
+                        <span className="font-medium">John Doe</span>{" "}
+                        replied to your discussion{" "}
+                        <span className="font-medium">"Quantum Mechanics and Reality"</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">30 minutes ago</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="p-3 cursor-pointer hover:bg-muted focus:bg-muted">
+                  <div className="flex gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" />
+                      <AvatarFallback>SA</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm">
+                        <span className="font-medium">Sarah Adams</span>{" "}
+                        mentioned you in a comment
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="p-3 cursor-pointer hover:bg-muted focus:bg-muted">
+                  <div className="flex gap-3">
+                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                      <Bell size={16} className="text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm">
+                        Your content submission was approved!
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">1 day ago</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              </div>
+              <div className="border-t p-2 text-center">
+                <Button variant="ghost" size="sm" className="w-full text-sm" onClick={() => navigate('/notifications')}>
+                  View all notifications
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <ThemeToggle />
           
@@ -167,21 +267,24 @@ export const Header: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                <User size={16} className="mr-2" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+                <Settings size={16} className="mr-2" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <LogOut size={16} className="mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
           <div className="hidden sm:flex items-center gap-2">
-            <Button size="sm">Join Premium</Button>
+            <Button size="sm" className="bg-[#6E59A5] hover:bg-[#7E69B5]">Premium</Button>
             <Button variant="outline" size="sm">Contribute</Button>
           </div>
 
@@ -193,81 +296,62 @@ export const Header: React.FC = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <SheetHeader>
+              <SheetHeader className="flex justify-between items-center">
                 <SheetTitle>Menu</SheetTitle>
+                <SheetClose asChild>
+                  <Button variant="ghost" size="icon">
+                    <X size={18} />
+                  </Button>
+                </SheetClose>
               </SheetHeader>
-              <nav className="flex flex-col gap-4 mt-6">
-                <Link to="/" className={`${isActive("/") ? "text-primary" : ""} font-medium`}>
+              <nav className="flex flex-col gap-4 mt-8">
+                <Link 
+                  to="/" 
+                  className={`${(isActive("/") || isActive("/dashboard")) ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
+                >
                   Home
                 </Link>
-                <Link to="/forum" className={`${isActive("/forum") ? "text-primary" : ""} font-medium`}>
-                  Discussion Forum
+                <Link 
+                  to="/forum" 
+                  className={`${isActive("/forum") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
+                >
+                  Forum
                 </Link>
-                <Link to="/library" className={`${isActive("/library") ? "text-primary" : ""} font-medium`}>
-                  Knowledge Library  
+                <Link 
+                  to="/library" 
+                  className={`${isActive("/library") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
+                >
+                  Library  
                 </Link>
-                <Link to="/quotes" className={`${isActive("/quotes") ? "text-primary" : ""} font-medium`}>
+                <Link 
+                  to="/quotes" 
+                  className={`${isActive("/quotes") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
+                >
                   Quotes
                 </Link>
-                <Link to="/wiki" className={`${isActive("/wiki") ? "text-primary" : ""} font-medium`}>
+                <Link 
+                  to="/wiki" 
+                  className={`${isActive("/wiki") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
+                >
                   Wiki
                 </Link>
-                <Link to="/chat" className={`${isActive("/chat") ? "text-primary" : ""} font-medium`}>
+                <Link 
+                  to="/chat" 
+                  className={`${isActive("/chat") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
+                >
                   Chat
                 </Link>
                 <div className="border-t border-border my-4"></div>
-                <Button className="w-full">Join Premium</Button>
+                <Button className="w-full bg-[#6E59A5] hover:bg-[#7E69B5]">Premium</Button>
                 <Button variant="outline" className="w-full mt-2">Contribute</Button>
+                <Button variant="destructive" className="w-full mt-2" onClick={handleLogout}>
+                  <LogOut size={16} className="mr-2" />
+                  Logout
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>
         </div>
-      </div>
-      
-      {/* Mobile Navigation - Only shown on small screens */}
-      <div className="md:hidden border-t border-border">
-        <nav className="flex justify-between px-4 py-2">
-          <Link 
-            to="/" 
-            className={`flex flex-col items-center justify-center text-xs ${
-              isActive("/") ? "text-primary" : "text-foreground"
-            }`}
-          >
-            <span>Home</span>
-          </Link>
-          <Link 
-            to="/forum" 
-            className={`flex flex-col items-center justify-center text-xs ${
-              isActive("/forum") ? "text-primary" : "text-foreground"
-            }`}
-          >
-            <span>Forum</span>
-          </Link>
-          <Link 
-            to="/library" 
-            className={`flex flex-col items-center justify-center text-xs ${
-              isActive("/library") ? "text-primary" : "text-foreground"
-            }`}
-          >
-            <span>Library</span>
-          </Link>
-          <Link 
-            to="/quotes" 
-            className={`flex flex-col items-center justify-center text-xs ${
-              isActive("/quotes") ? "text-primary" : "text-foreground"
-            }`}
-          >
-            <span>Quotes</span>
-          </Link>
-          <Link 
-            to="/wiki" 
-            className={`flex flex-col items-center justify-center text-xs ${
-              isActive("/wiki") ? "text-primary" : "text-foreground"
-            }`}
-          >
-            <span>Wiki</span>
-          </Link>
-        </nav>
       </div>
     </header>
   );

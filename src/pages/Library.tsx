@@ -1,11 +1,18 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
 import Header from "../components/Header";
 import { KnowledgeEntryCard } from "../components/KnowledgeEntryCard";
 import { polymathToast } from "../components/ui/use-toast";
-import { Library as LibraryIcon, PenSquare, Book, Search } from "lucide-react";
+import { Library as LibraryIcon, PenSquare, Book, Search, Filter, LayoutGrid, List } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 // Mock knowledge entries
 const knowledgeEntries = [
@@ -51,21 +58,56 @@ const knowledgeEntries = [
   }
 ];
 
+// Extract all unique categories from entries
+const allCategories = [...new Set(knowledgeEntries.flatMap(entry => entry.categories))];
+
 const Library = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultySetting, setDifficultySetting] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [filteredEntries, setFilteredEntries] = useState(knowledgeEntries);
   
-  // Filter entries based on search and difficulty
-  const filteredEntries = knowledgeEntries.filter(entry => {
-    const matchesSearch = searchTerm === '' || 
-      entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter entries based on search, difficulty, and categories
+  useEffect(() => {
+    let results = knowledgeEntries;
     
-    // In a real app, entries would have difficulty ratings
-    // This is just a placeholder logic
-    return matchesSearch;
-  });
+    // Apply search filtering
+    if (searchTerm) {
+      results = results.filter(entry => 
+        entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        entry.author.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply category filtering
+    if (activeCategory) {
+      results = results.filter(entry =>
+        entry.categories.includes(activeCategory)
+      );
+    }
+    
+    // Apply difficulty filtering (placeholder logic)
+    if (difficultySetting !== 'all') {
+      // In a real app, entries would have difficulty ratings
+      // This is just a placeholder filter that keeps some entries based on difficulty
+      switch(difficultySetting) {
+        case 'beginner':
+          results = results.filter(entry => entry.id !== '3');
+          break;
+        case 'intermediate':
+          results = results.filter(entry => entry.id !== '1' && entry.id !== '4');
+          break;
+        case 'advanced':
+          results = results.filter(entry => entry.id === '3');
+          break;
+      }
+    }
+    
+    setFilteredEntries(results);
+  }, [searchTerm, difficultySetting, activeCategory]);
   
   const handleEntryClick = (id: string) => {
     // In a real app, this would navigate to the entry detail page
@@ -77,6 +119,12 @@ const Library = () => {
     polymathToast.contributionSaved();
   };
   
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDifficultySetting('all');
+    setActiveCategory(null);
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <PromoBar />
@@ -86,13 +134,13 @@ const Library = () => {
           <Header />
           <div className="flex-1 overflow-auto">
             <main className="py-8 px-12">
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-8 stagger-fade">
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                   <LibraryIcon size={28} />
                   Knowledge Library
                 </h1>
                 <button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+                  className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
                   onClick={handleCreateEntry}
                 >
                   <PenSquare size={18} />
@@ -100,60 +148,124 @@ const Library = () => {
                 </button>
               </div>
               
-              <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8">
+              <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 shadow-md border border-gray-800">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="relative flex-1">
                     <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Search the library..."
-                      className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white"
+                      className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white focus:ring-1 focus:ring-[#6E59A5] focus:border-[#6E59A5] transition-colors"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   
-                  <div className="flex gap-2">
-                    <label className="flex items-center text-gray-400 text-sm">
-                      Difficulty:
-                    </label>
-                    <button 
-                      onClick={() => setDifficultySetting('all')}
-                      className={`px-3 py-1.5 text-sm rounded-md ${
-                        difficultySetting === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-300'
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button 
-                      onClick={() => setDifficultySetting('beginner')}
-                      className={`px-3 py-1.5 text-sm rounded-md ${
-                        difficultySetting === 'beginner' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-300'
-                      }`}
-                    >
-                      Beginner
-                    </button>
-                    <button 
-                      onClick={() => setDifficultySetting('intermediate')}
-                      className={`px-3 py-1.5 text-sm rounded-md ${
-                        difficultySetting === 'intermediate' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-300'
-                      }`}
-                    >
-                      Intermediate
-                    </button>
-                    <button 
-                      onClick={() => setDifficultySetting('advanced')}
-                      className={`px-3 py-1.5 text-sm rounded-md ${
-                        difficultySetting === 'advanced' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-300'
-                      }`}
-                    >
-                      Advanced
-                    </button>
+                  <div className="flex flex-wrap gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+                        >
+                          <Filter size={16} />
+                          <span>Category</span>
+                          {activeCategory && <Badge className="bg-[#6E59A5] ml-2 text-xs">{activeCategory}</Badge>}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 w-56">
+                        {allCategories.map((category, index) => (
+                          <DropdownMenuItem 
+                            key={index}
+                            className={`flex items-center gap-2 ${activeCategory === category ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                            onClick={() => setActiveCategory(activeCategory === category ? null : category)}
+                          >
+                            <Book size={16} />
+                            <span>{category}</span>
+                          </DropdownMenuItem>
+                        ))}
+                        {activeCategory && (
+                          <DropdownMenuItem 
+                            className="flex items-center gap-2 border-t border-gray-700 mt-1 pt-1 hover:bg-gray-700"
+                            onClick={() => setActiveCategory(null)}
+                          >
+                            <span>Clear category filter</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+                        >
+                          <span>Difficulty: {difficultySetting.charAt(0).toUpperCase() + difficultySetting.slice(1)}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
+                        <DropdownMenuItem 
+                          className={`${difficultySetting === 'all' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                          onClick={() => setDifficultySetting('all')}
+                        >
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`${difficultySetting === 'beginner' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                          onClick={() => setDifficultySetting('beginner')}
+                        >
+                          Beginner
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`${difficultySetting === 'intermediate' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                          onClick={() => setDifficultySetting('intermediate')}
+                        >
+                          Intermediate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`${difficultySetting === 'advanced' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                          onClick={() => setDifficultySetting('advanced')}
+                        >
+                          Advanced
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <div className="flex rounded-md overflow-hidden border border-gray-700">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className={`rounded-none ${viewMode === 'grid' ? 'bg-[#6E59A5] text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                        onClick={() => setViewMode('grid')}
+                      >
+                        <LayoutGrid size={18} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className={`rounded-none ${viewMode === 'list' ? 'bg-[#6E59A5] text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                        onClick={() => setViewMode('list')}
+                      >
+                        <List size={18} />
+                      </Button>
+                    </div>
+                    
+                    {(activeCategory || searchTerm || difficultySetting !== 'all') && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-gray-400 hover:text-white"
+                        onClick={handleResetFilters}
+                      >
+                        Reset Filters
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
               
-              <div className="flex flex-col gap-4">
+              <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4 stagger-fade`}>
                 {filteredEntries.length > 0 ? (
                   filteredEntries.map(entry => (
                     <KnowledgeEntryCard
@@ -169,40 +281,40 @@ const Library = () => {
                     />
                   ))
                 ) : (
-                  <div className="bg-[#1A1A1A] rounded-lg p-8 text-center">
+                  <div className="bg-[#1A1A1A] rounded-lg p-8 text-center col-span-full border border-gray-800">
                     <Book size={48} className="text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">No knowledge entries found matching your search.</p>
+                    <p className="text-gray-400">No knowledge entries found matching your search criteria.</p>
                     <button 
-                      className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-                      onClick={() => setSearchTerm('')}
+                      className="mt-4 bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md transition-colors hover-lift"
+                      onClick={handleResetFilters}
                     >
-                      Clear Search
+                      Clear Filters
                     </button>
                   </div>
                 )}
               </div>
               
-              <div className="mt-8 bg-[#1A1A1A] rounded-lg p-6">
+              <div className="mt-8 bg-[#1A1A1A] rounded-lg p-6 border border-gray-800">
                 <h2 className="text-lg font-semibold text-white mb-4">Recommended Learning Paths</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-[#222222] p-4 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-fade">
+                  <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
                     <h3 className="text-white font-medium">Foundations of Systems Thinking</h3>
                     <p className="text-sm text-gray-400 mt-1">5 modules • 3 hours total</p>
-                    <button className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-1.5 rounded transition-colors">
+                    <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
                       Begin Path
                     </button>
                   </div>
-                  <div className="bg-[#222222] p-4 rounded-lg">
+                  <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
                     <h3 className="text-white font-medium">Philosophy of Science</h3>
                     <p className="text-sm text-gray-400 mt-1">8 modules • 6 hours total</p>
-                    <button className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-1.5 rounded transition-colors">
+                    <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
                       Begin Path
                     </button>
                   </div>
-                  <div className="bg-[#222222] p-4 rounded-lg">
+                  <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
                     <h3 className="text-white font-medium">Mathematical Thinking</h3>
                     <p className="text-sm text-gray-400 mt-1">6 modules • 4 hours total</p>
-                    <button className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-1.5 rounded transition-colors">
+                    <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
                       Begin Path
                     </button>
                   </div>
