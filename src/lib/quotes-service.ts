@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -305,9 +304,12 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (unlikeError) throw unlikeError;
 
-      // Decrement like count - Fixed function call
+      // Decrement like count - Use direct SQL call instead of RPC
       const { error: decrementError } = await supabase
-        .rpc('decrement_quote_likes', { quote_id: quoteId });  // Fixed: RPC parameter name
+        .from('quotes')
+        .update({ likes: supabase.sql('likes - 1') })
+        .eq('id', quoteId)
+        .gt('likes', 0);
 
       if (decrementError) throw decrementError;
 
@@ -323,9 +325,11 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (likeError) throw likeError;
 
-      // Increment like count - Fixed function call
+      // Increment like count - Use direct SQL update instead of RPC
       const { error: incrementError } = await supabase
-        .rpc('increment_quote_likes', { quote_id: quoteId });  // Fixed: RPC parameter name
+        .from('quotes')
+        .update({ likes: supabase.sql('likes + 1') })
+        .eq('id', quoteId);
 
       if (incrementError) throw incrementError;
 
@@ -365,9 +369,12 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (removeError) throw removeError;
 
-      // Decrement bookmark count - Fixed function call
+      // Decrement bookmark count - Use direct SQL update instead of RPC
       const { error: decrementError } = await supabase
-        .rpc('decrement_quote_bookmarks', { quote_id: quoteId });  // Fixed: RPC parameter name
+        .from('quotes')
+        .update({ bookmarks: supabase.sql('bookmarks - 1') })
+        .eq('id', quoteId)
+        .gt('bookmarks', 0);
 
       if (decrementError) throw decrementError;
 
@@ -383,9 +390,11 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (bookmarkError) throw bookmarkError;
 
-      // Increment bookmark count - Fixed function call
+      // Increment bookmark count - Use direct SQL update instead of RPC
       const { error: incrementError } = await supabase
-        .rpc('increment_quote_bookmarks', { quote_id: quoteId });  // Fixed: RPC parameter name
+        .from('quotes')
+        .update({ bookmarks: supabase.sql('bookmarks + 1') })
+        .eq('id', quoteId);
 
       if (incrementError) throw incrementError;
 
