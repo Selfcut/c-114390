@@ -1,6 +1,5 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
 import {
   HoverCard,
   HoverCardContent,
@@ -8,134 +7,101 @@ import {
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { CalendarDays, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, UserPlus, Star, Brain, CalendarDays } from "lucide-react";
+import { Link } from "react-router-dom";
 
-interface UserHoverCardProps {
-  username: string;
+export interface UserHoverCardProps {
   children: React.ReactNode;
-  userData?: {
-    id: string;
-    name: string;
-    username: string;
-    avatar?: string;
-    role?: string;
-    bio?: string;
-    badges?: string[];
-    level?: number;
-    iq?: number;
-    joinedDate?: string;
-    isOnline?: boolean;
-    status?: 'online' | 'offline' | 'away' | 'do_not_disturb';
-    isFollowing?: boolean;
-  };
-  showBio?: boolean;
-  // Add the missing properties from UserProfile
-  displayName?: string;
-  avatarUrl?: string;
-  isOnline?: boolean;
+  username: string;
+  avatar: string;
+  status: "online" | "offline" | "away" | "do_not_disturb";
+  displayName: string;
 }
 
-export const UserHoverCard: React.FC<UserHoverCardProps> = ({
-  username,
-  children,
-  userData,
-  showBio = true,
-  displayName,
-  avatarUrl,
-  isOnline,
-}) => {
-  // If no user data is provided, use the username to fetch mock data
-  const user = userData || {
-    id: `user-${username}`,
-    name: displayName || username.charAt(0).toUpperCase() + username.slice(1),
-    username: username.toLowerCase(),
-    avatar: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-    role: "Member",
-    bio: "Polymath community member exploring various disciplines and contributing to discussions.",
-    badges: ["Active Member"],
-    level: 3,
-    iq: 120,
-    joinedDate: "Joined March 2025",
-    isOnline: isOnline !== undefined ? isOnline : Math.random() > 0.5,
-    status: 'online' as const,
-    isFollowing: false,
-  };
-
-  // Get status indicator color
-  const getStatusColor = (status?: string) => {
-    if (!status) return "bg-gray-400";
-    
+export const UserHoverCard = ({ 
+  children, 
+  username, 
+  avatar,
+  status,
+  displayName
+}: UserHoverCardProps) => {
+  // Function to determine the color of the status indicator
+  const getStatusColor = (status: "online" | "offline" | "away" | "do_not_disturb") => {
     switch (status) {
-      case 'online': return "bg-green-500";
-      case 'offline': return "bg-gray-400";
-      case 'away': return "bg-yellow-500";
-      case 'do_not_disturb': return "bg-red-500";
-      default: return "bg-gray-400";
+      case "online":
+        return "bg-green-500";
+      case "offline":
+        return "bg-gray-500";
+      case "away":
+        return "bg-yellow-500";
+      case "do_not_disturb":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <span className="cursor-pointer text-primary hover:underline">
-          {children}
-        </span>
+        {children}
       </HoverCardTrigger>
-      <HoverCardContent className="w-80" align="start">
-        <div className="flex justify-between space-x-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={user.avatar} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div className="space-y-1 flex-1">
-            <div className="flex items-center">
-              <h4 className="text-sm font-semibold">{user.name}</h4>
-              {user.status && (
-                <span 
-                  className={`ml-1.5 h-2 w-2 rounded-full ${getStatusColor(user.status)}`}
-                  title={user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                ></span>
-              )}
+      <HoverCardContent className="w-80 p-0 shadow-lg" align="end">
+        <div className="h-24 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-t-md relative" />
+        <div className="px-4 pb-4">
+          <div className="flex items-end gap-4 -mt-10">
+            <div className="relative">
+              <Avatar className="h-16 w-16 border-4 border-background">
+                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span 
+                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(status)}`}
+              />
             </div>
-            <p className="text-xs text-muted-foreground">@{user.username}</p>
-            <div className="flex gap-2 mt-1">
-              <Badge variant="secondary" className="text-xs">
-                Level {user.level}
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
-                <Brain size={10} className="mr-1" />
-                IQ {user.iq}
-              </Badge>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">{displayName}</h4>
+                  <p className="text-sm text-muted-foreground">@{username}</p>
+                </div>
+                <Badge 
+                  variant="outline" 
+                  className={`${status === "online" ? "bg-green-500/10 text-green-500 border-green-500/20" : 
+                    status === "away" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" : 
+                    status === "do_not_disturb" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                    "bg-gray-500/10 text-gray-500 border-gray-500/20"}`}
+                >
+                  {status.replace(/_/g, ' ')}
+                </Badge>
+              </div>
             </div>
           </div>
-        </div>
-        
-        {showBio && user.bio && (
-          <p className="text-xs text-muted-foreground mt-3 line-clamp-2">
-            {user.bio}
-          </p>
-        )}
-        
-        <div className="flex items-center pt-2 mt-3 border-t">
-          <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
-          <span className="text-xs text-muted-foreground">
-            {user.joinedDate}
-          </span>
-        </div>
-        
-        <div className="flex gap-2 mt-3">
-          <Button asChild size="sm" className="w-full gap-1">
-            <Link to={`/messages/${user.username}`}>
-              <MessageSquare size={14} />
-              <span>Message</span>
-            </Link>
-          </Button>
           
-          <Button variant={user.isFollowing ? "outline" : "secondary"} size="sm" className="w-full gap-1">
-            <UserPlus size={14} />
-            <span>{user.isFollowing ? 'Following' : 'Follow'}</span>
-          </Button>
+          <div className="mt-3">
+            <p className="text-sm">
+              Philosopher, mathematician, and science enthusiast. Exploring the intersection of quantum physics and consciousness.
+            </p>
+            <div className="flex items-center pt-2 text-muted-foreground text-xs">
+              <CalendarDays className="mr-1 h-3 w-3" />
+              <span>Joined March 2024</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <Link to={`/profile/${username}`} className="flex items-center justify-center">
+                View Profile
+              </Link>
+            </Button>
+            <Button asChild variant="default" size="sm" className="w-full">
+              <Link to={`/chat?direct=${username}`} className="flex items-center justify-center">
+                <MessageSquare className="mr-1 h-3 w-3" />
+                Message
+              </Link>
+            </Button>
+          </div>
         </div>
       </HoverCardContent>
     </HoverCard>

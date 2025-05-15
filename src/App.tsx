@@ -7,7 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { polymathToast } from "./components/ui/use-toast";
 import { ThemeProvider } from "./lib/theme-context";
-import { supabase } from "./integrations/supabase/client";
+import { AuthProvider } from "./lib/auth-context";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -21,15 +22,10 @@ import Wiki from "./pages/Wiki";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Admin from "./pages/Admin";
 
 // Components
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
-
-// Auth state types
-interface AuthState {
-  authenticated: boolean;
-  loading: boolean;
-}
 
 // Create a new query client with optimized settings
 const queryClient = new QueryClient({
@@ -43,37 +39,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  const [authState, setAuthState] = useState<AuthState>({
-    authenticated: false,
-    loading: true,
-  });
-
-  // Check for user session
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setAuthState({
-        authenticated: !!session,
-        loading: false,
-      });
-    };
-    
-    checkSession();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setAuthState({
-          authenticated: !!session,
-          loading: false,
-        });
-      }
-    );
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Check for returning users
   useEffect(() => {
     const lastLoginTimestamp = localStorage.getItem("lastLoginTimestamp");
@@ -96,51 +61,41 @@ const App = () => {
     localStorage.setItem("lastLoginTimestamp", currentTime.toString());
   }, []);
 
-  // Route guard component
-  const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
-    if (authState.loading) {
-      return (
-        <div className="flex items-center justify-center h-screen bg-background">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-16 h-16 bg-primary/20 rounded-full mb-4"></div>
-            <div className="h-4 w-24 bg-primary/20 rounded"></div>
-          </div>
-        </div>
-      );
-    }
-    
-    return authState.authenticated ? <>{element}</> : <Navigate to="/auth" replace />;
-  };
-
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="w-full min-h-screen m-0 p-0 max-w-full overflow-hidden">
-              <WelcomeOverlay />
-              <Routes>
-                <Route path="/" element={authState.authenticated ? <Dashboard /> : <Landing />} />
-                <Route path="/auth" element={authState.authenticated ? <Navigate to="/" replace /> : <Auth />} />
-                <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
-                <Route path="/forum" element={<ProtectedRoute element={<Forum />} />} />
-                <Route path="/library" element={<ProtectedRoute element={<Library />} />} />
-                <Route path="/quotes" element={<ProtectedRoute element={<Quotes />} />} />
-                <Route path="/wiki" element={<ProtectedRoute element={<Wiki />} />} />
-                <Route path="/chat" element={<ProtectedRoute element={<Chat />} />} />
-                <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
-                <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
-                
-                {/* Catch-all route for 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="w-full min-h-screen m-0 p-0 max-w-full overflow-hidden">
+                <WelcomeOverlay />
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/auth" element={<Auth />} />
+                  
+                  {/* Protected Routes */}
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
+                  <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
+                  <Route path="/quotes" element={<ProtectedRoute><Quotes /></ProtectedRoute>} />
+                  <Route path="/wiki" element={<ProtectedRoute><Wiki /></ProtectedRoute>} />
+                  <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+                  
+                  {/* Catch-all route for 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 

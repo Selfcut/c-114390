@@ -1,18 +1,23 @@
 
-import { useState } from "react";
-import { PromoBar } from "../components/PromoBar";
-import { Sidebar } from "../components/Sidebar";
-import Header from "../components/Header";
+import { useState, useEffect } from "react";
+import { PageLayout } from "../components/layouts/PageLayout";
 import { UserWelcome } from "../components/UserWelcome";
 import { ProgressCard } from "../components/ProgressCard";
 import { RecommendationsRow } from "../components/RecommendationsRow";
 import { TabNav } from "../components/TabNav";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, BarChart3, BookOpen, Users } from "lucide-react";
+import { Calendar, BarChart3, BookOpen, Users, Lightbulb } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/auth-context";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { LearningProgress } from "@/components/dashboard/LearningProgress";
+import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
+import { CommunityActivity } from "@/components/dashboard/CommunityActivity";
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const userName = localStorage.getItem('userName') || "Scholar";
+  const { user } = useAuth();
+  const userName = user?.name || localStorage.getItem('userName') || "Scholar";
   
   // Simulated progress data
   const progressData = [
@@ -60,47 +65,20 @@ const Dashboard = () => {
       label: "Learning Progress",
       icon: <BarChart3 size={16} className="mr-1" />,
       content: (
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 stagger-fade">
-            {progressData.map((item, index) => (
-              <ProgressCard
-                key={item.id}
-                title={item.title}
-                description={item.description}
-                progress={item.progress}
-                icon={item.icon as any}
-                recentActivity={item.recentActivity}
-                streakDays={item.streakDays}
-                animationDelay={`${index * 0.1}s`}
-                onClick={() => toast({
-                  title: "Content opened",
-                  description: `You opened: ${item.title}`,
-                })}
-              />
-            ))}
-          </div>
-          <RecommendationsRow />
-        </div>
+        <LearningProgress 
+          progressData={progressData}
+          onCardClick={(item) => toast({
+            title: "Content opened",
+            description: `You opened: ${item.title}`,
+          })}
+        />
       )
     },
     {
       id: "upcoming",
       label: "Upcoming Events",
       icon: <Calendar size={16} className="mr-1" />,
-      content: (
-        <div className="animate-fade-in">
-          <div className="bg-[#1A1A1A] border border-gray-800 rounded-lg p-8 text-center">
-            <Calendar className="mx-auto h-12 w-12 text-gray-500 mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No Upcoming Events</h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              You don't have any scheduled events. Join a study group or schedule a discussion to see events here.
-            </p>
-            <button className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md transition-colors hover-lift">
-              Browse Study Groups
-            </button>
-          </div>
-        </div>
-      )
+      content: <UpcomingEvents />
     },
     {
       id: "resources",
@@ -116,45 +94,45 @@ const Dashboard = () => {
       id: "community",
       label: "Community Activity",
       icon: <Users size={16} className="mr-1" />,
-      content: (
-        <div className="animate-fade-in">
-          <div className="bg-[#1A1A1A] border border-gray-800 rounded-lg p-8 text-center">
-            <Users className="mx-auto h-12 w-12 text-gray-500 mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Community Activity</h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Stay connected with the latest discussions, contributions, and activities from the community.
-            </p>
-            <button 
-              className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md transition-colors hover-lift"
-              onClick={() => toast({
-                title: "Coming soon",
-                description: "This feature will be available in the next update",
-              })}
-            >
-              View Activity Feed
-            </button>
-          </div>
-        </div>
-      )
+      content: <CommunityActivity />
     }
   ];
 
+  // User activity badges (for gamification)
+  const userBadges = [
+    { name: "Early Adopter", icon: "sparkles", achieved: true },
+    { name: "First Post", icon: "message", achieved: true },
+    { name: "Knowledge Seeker", icon: "book", achieved: false },
+    { name: "Deep Thinker", icon: "brain", achieved: false },
+    { name: "Community Builder", icon: "users", achieved: false }
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <PromoBar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <div className="flex-1 overflow-auto">
-            <main className="py-8 px-6 md:px-12">
-              <UserWelcome userName={userName} />
-              <TabNav tabs={dashboardTabs} defaultTab="progress" className="mb-6" />
-            </main>
+    <PageLayout>
+      <main className="py-8 px-6 md:px-12">
+        <UserWelcome 
+          userName={userName}
+          level={5}
+          xp={1240}
+          nextLevelXp={2000}
+          badges={userBadges.filter(badge => badge.achieved).length}
+          totalBadges={userBadges.length}
+          activityStreak={3}
+        />
+        <TabNav tabs={dashboardTabs} defaultTab="progress" className="mb-6" />
+        
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Lightbulb size={20} className="text-amber-400" />
+              Recent Activity
+              <Badge className="ml-2 bg-primary/20 text-primary">New</Badge>
+            </h2>
           </div>
+          <ActivityFeed />
         </div>
-      </div>
-    </div>
+      </main>
+    </PageLayout>
   );
 };
 
