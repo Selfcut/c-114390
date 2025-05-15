@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Send, Smile, Paperclip, Mic, Image, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -202,7 +201,7 @@ export const ChatInterface = ({
       }, 1000);
     } catch (error) {
       console.error('Error starting voice recording:', error);
-      polymathToast({
+      toast({
         title: 'Microphone access error',
         description: 'Please allow microphone access to send voice messages.',
         variant: 'destructive',

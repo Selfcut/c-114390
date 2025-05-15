@@ -67,4 +67,10 @@ export const polymathToast = {
   }
 };
 
+// Add a default calling mechanism for polymathToast
+(polymathToast as any).call = (props: { title: string; description: string; variant?: string }) => {
+  internalToast(props);
+};
+(polymathToast as any).__proto__ = Function.prototype;
+
 export { internalToast as toast };

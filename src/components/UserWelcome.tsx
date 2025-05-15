@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, BookOpen, Target, ArrowRight } from 'lucide-react';
-import { polymathToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserWelcomeProps {
   userName?: string;
@@ -15,6 +15,7 @@ export function UserWelcome({ userName = "Scholar" }: UserWelcomeProps) {
   const [progress, setProgress] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Simulate loading progress
@@ -96,7 +97,7 @@ export function UserWelcome({ userName = "Scholar" }: UserWelcomeProps) {
                     <Button 
                       variant="ghost" 
                       className="justify-start h-auto py-2 px-3 w-full text-left hover:bg-gray-700 text-gray-300 hover:text-white"
-                      onClick={() => polymathToast({
+                      onClick={() => toast({
                         title: "Action taken",
                         description: `You've started: ${recommendation}`,
                       })}

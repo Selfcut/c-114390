@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,10 +173,7 @@ export function RecommendationsRow() {
           <Card 
             key={rec.id} 
             className="flex-shrink-0 w-[280px] bg-[#1A1A1A] border-gray-800 hover:border-gray-700 transition-all hover-lift"
-            onClick={() => polymathToast({
-              title: "Content opened",
-              description: `You opened: ${rec.title}`,
-            })}
+            onClick={() => polymathToast.contentRecommended()}
           >
             <CardContent className="p-0">
               {rec.image ? (

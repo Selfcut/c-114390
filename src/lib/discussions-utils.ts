@@ -1,107 +1,65 @@
-
 export interface DiscussionTopic {
   id: string;
   title: string;
   author: string;
-  authorAvatar?: string;
-  replies: number;
-  createdAt: Date;
   tags: string[];
+  replies: number;
   upvotes: number;
+  createdAt: Date;
+  excerpt?: string; // Adding the missing excerpt property as optional
 }
-
-export const formatTimeAgo = (date: Date): string => {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) {
-    return `${diffInSeconds} seconds ago`;
-  }
-  
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
-  }
-  
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
-  }
-  
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
-  }
-  
-  const diffInWeeks = Math.floor(diffInDays / 7);
-  if (diffInWeeks < 5) {
-    return `${diffInWeeks}w ago`;
-  }
-  
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths}mo ago`;
-  }
-  
-  const diffInYears = Math.floor(diffInDays / 365);
-  return `${diffInYears}y ago`;
-};
 
 export const mockDiscussions: DiscussionTopic[] = [
   {
-    id: "1",
-    title: "The intersection of quantum physics and consciousness",
-    author: "PhilosophicalMind",
-    replies: 24,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    tags: ["Physics", "Philosophy", "Consciousness"],
-    upvotes: 18
-  },
-  {
-    id: "2",
-    title: "Mathematical patterns in natural phenomena",
-    author: "MathExplorer",
-    replies: 18,
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-    tags: ["Mathematics", "Nature", "Patterns"],
-    upvotes: 15
-  },
-  {
-    id: "3",
-    title: "Ethical implications of AI advancement",
-    author: "EthicsScholar",
-    replies: 32,
-    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
-    tags: ["Ethics", "AI", "Technology"],
-    upvotes: 27
-  },
-  {
-    id: "4",
-    title: "The role of literature in shaping societal values",
-    author: "LiteraryAnalyst",
-    replies: 21,
-    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-    tags: ["Literature", "Society", "Values"],
-    upvotes: 14
-  },
-  {
-    id: "5",
-    title: "Neuroplasticity and lifelong learning potential",
-    author: "BrainScientist",
-    replies: 29,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-    tags: ["Neuroscience", "Learning", "Psychology"],
-    upvotes: 31
-  },
-  {
-    id: "6",
-    title: "The future of interdisciplinary research methodologies",
-    author: "ResearchInnovator",
+    id: '1',
+    title: 'The ethics of AI in education',
+    author: 'Alice Johnson',
+    tags: ['AI', 'Ethics', 'Education'],
     replies: 15,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    tags: ["Research", "Methodology", "Interdisciplinary"],
-    upvotes: 12
-  }
+    upvotes: 42,
+    createdAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
+    excerpt: 'A discussion on the ethical implications of using AI in educational settings.'
+  },
+  {
+    id: '2',
+    title: 'The future of work in a decentralized world',
+    author: 'Bob Williams',
+    tags: ['DeFi', 'Future of Work', 'Technology'],
+    replies: 8,
+    upvotes: 28,
+    createdAt: new Date(Date.now() - 86400000 * 7), // 7 days ago
+    excerpt: 'Exploring how decentralization is changing the way we work and the opportunities it presents.'
+  },
+  {
+    id: '3',
+    title: 'The role of philosophy in modern technology',
+    author: 'Charlie Davis',
+    tags: ['Philosophy', 'Technology', 'Society'],
+    replies: 22,
+    upvotes: 61,
+    createdAt: new Date(Date.now() - 86400000 * 14), // 14 days ago
+    excerpt: 'Examining the philosophical questions raised by modern technology and their impact on society.'
+  },
+  {
+    id: '4',
+    title: 'The impact of social media on mental health',
+    author: 'Diana Evans',
+    tags: ['Social Media', 'Mental Health', 'Psychology'],
+    replies: 12,
+    upvotes: 35,
+    createdAt: new Date(Date.now() - 86400000 * 30), // 30 days ago
+    excerpt: 'Analyzing the effects of social media on our mental well-being and strategies for staying healthy.'
+  },
+  {
+    id: '5',
+    title: 'The science of consciousness',
+    author: 'Ethan Foster',
+    tags: ['Neuroscience', 'Consciousness', 'Science'],
+    replies: 18,
+    upvotes: 50,
+    createdAt: new Date(Date.now() - 86400000 * 60), // 60 days ago
+    excerpt: 'A deep dive into the scientific study of consciousness and the latest research in the field.'
+  },
 ];
 
 export const getSortedDiscussions = (
@@ -109,10 +67,10 @@ export const getSortedDiscussions = (
   sortBy: 'popular' | 'new' | 'upvotes'
 ): DiscussionTopic[] => {
   switch (sortBy) {
+    case 'popular':
+      return [...discussions].sort((a, b) => (b.replies + b.upvotes) - (a.replies + a.upvotes));
     case 'new':
       return [...discussions].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    case 'popular':
-      return [...discussions].sort((a, b) => b.replies - a.replies);
     case 'upvotes':
       return [...discussions].sort((a, b) => b.upvotes - a.upvotes);
     default:
@@ -122,8 +80,26 @@ export const getSortedDiscussions = (
 
 export const filterDiscussionsByTag = (
   discussions: DiscussionTopic[],
-  tag: string | null
+  tag: string
 ): DiscussionTopic[] => {
-  if (!tag) return discussions;
   return discussions.filter(discussion => discussion.tags.includes(tag));
+};
+
+export const formatTimeAgo = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) {
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  } else if (minutes > 0) {
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  } else {
+    return 'Just now';
+  }
 };
