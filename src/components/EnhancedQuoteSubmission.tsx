@@ -4,11 +4,18 @@ import { X, Upload, Info, Image, AlertTriangle } from "lucide-react";
 import { polymathToast } from "@/components/ui/use-toast";
 
 interface QuoteSubmissionModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
+  onSubmit?: (text: string, author: string, category: string) => void;
+  categories?: string[];
 }
 
-export const EnhancedQuoteSubmission = ({ isOpen, onClose }: QuoteSubmissionModalProps) => {
+export const EnhancedQuoteSubmission = ({ 
+  isOpen = true, 
+  onClose,
+  onSubmit,
+  categories = []
+}: QuoteSubmissionModalProps) => {
   const [quoteText, setQuoteText] = useState("");
   const [author, setAuthor] = useState("");
   const [source, setSource] = useState("");
@@ -74,6 +81,11 @@ export const EnhancedQuoteSubmission = ({ isOpen, onClose }: QuoteSubmissionModa
       category,
       uploadedImage
     });
+    
+    // Call the provided onSubmit if it exists
+    if (onSubmit) {
+      onSubmit(quoteText, author, category);
+    }
     
     // Show success toast
     polymathToast.contributionSaved();
