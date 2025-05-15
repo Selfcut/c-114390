@@ -1,118 +1,69 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
 import Header from "../components/Header";
 import { ChatInterface } from "../components/chat/ChatInterface";
-import { Search, Users, User, ChevronRight, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  MessageSquare, 
+  Users, 
+  User,
+  Search,
+  Plus 
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
-type ChatContact = {
-  id: string;
-  name: string;
-  avatar?: string;
-  status: 'online' | 'offline' | 'away';
-  lastMessage?: string;
-  unreadCount?: number;
-  lastActive?: Date;
-  isGroup?: boolean;
-  memberCount?: number;
-};
+// Mock conversations data
+const mockDirectConversations = [
+  { id: 'user1', name: 'Sarah Johnson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', status: 'online', unread: 3 },
+  { id: 'user2', name: 'Michael Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael', status: 'offline', lastSeen: '2h ago' },
+  { id: 'user3', name: 'Emma Watson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma', status: 'away', lastSeen: '15m ago' },
+  { id: 'user4', name: 'James Lee', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James', status: 'online' },
+  { id: 'user5', name: 'Maria García', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria', status: 'do_not_disturb' }
+];
 
-const mockContacts: ChatContact[] = [
-  {
-    id: '1',
-    name: 'Alice Johnson',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice',
-    status: 'online',
-    lastMessage: 'Looking forward to our discussion tomorrow!',
-    unreadCount: 2,
-    lastActive: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-  },
-  {
-    id: '2',
-    name: 'Robert Chen',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Robert',
-    status: 'online',
-    lastMessage: 'I found that article we were talking about',
-    lastActive: new Date(Date.now() - 1000 * 60 * 20), // 20 minutes ago
-  },
-  {
-    id: '3',
-    name: 'Philosophy Circle',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Philosophy',
-    status: 'online',
-    lastMessage: 'Sarah: Has anyone read Heidegger?',
-    isGroup: true,
-    memberCount: 8,
-    lastActive: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
-  },
-  {
-    id: '4',
-    name: 'Daniel Wright',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Daniel',
-    status: 'away',
-    lastMessage: 'Let me think about that and get back to you',
-    lastActive: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-  },
-  {
-    id: '5',
-    name: 'Quantum Mechanics Study Group',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Quantum',
-    status: 'online',
-    lastMessage: 'Michael: The double-slit experiment shows...',
-    isGroup: true,
-    memberCount: 5,
-    lastActive: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-  },
-  {
-    id: '6',
-    name: 'Emma Patterson',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-    status: 'offline',
-    lastMessage: 'Thanks for the book recommendation!',
-    lastActive: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-  },
+const mockGroupConversations = [
+  { id: 'group1', name: 'Quantum Physics Study Group', avatar: undefined, memberCount: 12, unread: 5 },
+  { id: 'group2', name: 'Psychology Enthusiasts', avatar: undefined, memberCount: 8 },
+  { id: 'group3', name: 'Philosophy Book Club', avatar: undefined, memberCount: 6 }
 ];
 
 const Chat = () => {
-  const [contacts, setContacts] = useState<ChatContact[]>(mockContacts);
+  const [activeTab, setActiveTab] = useState<'direct' | 'group' | 'global'>('direct');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct');
-  const { toast } = useToast();
-
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = activeTab === 'direct' ? !contact.isGroup : contact.isGroup;
-    return matchesSearch && matchesType;
-  });
-
-  const selectedContact = contacts.find(c => c.id === selectedContactId);
-
-  const formatLastActive = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+  const [selectedConversation, setSelectedConversation] = useState<any>(null);
+  const [conversationType, setConversationType] = useState<'direct' | 'group' | 'global'>('direct');
+  
+  // Filter conversations based on search term
+  const filteredDirectConversations = mockDirectConversations.filter(conv => 
+    conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const filteredGroupConversations = mockGroupConversations.filter(conv => 
+    conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Handle conversation selection
+  const handleConversationSelect = (conversation: any, type: 'direct' | 'group' | 'global') => {
+    setSelectedConversation(conversation);
+    setConversationType(type);
   };
-
-  const handleCreateChat = () => {
-    toast({
-      title: "Coming Soon",
-      description: "This feature will be available in the next update."
-    });
+  
+  // Get online status indicator color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-green-500';
+      case 'offline': return 'bg-gray-400';
+      case 'away': return 'bg-yellow-500';
+      case 'do_not_disturb': return 'bg-red-500';
+      default: return 'bg-gray-400';
+    }
   };
-
+  
   return (
     <div className="min-h-screen flex flex-col">
       <PromoBar />
@@ -121,139 +72,202 @@ const Chat = () => {
         <div className="flex-1 flex flex-col">
           <Header />
           <div className="flex-1 overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-              {/* Contacts sidebar */}
-              <div className="md:col-span-1 border-r border-gray-800 bg-[#1A1A1A] p-4 flex flex-col">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white">Messages</h2>
-                  <Button
-                    size="sm"
-                    className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white"
-                    onClick={handleCreateChat}
-                  >
-                    <Plus size={16} className="mr-1" />
-                    New
-                  </Button>
-                </div>
-
-                <div className="relative mb-4">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search conversations..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 bg-gray-800 border-gray-700"
-                  />
-                </div>
-
-                <div className="flex border-b border-gray-800 mb-4">
-                  <button
-                    className={`flex-1 pb-2 text-sm font-medium ${
-                      activeTab === 'direct'
-                        ? 'text-white border-b-2 border-[#6E59A5]'
-                        : 'text-gray-400'
-                    }`}
-                    onClick={() => setActiveTab('direct')}
-                  >
-                    <User size={16} className="inline mr-1" />
-                    Direct Messages
-                  </button>
-                  <button
-                    className={`flex-1 pb-2 text-sm font-medium ${
-                      activeTab === 'groups'
-                        ? 'text-white border-b-2 border-[#6E59A5]'
-                        : 'text-gray-400'
-                    }`}
-                    onClick={() => setActiveTab('groups')}
-                  >
-                    <Users size={16} className="inline mr-1" />
-                    Group Chats
-                  </button>
-                </div>
-
-                <ScrollArea className="flex-1">
-                  <div className="space-y-1 stagger-fade">
-                    {filteredContacts.length > 0 ? (
-                      filteredContacts.map((contact) => (
-                        <div
-                          key={contact.id}
-                          className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-800 ${
-                            selectedContactId === contact.id ? 'bg-gray-800' : ''
-                          }`}
-                          onClick={() => setSelectedContactId(contact.id)}
-                        >
-                          <div className="relative">
-                            <Avatar>
-                              <AvatarImage src={contact.avatar} />
-                              <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            {contact.status === 'online' && (
-                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]"></span>
-                            )}
-                            {contact.status === 'away' && (
-                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-yellow-500 rounded-full border-2 border-[#1A1A1A]"></span>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-baseline">
-                              <h4 className="font-medium text-white truncate">{contact.name}</h4>
-                              {contact.lastActive && (
-                                <span className="text-xs text-gray-400 whitespace-nowrap">
-                                  {formatLastActive(contact.lastActive)}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-400 truncate">
-                              {contact.lastMessage || 'No messages yet'}
-                            </p>
-                          </div>
-                          
-                          {contact.unreadCount && contact.unreadCount > 0 && (
-                            <div className="min-w-[20px] h-5 bg-[#6E59A5] rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white">{contact.unreadCount}</span>
-                            </div>
-                          )}
-                          
-                          <ChevronRight size={16} className="text-gray-500" />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-400">No conversations found</p>
-                      </div>
-                    )}
+            <div className="h-full flex">
+              {/* Chat sidebar */}
+              <div className="w-80 border-r flex flex-col">
+                <div className="p-4 border-b">
+                  <div className="flex items-center mb-4">
+                    <h2 className="text-xl font-bold">Messages</h2>
+                    <Button variant="ghost" size="icon" className="ml-auto">
+                      <Plus size={18} />
+                    </Button>
                   </div>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search conversations..."
+                      className="pl-9"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="border-b">
+                  <nav className="flex items-center">
+                    <button
+                      className={`flex-1 p-3 text-sm font-medium text-center transition-colors ${
+                        activeTab === 'direct' 
+                          ? 'border-b-2 border-primary text-primary' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      onClick={() => setActiveTab('direct')}
+                    >
+                      <div className="flex justify-center items-center gap-1.5">
+                        <User size={16} />
+                        <span>Direct</span>
+                      </div>
+                    </button>
+                    <button
+                      className={`flex-1 p-3 text-sm font-medium text-center transition-colors ${
+                        activeTab === 'group' 
+                          ? 'border-b-2 border-primary text-primary' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      onClick={() => setActiveTab('group')}
+                    >
+                      <div className="flex justify-center items-center gap-1.5">
+                        <Users size={16} />
+                        <span>Groups</span>
+                      </div>
+                    </button>
+                    <button
+                      className={`flex-1 p-3 text-sm font-medium text-center transition-colors ${
+                        activeTab === 'global' 
+                          ? 'border-b-2 border-primary text-primary' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      onClick={() => setActiveTab('global')}
+                    >
+                      <div className="flex justify-center items-center gap-1.5">
+                        <MessageSquare size={16} />
+                        <span>Global</span>
+                      </div>
+                    </button>
+                  </nav>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  {activeTab === 'direct' && (
+                    <div className="p-2">
+                      {filteredDirectConversations.length > 0 ? (
+                        filteredDirectConversations.map((conversation) => (
+                          <button
+                            key={conversation.id}
+                            className={`w-full text-left p-3 rounded-md mb-1 flex items-center gap-3 hover:bg-muted transition-colors ${
+                              selectedConversation?.id === conversation.id && conversationType === 'direct'
+                                ? 'bg-muted'
+                                : ''
+                            }`}
+                            onClick={() => handleConversationSelect(conversation, 'direct')}
+                          >
+                            <div className="relative">
+                              <Avatar>
+                                <AvatarImage src={conversation.avatar} />
+                                <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span 
+                                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(conversation.status)}`}
+                              ></span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium truncate">{conversation.name}</p>
+                                {conversation.unread && (
+                                  <Badge className="ml-auto bg-primary">{conversation.unread}</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {conversation.status === 'online' 
+                                  ? 'Online' 
+                                  : conversation.status === 'do_not_disturb'
+                                  ? 'Do not disturb'
+                                  : `Last seen ${conversation.lastSeen}`
+                                }
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center">
+                          <p className="text-sm text-muted-foreground">No conversations found</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {activeTab === 'group' && (
+                    <div className="p-2">
+                      {filteredGroupConversations.length > 0 ? (
+                        filteredGroupConversations.map((conversation) => (
+                          <button
+                            key={conversation.id}
+                            className={`w-full text-left p-3 rounded-md mb-1 flex items-center gap-3 hover:bg-muted transition-colors ${
+                              selectedConversation?.id === conversation.id && conversationType === 'group'
+                                ? 'bg-muted'
+                                : ''
+                            }`}
+                            onClick={() => handleConversationSelect(conversation, 'group')}
+                          >
+                            <Avatar>
+                              <AvatarImage src={conversation.avatar} />
+                              <AvatarFallback>{conversation.name.slice(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium truncate">{conversation.name}</p>
+                                {conversation.unread && (
+                                  <Badge className="ml-auto bg-primary">{conversation.unread}</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {conversation.memberCount} members
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center">
+                          <p className="text-sm text-muted-foreground">No groups found</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {activeTab === 'global' && (
+                    <div className="p-2">
+                      <button
+                        className={`w-full text-left p-3 rounded-md flex items-center gap-3 hover:bg-muted transition-colors ${
+                          conversationType === 'global' ? 'bg-muted' : ''
+                        }`}
+                        onClick={() => handleConversationSelect({id: 'global', name: 'Global Chat'}, 'global')}
+                      >
+                        <Avatar>
+                          <AvatarImage src={undefined} />
+                          <AvatarFallback>GC</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">Global Chat</p>
+                          <p className="text-xs text-muted-foreground">
+                            Community-wide discussion
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  )}
                 </ScrollArea>
               </div>
               
-              {/* Chat interface */}
-              <div className="md:col-span-2 flex flex-col h-full">
-                {selectedContact ? (
+              {/* Chat main area */}
+              <div className="flex-1 flex flex-col">
+                {selectedConversation ? (
                   <ChatInterface 
-                    recipientId={selectedContact.id}
-                    recipientName={selectedContact.name}
-                    recipientAvatar={selectedContact.avatar}
-                    isGroupChat={selectedContact.isGroup}
-                    groupName={selectedContact.isGroup ? selectedContact.name : undefined}
-                    groupAvatar={selectedContact.isGroup ? selectedContact.avatar : undefined}
+                    chatType={conversationType}
+                    recipientId={conversationType === 'direct' ? selectedConversation.id : undefined}
+                    recipientName={conversationType === 'direct' ? selectedConversation.name : undefined}
+                    recipientAvatar={conversationType === 'direct' ? selectedConversation.avatar : undefined}
+                    groupId={conversationType === 'group' ? selectedConversation.id : undefined}
+                    groupName={conversationType === 'group' ? selectedConversation.name : undefined}
                   />
                 ) : (
-                  <div className="flex-1 flex items-center justify-center bg-[#1A1A1A] rounded-lg">
-                    <div className="text-center p-8 max-w-md">
-                      <Users size={48} className="mx-auto text-gray-500 mb-4" />
-                      <h3 className="text-xl font-bold text-white mb-2">No Conversation Selected</h3>
-                      <p className="text-gray-400 mb-6">
-                        Select a conversation from the sidebar or start a new one to begin chatting.
-                      </p>
-                      <Button 
-                        className="bg-[#6E59A5] hover:bg-[#7E69B5]"
-                        onClick={handleCreateChat}
-                      >
-                        <Plus size={16} className="mr-2" />
-                        Start New Conversation
-                      </Button>
+                  <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <MessageSquare size={24} className="text-primary" />
                     </div>
+                    <h3 className="font-medium mb-2">No conversation selected</h3>
+                    <p className="text-sm text-muted-foreground max-w-xs">
+                      Select a conversation from the sidebar to start chatting.
+                    </p>
                   </div>
                 )}
               </div>

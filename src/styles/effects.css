@@ -6,7 +6,7 @@
 
 .hover-lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .hover-grow {
@@ -25,6 +25,7 @@
   box-shadow: 0 0 15px rgba(110, 89, 165, 0.4);
 }
 
+/* Interaction effects */
 .button-hover-effect {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
@@ -103,6 +104,19 @@
   background-color: hsl(var(--primary) / 0.8);
 }
 
+/* Text highlight effects */
+.text-gradient {
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-fill-color: transparent;
+}
+
+.text-gradient-glow {
+  text-shadow: 0 0 20px rgba(110, 89, 165, 0.5);
+}
+
 /* Gradient border hover */
 .gradient-border-hover {
   position: relative;
@@ -139,4 +153,78 @@
 .icon-hover:hover {
   transform: translateY(-2px);
   color: hsl(var(--primary));
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove blue outline on focus */
+:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Tooltip custom styles */
+.custom-tooltip {
+  position: relative;
+}
+
+.custom-tooltip::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem;
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 50;
+}
+
+.custom-tooltip:hover::before {
+  opacity: 1;
+}
+
+/* Badge highlight glow */
+.badge-glow {
+  box-shadow: 0 0 8px rgba(110, 89, 165, 0.6);
+}
+
+/* Achievement badge effect */
+.achievement-badge {
+  position: relative;
+}
+
+.achievement-badge::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  bottom: -2px;
+  left: -2px;
+  border-radius: inherit;
+  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--secondary)));
+  z-index: -1;
+  opacity: 0.3;
 }

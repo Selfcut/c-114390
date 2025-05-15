@@ -19,6 +19,8 @@ import Quotes from "./pages/Quotes";
 import Auth from "./pages/Auth";
 import Wiki from "./pages/Wiki";
 import Chat from "./pages/Chat";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 // Components
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
@@ -128,6 +130,8 @@ const App = () => {
                 <Route path="/quotes" element={<ProtectedRoute element={<Quotes />} />} />
                 <Route path="/wiki" element={<ProtectedRoute element={<Wiki />} />} />
                 <Route path="/chat" element={<ProtectedRoute element={<Chat />} />} />
+                <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
+                <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
                 
                 {/* Catch-all route for 404 */}
                 <Route path="*" element={<NotFound />} />

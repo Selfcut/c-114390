@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Bell, Menu, LogOut, Settings, User, X, HelpCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -13,27 +14,19 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-context";
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
-import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { 
+  CommandDialog, 
+  CommandEmpty, 
+  CommandGroup, 
+  CommandInput, 
+  CommandItem, 
+  CommandList,
+} from "@/components/ui/command";
+import { searchContentWithSupabase } from "@/lib/search-utils";
+import { useToast } from "@/hooks/use-toast";
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -41,9 +34,63 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  // Listen for command+k to open search
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsCommandOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
+  
+  // Handle search input change with debounce
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set new timeout for debounce
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (value.length > 1) {
+        // Fetch search results
+        try {
+          const { success, data, error } = await searchContentWithSupabase(value);
+          if (success && data) {
+            setSearchResults(data);
+          } else if (error) {
+            console.error("Search error:", error);
+            setSearchResults([]);
+          }
+        } catch (err) {
+          console.error("Search error:", err);
+          setSearchResults([]);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+  };
+
+  // Handle search result selection
+  const handleSelectSearchResult = (item: any) => {
+    setIsCommandOpen(false);
+    navigate(item.url);
+    toast({
+      title: "Item selected",
+      description: `You selected "${item.title}"`,
+    });
   };
 
   const handleLogout = async () => {
@@ -55,22 +102,15 @@ export const Header: React.FC = () => {
     });
   };
 
-  const handleSearchFocus = () => {
-    setIsSearchExpanded(true);
-  };
-
-  const handleSearchBlur = () => {
-    setIsSearchExpanded(false);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const query = (form.elements.namedItem('search') as HTMLInputElement).value;
-    toast({
-      title: "Search Results",
-      description: `Found 8 results for "${query}"`,
-    });
+  const renderSearchResultIcon = (type: string) => {
+    switch (type) {
+      case 'discussion': return <Search className="mr-2 h-4 w-4" />;
+      case 'book': return <Search className="mr-2 h-4 w-4" />;
+      case 'profile': return <User className="mr-2 h-4 w-4" />;
+      case 'article': return <Search className="mr-2 h-4 w-4" />;
+      case 'event': return <Search className="mr-2 h-4 w-4" />;
+      default: return <Search className="mr-2 h-4 w-4" />;
+    }
   };
 
   return (
@@ -84,26 +124,55 @@ export const Header: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <form 
-            className={cn(
-              "relative rounded-md transition-all duration-300",
-              isSearchExpanded ? "w-64" : "w-40"
-            )}
-            onSubmit={handleSearchSubmit}
+          {/* Global Search */}
+          <Button 
+            variant="outline" 
+            className="relative h-9 w-9 sm:w-64 sm:justify-start sm:px-3 sm:py-2"
+            onClick={() => setIsCommandOpen(true)}
           >
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            </div>
-            <Input
-              type="search"
-              name="search"
-              className="block w-full rounded-md border-0 bg-muted py-1.5 pl-10 pr-3 text-sm focus:ring-1 focus:ring-primary"
-              placeholder="Search..."
-              onFocus={handleSearchFocus}
-              onBlur={handleSearchBlur}
-            />
-          </form>
+            <Search className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline-flex">Search...</span>
+            <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
           
+          <CommandDialog open={isCommandOpen} onOpenChange={setIsCommandOpen}>
+            <CommandInput 
+              placeholder="Search everything..." 
+              value={searchQuery}
+              onValueChange={handleSearchChange}
+            />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              {searchResults.length > 0 && (
+                <CommandGroup heading="Search Results">
+                  {searchResults.map((result) => (
+                    <CommandItem
+                      key={result.id}
+                      onSelect={() => handleSelectSearchResult(result)}
+                      className="flex items-center"
+                    >
+                      {renderSearchResultIcon(result.type)}
+                      <div className="flex flex-col">
+                        <span>{result.title}</span>
+                        {result.excerpt && (
+                          <span className="text-xs text-muted-foreground">{result.excerpt}</span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              {searchQuery.length > 0 && searchResults.length === 0 && (
+                <CommandGroup>
+                  <CommandItem disabled>Searching...</CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </CommandDialog>
+          
+          {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
@@ -176,13 +245,15 @@ export const Header: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
+          {/* Theme Toggle */}
           <ThemeToggle />
           
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                  <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="@user" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
               </Button>
@@ -204,8 +275,10 @@ export const Header: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
+          {/* Premium Button */}
           <Button size="sm" className="bg-[#6E59A5] hover:bg-[#7E69B5]">Premium</Button>
 
+          {/* Help Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -213,84 +286,20 @@ export const Header: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => navigate('/ask-question')} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate('/help/ask')} className="cursor-pointer">
                 Ask a Question
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/knowledge-base')} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate('/help/knowledge-base')} className="cursor-pointer">
                 Knowledge Base
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/learning-guides')} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate('/help/guides')} className="cursor-pointer">
                 Learning Guides
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/wiki-access')} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate('/wiki')} className="cursor-pointer">
                 Wiki Access
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Mobile Menu Trigger */}
-          <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader className="flex justify-between items-center">
-                <SheetTitle>Menu</SheetTitle>
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon">
-                    <X size={18} />
-                  </Button>
-                </SheetClose>
-              </SheetHeader>
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link 
-                  to="/" 
-                  className={`${(isActive("/") || isActive("/dashboard")) ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
-                >
-                  Home
-                </Link>
-                <Link 
-                  to="/forum" 
-                  className={`${isActive("/forum") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
-                >
-                  Forum
-                </Link>
-                <Link 
-                  to="/library" 
-                  className={`${isActive("/library") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
-                >
-                  Library  
-                </Link>
-                <Link 
-                  to="/quotes" 
-                  className={`${isActive("/quotes") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
-                >
-                  Quotes
-                </Link>
-                <Link 
-                  to="/wiki" 
-                  className={`${isActive("/wiki") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
-                >
-                  Wiki
-                </Link>
-                <Link 
-                  to="/chat" 
-                  className={`${isActive("/chat") ? "text-primary" : ""} font-medium flex items-center gap-2 p-2 rounded-md hover:bg-muted`}
-                >
-                  Chat
-                </Link>
-                <div className="border-t border-border my-4"></div>
-                <Button className="w-full bg-[#6E59A5] hover:bg-[#7E69B5]">Premium</Button>
-                <Button variant="outline" className="w-full mt-2">Contribute</Button>
-                <Button variant="destructive" className="w-full mt-2" onClick={handleLogout}>
-                  <LogOut size={16} className="mr-2" />
-                  Logout
-                </Button>
-              </nav>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </header>
