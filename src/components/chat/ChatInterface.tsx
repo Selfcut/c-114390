@@ -39,6 +39,40 @@ import {
 import { ChatMessage } from "./ChatMessage";
 import { UserStatus } from "@/types/user";
 
+// Define the message type to ensure consistent structure
+interface ChatMessageType {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string;
+    status: UserStatus;
+  };
+  timestamp: Date;
+  reactions: Array<{
+    emoji: string;
+    count: number;
+    users: string[];
+  }>;
+  isEdited: boolean;
+  replyTo: {
+    id: string;
+    content: string;
+    sender: { name: string };
+  } | null;
+  mentions: string[];
+  attachments?: Array<{
+    id: string;
+    type: "image" | "file" | "audio" | "video" | "gif";
+    url: string;
+    name: string;
+    size?: number;
+    dimensions?: { width: number; height: number };
+  }>;
+}
+
 // Emoji data for quick selection
 const emojiCategories = [
   {
@@ -68,7 +102,7 @@ const gifCategories = [
 ];
 
 // Mock messages data
-const generateMockMessages = () => {
+const generateMockMessages = (): ChatMessageType[] => {
   const now = new Date();
   
   return [
@@ -102,7 +136,10 @@ const generateMockMessages = () => {
         status: "online" as UserStatus
       },
       timestamp: new Date(now.getTime() - 55 * 60 * 1000), // 55 mins ago
-      reactions: []
+      reactions: [],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg3",
@@ -268,7 +305,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   chatType
 }) => {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState(generateMockMessages());
+  const [messages, setMessages] = useState<ChatMessageType[]>(generateMockMessages());
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -317,7 +354,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setIsEditing(null);
     } else {
       // Add new message
-      const newMessage = {
+      const newMessage: ChatMessageType = {
         id: `msg${Date.now()}`,
         content: message,
         sender: {
@@ -329,7 +366,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         },
         timestamp: new Date(),
         reactions: [],
-        ...(replyingTo && { replyTo: replyingTo })
+        isEdited: false,
+        replyTo: replyingTo,
+        mentions: []
       };
 
       setMessages([...messages, newMessage]);

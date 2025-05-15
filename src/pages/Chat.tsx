@@ -53,7 +53,7 @@ const Chat = () => {
               recipientId={conversationType === 'direct' ? selectedConversation.id : undefined}
               recipientName={conversationType === 'direct' ? selectedConversation.name : undefined}
               recipientAvatar={conversationType === 'direct' ? selectedConversation.avatar : undefined}
-              recipientStatus={conversationType === 'direct' ? selectedConversation.status : undefined}
+              recipientStatus={conversationType === 'direct' ? selectedConversation.status as UserStatus : undefined}
               groupId={conversationType === 'group' ? selectedConversation.id : undefined}
               groupName={conversationType === 'group' ? selectedConversation.name : undefined}
               groupAvatar={conversationType === 'group' ? selectedConversation.avatar : undefined}
