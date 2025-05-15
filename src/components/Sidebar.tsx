@@ -58,7 +58,7 @@ export const Sidebar = () => {
     <div 
       className={`bg-[#1A1A1A] flex flex-col ${
         collapsed ? 'w-16' : 'w-64'
-      } transition-all duration-300 border-r border-gray-800`}
+      } transition-all duration-300`}
     >
       <div className="flex items-center justify-between p-4">
         {!collapsed && (
@@ -68,7 +68,7 @@ export const Sidebar = () => {
           onClick={() => setCollapsed(!collapsed)}
           className={`${
             collapsed ? 'mx-auto' : ''
-          } p-1.5 rounded-md bg-gray-800 text-gray-400 hover:text-white transition-colors`}
+          } p-1.5 rounded-md bg-gray-800 text-white hover:text-white transition-colors`}
         >
           {collapsed ? <Menu size={18} /> : <X size={18} />}
         </button>
@@ -84,8 +84,8 @@ export const Sidebar = () => {
                 collapsed ? 'justify-center' : 'justify-start'
               } px-3 py-3 rounded-md group ${
                 isActive(item.path)
-                  ? 'bg-blue-700 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-gray-800 text-white'
+                  : 'text-white hover:text-white hover:bg-gray-800'
               }`}
             >
               <div className="flex items-center">
@@ -99,15 +99,15 @@ export const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4">
         {!collapsed ? (
-          <div className="bg-gray-800 rounded-lg p-3 text-sm text-gray-300">
+          <div className="bg-gray-800 rounded-lg p-3 text-sm text-white">
             <div className="font-medium text-white mb-1">Pro Tip</div>
             <p>Press <kbd className="bg-gray-700 px-1.5 py-0.5 rounded">⌘</kbd> + <kbd className="bg-gray-700 px-1.5 py-0.5 rounded">K</kbd> to search</p>
           </div>
         ) : (
           <div className="flex justify-center">
-            <BookText size={20} className="text-gray-400" />
+            <BookText size={20} className="text-white" />
           </div>
         )}
       </div>
