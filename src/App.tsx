@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FloatingChatWidget } from '@/components/chat/FloatingChatWidget';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { initializeSupabase } from '@/integrations/supabase/init';
 
 // Pages
 import Landing from './pages/Landing';
@@ -24,6 +25,9 @@ import AI from './pages/AI';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
 import Wiki from './pages/Wiki';
+
+// Initialize Supabase
+initializeSupabase();
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {

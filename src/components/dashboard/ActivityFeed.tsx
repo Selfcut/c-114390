@@ -24,24 +24,14 @@ interface Activity {
 }
 
 interface ActivityFeedProps {
-  userActivities?: Activity[];
-  isLoading?: boolean;
+  limit?: number;
 }
 
-export const ActivityFeed = ({ userActivities = [], isLoading = false }: ActivityFeedProps) => {
-  const { user } = useAuth();
+export const ActivityFeed = ({ limit = 10 }: ActivityFeedProps) => {
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(isLoading);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If userActivities are provided, use them
-    if (userActivities.length > 0) {
-      setActivities(userActivities);
-      setLoading(false);
-      return;
-    }
-
-    // Otherwise fetch from Supabase
     const fetchActivities = async () => {
       try {
         setLoading(true);
@@ -50,7 +40,7 @@ export const ActivityFeed = ({ userActivities = [], isLoading = false }: Activit
           .from('user_activities')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(limit);
 
         if (error) {
           console.error('Error fetching activities:', error);
@@ -90,8 +80,37 @@ export const ActivityFeed = ({ userActivities = [], isLoading = false }: Activit
       }
     };
 
+    // Set up real-time subscription for new activities
+    const channel = supabase
+      .channel('public:user_activities')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'user_activities'
+      }, async (payload) => {
+        // Fetch the user details for the new activity
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('name, username, avatar_url')
+          .eq('id', payload.new.user_id)
+          .single();
+          
+        // Add the new activity to the state
+        const newActivity = {
+          ...payload.new,
+          user: userData || {}
+        } as Activity;
+        
+        setActivities(prev => [newActivity, ...prev].slice(0, limit));
+      })
+      .subscribe();
+
     fetchActivities();
-  }, [userActivities]);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [limit]);
 
   // Get the right icon for the activity type
   const getActivityIcon = (type: string) => {
@@ -105,6 +124,7 @@ export const ActivityFeed = ({ userActivities = [], isLoading = false }: Activit
       case 'bookmark':
         return <Bookmark size={16} className="mr-2" />;
       case 'like':
+      case 'quote_liked':
         return <Heart size={16} className="mr-2 text-red-500" />;
       case 'view':
         return <Eye size={16} className="mr-2" />;
@@ -183,7 +203,8 @@ export const ActivityFeed = ({ userActivities = [], isLoading = false }: Activit
             </div>
             
             <div className="mt-4 text-center">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" 
+                onClick={() => window.location.href = "/activity"}>
                 View all activity
                 <ArrowRight size={14} className="ml-2" />
               </Button>

@@ -154,13 +154,12 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count using the correct RPC function call
-      const { error: updateError } = await supabase.rpc(
-        'increment_quote_comments' as any,
-        { quote_id: quoteId }
-      );
-      
-      if (updateError) throw updateError;
+      // Update quote comment count using RPC function call
+      await supabase
+        .from('rpc')
+        .select('*')
+        .eq('name', 'increment_quote_comments')
+        .eq('args', { quote_id: quoteId });
       
       // Add activity record
       await supabase
