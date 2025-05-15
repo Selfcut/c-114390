@@ -7,7 +7,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { FloatingChatWidget } from '@/components/chat/FloatingChatWidget';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { StylesDebugger } from '@/components/StylesDebugger';
 
 // Pages
 import Landing from './pages/Landing';
@@ -121,9 +120,6 @@ const Root = () => {
       </Routes>
       
       {user && <FloatingChatWidget currentUser={user} />}
-      
-      {/* Add StylesDebugger to help troubleshoot */}
-      <StylesDebugger />
     </div>
   );
 };
