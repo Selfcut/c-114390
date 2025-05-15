@@ -1,11 +1,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Theme = 'dark' | 'light' | 'system';
+export type Theme = 'dark' | 'light' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
-  setTheme: (theme: Theme) => void; // Add this missing property
+  setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({

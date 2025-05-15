@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
@@ -24,7 +23,7 @@ import {
   Trash2,
   BellOff
 } from "lucide-react";
-import { useTheme } from "@/lib/theme-context";
+import { useTheme, Theme } from "@/lib/theme-context";
 import { supabase } from "../integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -118,7 +117,7 @@ const Settings = () => {
   };
   
   // Handle theme change
-  const handleThemeChange = (newTheme: string) => {
+  const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);
   };
   

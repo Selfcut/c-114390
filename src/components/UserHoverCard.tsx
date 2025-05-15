@@ -30,6 +30,10 @@ interface UserHoverCardProps {
     isFollowing?: boolean;
   };
   showBio?: boolean;
+  // Add the missing properties from UserProfile
+  displayName?: string;
+  avatarUrl?: string;
+  isOnline?: boolean;
 }
 
 export const UserHoverCard: React.FC<UserHoverCardProps> = ({
@@ -37,20 +41,23 @@ export const UserHoverCard: React.FC<UserHoverCardProps> = ({
   children,
   userData,
   showBio = true,
+  displayName,
+  avatarUrl,
+  isOnline,
 }) => {
   // If no user data is provided, use the username to fetch mock data
   const user = userData || {
     id: `user-${username}`,
-    name: username.charAt(0).toUpperCase() + username.slice(1),
+    name: displayName || username.charAt(0).toUpperCase() + username.slice(1),
     username: username.toLowerCase(),
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+    avatar: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
     role: "Member",
     bio: "Polymath community member exploring various disciplines and contributing to discussions.",
     badges: ["Active Member"],
     level: 3,
     iq: 120,
     joinedDate: "Joined March 2025",
-    isOnline: Math.random() > 0.5,
+    isOnline: isOnline !== undefined ? isOnline : Math.random() > 0.5,
     status: 'online' as const,
     isFollowing: false,
   };

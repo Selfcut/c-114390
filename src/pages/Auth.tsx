@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "../integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, GitHub, Mail } from "lucide-react";
+import { Eye, EyeOff, Github, Mail } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();

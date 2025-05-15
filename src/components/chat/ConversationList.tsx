@@ -32,8 +32,8 @@ export const ConversationList = ({
   const [activeTab, setActiveTab] = useState<'direct' | 'group' | 'global'>('direct');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock conversations data
-  const mockDirectConversations = [
+  // Mock conversations data with correctly typed status values
+  const mockDirectConversations: Conversation[] = [
     { id: 'user1', name: 'Sarah Johnson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', status: 'online', unread: 3 },
     { id: 'user2', name: 'Michael Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael', status: 'offline', lastSeen: '2h ago' },
     { id: 'user3', name: 'Emma Watson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma', status: 'away', lastSeen: '15m ago' },
@@ -41,7 +41,7 @@ export const ConversationList = ({
     { id: 'user5', name: 'Maria García', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria', status: 'do_not_disturb' }
   ];
 
-  const mockGroupConversations = [
+  const mockGroupConversations: Conversation[] = [
     { id: 'group1', name: 'Quantum Physics Study Group', avatar: undefined, memberCount: 12, unread: 5 },
     { id: 'group2', name: 'Psychology Enthusiasts', avatar: undefined, memberCount: 8 },
     { id: 'group3', name: 'Philosophy Book Club', avatar: undefined, memberCount: 6 }
@@ -57,7 +57,7 @@ export const ConversationList = ({
   );
 
   // Get online status indicator color
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: 'online' | 'offline' | 'away' | 'do_not_disturb') => {
     switch (status) {
       case 'online': return 'bg-green-500';
       case 'offline': return 'bg-gray-400';
