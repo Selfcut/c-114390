@@ -78,38 +78,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string, authSession: Session | null) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const userData: UserProfile = {
-          id: userId,
-          name: data.name || authSession?.user?.user_metadata.full_name || 'User',
-          email: authSession?.user?.email || '',
-          avatar: data.avatar_url || authSession?.user?.user_metadata.avatar_url,
-          role: data.role || 'user',
-          level: data.level || 1,
-          xp: data.xp || 0,
-          iq: data.iq || 100,
-          status: data.status || 'online',
-          isGhostMode: data.is_ghost_mode || false,
-          notificationSettings: {
-            desktopNotifications: data.desktop_notifications !== false,
-            soundNotifications: data.sound_notifications !== false,
-            emailNotifications: data.email_notifications !== false,
-          }
-        };
-        
-        setUser(userData);
-        localStorage.setItem('userName', userData.name);
-        if (userData.avatar) {
-          localStorage.setItem('userAvatar', userData.avatar);
+      // Using localStorage as placeholder for profile data
+      // In a real app, this would be replaced with Supabase query after tables are created
+      
+      // Create basic profile from auth data
+      const basicUserData: UserProfile = {
+        id: userId,
+        name: authSession?.user?.user_metadata.full_name || 'User',
+        email: authSession?.user?.email || '',
+        avatar: authSession?.user?.user_metadata.avatar_url,
+        role: 'user',
+        level: 1,
+        xp: 0,
+        iq: 100,
+        status: 'online',
+        isGhostMode: false,
+        notificationSettings: {
+          desktopNotifications: true,
+          soundNotifications: true,
+          emailNotifications: true,
         }
+      };
+      
+      setUser(basicUserData);
+      localStorage.setItem('userName', basicUserData.name);
+      if (basicUserData.avatar) {
+        localStorage.setItem('userAvatar', basicUserData.avatar);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -200,25 +194,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user) throw new Error("User not authenticated");
       
-      // Update profile in Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updates.name,
-          avatar_url: updates.avatar,
-          level: updates.level,
-          xp: updates.xp,
-          iq: updates.iq,
-          status: updates.status,
-          is_ghost_mode: updates.isGhostMode,
-          desktop_notifications: updates.notificationSettings?.desktopNotifications,
-          sound_notifications: updates.notificationSettings?.soundNotifications,
-          email_notifications: updates.notificationSettings?.emailNotifications,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-      
-      if (error) throw error;
+      // In a real app with Supabase tables, this would update the profiles table
+      // For now, just update the local state
       
       // Update local state
       setUser(prevUser => prevUser ? { ...prevUser, ...updates } : null);
@@ -242,16 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user) throw new Error("User not authenticated");
       
-      // Update status in Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-      
-      if (error) throw error;
+      // In a real app with Supabase tables, this would update the status in the profiles table
+      // For now, just update the local state
       
       // Update local state
       setUser(prevUser => prevUser ? { ...prevUser, status } : null);
@@ -270,16 +239,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const newGhostMode = !user.isGhostMode;
       
-      // Update ghost mode in Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          is_ghost_mode: newGhostMode,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-      
-      if (error) throw error;
+      // In a real app with Supabase tables, this would update is_ghost_mode in the profiles table
+      // For now, just update the local state
       
       // Update local state
       setUser(prevUser => prevUser ? { ...prevUser, isGhostMode: newGhostMode } : null);

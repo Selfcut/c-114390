@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -260,7 +259,7 @@ export function UserProfile({ user, isCurrentUser = false }: UserProfileProps) {
                     <UserHoverCard
                       username={connection.username}
                       displayName={connection.displayName}
-                      avatarUrl={connection.avatarUrl}
+                      avatar={connection.avatarUrl}
                       isOnline={connection.isOnline}
                     >
                       <Avatar className="h-10 w-10">

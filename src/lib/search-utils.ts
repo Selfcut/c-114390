@@ -1,83 +1,82 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
-export async function searchContentWithSupabase(query: string) {
+export type SearchResult = {
+  id: string;
+  type: 'discussion' | 'book' | 'profile' | 'article' | 'event';
+  title: string;
+  excerpt?: string;
+  author?: string;
+  url: string;
+  avatar?: string;
+  date?: string;
+};
+
+// Mock function to simulate searching content with Supabase
+export async function searchContentWithSupabase(query: string): Promise<{ 
+  success: boolean; 
+  data?: SearchResult[];
+  error?: any;
+}> {
   try {
-    // This is where we would implement a full text search with Supabase
-    // For now, we'll return mock data
+    // In a real implementation, this would make actual Supabase queries
+    // For now, we'll just simulate a delay and return mock data
+    await new Promise(resolve => setTimeout(resolve, 400));
     
-    // Example schema for search results from different tables:
-    // const { data: discussionsResults, error: discussionsError } = await supabase
-    //   .from('discussions')
-    //   .select('id, title, content, created_at, author_id')
-    //   .textSearch('title', query, { type: 'websearch' })
-    //   .limit(5);
+    const mockResults: SearchResult[] = [
+      {
+        id: '1',
+        type: 'discussion',
+        title: `Discussion about ${query}`,
+        excerpt: `Interesting points about ${query} and related concepts...`,
+        author: 'PhilosophicalMind',
+        url: '/forum/discussion/1',
+        date: '2 hours ago'
+      },
+      {
+        id: '2',
+        type: 'book',
+        title: `${query}: A Comprehensive Analysis`,
+        excerpt: `Deep dive into the subject of ${query}`,
+        author: 'Dr. Academic Writer',
+        url: '/library/books/2',
+        date: '3 days ago'
+      },
+      {
+        id: '3',
+        type: 'profile',
+        title: `Expert on ${query}`,
+        url: '/profile/expert-user',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${query}-expert`,
+      },
+      {
+        id: '4',
+        type: 'article',
+        title: `Understanding ${query} in Modern Context`,
+        excerpt: `How ${query} relates to contemporary issues and challenges`,
+        author: 'AnalyticalThinker',
+        url: '/library/articles/4',
+        date: '1 week ago'
+      },
+      {
+        id: '5',
+        type: 'event',
+        title: `${query} Workshop`,
+        excerpt: `Join us for an interactive session on ${query}`,
+        url: '/events/5',
+        date: 'May 28, 2025'
+      }
+    ];
     
-    // In a real implementation, this would query multiple tables and combine results
+    // Filter results that match the query (in a real app, the DB would do this)
+    const filtered = mockResults.filter(item => 
+      item.title.toLowerCase().includes(query.toLowerCase()) || 
+      (item.excerpt && item.excerpt.toLowerCase().includes(query.toLowerCase()))
+    );
     
-    return {
-      success: true,
-      data: getMockSearchResults(query),
-      error: null
-    };
+    return { success: true, data: filtered };
   } catch (error) {
     console.error('Search error:', error);
-    return {
-      success: false,
-      data: [],
-      error: 'Failed to perform search'
-    };
+    return { success: false, error };
   }
-}
-
-// For development purposes, we'll return mock search results
-function getMockSearchResults(query: string) {
-  const mockData = [
-    { 
-      id: '1', 
-      type: 'discussion', 
-      title: 'The Nature of Consciousness', 
-      excerpt: 'An exploration of human consciousness and its philosophical implications.', 
-      url: '/forum/discussion/1' 
-    },
-    { 
-      id: '2', 
-      type: 'book', 
-      title: 'Gödel, Escher, Bach', 
-      author: 'Douglas Hofstadter', 
-      excerpt: 'An exploration of cognition and the human mind.',
-      url: '/library/books/2' 
-    },
-    { 
-      id: '3', 
-      type: 'profile', 
-      title: 'Alan Turing', 
-      excerpt: 'Computer scientist and mathematician, pioneer in artificial intelligence.',
-      url: '/profile/alan-turing' 
-    },
-    { 
-      id: '4', 
-      type: 'article', 
-      title: 'The Unreasonable Effectiveness of Mathematics', 
-      author: 'Eugene Wigner',
-      excerpt: 'Why mathematics is unreasonably effective in the natural sciences.',
-      url: '/library/articles/4' 
-    },
-    { 
-      id: '5', 
-      type: 'event', 
-      title: 'Quantum Computing Seminar', 
-      date: 'May 28, 2025',
-      excerpt: 'Online event exploring the frontiers of quantum computing.',
-      url: '/events/5' 
-    },
-  ];
-  
-  // Filter results based on query
-  if (!query) return [];
-  
-  return mockData.filter(item => 
-    item.title.toLowerCase().includes(query.toLowerCase()) || 
-    item.excerpt.toLowerCase().includes(query.toLowerCase())
-  );
 }

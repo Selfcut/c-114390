@@ -61,6 +61,29 @@ export function timeSince(date: string | Date) {
   return 'just now';
 }
 
+export function formatDaysAgo(date: Date): string {
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return 'Today';
+  } else if (diffDays === 1) {
+    return 'Yesterday';
+  } else if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  } else if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+  } else if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+  } else {
+    const years = Math.floor(diffDays / 365);
+    return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+  }
+}
+
 export function truncateText(text: string, maxLength: number) {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
