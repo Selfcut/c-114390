@@ -3,15 +3,15 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
-  BookOpen,
   MessageSquare,
   Library,
   Users,
   Settings,
   Menu,
   X,
-  Quote,
-  BookText
+  BookText,
+  Calendar,
+  BookOpen
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -29,19 +29,20 @@ export const Sidebar = () => {
       path: '/',
     },
     {
-      title: 'Forum',
+      title: 'Discussion Forum',
       icon: <MessageSquare size={20} />,
       path: '/forum',
+      badge: { text: 'NEW', color: 'bg-green-500', count: 5 }
     },
     {
-      title: 'Library',
+      title: 'Knowledge Library',
       icon: <Library size={20} />,
       path: '/library',
     },
     {
-      title: 'Quotes',
-      icon: <Quote size={20} />,
-      path: '/quotes',
+      title: 'Study Guides',
+      icon: <BookOpen size={20} />,
+      path: '/study-guides',
     },
     {
       title: 'Community',
@@ -49,10 +50,39 @@ export const Sidebar = () => {
       path: '/community',
     },
     {
-      title: 'Settings',
-      icon: <Settings size={20} />,
-      path: '/settings',
-    }
+      title: 'Discord',
+      icon: <MessageSquare size={20} />,
+      path: '/discord',
+    },
+    {
+      title: 'Expert Q&A',
+      icon: <MessageSquare size={20} />,
+      path: '/expert-qa',
+    },
+    {
+      title: 'Disciplines',
+      icon: <BookText size={20} />,
+      path: '/disciplines',
+    },
+    {
+      title: 'Events',
+      icon: <Calendar size={20} />,
+      path: '/events',
+      badge: { count: 2 },
+      hasSubmenu: true
+    },
+    {
+      title: 'My Learning',
+      icon: <BookOpen size={20} />,
+      path: '/my-learning',
+      hasSubmenu: true
+    },
+    {
+      title: 'Resources',
+      icon: <BookText size={20} />,
+      path: '/resources',
+      hasSubmenu: true
+    },
   ];
 
   return (
@@ -63,7 +93,12 @@ export const Sidebar = () => {
     >
       <div className="flex items-center justify-between p-4">
         {!collapsed && (
-          <h2 className="text-xl font-bold text-white">Polymath</h2>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-8 h-8 border border-gray-700">
+              <span className="text-white text-xl">∞</span>
+            </div>
+            <h2 className="text-xl font-bold text-white">Polymath</h2>
+          </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -82,7 +117,7 @@ export const Sidebar = () => {
               key={item.title}
               to={item.path}
               className={`flex items-center ${
-                collapsed ? 'justify-center' : 'justify-start'
+                collapsed ? 'justify-center' : 'justify-between'
               } px-3 py-3 rounded-md group ${
                 isActive(item.path)
                   ? 'bg-blue-600 text-white'
@@ -95,6 +130,25 @@ export const Sidebar = () => {
                   <span className="ml-3 font-medium">{item.title}</span>
                 )}
               </div>
+              
+              {!collapsed && item.badge && (
+                <div className="flex items-center gap-1">
+                  {item.badge.text && (
+                    <span className={`px-1.5 py-0.5 text-xs text-white rounded ${item.badge.color || 'bg-green-500'}`}>
+                      {item.badge.text}
+                    </span>
+                  )}
+                  {item.badge.count && (
+                    <span className="flex items-center justify-center w-5 h-5 text-xs text-white bg-blue-500 rounded-full">
+                      {item.badge.count}
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {!collapsed && item.hasSubmenu && (
+                <span className="text-gray-500">›</span>
+              )}
             </Link>
           ))}
         </nav>
