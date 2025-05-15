@@ -58,6 +58,23 @@ const App = () => {
             <Route path="/library" element={<Library />} />
             <Route path="/quotes" element={<Quotes />} />
             <Route path="/community" element={<NotFound />} />
+            <Route path="/discord" element={<NotFound />} />
+            <Route path="/expert-qa" element={<NotFound />} />
+            <Route path="/disciplines" element={<NotFound />} />
+            <Route path="/events" element={<NotFound />} />
+            <Route path="/study-guides" element={<NotFound />} />
+            <Route path="/reading-list" element={<NotFound />} />
+            <Route path="/study-notes" element={<NotFound />} />
+            <Route path="/my-discussions" element={<NotFound />} />
+            <Route path="/study-groups" element={<NotFound />} />
+            <Route path="/knowledge-map" element={<NotFound />} />
+            <Route path="/learning-analytics" element={<NotFound />} />
+            <Route path="/learning-guides" element={<NotFound />} />
+            <Route path="/wiki" element={<NotFound />} />
+            <Route path="/help-center" element={<NotFound />} />
+            <Route path="/new-research" element={<NotFound />} />
+            <Route path="/academic-journals" element={<NotFound />} />
+            <Route path="/book-reviews" element={<NotFound />} />
             <Route path="/settings" element={<NotFound />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
