@@ -1,4 +1,5 @@
 
+import React from "react";
 import { ChatMessage } from "@/components/chat/types";
 
 // Function to parse mentions in a message
