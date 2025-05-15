@@ -200,20 +200,20 @@ export const Sidebar = () => {
             <Link
               key={item.title}
               to={item.path}
-              className={`flex items-center ${
-                collapsed ? 'justify-center' : 'justify-between'
-              } px-3 py-2 rounded-md group ${
+              className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 isActive(item.path)
                   ? 'bg-gray-800 text-white'
                   : 'text-white hover:text-white hover:bg-gray-800'
-              } transition-colors`}
+              }`}
             >
-              <div className="flex items-center">
-                <span className="w-5 h-5">{item.icon}</span>
-                {!collapsed && (
-                  <span className="ml-3 text-sm">{item.title}</span>
-                )}
+              <div className="text-gray-300">
+                {item.icon}
               </div>
+              {!collapsed && (
+                <span className="text-white text-sm font-medium flex-1 text-left">
+                  {item.title}
+                </span>
+              )}
               
               {!collapsed && (
                 <div className="flex items-center space-x-1">
@@ -237,13 +237,13 @@ export const Sidebar = () => {
           <div>
             <button
               onClick={() => toggleSection('myLearning')}
-              className={`flex items-center ${
+              className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } w-full px-3 py-2 rounded-md text-white hover:bg-gray-800 transition-colors`}
+              } text-white hover:bg-gray-800`}
             >
-              <div className="flex items-center">
+              <div className="text-gray-300">
                 {!collapsed && (
-                  <span className="text-sm">My Learning</span>
+                  <span className="text-white text-sm font-medium flex-1 text-left">My Learning</span>
                 )}
               </div>
               {!collapsed && (
@@ -257,16 +257,18 @@ export const Sidebar = () => {
                   <Link
                     key={item.title}
                     to={item.path}
-                    className={`flex items-center justify-between pl-6 pr-3 py-1.5 rounded-md ${
+                    className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
                       isActive(item.path)
                         ? 'bg-gray-800 text-white'
                         : 'text-white hover:text-white hover:bg-gray-800'
-                    } transition-colors`}
+                    }`}
                   >
-                    <div className="flex items-center">
-                      <span className="w-4 h-4">{item.icon}</span>
-                      <span className="ml-2 text-xs">{item.title}</span>
+                    <div className="text-gray-300">
+                      {item.icon}
                     </div>
+                    <span className="text-white text-xs font-medium flex-1 text-left">
+                      {item.title}
+                    </span>
                     
                     {item.badge && (
                       <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded">
@@ -283,13 +285,13 @@ export const Sidebar = () => {
           <div>
             <button
               onClick={() => toggleSection('resources')}
-              className={`flex items-center ${
+              className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } w-full px-3 py-2 rounded-md text-white hover:bg-gray-800 transition-colors p-3 gap-3`}
+              } text-white hover:bg-gray-800`}
             >
-              <div className="flex items-center">
+              <div className="text-gray-300">
                 {!collapsed && (
-                  <span className="text-sm">Resources</span>
+                  <span className="text-white text-sm font-medium flex-1 text-left">Resources</span>
                 )}
               </div>
               {!collapsed && (
@@ -303,16 +305,18 @@ export const Sidebar = () => {
                   <Link
                     key={item.title}
                     to={item.path}
-                    className={`flex items-center justify-between pl-6 pr-3 py-1.5 rounded-md ${
+                    className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
                       isActive(item.path)
                         ? 'bg-gray-800 text-white'
                         : 'text-white hover:text-white hover:bg-gray-800'
-                    } transition-colors`}
+                    }`}
                   >
-                    <div className="flex items-center">
-                      <span className="w-4 h-4">{item.icon}</span>
-                      <span className="ml-2 text-xs">{item.title}</span>
+                    <div className="text-gray-300">
+                      {item.icon}
                     </div>
+                    <span className="text-white text-xs font-medium flex-1 text-left">
+                      {item.title}
+                    </span>
                     
                     <div className="flex items-center space-x-1">
                       {item.badge && (
@@ -352,4 +356,3 @@ export const Sidebar = () => {
     </div>
   );
 };
-
