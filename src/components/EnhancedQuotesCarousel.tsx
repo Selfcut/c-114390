@@ -1,16 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Quote, Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
-
-interface QuoteItem {
-  id: string;
-  text: string;
-  author: string;
-  authorTitle?: string;
-  source?: string;
-  likes?: number;
-}
+import { fetchQuotes, likeQuote, checkUserLikedQuote } from "@/lib/quotes-service";
+import { useAuth } from "@/lib/auth-context";
 
 interface EnhancedQuotesCarouselProps {
   className?: string;
@@ -20,72 +14,77 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
   const [activeSlide, setActiveSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [likedQuotes, setLikedQuotes] = useState<string[]>([]);
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
-  
-  const quotes: QuoteItem[] = [
-    {
-      id: "1",
-      text: "The cave you fear to enter holds the treasure you seek.",
-      author: "Joseph Campbell",
-      authorTitle: "Mythologist",
-      source: "The Hero with a Thousand Faces",
-      likes: 156
-    },
-    {
-      id: "2",
-      text: "The Kingdom of Heaven is within you; and whosoever shall know themselves shall find it.",
-      author: "Ancient Egyptian Proverb",
-      source: "Hermetic Texts",
-      likes: 243
-    },
-    {
-      id: "3",
-      text: "As above, so below; as within, so without; as the universe, so the soul.",
-      author: "Hermes Trismegistus",
-      authorTitle: "Hermeticist",
-      source: "The Emerald Tablet",
-      likes: 321
-    },
-    {
-      id: "4",
-      text: "The day science begins to study non-physical phenomena, it will make more progress in one decade than in all the previous centuries of its existence.",
-      author: "Nikola Tesla",
-      authorTitle: "Inventor and Futurist",
-      likes: 198
-    },
-    {
-      id: "5",
-      text: "If you wish to understand the Universe, think of energy, frequency and vibration.",
-      author: "Nikola Tesla",
-      authorTitle: "Inventor and Futurist",
-      likes: 276
-    }
-  ];
+  const { isAuthenticated } = useAuth();
   
   useEffect(() => {
-    // Load liked quotes from local storage
-    const stored = localStorage.getItem('likedQuotes');
-    if (stored) {
-      setLikedQuotes(JSON.parse(stored));
-    }
+    const loadQuotes = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedQuotes = await fetchQuotes();
+        if (fetchedQuotes.length > 0) {
+          setQuotes(fetchedQuotes);
+          
+          // Check which quotes the user has liked
+          if (isAuthenticated) {
+            const likedIds = await Promise.all(
+              fetchedQuotes.map(async (quote) => {
+                const isLiked = await checkUserLikedQuote(quote.id);
+                return isLiked ? quote.id : null;
+              })
+            );
+            setLikedQuotes(likedIds.filter(Boolean) as string[]);
+          }
+        } else {
+          // Fallback to some default quotes if none in database
+          setQuotes([
+            {
+              id: "1",
+              text: "The cave you fear to enter holds the treasure you seek.",
+              author: "Joseph Campbell",
+              source: "The Hero with a Thousand Faces",
+              likes: 156
+            },
+            {
+              id: "2",
+              text: "The Kingdom of Heaven is within you; and whosoever shall know themselves shall find it.",
+              author: "Ancient Egyptian Proverb",
+              source: "Hermetic Texts",
+              likes: 243
+            },
+            {
+              id: "3",
+              text: "As above, so below; as within, so without; as the universe, so the soul.",
+              author: "Hermes Trismegistus",
+              source: "The Emerald Tablet",
+              likes: 321
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error loading quotes for carousel:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadQuotes();
     
     // Auto-rotate quotes every 8 seconds if not interacted with recently
     const interval = setInterval(() => {
-      if (!isAnimating) {
+      if (!isAnimating && quotes.length > 1) {
         nextSlide();
       }
     }, 8000);
     
     return () => clearInterval(interval);
-  }, [isAnimating]);
-  
-  const saveToLocalStorage = (updatedLikes: string[]) => {
-    localStorage.setItem('likedQuotes', JSON.stringify(updatedLikes));
-  };
+  }, [isAuthenticated]);
   
   const goToSlide = (index: number) => {
-    if (isAnimating) return;
+    if (isAnimating || quotes.length === 0) return;
     setIsAnimating(true);
     setActiveSlide(index);
     
@@ -96,11 +95,13 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
   };
   
   const prevSlide = () => {
+    if (quotes.length <= 1) return;
     const newIndex = activeSlide === 0 ? quotes.length - 1 : activeSlide - 1;
     goToSlide(newIndex);
   };
   
   const nextSlide = () => {
+    if (quotes.length <= 1) return;
     const newIndex = activeSlide === quotes.length - 1 ? 0 : activeSlide + 1;
     goToSlide(newIndex);
   };
@@ -127,28 +128,41 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
     touchStartX.current = null;
   };
   
-  const handleLike = (id: string) => {
-    if (likedQuotes.includes(id)) {
-      const updated = likedQuotes.filter(quoteId => quoteId !== id);
-      setLikedQuotes(updated);
-      saveToLocalStorage(updated);
-    } else {
-      const updated = [...likedQuotes, id];
-      setLikedQuotes(updated);
-      saveToLocalStorage(updated);
+  const handleLike = async (id: string) => {
+    if (!isAuthenticated) {
       toast({
-        title: "Quote liked",
-        description: "This quote has been added to your favorites."
+        title: "Authentication required",
+        description: "Please log in to like quotes",
+        variant: "destructive"
       });
+      return;
+    }
+    
+    const result = await likeQuote(id);
+    
+    // Update local state
+    if (result) {
+      setLikedQuotes(prev => [...prev, id]);
+      // Update quote likes in UI
+      setQuotes(prevQuotes => 
+        prevQuotes.map(quote => 
+          quote.id === id ? { ...quote, likes: quote.likes + 1 } : quote
+        )
+      );
+    } else {
+      setLikedQuotes(prev => prev.filter(quoteId => quoteId !== id));
+      // Update quote likes in UI
+      setQuotes(prevQuotes => 
+        prevQuotes.map(quote => 
+          quote.id === id ? { ...quote, likes: Math.max(0, quote.likes - 1) } : quote
+        )
+      );
     }
   };
   
-  const handleBookmarkClick = (quoteId: string) => {
-    toast({
-      title: "Quote Bookmarked",
-      description: "Added to your collection"
-    });
-  };
+  if (quotes.length === 0 && !isLoading) {
+    return null;
+  }
   
   const activeQuote = quotes[activeSlide];
   
@@ -186,62 +200,72 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div 
-          className="absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-500"
-          style={{ 
-            opacity: isAnimating ? 0 : 1
-          }}
-        >
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="text-[#6E59A5] mb-4">
-              <Quote size={30} className="mx-auto" />
-            </div>
-            <p className="text-white text-lg md:text-xl mb-6 italic">
-              {activeQuote?.text}
-            </p>
-            <div className="flex flex-col items-center">
-              <p className="text-gray-300 font-medium">{activeQuote?.author}</p>
-              {activeQuote?.authorTitle && (
-                <p className="text-gray-400 text-sm mt-1">{activeQuote.authorTitle}</p>
-              )}
-              {activeQuote?.source && (
-                <p className="text-gray-500 text-xs mt-2">{activeQuote.source}</p>
-              )}
-            </div>
-            
-            <button 
-              className={cn(
-                "mt-6 flex items-center gap-2 mx-auto transition-colors",
-                likedQuotes.includes(activeQuote?.id)
-                  ? "text-red-400"
-                  : "text-gray-400 hover:text-red-400"
-              )}
-              onClick={() => handleLike(activeQuote?.id)}
-            >
-              <Heart 
-                size={16} 
-                className={likedQuotes.includes(activeQuote?.id) ? "fill-red-400" : ""} 
-              />
-              <span>{activeQuote?.likes || 0} likes</span>
-            </button>
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6E59A5]"></div>
           </div>
-        </div>
+        ) : (
+          <div 
+            className="absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-500"
+            style={{ 
+              opacity: isAnimating ? 0 : 1
+            }}
+          >
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="text-[#6E59A5] mb-4">
+                <Quote size={30} className="mx-auto" />
+              </div>
+              <p className="text-white text-lg md:text-xl mb-6 italic">
+                {activeQuote?.text}
+              </p>
+              <div className="flex flex-col items-center">
+                <p className="text-gray-300 font-medium">{activeQuote?.author}</p>
+                {activeQuote?.user?.name && (
+                  <p className="text-gray-400 text-sm mt-1">Shared by {activeQuote.user.name}</p>
+                )}
+                {activeQuote?.source && (
+                  <p className="text-gray-500 text-xs mt-2">{activeQuote.source}</p>
+                )}
+              </div>
+              
+              <button 
+                className={cn(
+                  "mt-6 flex items-center gap-2 mx-auto transition-colors",
+                  likedQuotes.includes(activeQuote?.id)
+                    ? "text-red-400"
+                    : "text-gray-400 hover:text-red-400"
+                )}
+                onClick={() => activeQuote && handleLike(activeQuote.id)}
+              >
+                <Heart 
+                  size={16} 
+                  className={likedQuotes.includes(activeQuote?.id) ? "fill-red-400" : ""} 
+                />
+                <span>{activeQuote?.likes || 0} likes</span>
+              </button>
+            </div>
+          </div>
+        )}
         
-        <button
-          onClick={prevSlide}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-r-md transition-all transform hover:scale-105"
-          aria-label="Previous quote"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        
-        <button
-          onClick={nextSlide}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-l-md transition-all transform hover:scale-105"
-          aria-label="Next quote"
-        >
-          <ChevronRight size={20} />
-        </button>
+        {quotes.length > 1 && (
+          <>
+            <button
+              onClick={prevSlide}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-r-md transition-all transform hover:scale-105"
+              aria-label="Previous quote"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <button
+              onClick={nextSlide}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-l-md transition-all transform hover:scale-105"
+              aria-label="Next quote"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </>
+        )}
       </div>
       
       <div className="p-4 border-t border-gray-800 flex justify-between items-center">

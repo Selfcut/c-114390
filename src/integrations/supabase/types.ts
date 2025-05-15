@@ -9,6 +9,180 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          is_ghost_mode: boolean | null
+          name: string | null
+          role: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id: string
+          is_ghost_mode?: boolean | null
+          name?: string | null
+          role?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_ghost_mode?: boolean | null
+          name?: string | null
+          role?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      quote_bookmarks: {
+        Row: {
+          created_at: string | null
+          id: string
+          quote_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          quote_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          quote_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_bookmarks_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          quote_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          quote_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          quote_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_comments_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          quote_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          quote_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          quote_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_likes_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          author: string
+          bookmarks: number | null
+          category: string
+          comments: number | null
+          created_at: string | null
+          id: string
+          likes: number | null
+          source: string | null
+          tags: string[] | null
+          text: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          author: string
+          bookmarks?: number | null
+          category: string
+          comments?: number | null
+          created_at?: string | null
+          id?: string
+          likes?: number | null
+          source?: string | null
+          tags?: string[] | null
+          text: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          author?: string
+          bookmarks?: number | null
+          category?: string
+          comments?: number | null
+          created_at?: string | null
+          id?: string
+          likes?: number | null
+          source?: string | null
+          tags?: string[] | null
+          text?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           created_at: string | null
@@ -66,6 +240,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      user_status:
+        | "online"
+        | "away"
+        | "do-not-disturb"
+        | "invisible"
+        | "offline"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -182,6 +362,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      user_status: ["online", "away", "do-not-disturb", "invisible", "offline"],
     },
   },
 } as const

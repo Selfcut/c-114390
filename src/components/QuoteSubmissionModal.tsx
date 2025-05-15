@@ -1,11 +1,13 @@
+
 import { useState } from "react";
 import { X, Upload } from "lucide-react";
-import { polymathToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
+import { createQuote } from "@/lib/quotes-service";
 
 interface QuoteSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (text: string, author: string, category: string) => void;
+  onSubmit?: () => void;
   categories?: string[];
 }
 
@@ -19,37 +21,66 @@ export const QuoteSubmissionModal = ({
   const [author, setAuthor] = useState("");
   const [source, setSource] = useState("");
   const [category, setCategory] = useState("philosophy");
+  const [tags, setTags] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, we would send this data to the server
-    console.log({
-      quoteText,
-      author,
-      source,
-      category,
-      uploadedImage
-    });
-    
-    // Call the provided onSubmit if it exists
-    if (onSubmit) {
-      onSubmit(quoteText, author, category);
+    if (!quoteText.trim() || !author.trim() || !category.trim()) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
     }
     
-    // Show success toast
-    polymathToast.contributionSaved();
-    
-    // Reset form and close modal
-    setQuoteText("");
-    setAuthor("");
-    setSource("");
-    setCategory("philosophy");
-    setUploadedImage(null);
-    onClose();
+    setIsSubmitting(true);
+    try {
+      // Convert tags string to array
+      const tagsArray = tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag !== '');
+        
+      // Create the quote in the database
+      await createQuote({
+        text: quoteText,
+        author,
+        source: source || null,
+        category,
+        tags: tagsArray
+      });
+      
+      // Notify parent component
+      if (onSubmit) {
+        onSubmit();
+      } else {
+        // If no callback provided, just close the modal
+        onClose();
+      }
+      
+      // Reset form
+      setQuoteText("");
+      setAuthor("");
+      setSource("");
+      setCategory("philosophy");
+      setTags("");
+      setUploadedImage(null);
+    } catch (error) {
+      console.error("Error submitting quote:", error);
+      toast({
+        title: "Failed to save quote",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const defaultCategories = [
@@ -77,6 +108,7 @@ export const QuoteSubmissionModal = ({
           <button 
             onClick={onClose}
             className="text-gray-400 hover:text-white p-1"
+            disabled={isSubmitting}
           >
             <X size={20} />
           </button>
@@ -94,6 +126,7 @@ export const QuoteSubmissionModal = ({
               className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3 min-h-[100px]"
               placeholder="Enter the quote text..."
               required
+              disabled={isSubmitting}
             ></textarea>
           </div>
           
@@ -109,6 +142,7 @@ export const QuoteSubmissionModal = ({
               className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
               placeholder="Who said or wrote this?"
               required
+              disabled={isSubmitting}
             />
           </div>
           
@@ -123,6 +157,7 @@ export const QuoteSubmissionModal = ({
               onChange={(e) => setSource(e.target.value)}
               className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
               placeholder="Book, speech, etc. (optional)"
+              disabled={isSubmitting}
             />
           </div>
           
@@ -136,6 +171,7 @@ export const QuoteSubmissionModal = ({
               onChange={(e) => setCategory(e.target.value)}
               className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
               required
+              disabled={isSubmitting}
             >
               {categoryOptions.map((cat) => (
                 <option key={cat.value} value={cat.value}>
@@ -143,6 +179,21 @@ export const QuoteSubmissionModal = ({
                 </option>
               ))}
             </select>
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="tags" className="block text-sm font-medium text-gray-300">
+              Tags (comma separated)
+            </label>
+            <input
+              type="text"
+              id="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              className="w-full bg-gray-800 text-white border border-gray-700 rounded-md p-3"
+              placeholder="wisdom, reflection, knowledge"
+              disabled={isSubmitting}
+            />
           </div>
           
           <div className="space-y-2">
@@ -156,6 +207,7 @@ export const QuoteSubmissionModal = ({
                 accept="image/*"
                 className="hidden"
                 onChange={(e) => setUploadedImage(e.target.files ? e.target.files[0] : null)}
+                disabled={isSubmitting}
               />
               <label
                 htmlFor="imageUpload"
@@ -175,9 +227,10 @@ export const QuoteSubmissionModal = ({
           <div className="pt-4">
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
             >
-              Submit Quote
+              {isSubmitting ? "Submitting..." : "Submit Quote"}
             </button>
           </div>
         </form>

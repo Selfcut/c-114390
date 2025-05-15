@@ -1,34 +1,26 @@
 
-export type UserStatus = "online" | "offline" | "away" | "do-not-disturb" | "invisible";
+// User status type
+export type UserStatus = 'online' | 'away' | 'do-not-disturb' | 'offline' | 'invisible';
 
+// User roles
+export type UserRole = 'admin' | 'moderator' | 'user';
+
+// User notification settings
+export interface NotificationSettings {
+  desktopNotifications: boolean;
+  soundNotifications: boolean;
+  emailNotifications: boolean;
+}
+
+// User profile
 export interface UserProfile {
   id: string;
   name: string;
   username: string;
-  email?: string;
+  email: string;
   avatar: string;
-  coverImage?: string;
   status: UserStatus;
-  bio?: string;
-  level?: number;
-  xp?: number;
-  iq?: number;
-  badges?: Badge[];
-  joinedAt?: Date;
   isGhostMode: boolean;
-  isAdmin?: boolean;
-  role?: 'admin' | 'moderator' | 'user';
-  notificationSettings: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
-}
-
-export interface Badge {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  earnedAt: Date;
+  role: UserRole;
+  notificationSettings: NotificationSettings;
 }

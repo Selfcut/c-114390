@@ -3,38 +3,35 @@ import { User, Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 
-// This function will fetch the user profile from Supabase
-// Or create a mock profile for demo purposes if Supabase fetch fails
+// This function will fetch the user profile from Supabase profiles table
 export const fetchUserProfile = async (userId: string, session: Session | null): Promise<UserProfile> => {
   try {
-    // First try to fetch user role from user_roles table
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
+    // Fetch the user profile from the profiles table
+    const { data: profile, error } = await supabase
+      .from('profiles')
       .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('id', userId)
+      .single();
     
-    if (roleError) {
-      console.warn("Could not fetch user role:", roleError);
+    if (error) {
+      console.warn("Could not fetch user profile:", error);
+      throw error;
     }
     
-    // Since there's no profiles table, we'll create a profile from session data
-    // and user_roles if available
-    
-    const userEmail = session?.user?.email || 'user@example.com';
-    const userName = session?.user?.user_metadata?.full_name || userEmail.split('@')[0];
-    const userRole = roleData?.role || 'user';
-    
-    // Return a profile with data from auth and role
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Return the profile with all required fields
     return {
-      id: userId,
-      name: userName,
-      username: userName.toLowerCase().replace(/\s+/g, '-'),
-      email: userEmail,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
-      status: 'online',
-      isGhostMode: false,
-      role: userRole as 'admin' | 'moderator' | 'user',
+      id: profile.id,
+      name: profile.name || '',
+      username: profile.username || '',
+      email: session?.user?.email || '',
+      avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || '')}`,
+      status: profile.status || 'offline',
+      isGhostMode: profile.is_ghost_mode || false,
+      role: profile.role as 'admin' | 'moderator' | 'user',
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
@@ -42,18 +39,19 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       }
     };
   } catch (error) {
-    // Fallback to basic profile with data from auth
-    const userEmail = session?.user?.email || 'user@example.com';
-    const userName = session?.user?.user_metadata?.full_name || userEmail.split('@')[0];
+    console.error("Error fetching profile:", error);
     
-    // Return a minimal profile with data from auth
+    // If we can't get the profile, create a minimal fallback
+    const userEmail = session?.user?.email || 'user@example.com';
+    const userName = session?.user?.user_metadata?.name || userEmail.split('@')[0];
+    
     return {
       id: userId,
       name: userName,
       username: userName.toLowerCase().replace(/\s+/g, '-'),
       email: userEmail,
-      avatar: localStorage.getItem('userAvatar') || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
-      role: (localStorage.getItem('userRole') || 'user') as 'admin' | 'moderator' | 'user',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
+      role: 'user',
       status: 'online',
       isGhostMode: false,
       notificationSettings: {
@@ -62,6 +60,55 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
         emailNotifications: true
       }
     };
+  }
+};
+
+// Update user profile in Supabase
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: updates.name,
+        username: updates.username,
+        avatar_url: updates.avatar,
+        status: updates.status,
+        is_ghost_mode: updates.isGhostMode,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+
+    if (error) {
+      console.error("Error updating profile:", error);
+      throw error;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error in updateUserProfile:", error);
+    return { success: false, error };
+  }
+};
+
+export const updateUserStatus = async (userId: string, status: string) => {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        status: status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+
+    if (error) {
+      console.error("Error updating status:", error);
+      throw error;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error in updateUserStatus:", error);
+    return { success: false, error };
   }
 };
 

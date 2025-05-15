@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/types/user";
 import { AuthContextType } from "./auth-types";
-import { fetchUserProfile, clearUserData } from "./auth-utils";
+import { fetchUserProfile, updateUserProfile, updateUserStatus, clearUserData } from "./auth-utils";
 import { useAuthenticationMethods } from "./auth-authentication";
-import { useProfileManagement } from "./auth-profile";
 import { usePresenceManagement } from "./auth-presence";
+import { toast } from "@/components/ui/use-toast";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -18,8 +18,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   // Initialize auth methods
   const { signIn, signUp, signOut } = useAuthenticationMethods();
-  const { updateProfile, updateUserStatus } = useProfileManagement(user, setUser);
   const { toggleGhostMode, toggleDoNotDisturb } = usePresenceManagement(user, setUser);
+
+  const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      await updateUserProfile(user.id, updates);
+      
+      // Update local state
+      setUser(prevUser => prevUser ? { ...prevUser, ...updates } : null);
+      
+      toast({
+        title: "Profile updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to update profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleUpdateUserStatus = async (status: UserProfile['status']) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      await updateUserStatus(user.id, status);
+      
+      // Update local state
+      setUser(prevUser => prevUser ? { ...prevUser, status } : null);
+      
+      toast({
+        title: `Status updated to ${status}`,
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -72,8 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signUp,
         signOut,
-        updateProfile,
-        updateUserStatus,
+        updateProfile: handleUpdateProfile,
+        updateUserStatus: handleUpdateUserStatus,
         toggleGhostMode,
         toggleDoNotDisturb,
       }}

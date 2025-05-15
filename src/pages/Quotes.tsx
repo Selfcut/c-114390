@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,136 +9,264 @@ import { Quote, Search, Filter, Heart, Share, Bookmark, Plus } from "lucide-reac
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserHoverCard } from "../components/UserHoverCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  fetchQuotes, 
+  fetchQuotesWithFilters, 
+  likeQuote, 
+  bookmarkQuote, 
+  checkUserLikedQuote, 
+  checkUserBookmarkedQuote,
+  QuoteWithUser
+} from "@/lib/quotes-service";
+import { QuoteSubmissionModal } from "@/components/QuoteSubmissionModal";
+import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
-interface QuoteData {
-  id: string;
-  text: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  source?: string;
-  tags: string[];
-  likes: number;
+interface QuoteCardProps {
+  quote: QuoteWithUser;
   isLiked: boolean;
   isBookmarked: boolean;
-  submittedBy?: {
-    name: string;
-    username: string;
-    avatar?: string;
-    status: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
-  };
+  onLike: () => void;
+  onBookmark: () => void;
+  onTagClick: (tag: string) => void;
 }
+
+const QuoteCard: React.FC<QuoteCardProps> = ({ 
+  quote, 
+  isLiked, 
+  isBookmarked, 
+  onLike, 
+  onBookmark,
+  onTagClick 
+}) => {
+  return (
+    <Card key={quote.id} className="overflow-hidden hover:shadow-md transition-shadow">
+      <CardContent className="p-0">
+        <div className="p-6">
+          <Quote size={18} className="text-primary mb-2" />
+          <p className="text-lg mb-4">{quote.text}</p>
+          
+          <div className="flex items-center mb-4">
+            <Avatar className="h-8 w-8 mr-3">
+              <AvatarImage src={quote.user?.avatar_url} alt={quote.user?.name} />
+              <AvatarFallback>{quote.author.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{quote.author}</div>
+              {quote.source && (
+                <div className="text-xs text-muted-foreground">{quote.source}</div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {quote.tags && quote.tags.map(tag => (
+              <Badge 
+                key={tag} 
+                variant="outline"
+                className="hover:bg-muted cursor-pointer"
+                onClick={() => onTagClick(tag)}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          
+          {quote.user && (
+            <div className="text-xs text-muted-foreground mb-4 flex items-center">
+              <span className="mr-2">Submitted by</span>
+              <UserHoverCard
+                username={quote.user.username}
+                displayName={quote.user.name}
+                avatar={quote.user.avatar_url || ""}
+                isOnline={quote.user.status === "online"}
+              >
+                <span className="font-medium cursor-pointer hover:text-foreground">
+                  {quote.user.name}
+                </span>
+              </UserHoverCard>
+            </div>
+          )}
+        </div>
+        
+        <div className="border-t px-6 py-3 flex justify-between">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className={isLiked ? "text-red-500" : ""}
+            onClick={onLike}
+          >
+            <Heart
+              size={18} 
+              className={`mr-1 ${isLiked ? "fill-red-500" : ""}`}
+            />
+            {quote.likes}
+          </Button>
+          
+          <div className="flex gap-1">
+            <Button
+              variant="ghost" 
+              size="sm"
+              className={isBookmarked ? "text-yellow-500" : ""}
+              onClick={onBookmark}
+            >
+              <Bookmark 
+                size={18}
+                className={isBookmarked ? "fill-yellow-500" : ""}
+              />
+            </Button>
+            <Button variant="ghost" size="sm">
+              <Share size={18} />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const Quotes = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
-  const [quotes, setQuotes] = useState<QuoteData[]>([
-    {
-      id: "1",
-      text: "The cosmos is within us. We are made of star-stuff. We are a way for the universe to know itself.",
-      author: {
-        name: "Carl Sagan",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carl"
-      },
-      source: "Cosmos",
-      tags: ["Science", "Astronomy", "Philosophy"],
-      likes: 254,
-      isLiked: true,
-      isBookmarked: false,
-    },
-    {
-      id: "2",
-      text: "The unexamined life is not worth living.",
-      author: {
-        name: "Socrates"
-      },
-      tags: ["Philosophy", "Wisdom", "Ancient"],
-      likes: 189,
-      isLiked: false,
-      isBookmarked: true,
-      submittedBy: {
-        name: "Alex Morgan",
-        username: "alexmorgan",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        status: "online"
-      }
-    },
-    {
-      id: "3",
-      text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
-      author: {
-        name: "Aristotle"
-      },
-      tags: ["Philosophy", "Excellence", "Habit"],
-      likes: 327,
-      isLiked: false,
-      isBookmarked: false,
-    },
-    {
-      id: "4",
-      text: "The most incomprehensible thing about the world is that it is comprehensible.",
-      author: {
-        name: "Albert Einstein",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Albert"
-      },
-      tags: ["Science", "Physics", "Philosophy"],
-      likes: 218,
-      isLiked: false,
-      isBookmarked: true,
-      submittedBy: {
-        name: "Samantha Lee",
-        username: "samlee",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Samantha",
-        status: "away"
-      }
-    },
-  ]);
+  const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
+  const [filteredQuotes, setFilteredQuotes] = useState<QuoteWithUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
+  const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   // Extract all unique tags
   const allTags = Array.from(
-    new Set(quotes.flatMap(quote => quote.tags))
+    new Set(quotes.flatMap(quote => quote.tags || []))
   );
 
+  // Fetch quotes on component mount
+  useEffect(() => {
+    const loadQuotes = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchQuotes();
+        setQuotes(data);
+        setFilteredQuotes(data);
+        
+        // Check user likes and bookmarks
+        const likesObj: Record<string, boolean> = {};
+        const bookmarksObj: Record<string, boolean> = {};
+        
+        if (isAuthenticated) {
+          await Promise.all(data.map(async (quote) => {
+            likesObj[quote.id] = await checkUserLikedQuote(quote.id);
+            bookmarksObj[quote.id] = await checkUserBookmarkedQuote(quote.id);
+          }));
+        }
+        
+        setUserLikes(likesObj);
+        setUserBookmarks(bookmarksObj);
+      } catch (error) {
+        console.error("Error loading quotes:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadQuotes();
+  }, [isAuthenticated]);
+  
   // Filter quotes based on search and tag filter
-  const filteredQuotes = quotes.filter(quote => {
-    const matchesSearch = searchQuery ? 
-      quote.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quote.author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quote.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      : true;
-      
-    const matchesTag = filterTag ? 
-      quote.tags.includes(filterTag)
-      : true;
-      
-    return matchesSearch && matchesTag;
-  });
+  useEffect(() => {
+    if (searchQuery || filterTag) {
+      const filtered = quotes.filter(quote => {
+        const matchesSearch = searchQuery ? 
+          quote.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          quote.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (quote.tags && quote.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+          : true;
+            
+        const matchesTag = filterTag ? 
+          quote.tags && quote.tags.includes(filterTag)
+          : true;
+            
+        return matchesSearch && matchesTag;
+      });
+      setFilteredQuotes(filtered);
+    } else {
+      setFilteredQuotes(quotes);
+    }
+  }, [searchQuery, filterTag, quotes]);
 
-  // Toggle like status for a quote
-  const toggleLike = (id: string) => {
+  // Handle like button click
+  const handleLike = async (quoteId: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to like quotes",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const result = await likeQuote(quoteId);
+    
+    // Update local state
+    setUserLikes(prev => ({
+      ...prev,
+      [quoteId]: result
+    }));
+    
+    // Update quote likes count in UI
     setQuotes(prevQuotes => 
       prevQuotes.map(quote => 
-        quote.id === id 
+        quote.id === quoteId 
           ? { 
               ...quote, 
-              isLiked: !quote.isLiked,
-              likes: quote.isLiked ? quote.likes - 1 : quote.likes + 1
+              likes: result ? quote.likes + 1 : quote.likes - 1
             }
           : quote
       )
     );
   };
 
-  // Toggle bookmark status for a quote
-  const toggleBookmark = (id: string) => {
+  // Handle bookmark button click
+  const handleBookmark = async (quoteId: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to bookmark quotes",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const result = await bookmarkQuote(quoteId);
+    
+    // Update local state
+    setUserBookmarks(prev => ({
+      ...prev,
+      [quoteId]: result
+    }));
+    
+    // Update quote bookmark count in UI
     setQuotes(prevQuotes => 
       prevQuotes.map(quote => 
-        quote.id === id 
-          ? { ...quote, isBookmarked: !quote.isBookmarked }
+        quote.id === quoteId 
+          ? { 
+              ...quote, 
+              bookmarks: result ? quote.bookmarks + 1 : quote.bookmarks - 1
+            }
           : quote
       )
     );
+  };
+  
+  // Handle successful quote submission
+  const handleQuoteSubmitted = async () => {
+    // Refresh quotes list
+    const refreshedQuotes = await fetchQuotes();
+    setQuotes(refreshedQuotes);
+    setFilteredQuotes(refreshedQuotes);
+    setIsModalOpen(false);
   };
 
   return (
@@ -148,7 +277,20 @@ const Quotes = () => {
             <Quote size={28} className="text-primary" />
             Wisdom Quotes
           </h1>
-          <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90">
+          <Button 
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+            onClick={() => {
+              if (!isAuthenticated) {
+                toast({
+                  title: "Authentication required",
+                  description: "Please log in to submit quotes",
+                  variant: "destructive"
+                });
+                return;
+              }
+              setIsModalOpen(true);
+            }}
+          >
             <Plus size={18} />
             <span>Submit Quote</span>
           </Button>
@@ -203,90 +345,33 @@ const Quotes = () => {
 
         {/* Quotes grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-fade animate-in">
-          {filteredQuotes.length > 0 ? (
-            filteredQuotes.map(quote => (
-              <Card key={quote.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  <div className="p-6">
-                    <Quote size={18} className="text-primary mb-2" />
-                    <p className="text-lg mb-4">{quote.text}</p>
-                    
-                    <div className="flex items-center mb-4">
-                      <Avatar className="h-8 w-8 mr-3">
-                        <AvatarImage src={quote.author.avatar} alt={quote.author.name} />
-                        <AvatarFallback>{quote.author.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{quote.author.name}</div>
-                        {quote.source && (
-                          <div className="text-xs text-muted-foreground">{quote.source}</div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {quote.tags.map(tag => (
-                        <Badge 
-                          key={tag} 
-                          variant="outline"
-                          className="hover:bg-muted cursor-pointer"
-                          onClick={() => setFilterTag(tag)}
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    {quote.submittedBy && (
-                      <div className="text-xs text-muted-foreground mb-4 flex items-center">
-                        <span className="mr-2">Submitted by</span>
-                        <UserHoverCard
-                          username={quote.submittedBy.username}
-                          displayName={quote.submittedBy.name}
-                          avatar={quote.submittedBy.avatar || ""}
-                          isOnline={quote.submittedBy.status === "online"}
-                        >
-                          <span className="font-medium cursor-pointer hover:text-foreground">
-                            {quote.submittedBy.name}
-                          </span>
-                        </UserHoverCard>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="border-t px-6 py-3 flex justify-between">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className={quote.isLiked ? "text-red-500" : ""}
-                      onClick={() => toggleLike(quote.id)}
-                    >
-                      <Heart
-                        size={18} 
-                        className={`mr-1 ${quote.isLiked ? "fill-red-500" : ""}`}
-                      />
-                      {quote.likes}
-                    </Button>
-                    
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost" 
-                        size="icon"
-                        className={quote.isBookmarked ? "text-yellow-500" : ""}
-                        onClick={() => toggleBookmark(quote.id)}
-                      >
-                        <Bookmark 
-                          size={18}
-                          className={quote.isBookmarked ? "fill-yellow-500" : ""}
-                        />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Share size={18} />
-                      </Button>
+          {isLoading ? (
+            // Loading placeholders
+            Array(6).fill(0).map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="h-4 w-12 bg-muted rounded mb-4"></div>
+                  <div className="h-20 bg-muted rounded mb-4"></div>
+                  <div className="flex items-center mb-4">
+                    <div className="h-8 w-8 bg-muted rounded-full mr-3"></div>
+                    <div>
+                      <div className="h-4 w-24 bg-muted rounded"></div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+            ))
+          ) : filteredQuotes.length > 0 ? (
+            filteredQuotes.map(quote => (
+              <QuoteCard
+                key={quote.id}
+                quote={quote}
+                isLiked={!!userLikes[quote.id]}
+                isBookmarked={!!userBookmarks[quote.id]}
+                onLike={() => handleLike(quote.id)}
+                onBookmark={() => handleBookmark(quote.id)}
+                onTagClick={(tag) => setFilterTag(tag)}
+              />
             ))
           ) : (
             <div className="col-span-1 md:col-span-2 lg:col-span-3">
@@ -301,6 +386,15 @@ const Quotes = () => {
           )}
         </div>
       </main>
+      
+      {/* Quote submission modal */}
+      {isModalOpen && (
+        <QuoteSubmissionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleQuoteSubmitted}
+        />
+      )}
     </PageLayout>
   );
 };
