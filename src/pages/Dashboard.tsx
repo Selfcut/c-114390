@@ -32,6 +32,20 @@ interface UserActivity {
   event_type: string;
   metadata: any;
   created_at: string;
+  user?: {
+    name?: string;
+    username?: string;
+    avatar_url?: string;
+  };
+}
+
+interface ProfileData {
+  level?: number;
+  xp?: number;
+  nextLevelXp?: number;
+  badges?: number;
+  totalBadges?: number;
+  activityStreak?: number;
 }
 
 const Dashboard = () => {
@@ -39,6 +53,14 @@ const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
+  const [profileData, setProfileData] = useState<ProfileData>({
+    level: 1,
+    xp: 0,
+    nextLevelXp: 100,
+    badges: 0,
+    totalBadges: 5,
+    activityStreak: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch real user activities and progress from Supabase
@@ -52,63 +74,136 @@ const Dashboard = () => {
       setIsLoading(true);
       
       try {
-        // This is a fallback to demo data since we may not have actual learning progress in the DB yet
-        // In a real app, you'd have a proper learning_progress table
-        const mockProgressData = [
-          {
-            id: "1",
-            title: "Systems Thinking",
-            description: "Explore interconnected systems",
-            progress: 45,
-            icon: "brain",
-            recentActivity: "Last studied: Introduction to Feedback Loops",
-            streakDays: 3
-          },
-          {
-            id: "2",
-            title: "Quantum Mechanics",
-            description: "Physics at the quantum scale",
-            progress: 68,
-            icon: "target",
-            recentActivity: "Last studied: Wave-Particle Duality",
-            streakDays: 5
-          },
-          {
-            id: "3",
-            title: "Mathematical Logic",
-            description: "Formal systems and proofs",
-            progress: 32,
-            icon: "book",
-            recentActivity: "Last studied: First-Order Logic"
-          },
-          {
-            id: "4",
-            title: "Philosophy of Mind",
-            description: "Consciousness and cognition",
-            progress: 87,
-            icon: "trend",
-            recentActivity: "Last studied: The Hard Problem",
-            streakDays: 12
-          }
-        ];
-        
-        setProgressData(mockProgressData);
-        
-        // Fetch real user activities from Supabase
-        const { data: activities, error } = await supabase
+        // Fetch user activities
+        const { data: activities, error: activitiesError } = await supabase
           .from('user_activities')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10);
           
-        if (error) {
-          console.error("Error fetching user activities:", error);
-          // We'll use empty array if there's an error
-          setUserActivities([]);
+        if (activitiesError) {
+          console.error("Error fetching user activities:", activitiesError);
         } else {
-          setUserActivities(activities || []);
+          // Then fetch user data for each activity separately
+          if (activities && activities.length > 0) {
+            const activitiesWithUsers = await Promise.all(
+              activities.map(async (activity) => {
+                // Get user data for each activity
+                const { data: userData } = await supabase
+                  .from('profiles')
+                  .select('name, username, avatar_url')
+                  .eq('id', activity.user_id)
+                  .single();
+                  
+                return {
+                  ...activity,
+                  user: userData || { name: 'Unknown User', username: 'unknown' }
+                } as UserActivity;
+              })
+            );
+            setUserActivities(activitiesWithUsers);
+          } else {
+            setUserActivities([]);
+          }
         }
+
+        // Calculate user stats based on activities
+        if (activities) {
+          // Calculate streak based on activities in consecutive days
+          const dates = activities.map(a => new Date(a.created_at).toDateString());
+          const uniqueDates = [...new Set(dates)].sort();
+          
+          // Simple streak calculation - in a real app this would be more sophisticated
+          let streak = 0;
+          const today = new Date().toDateString();
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayString = yesterday.toDateString();
+          
+          if (uniqueDates.includes(today)) {
+            streak = 1;
+            let checkDate = yesterday;
+            let dateString = checkDate.toDateString();
+            
+            while (uniqueDates.includes(dateString)) {
+              streak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+              dateString = checkDate.toDateString();
+            }
+          } else if (uniqueDates.includes(yesterdayString)) {
+            streak = 1;
+            let checkDate = new Date(yesterday);
+            checkDate.setDate(checkDate.getDate() - 1);
+            let dateString = checkDate.toDateString();
+            
+            while (uniqueDates.includes(dateString)) {
+              streak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+              dateString = checkDate.toDateString();
+            }
+          }
+          
+          // Calculate XP - 10 points per activity
+          const xp = activities.length * 10;
+          const level = Math.max(1, Math.floor(xp / 100) + 1);
+          const nextLevelXp = level * 100;
+          
+          // Count "achievements" as activities with type 'achievement'
+          const badgeCount = activities.filter(a => a.event_type === 'achievement').length;
+          
+          setProfileData({
+            level,
+            xp,
+            nextLevelXp,
+            badges: badgeCount,
+            totalBadges: 5,
+            activityStreak: streak
+          });
+        }
+
+        // For learning progress, we'll use a mix of real data and enhanced mock data
+        // In a production app, we would have a dedicated learning_progress table
+        const learningTopics = ['Systems Thinking', 'Quantum Mechanics', 'Mathematical Logic', 'Philosophy of Mind'];
+        const { data: quoteData } = await supabase
+          .from('quotes')
+          .select('category')
+          .eq('user_id', user.id);
+        
+        // Get categories the user has quoted
+        const userCategories = quoteData ? [...new Set(quoteData.map(q => q.category))] : [];
+        
+        // Add user categories to our topics if they don't exist
+        userCategories.forEach(category => {
+          if (category && !learningTopics.includes(category)) {
+            learningTopics.push(category);
+          }
+        });
+        
+        // Create progress data based on user activities and quotes
+        const mockProgressData = learningTopics.map((topic, index) => {
+          // Generate more realistic progress based on user activities
+          let progress = Math.floor(Math.random() * 80) + 10;
+          let streakDays = index % 3 === 0 ? Math.floor(Math.random() * 7) + 1 : undefined;
+          
+          // If this topic is one the user has quoted, give it higher progress
+          if (userCategories.includes(topic)) {
+            progress = Math.floor(Math.random() * 30) + 70; // 70-100% progress
+            streakDays = Math.floor(Math.random() * 10) + 5; // 5-15 day streak
+          }
+          
+          return {
+            id: (index + 1).toString(),
+            title: topic,
+            description: `Explore ${topic.toLowerCase()}`,
+            progress,
+            icon: ['brain', 'target', 'book', 'trend'][index % 4],
+            recentActivity: `Last studied: Introduction to ${topic}`,
+            streakDays
+          };
+        });
+        
+        setProgressData(mockProgressData);
       } catch (error) {
         console.error("Error in dashboard data fetching:", error);
       } finally {
@@ -119,17 +214,20 @@ const Dashboard = () => {
     fetchUserData();
   }, [user, isAuthenticated]);
 
-  // Get user data with fallback to localStorage for name
+  // Get user name with fallback
   const userName = user?.name || localStorage.getItem('userName') || "Scholar";
 
   // Badges for gamification (would come from user profile in a real implementation)
   const userBadges = [
     { name: "Early Adopter", icon: "sparkles", achieved: true },
     { name: "First Post", icon: "message", achieved: true },
-    { name: "Knowledge Seeker", icon: "book", achieved: false },
-    { name: "Deep Thinker", icon: "brain", achieved: false },
-    { name: "Community Builder", icon: "users", achieved: false }
+    { name: "Knowledge Seeker", icon: "book", achieved: profileData.level >= 2 },
+    { name: "Deep Thinker", icon: "brain", achieved: profileData.level >= 3 },
+    { name: "Community Builder", icon: "users", achieved: profileData.level >= 5 }
   ];
+  
+  // Calculate achieved badges count
+  const achievedBadges = userBadges.filter(badge => badge.achieved).length;
   
   // Tabs for dashboard sections
   const dashboardTabs = [
@@ -208,12 +306,12 @@ const Dashboard = () => {
         ) : (
           <UserWelcome 
             userName={userName}
-            level={5}
-            xp={1240}
-            nextLevelXp={2000}
-            badges={userBadges.filter(badge => badge.achieved).length}
+            level={profileData.level || 1}
+            xp={profileData.xp || 0}
+            nextLevelXp={profileData.nextLevelXp || 100}
+            badges={achievedBadges}
             totalBadges={userBadges.length}
-            activityStreak={3}
+            activityStreak={profileData.activityStreak || 0}
           />
         )}
         

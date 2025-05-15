@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -28,40 +29,36 @@ export interface QuoteWithUser extends Quote {
 // Fetch all quotes with their submitters
 export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
   try {
-    const { data, error } = await supabase
+    // First fetch quotes
+    const { data: quotesData, error } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        user:user_id (
-          username,
-          name,
-          avatar_url,
-          status
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    if (!quotesData) return [];
+    
+    // Then fetch users for each quote
+    const quotesWithUsers = await Promise.all(
+      quotesData.map(async (quote) => {
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('name, username, avatar_url, status')
+          .eq('id', quote.user_id)
+          .single();
+        
+        return {
+          ...quote,
+          user: userData || {
+            name: 'Unknown User',
+            username: 'unknown',
+            status: 'offline'
+          }
+        } as QuoteWithUser;
+      })
+    );
 
-    // Ensure proper type conversion
-    const typedData = data?.map(item => {
-      const quote = item as unknown as QuoteWithUser;
-      if (quote.user && typeof quote.user === 'object') {
-        return quote;
-      }
-      
-      // If user data is missing, provide defaults
-      return {
-        ...item,
-        user: {
-          name: 'Unknown User',
-          username: 'unknown',
-          status: 'offline'
-        }
-      } as QuoteWithUser;
-    }) || [];
-
-    return typedData;
+    return quotesWithUsers;
   } catch (error) {
     console.error("Error fetching quotes:", error);
     return [];
@@ -77,15 +74,7 @@ export const fetchQuotesWithFilters = async (
   try {
     let query = supabase
       .from('quotes')
-      .select(`
-        *,
-        user:user_id (
-          username,
-          name,
-          avatar_url,
-          status
-        )
-      `);
+      .select('*');
 
     // Add tag filter if provided
     if (tagFilter) {
@@ -110,28 +99,32 @@ export const fetchQuotesWithFilters = async (
         break;
     }
 
-    const { data, error } = await query;
+    const { data: quotesData, error } = await query;
 
     if (error) throw error;
+    if (!quotesData) return [];
 
-    // Ensure proper type conversion
-    const typedData = data?.map(item => {
-      const quote = item as unknown as QuoteWithUser;
-      if (quote.user && typeof quote.user === 'object') {
-        return quote;
-      }
-      
-      return {
-        ...item,
-        user: {
-          name: 'Unknown User',
-          username: 'unknown',
-          status: 'offline'
-        }
-      } as QuoteWithUser;
-    }) || [];
+    // Then fetch users for each quote
+    const quotesWithUsers = await Promise.all(
+      quotesData.map(async (quote) => {
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('name, username, avatar_url, status')
+          .eq('id', quote.user_id)
+          .single();
+        
+        return {
+          ...quote,
+          user: userData || {
+            name: 'Unknown User',
+            username: 'unknown',
+            status: 'offline'
+          }
+        } as QuoteWithUser;
+      })
+    );
 
-    return typedData;
+    return quotesWithUsers;
   } catch (error) {
     console.error("Error fetching quotes with filters:", error);
     return [];
@@ -141,31 +134,25 @@ export const fetchQuotesWithFilters = async (
 // Fetch a single quote by ID
 export const fetchQuoteById = async (id: string): Promise<QuoteWithUser | null> => {
   try {
-    const { data, error } = await supabase
+    const { data: quoteData, error } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        user:user_id (
-          username,
-          name,
-          avatar_url,
-          status
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
     if (error) throw error;
+    if (!quoteData) return null;
 
-    // Ensure proper type conversion
-    const quote = data as unknown as QuoteWithUser;
-    if (quote?.user && typeof quote.user === 'object') {
-      return quote;
-    }
+    // Fetch user data for the quote
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('name, username, avatar_url, status')
+      .eq('id', quoteData.user_id)
+      .single();
     
     return {
-      ...data,
-      user: {
+      ...quoteData,
+      user: userData || {
         name: 'Unknown User',
         username: 'unknown',
         status: 'offline'
@@ -207,7 +194,7 @@ export const createQuote = async (quote: Omit<Quote, 'id' | 'user_id' | 'likes' 
     
     toast({
       title: "Failed to create quote",
-      description: error.message,
+      description: "An error occurred while creating the quote.",
       variant: "destructive",
     });
     
@@ -240,7 +227,7 @@ export const updateQuote = async (id: string, updates: Partial<Quote>): Promise<
     
     toast({
       title: "Failed to update quote",
-      description: error.message,
+      description: "An error occurred while updating the quote.",
       variant: "destructive",
     });
     
@@ -268,7 +255,7 @@ export const deleteQuote = async (id: string): Promise<boolean> => {
     
     toast({
       title: "Failed to delete quote",
-      description: error.message,
+      description: "An error occurred while deleting the quote.",
       variant: "destructive",
     });
     
@@ -304,22 +291,13 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (unlikeError) throw unlikeError;
 
-      // Decrement like count
-      const { data: quoteData, error: getQuoteError } = await supabase
-        .from('quotes')
-        .select('likes')
-        .eq('id', quoteId)
-        .single();
-        
-      if (getQuoteError) throw getQuoteError;
-      
-      const currentLikes = quoteData?.likes || 0;
-      const newLikes = Math.max(0, currentLikes - 1); // Ensure we don't go below 0
-      
+      // Decrement like count using our RPC function
       const { error: decrementError } = await supabase
-        .from('quotes')
-        .update({ likes: newLikes })
-        .eq('id', quoteId);
+        .rpc('decrement', {
+          row_id: quoteId,
+          table_name: 'quotes',
+          column_name: 'likes'
+        });
 
       if (decrementError) throw decrementError;
 
@@ -335,22 +313,13 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (likeError) throw likeError;
 
-      // Increment like count
-      const { data: quoteData, error: getQuoteError } = await supabase
-        .from('quotes')
-        .select('likes')
-        .eq('id', quoteId)
-        .single();
-        
-      if (getQuoteError) throw getQuoteError;
-      
-      const currentLikes = quoteData?.likes || 0;
-      const newLikes = currentLikes + 1;
-      
+      // Increment like count using our RPC function
       const { error: incrementError } = await supabase
-        .from('quotes')
-        .update({ likes: newLikes })
-        .eq('id', quoteId);
+        .rpc('increment', {
+          row_id: quoteId,
+          table_name: 'quotes',
+          column_name: 'likes'
+        });
 
       if (incrementError) throw incrementError;
 
@@ -390,22 +359,13 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (removeError) throw removeError;
 
-      // Decrement bookmark count
-      const { data: quoteData, error: getQuoteError } = await supabase
-        .from('quotes')
-        .select('bookmarks')
-        .eq('id', quoteId)
-        .single();
-        
-      if (getQuoteError) throw getQuoteError;
-      
-      const currentBookmarks = quoteData?.bookmarks || 0;
-      const newBookmarks = Math.max(0, currentBookmarks - 1); // Ensure we don't go below 0
-      
+      // Decrement bookmark count using our RPC function
       const { error: decrementError } = await supabase
-        .from('quotes')
-        .update({ bookmarks: newBookmarks })
-        .eq('id', quoteId);
+        .rpc('decrement', {
+          row_id: quoteId,
+          table_name: 'quotes',
+          column_name: 'bookmarks'
+        });
 
       if (decrementError) throw decrementError;
 
@@ -421,22 +381,13 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (bookmarkError) throw bookmarkError;
 
-      // Increment bookmark count
-      const { data: quoteData, error: getQuoteError } = await supabase
-        .from('quotes')
-        .select('bookmarks')
-        .eq('id', quoteId)
-        .single();
-        
-      if (getQuoteError) throw getQuoteError;
-      
-      const currentBookmarks = quoteData?.bookmarks || 0;
-      const newBookmarks = currentBookmarks + 1;
-      
+      // Increment bookmark count using our RPC function
       const { error: incrementError } = await supabase
-        .from('quotes')
-        .update({ bookmarks: newBookmarks })
-        .eq('id', quoteId);
+        .rpc('increment', {
+          row_id: quoteId,
+          table_name: 'quotes',
+          column_name: 'bookmarks'
+        });
 
       if (incrementError) throw incrementError;
 
@@ -516,37 +467,33 @@ export const fetchUserBookmarkedQuotes = async (): Promise<QuoteWithUser[]> => {
 
     const { data: quotesData, error: quotesError } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        user:user_id (
-          username,
-          name,
-          avatar_url,
-          status
-        )
-      `)
+      .select('*')
       .in('id', quoteIds);
 
     if (quotesError) throw quotesError;
+    if (!quotesData) return [];
 
-    // Ensure proper type conversion
-    const typedData = quotesData?.map(item => {
-      const quote = item as unknown as QuoteWithUser;
-      if (quote.user && typeof quote.user === 'object') {
-        return quote;
-      }
-      
-      return {
-        ...item,
-        user: {
-          name: 'Unknown User',
-          username: 'unknown',
-          status: 'offline'
-        }
-      } as QuoteWithUser;
-    }) || [];
+    // Then fetch users for each quote
+    const quotesWithUsers = await Promise.all(
+      quotesData.map(async (quote) => {
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('name, username, avatar_url, status')
+          .eq('id', quote.user_id)
+          .single();
+        
+        return {
+          ...quote,
+          user: userData || {
+            name: 'Unknown User',
+            username: 'unknown',
+            status: 'offline'
+          }
+        } as QuoteWithUser;
+      })
+    );
 
-    return typedData;
+    return quotesWithUsers;
   } catch (error) {
     console.error("Error fetching user's bookmarked quotes:", error);
     return [];

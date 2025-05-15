@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,8 +17,8 @@ interface Activity {
   metadata: any;
   created_at: string;
   user?: {
-    name: string;
-    username: string;
+    name?: string;
+    username?: string;
     avatar_url?: string;
   };
 }
@@ -44,16 +45,10 @@ export const ActivityFeed = ({ userActivities = [], isLoading = false }: Activit
     const fetchActivities = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        // First get the activities
+        const { data: activitiesData, error } = await supabase
           .from('user_activities')
-          .select(`
-            *,
-            user:user_id (
-              username,
-              name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -62,7 +57,32 @@ export const ActivityFeed = ({ userActivities = [], isLoading = false }: Activit
           return;
         }
 
-        setActivities(data || []);
+        if (!activitiesData || activitiesData.length === 0) {
+          setActivities([]);
+          setLoading(false);
+          return;
+        }
+
+        // Then fetch user data for each activity separately
+        const activitiesWithUsers = await Promise.all(
+          activitiesData.map(async (activity) => {
+            if (!activity.user_id) return activity;
+            
+            // Get user data for each activity
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('name, username, avatar_url')
+              .eq('id', activity.user_id)
+              .single();
+              
+            return {
+              ...activity,
+              user: userData || { name: 'Unknown User', username: 'unknown' }
+            };
+          })
+        );
+        
+        setActivities(activitiesWithUsers);
       } catch (error) {
         console.error('Error in activity feed:', error);
       } finally {

@@ -22,7 +22,7 @@ interface Comment {
   content: string;
   created_at: string;
   user_id: string;
-  user: {
+  user?: {
     name?: string;
     username?: string;
     avatar_url?: string;
@@ -47,21 +47,35 @@ export const QuoteCommentModal = ({
     const fetchComments = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        // First fetch all comments for this quote
+        const { data: commentsData, error } = await supabase
           .from('quote_comments')
-          .select(`
-            *,
-            user:user_id (
-              username,
-              name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('quote_id', quoteId)
           .order('created_at', { ascending: false });
           
         if (error) throw error;
-        setComments(data || []);
+        
+        // Then fetch user data for each comment separately
+        if (commentsData) {
+          const commentsWithUsers = await Promise.all(
+            commentsData.map(async (comment) => {
+              // Get user data for each comment
+              const { data: userData } = await supabase
+                .from('profiles')
+                .select('name, username, avatar_url')
+                .eq('id', comment.user_id)
+                .single();
+                
+              return {
+                ...comment,
+                user: userData || { name: 'Unknown User', username: 'unknown' }
+              } as Comment;
+            })
+          );
+          
+          setComments(commentsWithUsers);
+        }
       } catch (err) {
         console.error("Error fetching comments:", err);
         toast({
@@ -140,11 +154,15 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count
-      await supabase
-        .from('quotes')
-        .update({ comments: supabase.rpc('increment', { row_id: quoteId, table_name: 'quotes', column_name: 'comments' }) })
-        .eq('id', quoteId);
+      // Update quote comment count using our increment function
+      const { error: updateError } = await supabase
+        .rpc('increment', { 
+          row_id: quoteId,
+          table_name: 'quotes',
+          column_name: 'comments'
+        });
+      
+      if (updateError) throw updateError;
       
       // Add activity record
       await supabase
