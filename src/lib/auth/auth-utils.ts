@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Or create a mock profile for demo purposes if Supabase fetch fails
 export const fetchUserProfile = async (userId: string, session: Session | null): Promise<UserProfile> => {
   try {
-    // Try to fetch user role from user_roles table (which exists in Supabase)
+    // First try to fetch user role from user_roles table
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('*')

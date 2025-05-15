@@ -56,3 +56,9 @@
 .dark .text-gray-800 {
   color: hsl(var(--muted-foreground)) !important;
 }
+
+/* Fix for header and footer borders in dark mode */
+.dark .header,
+.dark .footer {
+  border-color: hsl(var(--border)) !important;
+}

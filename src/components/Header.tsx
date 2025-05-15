@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -150,111 +149,115 @@ const Header = () => {
           {/* Theme Toggle */}
           <ModeToggle />
           
-          {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative hover:bg-accent hover:text-accent-foreground" aria-label="Notifications">
-                <Bell size={20} />
-                {unreadNotificationsCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-2 w-2 items-center justify-center rounded-full bg-red-500">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping absolute"></span>
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel className="flex items-center justify-between">
-                <span>Notifications</span>
-                {unreadNotificationsCount > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-auto text-xs px-2 py-1"
-                    onClick={markAllNotificationsAsRead}
-                  >
-                    Mark all as read
-                  </Button>
-                )}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {notifications.length === 0 ? (
-                <div className="py-6 px-2 text-center">
-                  <div className="flex justify-center mb-2">
-                    <Bell className="h-12 w-12 text-muted-foreground opacity-20" />
-                  </div>
-                  <p className="text-muted-foreground">No notifications yet</p>
-                </div>
-              ) : (
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`px-4 py-3 hover:bg-accent/50 cursor-pointer ${!notification.isRead ? 'bg-accent/20' : ''}`}
-                      onClick={() => {
-                        const updatedNotifications = notifications.map(n => 
-                          n.id === notification.id ? { ...n, isRead: true } : n
-                        );
-                        setNotifications(updatedNotifications);
-                        // Handle notification click
-                        toast({
-                          description: "Navigating to notification content",
-                        });
-                      }}
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="flex-shrink-0 mt-0.5">
-                          {notification.type === 'mention' && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                              <span className="text-xs font-medium text-blue-500 dark:text-blue-200">@</span>
-                            </span>
-                          )}
-                          {notification.type === 'reply' && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                              <MessageSquare className="h-3 w-3 text-green-500 dark:text-green-200" />
-                            </span>
-                          )}
-                          {notification.type === 'like' && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                              <span className="text-xs font-medium text-red-500 dark:text-red-200">♥</span>
-                            </span>
-                          )}
-                          {notification.type === 'system' && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-                              <span className="text-xs font-medium text-purple-500 dark:text-purple-200">!</span>
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm">{notification.content}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatNotificationTime(notification.timestamp)}
-                          </p>
-                        </div>
-                        {!notification.isRead && (
-                          <div className="flex-shrink-0">
-                            <div className="h-2 w-2 rounded-full bg-primary"></div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <DropdownMenuSeparator />
-              <div className="p-2">
-                <Button variant="outline" size="sm" className="w-full">
-                  View all notifications
+          {/* Notifications - Only show for logged in users */}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative hover:bg-accent hover:text-accent-foreground" aria-label="Notifications">
+                  <Bell size={20} />
+                  {unreadNotificationsCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2 items-center justify-center rounded-full bg-red-500">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping absolute"></span>
+                    </span>
+                  )}
                 </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel className="flex items-center justify-between">
+                  <span>Notifications</span>
+                  {unreadNotificationsCount > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-auto text-xs px-2 py-1"
+                      onClick={markAllNotificationsAsRead}
+                    >
+                      Mark all as read
+                    </Button>
+                  )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.length === 0 ? (
+                  <div className="py-6 px-2 text-center">
+                    <div className="flex justify-center mb-2">
+                      <Bell className="h-12 w-12 text-muted-foreground opacity-20" />
+                    </div>
+                    <p className="text-muted-foreground">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div 
+                        key={notification.id} 
+                        className={`px-4 py-3 hover:bg-accent/50 cursor-pointer ${!notification.isRead ? 'bg-accent/20' : ''}`}
+                        onClick={() => {
+                          const updatedNotifications = notifications.map(n => 
+                            n.id === notification.id ? { ...n, isRead: true } : n
+                          );
+                          setNotifications(updatedNotifications);
+                          // Handle notification click
+                          toast({
+                            description: "Navigating to notification content",
+                          });
+                        }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 mt-0.5">
+                            {notification.type === 'mention' && (
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                                <span className="text-xs font-medium text-blue-500 dark:text-blue-200">@</span>
+                              </span>
+                            )}
+                            {notification.type === 'reply' && (
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                                <MessageSquare className="h-3 w-3 text-green-500 dark:text-green-200" />
+                              </span>
+                            )}
+                            {notification.type === 'like' && (
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
+                                <span className="text-xs font-medium text-red-500 dark:text-red-200">♥</span>
+                              </span>
+                            )}
+                            {notification.type === 'system' && (
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
+                                <span className="text-xs font-medium text-purple-500 dark:text-purple-200">!</span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm">{notification.content}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatNotificationTime(notification.timestamp)}
+                            </p>
+                          </div>
+                          {!notification.isRead && (
+                            <div className="flex-shrink-0">
+                              <div className="h-2 w-2 rounded-full bg-primary"></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <DropdownMenuSeparator />
+                <div className="p-2">
+                  <Button variant="outline" size="sm" className="w-full">
+                    View all notifications
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
-          {/* Chat */}
-          <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground" aria-label="Chat" asChild>
-            <Link to="/chat">
-              <MessageSquare size={20} />
-            </Link>
-          </Button>
+          {/* Chat - Only show for logged in users */}
+          {user && (
+            <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground" aria-label="Chat" asChild>
+              <Link to="/chat">
+                <MessageSquare size={20} />
+              </Link>
+            </Button>
+          )}
           
           {/* Premium */}
           <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-1 text-amber-500 border-amber-500/30 hover:bg-amber-500/10">
@@ -315,7 +318,7 @@ const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                   
-                  {user.isAdmin && (
+                  {user.role === 'admin' && (
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center cursor-pointer">
                         <Crown className="mr-2 h-4 w-4" />
