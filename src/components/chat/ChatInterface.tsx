@@ -141,7 +141,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           },
           {
             id: '2',
-            content: 'I'm doing well, thanks for asking! How about you?',
+            content: "I'm doing well, thanks for asking! How about you?",
             sender: currentUser.id,
             senderName: currentUser.name,
             senderAvatar: currentUser.avatar,
@@ -150,7 +150,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           },
           {
             id: '3',
-            content: 'Great! I was wondering if you'd be interested in joining our study group?',
+            content: "Great! I was wondering if you'd be interested in joining our study group?",
             sender: recipientId,
             senderName: recipientName || 'User',
             senderAvatar: recipientAvatar,
@@ -180,7 +180,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           },
           {
             id: '3',
-            content: 'I've shared some interesting resources in the library.',
+            content: "I've shared some interesting resources in the library.",
             sender: 'user-2',
             senderName: 'James',
             senderAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James',
