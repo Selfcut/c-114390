@@ -16,8 +16,9 @@ export interface UserHoverCardProps {
   username: string;
   avatar?: string;
   avatarUrl?: string; // Added this to support the property name used in UserProfile.tsx
-  status: "online" | "offline" | "away" | "do_not_disturb";
+  status?: "online" | "offline" | "away" | "do_not_disturb";
   displayName: string;
+  isOnline?: boolean; // Added this to support the property used in UserProfile.tsx
 }
 
 export const UserHoverCard = ({ 
@@ -25,11 +26,15 @@ export const UserHoverCard = ({
   username, 
   avatar,
   avatarUrl, // Added this property
-  status,
-  displayName
+  status = "offline", // Default to offline if not provided
+  displayName,
+  isOnline = false // Default to false if not provided
 }: UserHoverCardProps) => {
   // Use avatarUrl as a fallback if avatar is not provided
   const avatarSrc = avatar || avatarUrl;
+  
+  // If isOnline is true and status is not explicitly set, use "online"
+  const effectiveStatus = isOnline && !status ? "online" : status;
 
   // Function to determine the color of the status indicator
   const getStatusColor = (status: "online" | "offline" | "away" | "do_not_disturb") => {
@@ -62,7 +67,7 @@ export const UserHoverCard = ({
                 <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
               </Avatar>
               <span 
-                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(status)}`}
+                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(effectiveStatus)}`}
               />
             </div>
             <div className="flex-1">
@@ -73,12 +78,12 @@ export const UserHoverCard = ({
                 </div>
                 <Badge 
                   variant="outline" 
-                  className={`${status === "online" ? "bg-green-500/10 text-green-500 border-green-500/20" : 
-                    status === "away" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" : 
-                    status === "do_not_disturb" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                  className={`${effectiveStatus === "online" ? "bg-green-500/10 text-green-500 border-green-500/20" : 
+                    effectiveStatus === "away" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" : 
+                    effectiveStatus === "do_not_disturb" ? "bg-red-500/10 text-red-500 border-red-500/20" :
                     "bg-gray-500/10 text-gray-500 border-gray-500/20"}`}
                 >
-                  {status.replace(/_/g, ' ')}
+                  {effectiveStatus.replace(/_/g, ' ')}
                 </Badge>
               </div>
             </div>
