@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth-context";
 import {
@@ -72,7 +71,7 @@ export const Sidebar = () => {
   }
 
   return (
-    <div className="sidebar w-64 h-screen flex flex-col bg-background border-r border-border fixed left-0 top-0 overflow-hidden">
+    <div className="sidebar w-64 h-screen flex flex-col bg-background border-r border-border fixed left-0 top-0 overflow-hidden z-20">
       <div className="flex items-center p-4 h-16 border-b border-border">
         <img src="/logo.svg" alt="Logo" className="h-8 w-8 mr-2" />
         <span className="font-bold text-lg">Polymath</span>
@@ -118,7 +117,9 @@ export const Sidebar = () => {
               </>
             )}
           </div>
-          <ThemeToggle />
+          <div className="flex-shrink-0">
+            <ThemeToggle />
+          </div>
         </div>
         {user && (
           <button

@@ -16,7 +16,12 @@ export function ModeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Toggle theme" className="hover:bg-accent hover:text-accent-foreground">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          aria-label="Toggle theme" 
+          className="hover:bg-accent hover:text-accent-foreground relative"
+        >
           <Sun
             size={20}
             className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
