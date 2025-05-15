@@ -1,51 +1,50 @@
 
-import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ReactNode, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
 
-interface CollapsibleSectionProps {
+export interface CollapsibleSectionProps {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   defaultOpen?: boolean;
   className?: string;
-  titleClassName?: string;
   style?: React.CSSProperties;
 }
 
-export const CollapsibleSection = ({
-  title,
-  children,
-  defaultOpen = true,
+export const CollapsibleSection = ({ 
+  title, 
+  children, 
+  defaultOpen = false, 
   className = "",
-  titleClassName = "",
   style
 }: CollapsibleSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <Collapsible
-      open={isOpen}
+    <Collapsible 
+      open={isOpen} 
       onOpenChange={setIsOpen}
-      className={`mb-8 bg-[#1A1A1A] rounded-lg p-6 border border-gray-800 transition-all duration-300 ${className}`}
+      className={`mb-10 ${className}`}
       style={style}
     >
-      <div className="flex items-center justify-between">
-        <h2 className={`text-2xl font-bold text-white ${titleClassName}`}>{title}</h2>
+      <div className="flex justify-between items-center mb-4 group">
+        <h2 className="text-2xl font-bold text-white">{title}</h2>
         <CollapsibleTrigger asChild>
-          <button
-            className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-            aria-label={isOpen ? "Collapse section" : "Expand section"}
-          >
+          <button className="bg-gray-800 hover:bg-gray-700 p-2 rounded-full transition-colors">
             {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-gray-400" />
+              <ChevronUp size={20} className="text-gray-400 group-hover:text-white transition-colors" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-gray-400" />
+              <ChevronDown size={20} className="text-gray-400 group-hover:text-white transition-colors" />
             )}
           </button>
         </CollapsibleTrigger>
       </div>
       
-      <CollapsibleContent className="mt-4 space-y-4 overflow-hidden">
+      <CollapsibleContent>
         {children}
       </CollapsibleContent>
     </Collapsible>

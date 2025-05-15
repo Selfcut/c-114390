@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { BookOpen, Award, Clock } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast, polymathToast } from '@/components/ui/use-toast';
 
 interface ReadingProgressProps {
   bookTitle: string;

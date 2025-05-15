@@ -15,6 +15,9 @@ import { MembershipBenefits } from "../components/MembershipBenefits";
 import { CollapsibleSection } from "../components/CollapsibleSection";
 import { KnowledgeBrowser } from "../components/KnowledgeBrowser";
 import { ReadingList } from "../components/ReadingProgress";
+import { UserProgressCard } from "../components/UserProgressCard";
+import { FeaturedAppCard } from "../components/FeaturedAppCard";
+import { ModelCard } from "../components/ModelCard";
 
 // Create a new component for discussion topics
 const DiscussionTopicItem = ({ title, author, replies, timeAgo }: { title: string, author: string, replies: number, timeAgo: string }) => (
