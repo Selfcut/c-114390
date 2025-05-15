@@ -1,4 +1,3 @@
-
 // Create a new file with fixed status values
 import React, { useState } from 'react';
 import { PageLayout } from "./layouts/PageLayout";
@@ -259,12 +258,7 @@ export const Quotes = () => {
                     tags={quote.tags}
                     likes={quote.likes}
                     comments={quote.comments}
-                    user={{
-                      name: quote.user.name,
-                      avatar: quote.user.avatar,
-                      status: quote.user.status === "do_not_disturb" ? 
-                        "do-not-disturb" : quote.user.status
-                    }}
+                    user={quote.user}
                     isBookmarked={false}
                     onLike={() => {}}
                     onBookmark={() => {}}
@@ -299,7 +293,7 @@ export const Quotes = () => {
                             contributor.status === 'online' ? 'bg-green-500' : 
                             contributor.status === 'away' ? 'bg-amber-500' :
                             contributor.status === 'do-not-disturb' ? 'bg-red-500' :
-                            contributor.status === 'invisible' || contributor.status === 'offline' ? 'bg-gray-400' : 'bg-gray-400'
+                            'bg-gray-400' // Default for offline or invisible
                           } ring-1 ring-white`}
                         />
                       </div>

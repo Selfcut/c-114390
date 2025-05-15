@@ -1,4 +1,3 @@
-
 import { MessageSquare, Quote, ThumbsUp, BookmarkPlus } from "lucide-react";
 import { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -10,14 +9,22 @@ interface QuoteCardProps {
   author: string;
   source?: string;
   category?: string;
-  tags?: string[];  // Add tags as an optional property
+  tags?: string[];
   likes: number;
   comments?: number;
   imageUrl?: string;
   isBookmarked?: boolean;
   quote?: any; // For backward compatibility with the old API
   animationDelay?: string;
+  user?: {
+    name: string;
+    avatar: string;
+    status: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
+  };
   onLike?: () => void;
+  onBookmark?: () => void; 
+  onComment?: () => void;
+  onShare?: () => void;
 }
 
 export const QuoteCard = ({
@@ -33,7 +40,11 @@ export const QuoteCard = ({
   isBookmarked = false,
   quote,
   animationDelay,
+  user,
   onLike,
+  onBookmark,
+  onComment,
+  onShare,
 }: QuoteCardProps) => {
   // If the quote object is provided, extract properties from it
   const quoteData = quote || { id, text, author, category, likes };
@@ -59,7 +70,11 @@ export const QuoteCard = ({
 
   const handleBookmark = () => {
     setBookmarked(!bookmarked);
-    polymathToast.resourceBookmarked();
+    if (onBookmark) {
+      onBookmark();
+    } else {
+      polymathToast.resourceBookmarked();
+    }
   };
 
   return (

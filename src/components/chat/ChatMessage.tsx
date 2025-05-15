@@ -16,7 +16,8 @@ interface ChatMessageProps {
   id: string;
   content: string;
   timestamp: Date;
-  isOwnMessage: boolean;
+  isOwnMessage?: boolean;
+  isCurrentUser?: boolean;
   sender: {
     id: string;
     name: string;
@@ -30,25 +31,41 @@ interface ChatMessageProps {
   }>;
   edited?: boolean;
   deleted?: boolean;
+  isFirstInGroup?: boolean;
+  isLastInGroup?: boolean;
+  mentions?: Array<{ id: string; name: string }>;
+  attachments?: Array<{ id: string; type: 'image' | 'gif' | 'file'; url: string; name?: string }>;
   onReply?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
+  onReactionAdd?: (messageId: string, emoji: string) => void;
+  onReactionRemove?: (messageId: string, emoji: string) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   id,
   content,
   timestamp,
-  isOwnMessage,
+  isOwnMessage = false,
+  isCurrentUser = false, // Add this prop with default value
   sender,
   reactions = [],
   edited = false,
   deleted = false,
+  isFirstInGroup = true,
+  isLastInGroup = true,
+  mentions,
+  attachments,
   onReply,
   onDelete,
-  onReact
+  onReact,
+  onReactionAdd,
+  onReactionRemove
 }) => {
   const [showReactions, setShowReactions] = useState(false);
+  
+  // Use isCurrentUser or isOwnMessage, prioritizing isCurrentUser if passed
+  const isMessageFromCurrentUser = isCurrentUser || isOwnMessage;
   
   // Determine status indicator color
   const getStatusColor = () => {
@@ -80,12 +97,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const handleReact = (emoji: string) => {
     if (onReact) {
       onReact(id, emoji);
+    } else if (onReactionAdd) {
+      onReactionAdd(id, emoji);
     }
   };
 
   return (
     <div 
-      className={`flex gap-2 mb-4 group ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+      className={`flex gap-2 mb-4 group ${isMessageFromCurrentUser ? 'justify-end' : 'justify-start'}`}
       onMouseEnter={() => setShowReactions(true)}
       onMouseLeave={() => setShowReactions(false)}
     >
