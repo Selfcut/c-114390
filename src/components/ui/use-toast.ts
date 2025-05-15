@@ -67,8 +67,8 @@ export const polymathToast = {
   }
 };
 
-// Add a default calling mechanism for polymathToast
-(polymathToast as any).call = (props: { title: string; description: string; variant?: string }) => {
+// Add a default calling mechanism for polymathToast that restricts variant types
+(polymathToast as any).call = (props: { title: string; description: string; variant?: "default" | "destructive" }) => {
   internalToast(props);
 };
 (polymathToast as any).__proto__ = Function.prototype;

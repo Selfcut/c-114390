@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { polymathToast } from "@/components/ui/use-toast";
+import { polymathToast, toast } from "@/components/ui/use-toast";
 
 type ChatMessage = {
   id: string;
