@@ -10,6 +10,8 @@ import Forum from "./pages/Forum";
 import Library from "./pages/Library";
 import Quotes from "./pages/Quotes";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
+import { useEffect } from "react";
+import { polymathToast } from "./components/ui/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,24 +22,52 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <WelcomeOverlay />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/forum" element={<Forum />} />
-          <Route path="/library" element={<Library />} />
-          <Route path="/quotes" element={<Quotes />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Check for returning users
+  useEffect(() => {
+    const lastLoginTimestamp = localStorage.getItem("lastLoginTimestamp");
+    const currentTime = new Date().getTime();
+    
+    if (lastLoginTimestamp) {
+      const lastLogin = parseInt(lastLoginTimestamp);
+      const daysSinceLastLogin = Math.floor((currentTime - lastLogin) / (1000 * 60 * 60 * 24));
+      
+      // If it's been more than 7 days since last login
+      if (daysSinceLastLogin > 7) {
+        // Delayed toast to ensure it appears after page load
+        setTimeout(() => {
+          polymathToast({
+            title: "Welcome back!",
+            description: `It's been ${daysSinceLastLogin} days since your last visit. New content is waiting for you.`,
+            variant: "default",
+          });
+        }, 2000);
+      }
+    }
+    
+    // Update last login timestamp
+    localStorage.setItem("lastLoginTimestamp", currentTime.toString());
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <WelcomeOverlay />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/forum" element={<Forum />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/quotes" element={<Quotes />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
