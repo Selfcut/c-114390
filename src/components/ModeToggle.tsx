@@ -20,7 +20,7 @@ export function ModeToggle() {
           variant="ghost" 
           size="icon" 
           aria-label="Toggle theme" 
-          className="hover:bg-accent hover:text-accent-foreground relative"
+          className="hover:bg-accent hover:text-accent-foreground"
         >
           <Sun
             size={20}

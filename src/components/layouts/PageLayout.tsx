@@ -24,9 +24,9 @@ export const PageLayout = ({
         {showSidebar && <Sidebar />}
         <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-64' : ''}`}>
           {showHeader && <Header />}
-          <div className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto">
             {children}
-          </div>
+          </main>
         </div>
       </div>
     </div>

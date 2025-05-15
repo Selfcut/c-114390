@@ -103,7 +103,7 @@ const Header = () => {
   };
 
   return (
-    <header className="border-b bg-background sticky top-0 z-10">
+    <header className="border-b bg-background">
       <div className="container px-4 h-16 flex items-center justify-between">
         {/* Logo and Search Bar */}
         <div className="flex items-center flex-1 gap-4">
