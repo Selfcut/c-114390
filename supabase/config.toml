@@ -1,1 +1,11 @@
+
 project_id = "zmevoxevezwnkigertpn"
+
+[functions.create-admin]
+verify_jwt = true
+
+[functions.generate-with-ai]
+verify_jwt = true
+
+[functions.track-user-activity]
+verify_jwt = true

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-context';
@@ -20,6 +21,7 @@ import Settings from './pages/Settings';
 import AdminPanel from './pages/admin/AdminPanel';
 import Quotes from './components/Quotes';
 import Admin from './pages/Admin';
+import AI from './pages/AI';
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {
@@ -101,6 +103,11 @@ const Root = () => {
         <Route path="/quotes" element={
           <ProtectedRoute>
             <Quotes />
+          </ProtectedRoute>
+        } />
+        <Route path="/ai" element={
+          <ProtectedRoute>
+            <AI />
           </ProtectedRoute>
         } />
         <Route path="/admin/*" element={
