@@ -35,6 +35,7 @@
 
     --radius: 0.5rem;
     
+    /* Fixed sidebar background variable */
     --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
@@ -73,4 +74,9 @@
 .run-button:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
+}
+
+/* Adding explicit styling for sidebar to ensure it works correctly */
+.bg-sidebar {
+  background-color: hsl(var(--sidebar-background));
 }
