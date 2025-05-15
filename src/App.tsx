@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Forum from "./pages/Forum";
 import Library from "./pages/Library";
+import { WelcomeOverlay } from "./components/WelcomeOverlay";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +25,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <WelcomeOverlay />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/forum" element={<Forum />} />

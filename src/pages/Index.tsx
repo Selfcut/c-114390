@@ -8,6 +8,7 @@ import { CreationCard } from "../components/CreationCard";
 import { QuickStartItem } from "../components/QuickStartItem";
 import { FeaturedAppCard } from "../components/FeaturedAppCard";
 import { ModelCard } from "../components/ModelCard";
+import { UserProgressCard } from "../components/UserProgressCard";
 import { BookOpen, MessageSquare, Users, Library, Book, Sparkles, Calendar, BrainCircuit, Search } from "lucide-react";
 import { polymathToast } from "../components/ui/use-toast";
 import { disciplines, formatDaysAgo } from "../lib/utils";
@@ -102,6 +103,16 @@ const Index = () => {
     }
   };
 
+  // New function to show the join study group toast
+  const handleJoinGroup = () => {
+    polymathToast.joinedStudyGroup();
+  };
+
+  // New function to show event registration toast
+  const handleEventRegistration = () => {
+    polymathToast.eventRegistered();
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <PromoBar />
@@ -138,6 +149,42 @@ const Index = () => {
                   <CreationCard type="knowledge" />
                 </Link>
               </div>
+              
+              {/* User Progress Section */}
+              <section className="mb-12">
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Your Learning Progress
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <UserProgressCard 
+                    discipline="Mathematics & Logic"
+                    progress={65}
+                    nextMilestone="Advanced Set Theory"
+                    daysStreak={12}
+                  />
+                  <UserProgressCard 
+                    discipline="Philosophy"
+                    progress={38}
+                    nextMilestone="Ethics & Moral Philosophy"
+                    daysStreak={7}
+                  />
+                  <UserProgressCard 
+                    discipline="Physics"
+                    progress={27}
+                    nextMilestone="Quantum Mechanics Basics"
+                    daysStreak={3}
+                  />
+                  <div className="bg-[#1A1A1A] rounded-lg p-4 flex flex-col gap-3 justify-center items-center">
+                    <div className="p-3 rounded-full bg-blue-900">
+                      <BrainCircuit size={24} className="text-blue-400" />
+                    </div>
+                    <p className="text-center text-white font-medium">Explore More Disciplines</p>
+                    <button className="mt-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm py-1.5 px-4 rounded">
+                      Browse All
+                    </button>
+                  </div>
+                </div>
+              </section>
               
               <section className="mb-12">
                 <h2 className="text-2xl font-bold text-white mb-6">
@@ -270,23 +317,23 @@ const Index = () => {
                   <FeaturedAppCard 
                     title="Mathematics & Logic"
                     subtitle="Foundational Thinking"
-                    imageSrc="/lovable-uploads/12cd0679-f352-498e-a6ad-9faaa1ffbec9.png"
+                    imageSrc="/lovable-uploads/b89881e6-12b4-4527-9c22-1052b8116ca9.png"
                     isNew
                   />
                   <FeaturedAppCard 
                     title="Physics & Astronomy"
                     subtitle="Natural Sciences"
-                    imageSrc="/lovable-uploads/d16f3783-6af1-4327-8936-c5a50eb0cab5.png"
+                    imageSrc="/lovable-uploads/8827d443-a68b-4bd9-998f-3c4c410510e9.png"
                   />
                   <FeaturedAppCard 
                     title="Philosophy & Ethics"
                     subtitle="Conceptual Frameworks"
-                    imageSrc="/lovable-uploads/142dea30-a410-4e79-84d0-70189e8fcd07.png"
+                    imageSrc="/lovable-uploads/0c6db754-b805-46e5-a4b8-319a9d8fef71.png"
                   />
                   <FeaturedAppCard 
                     title="Computer Science"
                     subtitle="Computational Thinking"
-                    imageSrc="/lovable-uploads/b67f802d-430a-4e5a-8755-b61e10470d58.png"
+                    imageSrc="/lovable-uploads/12cd0679-f352-498e-a6ad-9faaa1ffbec9.png"
                   />
                 </div>
                 
@@ -294,22 +341,22 @@ const Index = () => {
                   <FeaturedAppCard 
                     title="Literature & Arts"
                     subtitle="Creative Expression"
-                    imageSrc="/lovable-uploads/4255fa40-8036-4424-a210-e3bcd99754df.png"
+                    imageSrc="/lovable-uploads/142dea30-a410-4e79-84d0-70189e8fcd07.png"
                   />
                   <FeaturedAppCard 
                     title="History & Anthropology"
                     subtitle="Human Evolution"
-                    imageSrc="/lovable-uploads/0c6db754-b805-46e5-a4b8-319a9d8fef71.png"
+                    imageSrc="/lovable-uploads/d16f3783-6af1-4327-8936-c5a50eb0cab5.png"
                   />
                   <FeaturedAppCard 
                     title="Biology & Medicine"
                     subtitle="Life Sciences"
-                    imageSrc="/lovable-uploads/8827d443-a68b-4bd9-998f-3c4c410510e9.png"
+                    imageSrc="/lovable-uploads/a3dc041f-fb55-4108-807b-ca52164461d8.png"
                   />
                   <FeaturedAppCard 
                     title="Psychology & Cognition"
                     subtitle="Mind Sciences"
-                    imageSrc="/lovable-uploads/b89881e6-12b4-4527-9c22-1052b8116ca9.png"
+                    imageSrc="/lovable-uploads/e9db2be9-f0a3-4506-b387-ce20bea67ba9.png"
                   />
                 </div>
                 
@@ -445,7 +492,12 @@ const Index = () => {
                     <p className="text-sm text-gray-400 mt-2">Join leading thinkers for a discussion on breaking down academic silos.</p>
                     <div className="mt-4 flex justify-between items-center">
                       <span className="text-xs text-gray-500">125 attendees</span>
-                      <button className="text-blue-400 text-sm hover:underline">Register</button>
+                      <button 
+                        onClick={handleEventRegistration}  
+                        className="text-blue-400 text-sm hover:underline"
+                      >
+                        Register
+                      </button>
                     </div>
                   </div>
                   
@@ -460,7 +512,12 @@ const Index = () => {
                     <p className="text-sm text-gray-400 mt-2">Monthly discussion of Hofstadter's classic exploration of consciousness and formal systems.</p>
                     <div className="mt-4 flex justify-between items-center">
                       <span className="text-xs text-gray-500">42 attendees</span>
-                      <button className="text-blue-400 text-sm hover:underline">Join Group</button>
+                      <button 
+                        onClick={handleJoinGroup}
+                        className="text-blue-400 text-sm hover:underline"
+                      >
+                        Join Group
+                      </button>
                     </div>
                   </div>
                   
@@ -475,7 +532,12 @@ const Index = () => {
                     <p className="text-sm text-gray-400 mt-2">Learn frameworks for approaching problems across multiple domains.</p>
                     <div className="mt-4 flex justify-between items-center">
                       <span className="text-xs text-gray-500">78 attendees</span>
-                      <button className="text-blue-400 text-sm hover:underline">Enroll</button>
+                      <button 
+                        onClick={() => polymathToast.contentRecommended()}
+                        className="text-blue-400 text-sm hover:underline"
+                      >
+                        Enroll
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -498,28 +560,52 @@ const Index = () => {
                     <Search size={18} className="text-gray-400" />
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(15)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Quantum Computing
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(28)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Cognitive Biases
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(23)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Game Theory
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(17)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Epistemology
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(11)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Network Science
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(34)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Complex Systems
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(19)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Information Theory
                     </button>
-                    <button className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors">
+                    <button 
+                      onClick={() => polymathToast.searchComplete(22)}
+                      className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md text-sm text-white text-left transition-colors"
+                    >
                       Linguistics
                     </button>
                   </div>
@@ -542,4 +628,3 @@ const Index = () => {
 };
 
 export default Index;
-
