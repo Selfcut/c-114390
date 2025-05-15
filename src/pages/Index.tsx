@@ -1,41 +1,25 @@
+
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { PromoBar } from "../components/PromoBar";
 import { Sidebar } from "../components/Sidebar";
 import Header from "../components/Header";
-import { CreationCard } from "../components/CreationCard";
-import { BookOpen, MessageSquare, Quote } from "lucide-react";
 import { polymathToast } from "../components/ui/use-toast";
 import { formatDaysAgo } from "../lib/utils";
-import { WelcomeExploration } from "../components/WelcomeExploration";
-import { MysticalTopicsSection } from "../components/MysticalTopicsSection";
-import { FeaturedBooksSection } from "../components/FeaturedBooksSection";
-import { CommunitySection } from "../components/CommunitySection";
-import { MembershipBenefits } from "../components/MembershipBenefits";
-import { CollapsibleSection } from "../components/CollapsibleSection";
-import { KnowledgeBrowser } from "../components/KnowledgeBrowser";
-import { ReadingList } from "../components/ReadingProgress";
-import { EnhancedQuotesCarousel } from "../components/EnhancedQuotesCarousel";
 import { WelcomeMessage } from "../components/WelcomeMessage";
-import { LearningProgress } from "../components/LearningProgress";
-import { KnowledgePathways } from "../components/KnowledgePathways";
-import { FeaturedDisciplines } from "../components/FeaturedDisciplines";
-import { LearningMethodologies } from "../components/LearningMethodologies";
-import { WisdomHighlights } from "../components/WisdomHighlights";
-import { EnhancedCommunityActivity } from "../components/EnhancedCommunityActivity";
-import { UpcomingEvents } from "../components/UpcomingEvents";
-import { QuickSearch } from "../components/QuickSearch";
-import { EnhancedKnowledgeExplorer } from "../components/EnhancedKnowledgeExplorer";
-import { TopicRecommendations } from "../components/TopicRecommendations";
-import { ContentProgressTracker } from "../components/ContentProgressTracker";
-import { useIsMobile } from "../hooks/use-mobile";
+import { ExploreSection } from "../components/index/ExploreSection";
+import { QuoteSection } from "../components/index/QuoteSection";
+import { MainContentGrid } from "../components/index/MainContentGrid";
+import { SecondaryContent } from "../components/index/SecondaryContent";
+import { MembershipSection } from "../components/index/MembershipSection";
+import { LearningSection } from "../components/index/LearningSection";
+import { DisciplinesSection } from "../components/index/DisciplinesSection";
+import { FooterSection } from "../components/index/FooterSection";
 
 const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [recentVisit, setRecentVisit] = useState<string | null>(null);
   const [newDiscussions, setNewDiscussions] = useState(0);
   const [newEntries, setNewEntries] = useState(0);
-  const isMobile = useIsMobile();
 
   // Check for recent visit
   useEffect(() => {
@@ -93,147 +77,30 @@ const Index = () => {
             <main className="py-8 px-8 lg:px-12">
               {/* Enhanced Welcome Message */}
               <WelcomeMessage />
-            
-              <h1 className="text-3xl font-bold text-white mb-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                Explore Intellectual Frontiers
-              </h1>
               
-              {/* Welcome and Exploration Banner */}
-              <WelcomeExploration />
-              
-              {/* Creation cards with hover lift effect */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-                <Link to="/forum" className="transform transition-transform hover:scale-102 hover:translate-y-[-4px]">
-                  <CreationCard type="discussion" />
-                </Link>
-                <Link to="/library" className="transform transition-transform hover:scale-102 hover:translate-y-[-4px]">
-                  <CreationCard type="knowledge" />
-                </Link>
-                <Link to="/quotes" className="transform transition-transform hover:scale-102 hover:translate-y-[-4px]">
-                  <div className="creation-card bg-gradient-to-br from-[#36003B] to-[#500056] rounded-lg p-6 h-full flex flex-col hover-lift">
-                    <div className="mb-4 p-3 rounded-full bg-[#FF3EA5]/20 w-fit">
-                      <Quote size={24} className="text-[#FF3EA5]" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Share a Quote</h3>
-                    <p className="text-gray-300 mb-6">Discover and contribute to our collection of timeless wisdom.</p>
-                    <div className="mt-auto">
-                      <span className="text-xs text-[#FF3EA5] bg-[#FF3EA5]/10 px-2 py-1 rounded">
-                        NEW FEATURE
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+              {/* Explore Section with Creation Cards */}
+              <ExploreSection />
               
               {/* Enhanced Quotes Carousel */}
-              <div className="mb-12 animate-fade-in" style={{ animationDelay: "0.25s" }}>
-                <EnhancedQuotesCarousel />
-              </div>
+              <QuoteSection />
 
               {/* Main Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                {/* Left Column */}
-                <div className="lg:col-span-2 space-y-8">
-                  {/* Topic Recommendations */}
-                  <TopicRecommendations />
-                  
-                  {/* Knowledge Explorer - Enhanced */}
-                  <CollapsibleSection title="Explore Knowledge" defaultOpen={true}>
-                    <EnhancedKnowledgeExplorer />
-                  </CollapsibleSection>
-                  
-                  {/* Mystical Topics with hover effects */}
-                  <CollapsibleSection title="Mystical Topics" defaultOpen={true}>
-                    <MysticalTopicsSection />
-                  </CollapsibleSection>
-                </div>
-                
-                {/* Right Column */}
-                <div className="space-y-8">
-                  {/* Content Progress Tracker */}
-                  <ContentProgressTracker />
-                  
-                  {/* Community Activity Feed */}
-                  <EnhancedCommunityActivity />
-                  
-                  {/* Featured Books - Keep this one */}
-                  <CollapsibleSection title="Featured Books" defaultOpen={true}>
-                    <FeaturedBooksSection />
-                  </CollapsibleSection>
-                </div>
-              </div>
+              <MainContentGrid />
               
-              {/* Second Content Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                {/* Reading Progress */}
-                <CollapsibleSection title="Reading Progress" defaultOpen={!isMobile}>
-                  <ReadingList />
-                </CollapsibleSection>
-                
-                {/* Community Section */}
-                <CollapsibleSection title="Community" defaultOpen={!isMobile}>
-                  <CommunitySection />
-                </CollapsibleSection>
-              </div>
+              {/* Secondary Content */}
+              <SecondaryContent />
               
               {/* Membership Benefits */}
-              <CollapsibleSection title="Membership Benefits" defaultOpen={true}>
-                <MembershipBenefits />
-              </CollapsibleSection>
+              <MembershipSection />
               
-              {/* Collapsed/Less Important Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                {/* Learning Progress - Collapsed by Default */}
-                <CollapsibleSection 
-                  title="Your Learning Progress" 
-                  defaultOpen={false} 
-                  className="animate-fade-in"
-                  style={{ animationDelay: "0.3s" }}
-                >
-                  <LearningProgress />
-                </CollapsibleSection>
-                
-                {/* Knowledge Pathways - Collapsed by Default */}
-                <CollapsibleSection 
-                  title="Knowledge Pathways" 
-                  defaultOpen={false} 
-                  className="animate-fade-in" 
-                  style={{ animationDelay: "0.4s" }}
-                >
-                  <KnowledgePathways />
-                </CollapsibleSection>
-              </div>
+              {/* Learning Progress & Pathways */}
+              <LearningSection />
 
-              {/* Third Content Row - Less Important Sections */}
-              <div className="space-y-8 mb-12">
-                {/* Featured Disciplines */}
-                <CollapsibleSection title="Featured Disciplines" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
-                  <FeaturedDisciplines />
-                </CollapsibleSection>
-                
-                {/* Learning Methodologies */}
-                <CollapsibleSection title="Learning Methodologies" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.6s" }}>
-                  <LearningMethodologies />
-                </CollapsibleSection>
-                
-                {/* Wisdom Highlights */}
-                <CollapsibleSection title="Wisdom Highlights" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.7s" }}>
-                  <WisdomHighlights />
-                </CollapsibleSection>
-              </div>
+              {/* Disciplines, Methodologies, and Wisdom */}
+              <DisciplinesSection />
               
-              {/* Final Content Row - Least Important Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Upcoming Events */}
-                <CollapsibleSection title="Upcoming Events" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.9s" }}>
-                  <UpcomingEvents />
-                </CollapsibleSection>
-                
-                {/* Quick Search */}
-                <CollapsibleSection title="Quick Search" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "1s" }}>
-                  <QuickSearch />
-                </CollapsibleSection>
-              </div>
+              {/* Footer Content - Events & Search */}
+              <FooterSection />
             </main>
           </div>
         </div>
