@@ -152,7 +152,10 @@ const generateMockMessages = (): ChatMessageType[] => {
         status: "online" as UserStatus
       },
       timestamp: new Date(now.getTime() - 50 * 60 * 1000), // 50 mins ago
-      reactions: []
+      reactions: [],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg4",
@@ -167,7 +170,10 @@ const generateMockMessages = (): ChatMessageType[] => {
       timestamp: new Date(now.getTime() - 45 * 60 * 1000), // 45 mins ago
       reactions: [
         { emoji: "🤔", count: 1, users: ["user2"] }
-      ]
+      ],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg5",
@@ -180,7 +186,10 @@ const generateMockMessages = (): ChatMessageType[] => {
         status: "online" as UserStatus
       },
       timestamp: new Date(now.getTime() - 40 * 60 * 1000), // 40 mins ago
-      reactions: []
+      reactions: [],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg6",
@@ -196,7 +205,9 @@ const generateMockMessages = (): ChatMessageType[] => {
       mentions: ["davidchalmers"],
       reactions: [
         { emoji: "👍", count: 1, users: ["user2"] }
-      ]
+      ],
+      isEdited: false,
+      replyTo: null
     },
     {
       id: "msg7",
@@ -209,7 +220,10 @@ const generateMockMessages = (): ChatMessageType[] => {
         status: "online" as UserStatus
       },
       timestamp: new Date(now.getTime() - 30 * 60 * 1000), // 30 mins ago
-      reactions: []
+      reactions: [],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg8",
@@ -224,7 +238,10 @@ const generateMockMessages = (): ChatMessageType[] => {
       timestamp: new Date(now.getTime() - 25 * 60 * 1000), // 25 mins ago
       reactions: [
         { emoji: "🙏", count: 1, users: ["user2"] }
-      ]
+      ],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg9",
@@ -237,7 +254,10 @@ const generateMockMessages = (): ChatMessageType[] => {
         status: "online" as UserStatus
       },
       timestamp: new Date(now.getTime() - 20 * 60 * 1000), // 20 mins ago
-      reactions: []
+      reactions: [],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg10",
@@ -250,7 +270,10 @@ const generateMockMessages = (): ChatMessageType[] => {
         status: "online" as UserStatus
       },
       timestamp: new Date(now.getTime() - 15 * 60 * 1000), // 15 mins ago
-      reactions: []
+      reactions: [],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg11",
@@ -265,7 +288,10 @@ const generateMockMessages = (): ChatMessageType[] => {
       timestamp: new Date(now.getTime() - 10 * 60 * 1000), // 10 mins ago
       reactions: [
         { emoji: "👍", count: 1, users: ["user1"] }
-      ]
+      ],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     }
   ];
 };
