@@ -3,24 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  role?: string;
-  level?: number;
-  xp?: number;
-  iq?: number;
-  status: 'online' | 'offline' | 'away' | 'do-not-disturb' | 'invisible';
-  isGhostMode: boolean;
-  notificationSettings: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
-}
+import { UserStatus, UserProfile } from "@/types/user";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -31,8 +14,9 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData: object) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
-  updateUserStatus: (status: UserProfile['status']) => Promise<void>;
+  updateUserStatus: (status: UserStatus) => Promise<void>;
   toggleGhostMode: () => Promise<void>;
+  toggleDoNotDisturb: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           // Fetch user profile from our profiles table
-          fetchUserProfile(session.user.id, session);
+          fetchUserProfile(session.user.id);
         } else {
           setUser(null);
           localStorage.removeItem('userName');
@@ -65,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       
       if (session?.user) {
-        fetchUserProfile(session.user.id, session);
+        fetchUserProfile(session.user.id);
       } else {
         setIsLoading(false);
       }
@@ -76,28 +60,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const fetchUserProfile = async (userId: string, authSession: Session | null) => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      // Using localStorage as placeholder for profile data
-      // In a real app, this would be replaced with Supabase query after tables are created
+      // In a real app with Supabase, we would fetch profile data
+      // For now using localStorage and session data as a placeholder
       
       // Create basic profile from auth data
       const basicUserData: UserProfile = {
         id: userId,
-        name: authSession?.user?.user_metadata.full_name || 'User',
-        email: authSession?.user?.email || '',
-        avatar: authSession?.user?.user_metadata.avatar_url,
-        role: 'user',
+        name: session?.user?.user_metadata.full_name || 'User',
+        username: session?.user?.user_metadata.username || session?.user?.email?.split('@')[0] || 'user',
+        email: session?.user?.email || '',
+        avatar: session?.user?.user_metadata.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${userId}`,
+        coverImage: session?.user?.user_metadata.cover_image,
+        status: 'online',
         level: 1,
         xp: 0,
         iq: 100,
-        status: 'online',
         isGhostMode: false,
+        isAdmin: session?.user?.email === 'admin@example.com', // Simple admin check
         notificationSettings: {
           desktopNotifications: true,
           soundNotifications: true,
           emailNotifications: true,
-        }
+        },
+        badges: []
       };
       
       setUser(basicUserData);
@@ -107,13 +94,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // Create basic profile from auth data as fallback
-      if (authSession?.user) {
+      // Fallback to basic profile
+      if (session?.user) {
         const basicUserData: UserProfile = {
           id: userId,
-          name: authSession.user.user_metadata.full_name || 'User',
-          email: authSession.user.email || '',
-          avatar: authSession.user.user_metadata.avatar_url,
+          name: session.user.user_metadata.full_name || 'User',
+          username: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'user',
+          email: session.user.email || '',
+          avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${userId}`,
           status: 'online',
           isGhostMode: false,
           notificationSettings: {
@@ -215,7 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateUserStatus = async (status: UserProfile['status']) => {
+  const updateUserStatus = async (status: UserStatus) => {
     try {
       if (!user) throw new Error("User not authenticated");
       
@@ -256,6 +244,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const toggleDoNotDisturb = async () => {
+    try {
+      if (!user) throw new Error("User not authenticated");
+      
+      const isDoNotDisturb = user.status === "do-not-disturb";
+      const newStatus: UserStatus = isDoNotDisturb ? "online" : "do-not-disturb";
+      
+      // Update local state
+      setUser(prevUser => prevUser ? { ...prevUser, status: newStatus } : null);
+      
+      // Update notification settings
+      if (newStatus === "do-not-disturb") {
+        setUser(prevUser => prevUser ? {
+          ...prevUser,
+          notificationSettings: {
+            ...prevUser.notificationSettings,
+            soundNotifications: false,
+            desktopNotifications: false
+          }
+        } : null);
+      }
+      
+      toast({
+        title: `Do Not Disturb ${newStatus === "do-not-disturb" ? 'enabled' : 'disabled'}`,
+        description: newStatus === "do-not-disturb" ? 
+          "All notifications are now muted" : 
+          "Notifications have been restored",
+      });
+    } catch (error) {
+      console.error('Error toggling do not disturb:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -269,6 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         updateUserStatus,
         toggleGhostMode,
+        toggleDoNotDisturb,
       }}
     >
       {children}

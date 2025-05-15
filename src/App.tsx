@@ -18,6 +18,7 @@ import Library from './pages/Library';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import AdminPanel from './pages/admin/AdminPanel';
+import Quotes from './components/Quotes';
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {
@@ -94,6 +95,11 @@ const Root = () => {
         <Route path="/settings" element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        } />
+        <Route path="/quotes" element={
+          <ProtectedRoute>
+            <Quotes />
           </ProtectedRoute>
         } />
         <Route path="/admin/*" element={

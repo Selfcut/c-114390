@@ -1,191 +1,199 @@
 
-/* Enhanced Animation Effects */
+/* Animations */
+
+/* Fade in animation */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Staggered fade in effect for multiple elements */
+.stagger-fade > * {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.stagger-fade > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-fade > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-fade > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-fade > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-fade > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-fade > *:nth-child(6) { animation-delay: 0.6s; }
+.stagger-fade > *:nth-child(7) { animation-delay: 0.7s; }
+.stagger-fade > *:nth-child(8) { animation-delay: 0.8s; }
+.stagger-fade > *:nth-child(9) { animation-delay: 0.9s; }
+.stagger-fade > *:nth-child(10) { animation-delay: 1s; }
+
+/* Scale in animation */
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-scale-in {
+  animation: scaleIn 0.3s ease forwards;
 }
 
+/* Pulse animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s infinite ease-in-out;
+}
+
+/* Slide in animation */
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease forwards;
+}
+
+/* Slide in from right animation */
 @keyframes slideInRight {
-  from {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease forwards;
+}
+
+/* Fade in from bottom animation */
+@keyframes fadeInUp {
+  from { 
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateY(20px); 
   }
-  to {
+  to { 
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0); 
   }
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
 }
 
-@keyframes pulseGlow {
+/* Bounce animation */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-10px);}
+  60% {transform: translateY(-5px);}
+}
+
+.animate-bounce-slow {
+  animation: bounce 2s infinite;
+}
+
+/* Shake animation */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(5px); }
+  50% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Rotate animation */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-rotate {
+  animation: rotate 2s linear infinite;
+}
+
+/* Typing cursor animation */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: currentColor; }
+}
+
+.typing-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: 
+    typing 3.5s steps(40, end),
+    blink-caret .75s step-end infinite;
+}
+
+/* Higher Order Animation Combinations */
+
+/* Entrance animation (fade in + scale) */
+.animate-entrance {
+  animation: 
+    fadeIn 0.5s ease forwards,
+    scaleIn 0.5s ease forwards;
+}
+
+/* Shine effect animation */
+@keyframes shine {
   0% {
-    box-shadow: 0 0 0 0 rgba(110, 89, 165, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(110, 89, 165, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(110, 89, 165, 0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
+    background-position: -100% 0;
   }
   100% {
     background-position: 200% 0;
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes rotateIn {
-  from {
-    opacity: 0;
-    transform: rotate(-10deg);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(0);
-  }
-}
-
-/* Apply Animations to Elements */
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.5s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.8s ease-out forwards;
-}
-
-.animate-slide-right {
-  animation: slideInRight 0.6s ease-out forwards;
-}
-
-.animate-slide-left {
-  animation: slideInLeft 0.6s ease-out forwards;
-}
-
-.animate-rotate-in {
-  animation: rotateIn 0.5s ease-out forwards;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0) 0%, 
-    rgba(255, 255, 255, 0.05) 50%, 
-    rgba(255, 255, 255, 0) 100%);
+.animate-shine {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
   background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+  background-position: -100% 0;
+  animation: shine 3s infinite;
 }
 
-/* Utility Animations */
-.fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
+/* Appear animation for staggered elements */
+@keyframes appear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.pulse {
-  animation: pulseGlow 2s infinite;
-}
-
-.bounce {
-  animation: bounce 1s ease infinite;
-}
-
-/* Animation delays */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
-.delay-600 { animation-delay: 0.6s; }
-.delay-700 { animation-delay: 0.7s; }
-.delay-800 { animation-delay: 0.8s; }
-
-/* Animation durations */
-.duration-300 { animation-duration: 0.3s; }
-.duration-500 { animation-duration: 0.5s; }
-.duration-700 { animation-duration: 0.7s; }
-.duration-1000 { animation-duration: 1s; }
-
-/* Page transition animations */
-.page-enter {
+.animate-in > * {
   opacity: 0;
-  transform: translateY(20px);
+  animation: appear 0.5s ease forwards;
 }
 
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 300ms, transform 300ms;
-}
-
-.page-exit {
-  opacity: 1;
-}
-
-.page-exit-active {
-  opacity: 0;
-  transition: opacity 300ms;
-}
-
-/* Badge animations */
-.badge-pop {
-  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Achievement unlock animation */
-.achievement-unlock {
-  animation: fadeIn 0.5s ease-out forwards, pulseGlow 2s infinite;
-}
+.animate-in > *:nth-child(1) { animation-delay: 0.1s; }
+.animate-in > *:nth-child(2) { animation-delay: 0.2s; }
+.animate-in > *:nth-child(3) { animation-delay: 0.3s; }
+.animate-in > *:nth-child(4) { animation-delay: 0.4s; }
+.animate-in > *:nth-child(5) { animation-delay: 0.5s; }
+.animate-in > *:nth-child(6) { animation-delay: 0.6s; }
+.animate-in > *:nth-child(7) { animation-delay: 0.7s; }
+.animate-in > *:nth-child(8) { animation-delay: 0.8s; }
+.animate-in > *:nth-child(9) { animation-delay: 0.9s; }
+.animate-in > *:nth-child(10) { animation-delay: 1s; }

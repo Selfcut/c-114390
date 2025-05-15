@@ -1,158 +1,218 @@
-import { MessageSquare, Quote, ThumbsUp, BookmarkPlus } from "lucide-react";
-import { useState } from "react";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { polymathToast } from "@/components/ui/use-toast";
 
-interface QuoteCardProps {
+import React, { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, MessageSquare, Share2, Bookmark, BookmarkCheck } from "lucide-react";
+import { UserStatus } from "@/types/user";
+
+export interface QuoteCardProps {
   id: string;
   text: string;
   author: string;
-  source?: string;
-  category?: string;
-  tags?: string[];
+  source: string;
+  category: string;
+  tags: string[];
   likes: number;
-  comments?: number;
-  imageUrl?: string;
-  isBookmarked?: boolean;
-  quote?: any; // For backward compatibility with the old API
-  animationDelay?: string;
-  user?: {
+  comments: number;
+  bookmarks?: number;
+  hasLiked?: boolean;
+  hasBookmarked?: boolean;
+  createdAt: Date;
+  user: {
     name: string;
     avatar: string;
-    status: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
+    status: UserStatus;
   };
-  onLike?: () => void;
-  onBookmark?: () => void; 
-  onComment?: () => void;
-  onShare?: () => void;
+  onLike: (id: string) => void;
+  onComment: (id: string) => void;
+  onBookmark: (id: string) => void;
+  onShare: () => void;
 }
 
-export const QuoteCard = ({
+export const QuoteCard: React.FC<QuoteCardProps> = ({
   id,
   text,
   author,
   source,
   category,
-  tags = [],
+  tags,
   likes,
-  comments = 0,
-  imageUrl,
-  isBookmarked = false,
-  quote,
-  animationDelay,
+  comments,
+  bookmarks = 0,
+  hasLiked = false,
+  hasBookmarked = false,
+  createdAt,
   user,
   onLike,
-  onBookmark,
   onComment,
+  onBookmark,
   onShare,
-}: QuoteCardProps) => {
-  // If the quote object is provided, extract properties from it
-  const quoteData = quote || { id, text, author, category, likes };
-  
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(quoteData.likes);
-  const [bookmarked, setBookmarked] = useState(isBookmarked);
-  const [isHovered, setIsHovered] = useState(false);
+}) => {
+  const [isLiked, setIsLiked] = useState(hasLiked);
+  const [likeCount, setLikeCount] = useState(likes);
+  const [isBookmarked, setIsBookmarked] = useState(hasBookmarked);
+  const [bookmarkCount, setBookmarkCount] = useState(bookmarks);
 
-  const handleLike = () => {
-    if (liked) {
-      setLikeCount(likeCount - 1);
-    } else {
-      setLikeCount(likeCount + 1);
-    }
-    setLiked(!liked);
+  // Format time ago
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     
-    // If an external onLike handler is provided, call it
-    if (onLike) {
-      onLike();
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} sec ago`;
+    }
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} min ago`;
+    }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} hr ago`;
+    }
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+    }
+    
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} week${diffInWeeks !== 1 ? 's' : ''} ago`;
+    }
+    
+    const diffInMonths = Math.floor(diffInDays / 30);
+    return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`;
+  };
+
+  // Get status indicator color
+  const getStatusIndicator = (status: UserStatus) => {
+    switch (status) {
+      case "online":
+        return "bg-green-500";
+      case "away":
+        return "bg-yellow-500";
+      case "do-not-disturb":
+        return "bg-red-500";
+      case "invisible":
+      case "offline":
+      default:
+        return "bg-gray-500";
     }
   };
 
+  // Handle like button click
+  const handleLike = () => {
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+    setLikeCount(prevCount => newIsLiked ? prevCount + 1 : prevCount - 1);
+    onLike(id);
+  };
+
+  // Handle bookmark button click
   const handleBookmark = () => {
-    setBookmarked(!bookmarked);
-    if (onBookmark) {
-      onBookmark();
-    } else {
-      polymathToast.resourceBookmarked();
-    }
+    const newIsBookmarked = !isBookmarked;
+    setIsBookmarked(newIsBookmarked);
+    setBookmarkCount(prevCount => newIsBookmarked ? prevCount + 1 : prevCount - 1);
+    onBookmark(id);
   };
 
   return (
-    <div 
-      className="bg-[#1A1A1A] rounded-lg overflow-hidden flex flex-col enhanced-card hover-lift"
-      style={animationDelay ? { animationDelay } : undefined}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {imageUrl && (
-        <div className="w-full h-40 relative">
-          <AspectRatio ratio={16/9}>
-            <img 
-              src={imageUrl} 
-              alt={`Visual for quote by ${quoteData.author}`} 
-              className="w-full h-full object-cover transition-transform duration-700"
-              style={{
-                transform: isHovered ? 'scale(1.05)' : 'scale(1)'
-              }}
-            />
-          </AspectRatio>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent opacity-50"></div>
+    <div className="bg-card border rounded-lg overflow-hidden hover:border-primary/40 transition-all duration-300 hover:shadow-md group">
+      <div className="p-5">
+        {/* Quote text */}
+        <div className="mb-4">
+          <p className="text-lg font-serif italic relative">
+            <span className="absolute -left-4 -top-2 text-3xl text-primary/30">"</span>
+            {text}
+            <span className="absolute text-3xl text-primary/30">"</span>
+          </p>
         </div>
-      )}
-
-      <div className="p-5 flex-grow">
-        <div className="flex items-start mb-4">
-          <div className="p-2 rounded-full bg-[#360036] mr-3">
-            <Quote size={18} className="text-[#FF3EA5]" />
+        
+        {/* Quote metadata */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="font-medium text-sm">{author}</p>
+            {source && <p className="text-xs text-muted-foreground">{source}</p>}
           </div>
-          {category && (
-            <span className="text-xs text-[#FF3EA5] font-medium bg-[#360036]/30 px-2 py-0.5 rounded">
-              {category}
-            </span>
-          )}
-        </div>
-
-        <blockquote className="text-white text-lg font-medium mb-4 italic">
-          "{quoteData.text}"
-        </blockquote>
-        
-        <div className="text-gray-400 text-sm mb-3">
-          <span className="font-medium text-white">{quoteData.author}</span>
-          {source && <span> • {source}</span>}
+          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+            {category}
+          </Badge>
         </div>
         
-        {/* Show tags if provided */}
-        {tags && tags.length > 0 && (
+        {/* Tags */}
+        {tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
             {tags.map((tag, index) => (
-              <span key={index} className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+              <Badge key={index} variant="secondary" className="text-xs hover:bg-secondary/80 cursor-pointer">
                 #{tag}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
         
-        <div className="flex justify-between items-center mt-auto">
-          <div className="flex gap-4">
-            <button 
-              onClick={handleLike}
-              className={`flex items-center gap-1 text-sm ${liked ? 'text-blue-400' : 'text-gray-400'} hover:text-blue-400 transition-colors`}
-            >
-              <ThumbsUp size={16} className={liked ? "fill-blue-400" : ""} />
-              <span>{likeCount}</span>
-            </button>
-            <button className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors">
-              <MessageSquare size={16} />
-              <span>{comments}</span>
-            </button>
+        {/* User info and timestamp */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>{user.name[0]}</AvatarFallback>
+              </Avatar>
+              <span className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-[1px] border-background ${getStatusIndicator(user.status)}`}></span>
+            </div>
+            <span className="text-xs font-medium">{user.name}</span>
           </div>
-          <button 
-            onClick={handleBookmark}
-            className={`p-1.5 rounded-full transition-all ${bookmarked ? 'bg-blue-900/30 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
-            aria-label={bookmarked ? "Remove bookmark" : "Bookmark quote"}
+          <span className="text-xs text-muted-foreground">{formatTimeAgo(createdAt)}</span>
+        </div>
+      </div>
+      
+      {/* Action buttons */}
+      <div className="flex items-center justify-between px-5 py-3 bg-muted/30 border-t group-hover:bg-muted/50 transition-colors">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`flex items-center gap-1 px-2 ${
+              isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+            }`}
+            onClick={handleLike}
           >
-            <BookmarkPlus size={18} className={bookmarked ? "fill-blue-400" : ""} />
-          </button>
+            <Heart size={16} className={isLiked ? "fill-current" : ""} />
+            <span className="text-xs">{likeCount}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1 px-2 text-muted-foreground hover:text-foreground"
+            onClick={() => onComment(id)}
+          >
+            <MessageSquare size={16} />
+            <span className="text-xs">{comments}</span>
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`flex items-center gap-1 px-2 ${
+              isBookmarked ? "text-primary" : "text-muted-foreground hover:text-primary"
+            }`}
+            onClick={handleBookmark}
+          >
+            {isBookmarked ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+            <span className="text-xs">{bookmarkCount}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1 px-2 text-muted-foreground hover:text-foreground"
+            onClick={onShare}
+          >
+            <Share2 size={16} />
+          </Button>
         </div>
       </div>
     </div>

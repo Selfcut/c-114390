@@ -1,195 +1,286 @@
 
-/* Form Elements */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea,
-select {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid hsl(var(--border));
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  border-radius: 0.3rem;
-  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
-}
+/* Custom Components Styling */
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-textarea:focus,
-select:focus {
-  border-color: hsl(var(--primary));
-  outline: none;
-}
-
-/* Card Component */
-.card {
-  background-color: hsl(var(--card));
-  color: hsl(var(--card-foreground));
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* List Styles */
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-ul li {
-  margin-bottom: 0.5rem;
-}
-
-/* Table Styles */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid hsl(var(--border));
-}
-
-th {
-  font-weight: bold;
-}
-
-/* Dropdown styling */
-.dropdown-menu {
-  background-color: hsl(var(--popover));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Navigation styling */
-.nav-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius);
-  font-weight: medium;
-  transition: all 0.2s ease;
-}
-
-.nav-link:hover {
-  background-color: hsl(var(--accent));
-}
-
-/* Badge component */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
-/* Avatar component */
-.avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-/* Enhanced card style */
+/* Card enhancements */
 .enhanced-card {
-  @apply bg-card border border-border rounded-lg shadow-sm transition duration-300 ease-in-out overflow-hidden;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+  border: 1px solid hsl(var(--border));
+}
+
+.enhanced-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: hsl(var(--primary) / 0.3);
 }
 
 /* Hover lift effect */
 .hover-lift {
-  @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-md;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
-/* Stagger fade animation utilities */
-.stagger-fade > * {
-  animation-name: fadeInUp;
-  animation-duration: 0.5s;
-  animation-fill-mode: both;
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.stagger-fade > *:nth-child(1) { animation-delay: 0.1s; }
-.stagger-fade > *:nth-child(2) { animation-delay: 0.2s; }
-.stagger-fade > *:nth-child(3) { animation-delay: 0.3s; }
-.stagger-fade > *:nth-child(4) { animation-delay: 0.4s; }
-.stagger-fade > *:nth-child(5) { animation-delay: 0.5s; }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-/* Pulse animation */
-.pulse {
+/* Badge pulse effect */
+.badge-pulse {
   animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+/* Fix for buttons */
+.bg-primary, .bg-[#6E59A5], .bg-[#7E69B5] {
+  color: white !important;
 }
 
-/* Text highlight effect */
-.text-highlight {
-  @apply bg-primary/10 text-primary rounded px-1 py-0.5;
+/* Chat message mentions styling */
+.mention {
+  display: inline-block;
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
-/* User online status indicator */
-.user-online-indicator {
-  @apply absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 ring-1 ring-white;
+/* Message actions visibility on hover */
+.message-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
 }
 
-/* Remove blue outlines */
-* {
-  outline-color: hsl(var(--primary)) !important;
+.message:hover .message-actions {
+  opacity: 1;
 }
 
-/* Fix button primary colors to use the theme variables */
-button.btn-primary,
-.btn-primary {
+/* Sidebar item styling */
+.sidebar-item {
+  transition: background-color 0.2s ease-out, color 0.2s ease-out;
+}
+
+.sidebar-item:hover {
+  background-color: hsl(var(--accent) / 0.8);
+  color: hsl(var(--accent-foreground));
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary) / 0.7));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+/* Profile card */
+.profile-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    hsl(var(--primary) / 0.3),
+    transparent 30%
+  );
+  animation: rotate 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.profile-card:hover::before {
+  opacity: 1;
+}
+
+.profile-card-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Tooltip enhanced */
+.tooltip-enhanced {
+  position: relative;
+}
+
+.tooltip-enhanced::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.tooltip-enhanced:hover::after {
+  opacity: 1;
+  visibility: visible;
+  bottom: calc(100% + 5px);
+}
+
+/* Quote styling */
+.quote {
+  position: relative;
+  padding: 1rem 1rem 1rem 3rem;
+}
+
+.quote::before {
+  content: """;
+  position: absolute;
+  left: 0.5rem;
+  top: 0;
+  font-size: 4rem;
+  line-height: 1;
+  font-family: Georgia, serif;
+  color: hsl(var(--primary) / 0.3);
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 8px;
+  background-color: hsl(var(--muted));
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary) / 0.7));
+  transition: width 0.5s ease;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* Glass card effect */
+.glass-card {
+  background-color: hsl(var(--card) / 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Image hover zoom */
+.image-zoom {
+  overflow: hidden;
+}
+
+.image-zoom img {
+  transition: transform 0.5s ease;
+}
+
+.image-zoom:hover img {
+  transform: scale(1.05);
+}
+
+/* Badge with dot indicator */
+.badge-with-dot {
+  position: relative;
+  padding-right: 1rem;
+}
+
+.badge-with-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* Text underline animation */
+.underline-animation {
+  position: relative;
+}
+
+.underline-animation::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
   background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  transition: width 0.3s ease;
 }
 
-.btn-primary:hover {
-  background-color: hsl(var(--primary) / 0.8);
+.underline-animation:hover::after {
+  width: 100%;
 }
 
-/* Fix button secondary colors */
-button.btn-secondary,
-.btn-secondary {
-  background-color: hsl(var(--secondary));
-  color: hsl(var(--secondary-foreground));
+/* 3D Button */
+.button-3d {
+  transition: all 0.2s ease;
+  transform: translateY(0);
+  box-shadow: 0 4px 0 0 hsl(var(--primary) / 0.7);
 }
 
-.btn-secondary:hover {
-  background-color: hsl(var(--secondary) / 0.8);
+.button-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+}
+
+/* Circular progress */
+.circular-progress {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+}
+
+.circular-progress svg {
+  transform: rotate(-90deg);
+}
+
+.circular-progress circle {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.circular-progress .background {
+  stroke: hsl(var(--muted));
+}
+
+.circular-progress .progress {
+  stroke: hsl(var(--primary));
+  transition: stroke-dashoffset 0.5s ease;
 }
