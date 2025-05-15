@@ -1,20 +1,67 @@
 
 <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-  <title>Polymath Icon</title>
+  <title>Interactive Polymath Icon</title>
 
-  <!-- Central connecting lines -->
-  <g stroke="currentColor" stroke-width="5" stroke-linecap="round">
-    <line x1="50" y1="50" x2="50" y2="25" />
-    <line x1="50" y1="50" x2="28" y2="65" /> <!-- Adjusted for symmetry -->
-    <line x1="50" y1="50" x2="72" y2="65" /> <!-- Adjusted for symmetry -->
+  <style>
+    /* Base styles for elements */
+    .polymath-icon-group .line {
+      stroke: currentColor;
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-width 0.3s ease-out;
+    }
+    .polymath-icon-group .node {
+      fill: currentColor;
+      transform-origin: center center; /* Ensures scaling happens from the center of the circle */
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), /* Elastic bounce */
+                  fill 0.3s ease-out;
+    }
+    .polymath-icon-group .center-dot {
+      fill: currentColor;
+      transform-origin: center center;
+      transition: transform 0.3s ease-out, fill 0.3s ease-out;
+    }
+
+    /* Hover effects for the entire SVG */
+    svg:hover .polymath-icon-group .node-1 {
+      transform: scale(1.2);
+      /* fill: #60a5fa; Optional: specific color highlight */
+    }
+    svg:hover .polymath-icon-group .node-2 {
+      transform: scale(1.2);
+      transition-delay: 0.05s; /* Slight delay for a more dynamic feel */
+      /* fill: #facc15; */
+    }
+    svg:hover .polymath-icon-group .node-3 {
+      transform: scale(1.2);
+      transition-delay: 0.1s;
+      /* fill: #34d399; */
+    }
+    svg:hover .polymath-icon-group .center-dot {
+      transform: scale(1.25);
+      /* fill: #f87171; */ /* A distinct highlight for the core */
+    }
+    svg:hover .polymath-icon-group .line {
+      stroke-width: 6; /* Lines slightly thicken */
+    }
+  </style>
+
+  <g class="polymath-icon-group">
+    <!-- Connecting lines -->
+    <g class="lines">
+      <line class="line line-top" x1="50" y1="50" x2="50" y2="25" />
+      <line class="line line-left" x1="50" y1="50" x2="28" y2="65" />
+      <line class="line line-right" x1="50" y1="50" x2="72" y2="65" />
+    </g>
+
+    <!-- Nodes/Knowledge Areas -->
+    <g class="nodes">
+      <circle class="node node-1" cx="50" cy="20" r="10" />
+      <circle class="node node-2" cx="22" cy="70" r="10" />
+      <circle class="node node-3" cx="78" cy="70" r="10" />
+    </g>
+
+    <!-- Central point -->
+    <circle class="center-dot" cx="50" cy="50" r="6" />
   </g>
-
-  <!-- Nodes/Knowledge Areas -->
-  <circle cx="50" cy="20" r="10" />
-  <circle cx="22" cy="70" r="10" /> <!-- Adjusted for visual balance -->
-  <circle cx="78" cy="70" r="10" /> <!-- Adjusted for visual balance -->
-
-  <!-- Optional: Small central point to emphasize connection origin -->
-  <circle cx="50" cy="50" r="6" />
-
 </svg>

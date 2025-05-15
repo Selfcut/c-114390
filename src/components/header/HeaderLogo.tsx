@@ -13,22 +13,68 @@ export const HeaderLogo = () => {
         className="text-primary"
         aria-label="Polymath Logo"
       >
-        <title>Polymath Icon</title>
+        <title>Interactive Polymath Icon</title>
 
-        {/* Central connecting lines */}
-        <g stroke="currentColor" strokeWidth="5" strokeLinecap="round">
-          <line x1="50" y1="50" x2="50" y2="25" />
-          <line x1="50" y1="50" x2="28" y2="65" /> {/* Adjusted for symmetry */}
-          <line x1="50" y1="50" x2="72" y2="65" /> {/* Adjusted for symmetry */}
+        <style>
+          {`
+          /* Base styles for elements */
+          .polymath-icon-group .line {
+            stroke: currentColor;
+            stroke-width: 5;
+            stroke-linecap: round;
+            transition: stroke-width 0.3s ease-out;
+          }
+          .polymath-icon-group .node {
+            fill: currentColor;
+            transform-origin: center center;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                        fill 0.3s ease-out;
+          }
+          .polymath-icon-group .center-dot {
+            fill: currentColor;
+            transform-origin: center center;
+            transition: transform 0.3s ease-out, fill 0.3s ease-out;
+          }
+
+          /* Hover effects */
+          svg:hover .polymath-icon-group .node-1 {
+            transform: scale(1.2);
+          }
+          svg:hover .polymath-icon-group .node-2 {
+            transform: scale(1.2);
+            transition-delay: 0.05s;
+          }
+          svg:hover .polymath-icon-group .node-3 {
+            transform: scale(1.2);
+            transition-delay: 0.1s;
+          }
+          svg:hover .polymath-icon-group .center-dot {
+            transform: scale(1.25);
+          }
+          svg:hover .polymath-icon-group .line {
+            stroke-width: 6;
+          }
+          `}
+        </style>
+
+        <g className="polymath-icon-group">
+          {/* Connecting lines */}
+          <g className="lines">
+            <line className="line line-top" x1="50" y1="50" x2="50" y2="25" />
+            <line className="line line-left" x1="50" y1="50" x2="28" y2="65" />
+            <line className="line line-right" x1="50" y1="50" x2="72" y2="65" />
+          </g>
+
+          {/* Nodes/Knowledge Areas */}
+          <g className="nodes">
+            <circle className="node node-1" cx="50" cy="20" r="10" />
+            <circle className="node node-2" cx="22" cy="70" r="10" />
+            <circle className="node node-3" cx="78" cy="70" r="10" />
+          </g>
+
+          {/* Central point */}
+          <circle className="center-dot" cx="50" cy="50" r="6" />
         </g>
-
-        {/* Nodes/Knowledge Areas */}
-        <circle cx="50" cy="20" r="10" />
-        <circle cx="22" cy="70" r="10" /> {/* Adjusted for visual balance */}
-        <circle cx="78" cy="70" r="10" /> {/* Adjusted for visual balance */}
-
-        {/* Optional: Small central point to emphasize connection origin */}
-        <circle cx="50" cy="50" r="6" />
       </svg>
       <span className="font-bold text-xl hidden md:inline">Polymath</span>
     </Link>
