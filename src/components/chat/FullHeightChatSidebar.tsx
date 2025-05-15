@@ -260,7 +260,7 @@ export const FullHeightChatSidebar = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Close sidebar when clicking outside on mobile
+  // Close sidebar when clicking outside on mobile or listen for toggle events
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768 && isOpen) {
@@ -269,8 +269,34 @@ export const FullHeightChatSidebar = () => {
       }
     };
 
+    // Listen for custom toggle events from other components
+    const handleToggleEvent = (event: CustomEvent) => {
+      if (event.detail && typeof event.detail.isOpen === 'boolean') {
+        setIsOpen(event.detail.isOpen);
+      } else {
+        // If no specific state is provided, toggle the current state
+        setIsOpen(prev => !prev);
+      }
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('chatSidebarToggle', handleToggleEvent as EventListener);
+    
+    // Initialize from localStorage if available
+    const savedState = localStorage.getItem('chatSidebarOpen');
+    if (savedState !== null) {
+      setIsOpen(savedState === 'true');
+    }
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('chatSidebarToggle', handleToggleEvent as EventListener);
+    };
+  }, [isOpen]);
+
+  // Save sidebar state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('chatSidebarOpen', String(isOpen));
   }, [isOpen]);
 
   const scrollToBottom = () => {
@@ -281,8 +307,6 @@ export const FullHeightChatSidebar = () => {
     if (!message.trim()) return;
 
     try {
-      const guestName = localStorage.getItem('guestName') || "Guest";
-      
       // For authenticated users, send with their ID
       if (isAuthenticated && user) {
         const { error } = await supabase

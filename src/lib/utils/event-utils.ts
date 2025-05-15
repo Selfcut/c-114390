@@ -1,59 +1,34 @@
 
-// Event system for cross-component communication
-type EventCallback<T> = (data: T) => void;
+// Event utility functions for the application
 
-// Event map to manage different event types and their callbacks
-const eventMap: Map<string, EventCallback<any>[]> = new Map();
+/**
+ * Publishes a chat sidebar toggle event to toggle the sidebar visibility
+ * @param isOpen Optional boolean to explicitly set the sidebar state
+ */
+export const publishChatSidebarToggle = (isOpen?: boolean) => {
+  const event = new CustomEvent('chatSidebarToggle', {
+    detail: isOpen !== undefined ? { isOpen } : {}
+  });
+  window.dispatchEvent(event);
+};
 
-// Generic publish function to emit events
-export function publishEvent<T>(eventName: string, data: T): void {
-  const callbacks = eventMap.get(eventName) || [];
-  callbacks.forEach(callback => callback(data));
-}
-
-// Generic subscribe function to listen for events
-export function subscribeToEvent<T>(
-  eventName: string, 
-  callback: EventCallback<T>
-): () => void {
-  // Get or create array of callbacks for this event
-  const callbacks = eventMap.get(eventName) || [];
-  callbacks.push(callback);
-  eventMap.set(eventName, callbacks);
-
-  // Return unsubscribe function
-  return () => {
-    const currentCallbacks = eventMap.get(eventName) || [];
-    const filteredCallbacks = currentCallbacks.filter(cb => cb !== callback);
-    eventMap.set(eventName, filteredCallbacks);
+/**
+ * Subscribe to chat sidebar toggle events
+ * @param callback Function to call when the event is triggered
+ * @returns Cleanup function to remove the event listener
+ */
+export const subscribeToChatSidebarToggle = (callback: (isOpen: boolean) => void) => {
+  const handler = (event: CustomEvent) => {
+    if (event.detail && typeof event.detail.isOpen === 'boolean') {
+      callback(event.detail.isOpen);
+    } else {
+      // If no explicit state is provided, treat it as a toggle request
+      callback(prev => !prev);
+    }
   };
-}
 
-// Chat sidebar specific events
-export const CHAT_SIDEBAR_TOGGLE = 'chat-sidebar-toggle';
-
-export function publishChatSidebarToggle(isOpen: boolean): void {
-  publishEvent(CHAT_SIDEBAR_TOGGLE, isOpen);
-}
-
-export function subscribeToChatSidebarToggle(
-  callback: (isOpen: boolean) => void
-): () => void {
-  return subscribeToEvent(CHAT_SIDEBAR_TOGGLE, callback);
-}
-
-// Event system for global modals
-export const GLOBAL_MODAL_OPEN = 'global-modal-open';
-
-export function publishGlobalModalOpen(
-  modalId: string,
-  modalProps: Record<string, any> = {}
-): void {
-  publishEvent(GLOBAL_MODAL_OPEN, { modalId, modalProps });
-}
-
-export function subscribeToGlobalModalOpen(
-  callback: (data: { modalId: string; modalProps: Record<string, any> }) => void
-): () => void {
-  return subscribeToEvent(GLOBAL_MODAL_OPEN, callback);
-}
+  window.addEventListener('chatSidebarToggle', handler as EventListener);
+  return () => {
+    window.removeEventListener('chatSidebarToggle', handler as EventListener);
+  };
+};
