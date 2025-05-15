@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { X, Send, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -9,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "./ui/use-toast";
 import { Textarea } from "./ui/textarea";
 import { Skeleton } from "./ui/skeleton";
+import { incrementCounter } from "@/lib/utils/supabase-utils";
 
 interface QuoteCommentModalProps {
   quoteId: string;
@@ -154,17 +154,16 @@ export const QuoteCommentModal = ({
         
       if (error) throw error;
       
-      // Update quote comment count using RPC - fixed with proper type casting
+      // Update quote comment count using the helper function
       await supabase
         .from('quotes')
         .update({
-          // Use type casting to bypass TypeScript's type checking
-          comments: (supabase.rpc as any)('increment_counter', { 
-            row_id: quoteId, 
-            column_name: 'comments' 
-          }) as unknown as number
+          comments: 0 // This will be incremented by the RPC function
         })
         .eq('id', quoteId);
+      
+      // Use our helper function to increment the comments count
+      await incrementCounter(quoteId, 'comments');
       
       // Add activity record
       await supabase

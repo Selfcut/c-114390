@@ -1,6 +1,33 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper functions for counter operations
+export const incrementCounter = async (tableId: string, columnName: string) => {
+  try {
+    await (supabase.rpc as any)('increment_counter', {
+      row_id: tableId,
+      column_name: columnName
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error incrementing ${columnName}:`, error);
+    return false;
+  }
+};
+
+export const decrementCounter = async (tableId: string, columnName: string) => {
+  try {
+    await (supabase.rpc as any)('decrement_counter', {
+      row_id: tableId,
+      column_name: columnName
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error decrementing ${columnName}:`, error);
+    return false;
+  }
+};
+
 // Helper function to create RPC functions in Supabase if they don't exist
 export const ensureRpcFunctionsExist = async () => {
   try {
@@ -11,7 +38,7 @@ export const ensureRpcFunctionsExist = async () => {
     try {
       // TypeScript doesn't understand custom RPC functions by default
       // We need to cast to any to bypass type checking for custom RPCs
-      const result = await (supabase.rpc as any)('increment_counter', {
+      await (supabase.rpc as any)('increment_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
       });
@@ -28,7 +55,7 @@ export const ensureRpcFunctionsExist = async () => {
     try {
       // TypeScript doesn't understand custom RPC functions by default
       // We need to cast to any to bypass type checking for custom RPCs
-      const result = await (supabase.rpc as any)('decrement_counter', {
+      await (supabase.rpc as any)('decrement_counter', {
         row_id: '00000000-0000-0000-0000-000000000000',
         column_name: 'likes'
       });

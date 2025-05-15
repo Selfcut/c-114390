@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-context';
@@ -8,6 +7,7 @@ import { FloatingChatWidget } from '@/components/chat/FloatingChatWidget';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initializeSupabase } from '@/integrations/supabase/init';
+import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
 
 // Pages
 import Landing from './pages/Landing';
@@ -28,6 +28,8 @@ import Wiki from './pages/Wiki';
 
 // Initialize Supabase
 initializeSupabase();
+// Initialize Supabase utility functions
+initializeSupabaseUtils();
 
 // Auth callback page for OAuth providers
 const AuthCallback = () => {
