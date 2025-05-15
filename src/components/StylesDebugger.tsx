@@ -1,8 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
+import { useTheme } from '@/lib/theme-context';
 
 export const StylesDebugger = () => {
+  const { theme } = useTheme();
   const [styleStatus, setStyleStatus] = useState<{[key: string]: boolean | string}>({
     tailwind: false,
     button: false,
@@ -12,7 +13,8 @@ export const StylesDebugger = () => {
     layout: false,
     primaryColor: 'unknown',
     secondaryColor: 'unknown',
-    sidebarColor: 'unknown'
+    sidebarColor: 'unknown',
+    currentTheme: 'unknown'
   });
   
   const [fontLoaded, setFontLoaded] = useState(false);
@@ -87,7 +89,8 @@ export const StylesDebugger = () => {
         layout: layoutWorking,
         primaryColor,
         secondaryColor,
-        sidebarColor
+        sidebarColor,
+        currentTheme: theme
       });
     });
 
@@ -111,7 +114,7 @@ export const StylesDebugger = () => {
         width: window.getComputedStyle(sidebarEl).width
       });
     }
-  }, []);
+  }, [theme]);
 
   const toggleDetails = () => {
     setShowDetails(!showDetails);
@@ -175,6 +178,9 @@ export const StylesDebugger = () => {
             </p>
             <p className={`text-xs ${styleStatus.layout ? 'text-green-500' : 'text-red-500'}`}>
               Full Width Layout: {styleStatus.layout ? '✓' : '✗'}
+            </p>
+            <p className="text-xs text-blue-500">
+              Current Theme: {styleStatus.currentTheme}
             </p>
           </div>
           
