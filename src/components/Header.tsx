@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu, LogOut, Settings, User, X } from 'lucide-react';
+import { Search, Bell, Menu, LogOut, Settings, User, X, HelpCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from '@/components/ThemeToggle';
 import {
@@ -82,84 +81,6 @@ export const Header: React.FC = () => {
             <img src="/logo.svg" alt="Polymath Logo" className="h-8 w-8" />
             <span className="font-bold text-foreground">Polymath</span>
           </Link>
-          
-          <div className="hidden md:flex items-center ml-6">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link to="/">
-                    <NavigationMenuLink 
-                      className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/") || isActive("/dashboard") ? "text-primary bg-primary/10" : ""
-                      }`}
-                    >
-                      Home
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                
-                <NavigationMenuItem>
-                  <Link to="/forum">
-                    <NavigationMenuLink 
-                      className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/forum") ? "text-primary bg-primary/10" : ""
-                      }`}
-                    >
-                      Forum
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                
-                <NavigationMenuItem>
-                  <Link to="/library">
-                    <NavigationMenuLink 
-                      className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/library") ? "text-primary bg-primary/10" : ""
-                      }`}
-                    >
-                      Library
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                
-                <NavigationMenuItem>
-                  <Link to="/quotes">
-                    <NavigationMenuLink 
-                      className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/quotes") ? "text-primary bg-primary/10" : ""
-                      }`}
-                    >
-                      Quotes
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/wiki">
-                    <NavigationMenuLink 
-                      className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/wiki") ? "text-primary bg-primary/10" : ""
-                      }`}
-                    >
-                      Wiki
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/chat">
-                    <NavigationMenuLink 
-                      className={`${navigationMenuTriggerStyle()} ${
-                        isActive("/chat") ? "text-primary bg-primary/10" : ""
-                      }`}
-                    >
-                      Chat
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -283,10 +204,29 @@ export const Header: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <div className="hidden sm:flex items-center gap-2">
-            <Button size="sm" className="bg-[#6E59A5] hover:bg-[#7E69B5]">Premium</Button>
-            <Button variant="outline" size="sm">Contribute</Button>
-          </div>
+          <Button size="sm" className="bg-[#6E59A5] hover:bg-[#7E69B5]">Premium</Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => navigate('/ask-question')} className="cursor-pointer">
+                Ask a Question
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/knowledge-base')} className="cursor-pointer">
+                Knowledge Base
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/learning-guides')} className="cursor-pointer">
+                Learning Guides
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/wiki-access')} className="cursor-pointer">
+                Wiki Access
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Mobile Menu Trigger */}
           <Sheet>

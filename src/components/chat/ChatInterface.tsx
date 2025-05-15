@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send, Smile, Paperclip, Mic, Image, XCircle } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useRef } from "react";
+import { Send, Smile, Paperclip, Mic, Image, X, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { polymathToast, toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 type ChatMessage = {
   id: string;
@@ -322,7 +322,7 @@ export const ChatInterface = ({
               className="ml-auto"
               onClick={stopRecording}
             >
-              <XCircle size={16} className="mr-2" />
+              <X size={16} className="mr-2" />
               Stop
             </Button>
           </div>

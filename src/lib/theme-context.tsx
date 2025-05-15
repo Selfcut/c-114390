@@ -1,82 +1,50 @@
 
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Theme = "dark" | "light";
+type Theme = 'dark' | 'light' | 'system';
 
-type ThemeContextType = {
+interface ThemeContextType {
   theme: Theme;
-  setTheme: (theme: Theme) => void; // Adding the missing setTheme method
-  toggleTheme: () => void;
-};
+  setTheme: (theme: Theme) => void; // Add this missing property
+}
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType>({
+  theme: 'dark',
+  setTheme: () => {}, // Provide a default empty function
+});
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ 
-  children 
-}) => {
+export const useTheme = () => useContext(ThemeContext);
+
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check for saved preference in localStorage
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem("theme") as Theme;
-      if (savedTheme === "dark" || savedTheme === "light") {
-        return savedTheme;
-      }
-      
-      // Check system preference
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        return "light";
-      }
-    }
-    
-    // Default to dark mode
-    return "dark";
+    const savedTheme = localStorage.getItem("polymath-theme");
+    return (savedTheme as Theme) || "dark";
   });
 
   useEffect(() => {
-    // Apply theme changes immediately when component mounts and when theme changes
-    applyTheme(theme);
+    const root = window.document.documentElement;
     
-    // Save theme preference
-    localStorage.setItem("theme", theme);
+    root.classList.remove("light", "dark");
     
-    console.log(`Theme set to: ${theme}`);
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
+    }
+    
+    localStorage.setItem("polymath-theme", theme);
   }, [theme]);
 
-  const applyTheme = (currentTheme: Theme) => {
-    const root = document.documentElement;
-    
-    if (currentTheme === "light") {
-      root.classList.add("light-mode");
-      root.classList.remove("dark-mode");
-      document.body.style.backgroundColor = "#ffffff";
-      document.body.style.color = "#1a202c";
-    } else {
-      root.classList.add("dark-mode");
-      root.classList.remove("light-mode");
-      document.body.style.backgroundColor = "#121212";
-      document.body.style.color = "#ffffff";
-    }
-  };
-
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const newTheme = prev === "dark" ? "light" : "dark";
-      console.log(`Toggling theme from ${prev} to ${newTheme}`);
-      return newTheme;
-    });
-  };
-
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
-};
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
 };

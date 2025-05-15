@@ -24,21 +24,6 @@ select:focus {
   outline: none;
 }
 
-button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border-radius: 0.3rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-weight: 500;
-}
-
-button:hover {
-  background-color: hsl(var(--primary) / 0.8);
-}
-
 /* Card Component */
 .card {
   background-color: hsl(var(--card));
@@ -118,13 +103,93 @@ th {
   overflow: hidden;
 }
 
-/* Button variants */
+/* Enhanced card style */
+.enhanced-card {
+  @apply bg-card border border-border rounded-lg shadow-sm transition duration-300 ease-in-out overflow-hidden;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-md;
+}
+
+/* Stagger fade animation utilities */
+.stagger-fade > * {
+  animation-name: fadeInUp;
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+.stagger-fade > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-fade > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-fade > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-fade > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-fade > *:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Pulse animation */
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Text highlight effect */
+.text-highlight {
+  @apply bg-primary/10 text-primary rounded px-1 py-0.5;
+}
+
+/* User online status indicator */
+.user-online-indicator {
+  @apply absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 ring-1 ring-white;
+}
+
+/* Remove blue outlines */
+* {
+  outline-color: hsl(var(--primary)) !important;
+}
+
+/* Fix button primary colors to use the theme variables */
+button.btn-primary,
 .btn-primary {
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
 
+.btn-primary:hover {
+  background-color: hsl(var(--primary) / 0.8);
+}
+
+/* Fix button secondary colors */
+button.btn-secondary,
 .btn-secondary {
   background-color: hsl(var(--secondary));
   color: hsl(var(--secondary-foreground));
+}
+
+.btn-secondary:hover {
+  background-color: hsl(var(--secondary) / 0.8);
 }
