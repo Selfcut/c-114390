@@ -304,12 +304,22 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (unlikeError) throw unlikeError;
 
-      // Decrement like count - Use direct SQL call instead of RPC
+      // Decrement like count
+      const { data: quoteData, error: getQuoteError } = await supabase
+        .from('quotes')
+        .select('likes')
+        .eq('id', quoteId)
+        .single();
+        
+      if (getQuoteError) throw getQuoteError;
+      
+      const currentLikes = quoteData?.likes || 0;
+      const newLikes = Math.max(0, currentLikes - 1); // Ensure we don't go below 0
+      
       const { error: decrementError } = await supabase
         .from('quotes')
-        .update({ likes: supabase.sql('likes - 1') })
-        .eq('id', quoteId)
-        .gt('likes', 0);
+        .update({ likes: newLikes })
+        .eq('id', quoteId);
 
       if (decrementError) throw decrementError;
 
@@ -325,10 +335,21 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (likeError) throw likeError;
 
-      // Increment like count - Use direct SQL update instead of RPC
+      // Increment like count
+      const { data: quoteData, error: getQuoteError } = await supabase
+        .from('quotes')
+        .select('likes')
+        .eq('id', quoteId)
+        .single();
+        
+      if (getQuoteError) throw getQuoteError;
+      
+      const currentLikes = quoteData?.likes || 0;
+      const newLikes = currentLikes + 1;
+      
       const { error: incrementError } = await supabase
         .from('quotes')
-        .update({ likes: supabase.sql('likes + 1') })
+        .update({ likes: newLikes })
         .eq('id', quoteId);
 
       if (incrementError) throw incrementError;
@@ -369,12 +390,22 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (removeError) throw removeError;
 
-      // Decrement bookmark count - Use direct SQL update instead of RPC
+      // Decrement bookmark count
+      const { data: quoteData, error: getQuoteError } = await supabase
+        .from('quotes')
+        .select('bookmarks')
+        .eq('id', quoteId)
+        .single();
+        
+      if (getQuoteError) throw getQuoteError;
+      
+      const currentBookmarks = quoteData?.bookmarks || 0;
+      const newBookmarks = Math.max(0, currentBookmarks - 1); // Ensure we don't go below 0
+      
       const { error: decrementError } = await supabase
         .from('quotes')
-        .update({ bookmarks: supabase.sql('bookmarks - 1') })
-        .eq('id', quoteId)
-        .gt('bookmarks', 0);
+        .update({ bookmarks: newBookmarks })
+        .eq('id', quoteId);
 
       if (decrementError) throw decrementError;
 
@@ -390,10 +421,21 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (bookmarkError) throw bookmarkError;
 
-      // Increment bookmark count - Use direct SQL update instead of RPC
+      // Increment bookmark count
+      const { data: quoteData, error: getQuoteError } = await supabase
+        .from('quotes')
+        .select('bookmarks')
+        .eq('id', quoteId)
+        .single();
+        
+      if (getQuoteError) throw getQuoteError;
+      
+      const currentBookmarks = quoteData?.bookmarks || 0;
+      const newBookmarks = currentBookmarks + 1;
+      
       const { error: incrementError } = await supabase
         .from('quotes')
-        .update({ bookmarks: supabase.sql('bookmarks + 1') })
+        .update({ bookmarks: newBookmarks })
         .eq('id', quoteId);
 
       if (incrementError) throw incrementError;
