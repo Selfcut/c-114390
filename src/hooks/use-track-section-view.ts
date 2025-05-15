@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { trackActivity, ActivityType } from '@/lib/activity-tracker';

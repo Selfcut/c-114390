@@ -11,9 +11,8 @@ import { initializeSupabase } from '@/integrations/supabase/init';
 import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
 
 // Pages
-import Landing from './pages/Landing';
-import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
+import Auth from './pages/Auth';
 import Chat from './pages/Chat';
 import Forum from './pages/Forum';
 import Library from './pages/Library';
@@ -69,9 +68,9 @@ const Root = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
-        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
-        <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/dashboard" replace />} />
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         

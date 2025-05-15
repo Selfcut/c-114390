@@ -98,7 +98,7 @@ export const createProgressDataFromTopics = (topics: Map<string, {
       progress: data.progress,
       icon: icons[iconIndex],
       recentActivity: `Last activity: ${new Date(data.lastActivity).toLocaleDateString()}`,
-      streakDays: data.activities > 2 ? Math.max(1, Math.floor(data.activities / 2)) : undefined
+      streakDays: data.activities > 2 ? Math.max(1, Math.floor(data.activities / 2)) : 0
     };
   });
 };
@@ -115,7 +115,7 @@ export const addDefaultTopics = () => {
     title: topic,
     description: 'Begin your learning journey',
     progress: 0,
-    icon: ["book", "brain", "target", "clock"][index % 4] as "book" | "brain" | "target" | "clock",
+    icon: ["book", "brain", "target", "clock"][index % 4],
     recentActivity: `No recent activity`,
     streakDays: 0
   }));

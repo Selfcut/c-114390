@@ -25,9 +25,11 @@ export const PageLayout = ({
   const [isChatOpen, setIsChatOpen] = useState(false);
   
   // Track section view if section name is provided
-  if (sectionName) {
-    useTrackSectionView(sectionName);
-  }
+  useEffect(() => {
+    if (sectionName) {
+      useTrackSectionView(sectionName);
+    }
+  }, [sectionName]);
 
   // Listen to chat sidebar toggle events
   useEffect(() => {

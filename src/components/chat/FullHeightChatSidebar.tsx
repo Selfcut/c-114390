@@ -33,6 +33,8 @@ export const FullHeightChatSidebar = () => {
 
   // Track chat visibility changes and notify layout
   useEffect(() => {
+    dispatchChatSidebarToggle(isOpen);
+    
     if (user && isOpen) {
       trackActivity(user.id, 'view', {
         section: 'chat',
@@ -40,9 +42,6 @@ export const FullHeightChatSidebar = () => {
         timestamp: new Date().toISOString()
       });
     }
-    
-    // Dispatch event so other components can adjust layout
-    dispatchChatSidebarToggle(isOpen);
   }, [isOpen, user]);
 
   const toggleChat = () => {
