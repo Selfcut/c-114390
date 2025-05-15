@@ -1,7 +1,9 @@
 
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import './styles/variables.css'  // Import CSS variables first
 import './index.css'
+import './App.css'
 
 // Set document title
 document.title = "Polymath - Intellectual Science Community";
@@ -32,6 +34,7 @@ const initScrollAnimations = () => {
 // Execute after initial render
 window.addEventListener('load', () => {
   setTimeout(initScrollAnimations, 500);
+  console.log('Styles loaded: Tailwind and CSS initialized');
 });
 
 // Debug styles

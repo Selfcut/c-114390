@@ -1,0 +1,60 @@
+
+:root {
+  /* Base colors */
+  --promo: 265 84% 61%;
+  --promo-foreground: 0 0% 100%;
+  
+  /* Background colors */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 100%;
+  
+  /* Card colors */
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  
+  /* Popover colors */
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  
+  /* Primary colors */
+  --primary: 265 84% 61%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary colors */
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  
+  /* Muted colors */
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  
+  /* Accent colors */
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  
+  /* Destructive colors */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  
+  /* Border colors */
+  --border: 240 3.7% 15.9%;
+  
+  /* Input colors */
+  --input: 240 3.7% 15.9%;
+  
+  /* Ring color */
+  --ring: 240 4.9% 83.9%;
+  
+  /* Radius */
+  --radius: 0.5rem;
+  
+  /* Sidebar colors */
+  --sidebar-background: 240 10% 3.9%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 265 84% 61%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 240 4.9% 83.9%;
+}
