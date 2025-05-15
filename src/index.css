@@ -370,3 +370,66 @@ button:focus, a:focus, input:focus, textarea:focus, select:focus {
 .reveal-text:hover:after {
   width: 100%;
 }
+
+/* Collapsible component animations */
+.collapsible-content-enter {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.collapsible-content-enter-active {
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.5s ease-in-out, opacity 0.5s ease;
+}
+
+.collapsible-content-exit {
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.collapsible-content-exit-active {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
+}
+
+/* Topic card hover effects */
+.topic-card {
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.topic-card:hover {
+  border-color: hsla(var(--primary), 0.3);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Book card cover image effect */
+.book-cover {
+  transition: all 0.5s ease;
+  transform-origin: bottom;
+  box-shadow: 0 10px 15px -5px rgba(0, 0, 0, 0.5);
+}
+
+.book-cover:hover {
+  transform: perspective(800px) rotateY(10deg) rotateX(5deg);
+  box-shadow: -10px 10px 15px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Quote highlight effect */
+.quote-highlight {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.quote-highlight:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(to bottom, hsla(var(--primary), 1), transparent);
+}

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PromoBar } from "../components/PromoBar";
@@ -11,6 +12,11 @@ import { UserProgressCard } from "../components/UserProgressCard";
 import { BookOpen, MessageSquare, Users, Library, Book, Sparkles, Calendar, BrainCircuit, Search, Quote } from "lucide-react";
 import { polymathToast } from "../components/ui/use-toast";
 import { disciplines, formatDaysAgo } from "../lib/utils";
+import { WelcomeExploration } from "../components/WelcomeExploration";
+import { MysticalTopicsSection } from "../components/MysticalTopicsSection";
+import { FeaturedBooksSection } from "../components/FeaturedBooksSection";
+import { CommunitySection } from "../components/CommunitySection";
+import { MembershipBenefits } from "../components/MembershipBenefits";
 
 // Create a new component for discussion topics
 const DiscussionTopicItem = ({ title, author, replies, timeAgo }: { title: string, author: string, replies: number, timeAgo: string }) => (
@@ -140,6 +146,9 @@ const Index = () => {
                 Explore Intellectual Frontiers
               </h1>
               
+              {/* Welcome and Exploration Banner */}
+              <WelcomeExploration />
+              
               <div className="grid grid-cols-3 gap-6 mb-12">
                 <Link to="/forum">
                   <CreationCard type="discussion" />
@@ -162,6 +171,18 @@ const Index = () => {
                   </div>
                 </Link>
               </div>
+              
+              {/* Membership Benefits */}
+              <MembershipBenefits />
+              
+              {/* Mystical Topics */}
+              <MysticalTopicsSection />
+              
+              {/* Featured Books */}
+              <FeaturedBooksSection />
+              
+              {/* Community Section */}
+              <CommunitySection />
               
               {/* User Progress Section */}
               <section className="mb-12">
