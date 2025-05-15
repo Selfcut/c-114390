@@ -6,11 +6,13 @@ import { useAuth } from "@/lib/auth-context";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  allowGuests?: boolean; // New prop to allow guests for public pages
 }
 
 export const ProtectedRoute = ({ 
   children, 
-  requireAdmin = false 
+  requireAdmin = false,
+  allowGuests = false
 }: ProtectedRouteProps) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
@@ -25,6 +27,11 @@ export const ProtectedRoute = ({
         </div>
       </div>
     );
+  }
+
+  // If guests are allowed, show the content regardless of authentication status
+  if (allowGuests) {
+    return <>{children}</>;
   }
 
   // Redirect to login if not authenticated

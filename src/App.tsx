@@ -75,7 +75,7 @@ const Root = () => {
         <Route path="/auth/callback" element={<AuthCallback />} />
         
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowGuests={true}>
             <Dashboard />
           </ProtectedRoute>
         } />
@@ -85,17 +85,17 @@ const Root = () => {
           </ProtectedRoute>
         } />
         <Route path="/forum" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowGuests={true}>
             <Forum />
           </ProtectedRoute>
         } />
         <Route path="/library" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowGuests={true}>
             <Library />
           </ProtectedRoute>
         } />
         <Route path="/wiki" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowGuests={true}>
             <Wiki />
           </ProtectedRoute>
         } />
@@ -115,7 +115,7 @@ const Root = () => {
           </ProtectedRoute>
         } />
         <Route path="/quotes" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowGuests={true}>
             <Quotes />
           </ProtectedRoute>
         } />
@@ -139,7 +139,8 @@ const Root = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {user && <FullHeightChatSidebar />}
+      {/* Show chat sidebar for all users (including guests) but with limited functionality for guests */}
+      <FullHeightChatSidebar />
     </div>
   );
 };
