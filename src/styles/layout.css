@@ -1,0 +1,35 @@
+
+/* Layout Components */
+.sidebar {
+  background-color: #1A1A1A;
+  border-right: 1px solid #222;
+}
+
+.header {
+  background-color: #1A1A1A;
+  padding: 1rem;
+  border-bottom: 1px solid #222;
+}
+
+/* Application Layout */
+.app-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #222;
+  }
+}

@@ -1,0 +1,49 @@
+
+/* Hover Effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.button-hover-effect {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.button-hover-effect:hover {
+  transform: translateY(-2px);
+}
+
+.button-hover-effect:active {
+  transform: translateY(0);
+}
+
+/* Card effects */
+.enhanced-card {
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.enhanced-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(110, 89, 165, 0.5);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Feature Card Hover Effects */
+.feature-card {
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+}
+
+.feature-card:hover .run-button {
+  background-color: #7E69AB;
+}

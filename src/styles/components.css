@@ -1,0 +1,74 @@
+
+/* Form Elements */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #333;
+  background-color: #222;
+  color: #fff;
+  border-radius: 0.3rem;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #6E59A5;
+  outline: none;
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background-color: #6E59A5;
+  color: #fff;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: 500;
+}
+
+button:hover {
+  background-color: #7E69AB;
+}
+
+/* Card Component */
+.card {
+  background-color: #1A1A1A;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* List Styles */
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul li {
+  margin-bottom: 0.5rem;
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #222;
+}
+
+th {
+  font-weight: bold;
+}
