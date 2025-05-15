@@ -11,20 +11,44 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+export interface ChatMessage {
+  id: string;
+  sender: {
+    id?: string;
+    name: string;
+    avatar: string;
+    isSystem?: boolean;
+  };
+  content: string;
+  timestamp: Date;
+}
+
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  unread: number;
+  isGlobal?: boolean;
+  isGroup?: boolean;
+}
 
 export const FullHeightChatSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [conversations, setConversations] = useState([
+  const [conversations, setConversations] = useState<Conversation[]>([
     {
-      id: "1",
+      id: "global",
       name: "Global Chat",
       avatar: "/placeholder.svg",
       lastMessage: "Welcome to the Polymath community!",
-      unread: 2,
+      unread: 0,
       isGlobal: true
     },
     {
-      id: "2", 
+      id: "philosophy", 
       name: "Philosophy Group",
       avatar: "/placeholder.svg",
       lastMessage: "What's everyone's take on existentialism?",
@@ -33,39 +57,13 @@ export const FullHeightChatSidebar = () => {
     }
   ]);
   const { user, isAuthenticated } = useAuth();
-  const [selectedConversation, setSelectedConversation] = useState("1"); // Default to Global Chat
+  const [selectedConversation, setSelectedConversation] = useState("global"); // Default to Global Chat
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: "msg1",
-      sender: {
-        name: "System",
-        avatar: "/placeholder.svg",
-        isSystem: true
-      },
-      content: "Welcome to the Polymath Global Chat!",
-      timestamp: new Date(Date.now() - 3600000)
-    },
-    {
-      id: "msg2",
-      sender: {
-        name: "Alex Thompson",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Alex",
-      },
-      content: "Hi everyone! Just joined Polymath and excited to connect with fellow knowledge enthusiasts.",
-      timestamp: new Date(Date.now() - 2400000)
-    },
-    {
-      id: "msg3",
-      sender: {
-        name: "Maya Patel",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Maya",
-      },
-      content: "Welcome Alex! What topics are you most interested in exploring?",
-      timestamp: new Date(Date.now() - 1800000)
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const messagesSubscriptionRef = useRef<any>(null);
   
   // Emoji data for quick selection
   const emojiCategories = [
@@ -89,6 +87,110 @@ export const FullHeightChatSidebar = () => {
     setIsOpen(newState);
     publishChatSidebarToggle(newState);
   };
+  
+  // Fetch messages for the selected conversation
+  useEffect(() => {
+    const fetchMessages = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Fetch messages for the selected conversation
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .select(`
+            id,
+            content,
+            created_at,
+            user_id,
+            conversation_id,
+            profiles:user_id (name, avatar_url)
+          `)
+          .eq("conversation_id", selectedConversation)
+          .order("created_at", { ascending: true })
+          .limit(50);
+
+        if (error) {
+          console.error("Error fetching messages:", error);
+          toast({
+            title: "Failed to load messages",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Transform data into ChatMessage format
+        const formattedMessages: ChatMessage[] = data.map(msg => ({
+          id: msg.id,
+          sender: {
+            id: msg.user_id,
+            name: msg.profiles?.name || "Anonymous User",
+            avatar: msg.profiles?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${msg.user_id}`,
+          },
+          content: msg.content,
+          timestamp: new Date(msg.created_at)
+        }));
+
+        setMessages(formattedMessages);
+      } catch (err) {
+        console.error("Error in messages fetch:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Only fetch messages if we have a selected conversation
+    if (selectedConversation) {
+      fetchMessages();
+      
+      // Set up real-time subscription for new messages
+      if (messagesSubscriptionRef.current) {
+        messagesSubscriptionRef.current.unsubscribe();
+      }
+      
+      messagesSubscriptionRef.current = supabase
+        .channel(`chat_${selectedConversation}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${selectedConversation}`
+          },
+          async (payload) => {
+            // Fetch user profile for the new message
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('name, avatar_url')
+              .eq('id', payload.new.user_id)
+              .single();
+            
+            // Add the new message to the state
+            const newMessage: ChatMessage = {
+              id: payload.new.id,
+              sender: {
+                id: payload.new.user_id,
+                name: profileData?.name || "Anonymous User",
+                avatar: profileData?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${payload.new.user_id}`,
+              },
+              content: payload.new.content,
+              timestamp: new Date(payload.new.created_at)
+            };
+            
+            setMessages(prev => [...prev, newMessage]);
+          }
+        )
+        .subscribe();
+    }
+    
+    // Cleanup subscription on unmount or when conversation changes
+    return () => {
+      if (messagesSubscriptionRef.current) {
+        messagesSubscriptionRef.current.unsubscribe();
+      }
+    };
+  }, [selectedConversation]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -112,23 +214,70 @@ export const FullHeightChatSidebar = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
 
-    // Create new message
-    const newMessage = {
-      id: `msg${Date.now()}`,
-      sender: {
-        name: isAuthenticated ? (user?.name || "Anonymous User") : "Guest User",
-        avatar: isAuthenticated ? (user?.avatar || "https://api.dicebear.com/7.x/personas/svg?seed=User") : "https://api.dicebear.com/7.x/personas/svg?seed=Guest",
-      },
-      content: message,
-      timestamp: new Date()
-    };
+    try {
+      // For authenticated users, send with their ID
+      if (isAuthenticated && user) {
+        const { error } = await supabase
+          .from('chat_messages')
+          .insert({
+            conversation_id: selectedConversation,
+            user_id: user.id,
+            content: message
+          });
 
-    // Add message to chat
-    setMessages([...messages, newMessage]);
-    setMessage("");
+        if (error) {
+          console.error("Error sending message:", error);
+          toast({
+            title: "Failed to send message",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        // For guests, send as anonymous
+        const { error } = await supabase
+          .from('chat_messages')
+          .insert({
+            conversation_id: selectedConversation,
+            user_id: "00000000-0000-0000-0000-000000000000", // Guest user ID
+            content: message,
+            sender_name: "Guest User"
+          });
+
+        if (error) {
+          console.error("Error sending message:", error);
+          toast({
+            title: "Failed to send message",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // For guests, we need to manually add the message since they may not have
+        // subscription permissions to see their own messages in real-time
+        const newMessage: ChatMessage = {
+          id: `local-${Date.now()}`,
+          sender: {
+            name: "Guest User",
+            avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Guest"
+          },
+          content: message,
+          timestamp: new Date()
+        };
+        
+        setMessages([...messages, newMessage]);
+      }
+
+      // Clear input after successful send
+      setMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -152,7 +301,6 @@ export const FullHeightChatSidebar = () => {
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversation(id);
-    // In a real app, you would fetch messages for the selected conversation here
   };
 
   return (
@@ -224,28 +372,50 @@ export const FullHeightChatSidebar = () => {
 
         {/* Messages area */}
         <ScrollArea className="flex-1 p-3">
-          <div className="space-y-3">
-            {messages.map((msg) => (
-              <div key={msg.id} className="flex gap-2">
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarImage src={msg.sender.avatar} />
-                  <AvatarFallback>{msg.sender.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`font-medium text-sm ${msg.sender.isSystem ? 'text-primary' : ''}`}>
-                      {msg.sender.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTime(msg.timestamp)}
-                    </span>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-2 animate-pulse">
+                  <div className="h-8 w-8 bg-muted rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-muted rounded w-24 mb-2"></div>
+                    <div className="h-3 bg-muted rounded w-full"></div>
                   </div>
-                  <p className="text-sm break-words">{msg.content}</p>
                 </div>
+              ))}
+            </div>
+          ) : messages.length > 0 ? (
+            <div className="space-y-3">
+              {messages.map((msg) => (
+                <div key={msg.id} className="flex gap-2">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage src={msg.sender.avatar} />
+                    <AvatarFallback>{msg.sender.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`font-medium text-sm ${msg.sender.isSystem ? 'text-primary' : ''}`}>
+                        {msg.sender.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(msg.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm break-words">{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center p-4">
+                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+                <h3 className="font-medium mb-1">No messages yet</h3>
+                <p className="text-sm text-muted-foreground">Be the first to start the conversation!</p>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+            </div>
+          )}
         </ScrollArea>
 
         {/* Input area */}
@@ -258,16 +428,16 @@ export const FullHeightChatSidebar = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent side="top" align="start" className="w-64 p-0">
-                <Tabs defaultValue="smileys">
+                <Tabs defaultValue="Smileys">
                   <TabsList className="grid grid-cols-3">
                     {emojiCategories.map((category) => (
-                      <TabsTrigger key={category.name} value={category.name.toLowerCase()}>
+                      <TabsTrigger key={category.name} value={category.name}>
                         {category.emojis[0]}
                       </TabsTrigger>
                     ))}
                   </TabsList>
                   {emojiCategories.map((category) => (
-                    <TabsContent key={category.name} value={category.name.toLowerCase()} className="p-2">
+                    <TabsContent key={category.name} value={category.name} className="p-2">
                       <div className="grid grid-cols-8 gap-1">
                         {category.emojis.map((emoji) => (
                           <button

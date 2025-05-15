@@ -24,6 +24,7 @@ import Admin from './pages/Admin';
 import AI from './pages/AI';
 import NotFound from './pages/NotFound';
 import Wiki from './pages/Wiki';
+import Landing from './pages/Landing';
 
 // Initialize Supabase
 initializeSupabase();
@@ -68,14 +69,14 @@ const Root = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/dashboard" replace />} />
-        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/dashboard" replace />} />
-        <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
+        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
         <Route path="/dashboard" element={
-          <ProtectedRoute allowGuests={true}>
+          <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
         } />
