@@ -34,4 +34,7 @@ window.addEventListener('load', () => {
   setTimeout(initScrollAnimations, 500);
 });
 
+// Debug styles
+console.log('Styles loading check: index.css loaded');
+
 createRoot(document.getElementById("root")!).render(<App />);

@@ -12,6 +12,7 @@ import Quotes from "./pages/Quotes";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
 import { useEffect } from "react";
 import { polymathToast } from "./components/ui/use-toast";
+import { StylesDebugger } from "./components/StylesDebugger";
 
 // Create a new query client with optimized settings
 const queryClient = new QueryClient({
@@ -54,6 +55,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <WelcomeOverlay />
+          <StylesDebugger />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/forum" element={<Forum />} />
