@@ -44,7 +44,25 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
 
     if (error) throw error;
 
-    return data || [];
+    // Ensure proper type conversion
+    const typedData = data?.map(item => {
+      const quote = item as unknown as QuoteWithUser;
+      if (quote.user && typeof quote.user === 'object') {
+        return quote;
+      }
+      
+      // If user data is missing, provide defaults
+      return {
+        ...item,
+        user: {
+          name: 'Unknown User',
+          username: 'unknown',
+          status: 'offline'
+        }
+      } as QuoteWithUser;
+    }) || [];
+
+    return typedData;
   } catch (error) {
     console.error("Error fetching quotes:", error);
     return [];
@@ -97,7 +115,24 @@ export const fetchQuotesWithFilters = async (
 
     if (error) throw error;
 
-    return data || [];
+    // Ensure proper type conversion
+    const typedData = data?.map(item => {
+      const quote = item as unknown as QuoteWithUser;
+      if (quote.user && typeof quote.user === 'object') {
+        return quote;
+      }
+      
+      return {
+        ...item,
+        user: {
+          name: 'Unknown User',
+          username: 'unknown',
+          status: 'offline'
+        }
+      } as QuoteWithUser;
+    }) || [];
+
+    return typedData;
   } catch (error) {
     console.error("Error fetching quotes with filters:", error);
     return [];
@@ -123,7 +158,20 @@ export const fetchQuoteById = async (id: string): Promise<QuoteWithUser | null> 
 
     if (error) throw error;
 
-    return data;
+    // Ensure proper type conversion
+    const quote = data as unknown as QuoteWithUser;
+    if (quote?.user && typeof quote.user === 'object') {
+      return quote;
+    }
+    
+    return {
+      ...data,
+      user: {
+        name: 'Unknown User',
+        username: 'unknown',
+        status: 'offline'
+      }
+    } as QuoteWithUser;
   } catch (error) {
     console.error("Error fetching quote:", error);
     return null;
@@ -257,8 +305,11 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (unlikeError) throw unlikeError;
 
-      // Decrement like count
-      await supabase.rpc('decrement_quote_likes', { quote_id: quoteId });
+      // Decrement like count - Fixed function call
+      const { error: decrementError } = await supabase
+        .rpc('decrement_quote_likes', { quote_id: quoteId });
+
+      if (decrementError) throw decrementError;
 
       return false; // Returned false means user unliked
     } else {
@@ -272,8 +323,11 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       if (likeError) throw likeError;
 
-      // Increment like count
-      await supabase.rpc('increment_quote_likes', { quote_id: quoteId });
+      // Increment like count - Fixed function call
+      const { error: incrementError } = await supabase
+        .rpc('increment_quote_likes', { quote_id: quoteId });
+
+      if (incrementError) throw incrementError;
 
       return true; // Returned true means user liked
     }
@@ -311,8 +365,11 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (removeError) throw removeError;
 
-      // Decrement bookmark count
-      await supabase.rpc('decrement_quote_bookmarks', { quote_id: quoteId });
+      // Decrement bookmark count - Fixed function call
+      const { error: decrementError } = await supabase
+        .rpc('decrement_quote_bookmarks', { quote_id: quoteId });
+
+      if (decrementError) throw decrementError;
 
       return false; // Returned false means user removed bookmark
     } else {
@@ -326,8 +383,11 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       if (bookmarkError) throw bookmarkError;
 
-      // Increment bookmark count
-      await supabase.rpc('increment_quote_bookmarks', { quote_id: quoteId });
+      // Increment bookmark count - Fixed function call
+      const { error: incrementError } = await supabase
+        .rpc('increment_quote_bookmarks', { quote_id: quoteId });
+
+      if (incrementError) throw incrementError;
 
       return true; // Returned true means user bookmarked
     }
@@ -418,7 +478,24 @@ export const fetchUserBookmarkedQuotes = async (): Promise<QuoteWithUser[]> => {
 
     if (quotesError) throw quotesError;
 
-    return quotesData || [];
+    // Ensure proper type conversion
+    const typedData = quotesData?.map(item => {
+      const quote = item as unknown as QuoteWithUser;
+      if (quote.user && typeof quote.user === 'object') {
+        return quote;
+      }
+      
+      return {
+        ...item,
+        user: {
+          name: 'Unknown User',
+          username: 'unknown',
+          status: 'offline'
+        }
+      } as QuoteWithUser;
+    }) || [];
+
+    return typedData;
   } catch (error) {
     console.error("Error fetching user's bookmarked quotes:", error);
     return [];

@@ -1,6 +1,6 @@
 
 import { User, Session } from "@supabase/supabase-js";
-import { UserProfile } from "@/types/user";
+import { UserProfile, UserStatus } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 
 // This function will fetch the user profile from Supabase profiles table
@@ -29,9 +29,10 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       username: profile.username || '',
       email: session?.user?.email || '',
       avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || '')}`,
-      status: profile.status || 'offline',
+      status: profile.status as UserStatus || 'offline',
       isGhostMode: profile.is_ghost_mode || false,
       role: profile.role as 'admin' | 'moderator' | 'user',
+      isAdmin: profile.role === 'admin',
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
@@ -52,7 +53,7 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       email: userEmail,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
       role: 'user',
-      status: 'online',
+      status: 'online' as UserStatus,
       isGhostMode: false,
       notificationSettings: {
         desktopNotifications: true,
