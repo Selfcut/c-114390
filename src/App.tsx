@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +12,6 @@ import Quotes from "./pages/Quotes";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
 import { useEffect } from "react";
 import { polymathToast } from "./components/ui/use-toast";
-import { Sidebar } from "./components/Sidebar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,38 +52,33 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <WelcomeOverlay />
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/forum" element={<Forum />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/quotes" element={<Quotes />} />
-                <Route path="/community" element={<NotFound />} />
-                <Route path="/discord" element={<NotFound />} />
-                <Route path="/expert-qa" element={<NotFound />} />
-                <Route path="/disciplines" element={<NotFound />} />
-                <Route path="/events" element={<NotFound />} />
-                <Route path="/study-guides" element={<NotFound />} />
-                <Route path="/reading-list" element={<NotFound />} />
-                <Route path="/study-notes" element={<NotFound />} />
-                <Route path="/my-discussions" element={<NotFound />} />
-                <Route path="/study-groups" element={<NotFound />} />
-                <Route path="/knowledge-map" element={<NotFound />} />
-                <Route path="/learning-analytics" element={<NotFound />} />
-                <Route path="/learning-guides" element={<NotFound />} />
-                <Route path="/wiki" element={<NotFound />} />
-                <Route path="/help-center" element={<NotFound />} />
-                <Route path="/new-research" element={<NotFound />} />
-                <Route path="/academic-journals" element={<NotFound />} />
-                <Route path="/book-reviews" element={<NotFound />} />
-                <Route path="/settings" element={<NotFound />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-          </div>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/forum" element={<Forum />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/quotes" element={<Quotes />} />
+            <Route path="/community" element={<NotFound />} />
+            <Route path="/discord" element={<NotFound />} />
+            <Route path="/expert-qa" element={<NotFound />} />
+            <Route path="/disciplines" element={<NotFound />} />
+            <Route path="/events" element={<NotFound />} />
+            <Route path="/study-guides" element={<NotFound />} />
+            <Route path="/reading-list" element={<NotFound />} />
+            <Route path="/study-notes" element={<NotFound />} />
+            <Route path="/my-discussions" element={<NotFound />} />
+            <Route path="/study-groups" element={<NotFound />} />
+            <Route path="/knowledge-map" element={<NotFound />} />
+            <Route path="/learning-analytics" element={<NotFound />} />
+            <Route path="/learning-guides" element={<NotFound />} />
+            <Route path="/wiki" element={<NotFound />} />
+            <Route path="/help-center" element={<NotFound />} />
+            <Route path="/new-research" element={<NotFound />} />
+            <Route path="/academic-journals" element={<NotFound />} />
+            <Route path="/book-reviews" element={<NotFound />} />
+            <Route path="/settings" element={<NotFound />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
