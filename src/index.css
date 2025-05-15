@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -119,6 +118,7 @@
   opacity: 1;
 }
 
+/* Add a subtle bounce effect to buttons */
 .run-button {
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
   position: relative;
@@ -141,42 +141,7 @@
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
-.transition-colors {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(.4,0,.2,1);
-  transition-duration: .15s;
-}
-
-.p-3 {
-  padding: .75rem;
-}
-
-.rounded-md {
-  border-radius: calc(var(--radius) - 2px);
-}
-
-.gap-3 {
-  gap: .75rem;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.flex {
-  display: flex;
-}
-
-/* Corrected bg-accent class */
-.bg-accent {
-  background-color: hsl(var(--accent));
-}
-
-/* Enhanced hover effects */
+/* Add enhanced hover-lift effect */
 .hover-lift {
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
               box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -187,9 +152,10 @@
   box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.3);
 }
 
-/* Quick fade-in animation for content */
+/* Improve fade-in animation */
 .fade-in {
-  animation: fadeIn 0.6s ease-out;
+  animation: fadeIn 0.6s ease-out forwards;
+  opacity: 0;
 }
 
 @keyframes fadeIn {
@@ -197,7 +163,20 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Subtle pulse animation for buttons */
+/* Add staggered fade-in for lists */
+.staggered-fade-in > * {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.staggered-fade-in > *:nth-child(1) { animation-delay: 0.1s; }
+.staggered-fade-in > *:nth-child(2) { animation-delay: 0.2s; }
+.staggered-fade-in > *:nth-child(3) { animation-delay: 0.3s; }
+.staggered-fade-in > *:nth-child(4) { animation-delay: 0.4s; }
+.staggered-fade-in > *:nth-child(5) { animation-delay: 0.5s; }
+.staggered-fade-in > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* Subtle pulse animation for important buttons */
 .pulse-on-hover:hover {
   animation: pulse 1.8s infinite;
 }
@@ -216,7 +195,7 @@
 }
 
 .enhanced-card:hover {
-  border-color: hsla(var(--primary), 0.5);
+  border-color: hsla(var(--border), 0.8);
   box-shadow: 0 0 0 1px hsla(var(--primary), 0.1);
   outline: none;
 }
@@ -253,169 +232,32 @@ button:focus, a:focus, input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Ripple effect for clickable items */
-.ripple {
-  position: relative;
-  overflow: hidden;
+/* New shimmer loading effect */
+.shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.03) 0%, 
+    rgba(255, 255, 255, 0.08) 50%, 
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
-.ripple:after {
-  content: "";
-  display: block;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 10%, transparent 10.01%);
-  background-repeat: no-repeat;
-  background-position: 50%;
-  transform: scale(10, 10);
-  opacity: 0;
-  transition: transform .5s, opacity 1s;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.ripple:active:after {
-  transform: scale(0, 0);
-  opacity: .3;
-  transition: 0s;
-}
-
-/* Enhance skeleton loading animation */
-.skeleton-pulse {
-  animation: skeletonPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes skeletonPulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 0.3; }
-  100% { opacity: 0.6; }
-}
-
-/* Page transitions */
-.page-transition-enter {
+/* New slide-up effect for content reveals */
+.slide-up {
   opacity: 0;
   transform: translateY(20px);
+  transition: opacity 0.5s, transform 0.5s;
 }
 
-.page-transition-enter-active {
+.slide-up.visible {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-.page-transition-exit {
-  opacity: 1;
-}
-
-.page-transition-exit-active {
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-/* Stylish content highlight on hover */
-.content-highlight {
-  position: relative;
-  overflow: hidden;
-}
-
-.content-highlight:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent 95%, hsla(var(--primary), 0.5) 95%);
-  background-size: 200% 200%;
-  background-position: 100% 100%;
-  transition: background-position 0.5s ease;
-}
-
-.content-highlight:hover:before {
-  background-position: 0% 0%;
-}
-
-/* Image hover zoom effect */
-.img-zoom-container {
-  overflow: hidden;
-}
-
-.img-zoom {
-  transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.img-zoom-container:hover .img-zoom {
-  transform: scale(1.07);
-}
-
-/* Text reveal animation */
-.reveal-text {
-  position: relative;
-  overflow: hidden;
-}
-
-.reveal-text:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0%;
-  height: 100%;
-  background-color: hsla(var(--primary), 0.2);
-  transition: width 0.4s ease;
-}
-
-.reveal-text:hover:after {
-  width: 100%;
-}
-
-/* Collapsible component animations */
-.collapsible-content-enter {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-}
-
-.collapsible-content-enter-active {
-  max-height: 1000px;
-  opacity: 1;
-  transition: max-height 0.5s ease-in-out, opacity 0.5s ease;
-}
-
-.collapsible-content-exit {
-  max-height: 1000px;
-  opacity: 1;
-}
-
-.collapsible-content-exit-active {
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
-}
-
-/* Topic card hover effects */
-.topic-card {
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-}
-
-.topic-card:hover {
-  border-color: hsla(var(--primary), 0.3);
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-/* Book card cover image effect */
-.book-cover {
-  transition: all 0.5s ease;
-  transform-origin: bottom;
-  box-shadow: 0 10px 15px -5px rgba(0, 0, 0, 0.5);
-}
-
-.book-cover:hover {
-  transform: perspective(800px) rotateY(10deg) rotateX(5deg);
-  box-shadow: -10px 10px 15px -5px rgba(0, 0, 0, 0.5);
 }
 
 /* Quote highlight effect */
@@ -434,7 +276,7 @@ button:focus, a:focus, input:focus, textarea:focus, select:focus {
   background: linear-gradient(to bottom, hsla(var(--primary), 1), transparent);
 }
 
-/* Accordion animations */
+/* Collapsible component animations */
 @keyframes slideDown {
   from {
     height: 0;

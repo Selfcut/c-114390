@@ -18,6 +18,8 @@ import { ReadingList } from "../components/ReadingProgress";
 import { UserProgressCard } from "../components/UserProgressCard";
 import { FeaturedAppCard } from "../components/FeaturedAppCard";
 import { ModelCard } from "../components/ModelCard";
+import { QuotesCarousel } from "../components/QuotesCarousel";
+import { WelcomeMessage } from "../components/WelcomeMessage";
 
 // Create a new component for discussion topics
 const DiscussionTopicItem = ({ title, author, replies, timeAgo }: { title: string, author: string, replies: number, timeAgo: string }) => (
@@ -128,20 +130,8 @@ const Index = () => {
           <Header />
           <div className="flex-1 overflow-auto">
             <main className="py-8 px-12">
-              {showWelcome && recentVisit && (
-                <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 flex justify-between items-center animate-fade-in">
-                  <p className="text-gray-300">
-                    <span className="font-medium text-white">Welcome back!</span> Your last visit was {recentVisit}. 
-                    There have been {newDiscussions} new discussions and {newEntries} new knowledge entries since then.
-                  </p>
-                  <button 
-                    onClick={dismissWelcome} 
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
+              {/* Replace the old welcome message with our enhanced one */}
+              <WelcomeMessage />
             
               <h1 className="text-3xl font-bold text-white mb-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 Explore Intellectual Frontiers
@@ -150,6 +140,7 @@ const Index = () => {
               {/* Welcome and Exploration Banner */}
               <WelcomeExploration />
               
+              {/* Creation cards */}
               <div className="grid grid-cols-3 gap-6 mb-12 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                 <Link to="/forum">
                   <CreationCard type="discussion" />
@@ -171,6 +162,11 @@ const Index = () => {
                     </div>
                   </div>
                 </Link>
+              </div>
+              
+              {/* Add new Quote Carousel */}
+              <div className="mb-12 animate-fade-in" style={{ animationDelay: "0.25s" }}>
+                <QuotesCarousel />
               </div>
               
               {/* Membership Benefits */}
@@ -203,8 +199,13 @@ const Index = () => {
                 <CommunitySection />
               </CollapsibleSection>
               
-              {/* User Progress Section */}
-              <CollapsibleSection title="Your Learning Progress" defaultOpen={false} className="animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              {/* User Progress Section - Moving style to className for typescript compatibility */}
+              <CollapsibleSection 
+                title="Your Learning Progress" 
+                defaultOpen={false} 
+                className="animate-fade-in mb-8"
+                style={{ animationDelay: "0.3s" }}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <UserProgressCard 
                     discipline="Mathematics & Logic"

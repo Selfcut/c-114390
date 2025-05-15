@@ -1,6 +1,5 @@
 
-import { BookOpen, Award, TrendingUp } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { BookOpen, ChevronRight } from "lucide-react";
 
 interface UserProgressCardProps {
   discipline: string;
@@ -9,33 +8,42 @@ interface UserProgressCardProps {
   daysStreak: number;
 }
 
-export const UserProgressCard = ({ discipline, progress, nextMilestone, daysStreak }: UserProgressCardProps) => {
+export const UserProgressCard = ({
+  discipline,
+  progress,
+  nextMilestone,
+  daysStreak
+}: UserProgressCardProps) => {
   return (
-    <div className="bg-[#1A1A1A] rounded-lg p-4 flex flex-col gap-3">
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-white">{discipline}</h3>
-        <span className="bg-blue-600 text-xs text-white px-2 py-1 rounded-full">
+    <div className="bg-[#1A1A1A] rounded-lg p-4 hover-lift">
+      <div className="flex justify-between items-start mb-3">
+        <h3 className="text-white font-medium">{discipline}</h3>
+        <span className="text-xs bg-blue-900 text-blue-200 px-2 py-0.5 rounded-full">
           {daysStreak} day streak
         </span>
       </div>
       
-      <div>
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-400">Progress</span>
-          <span className="text-white">{progress}%</span>
+      <div className="mb-4">
+        <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <span>Progress</span>
+          <span>{progress}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-blue-600 rounded-full"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
       </div>
       
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex items-center gap-1 text-xs text-gray-400">
-          <Award size={14} />
-          <span>Next: {nextMilestone}</span>
+      <div className="border-t border-gray-800 pt-3 flex justify-between items-center">
+        <div className="flex items-center text-sm">
+          <BookOpen size={14} className="text-blue-400 mr-1.5" />
+          <span className="text-gray-300">Next: {nextMilestone}</span>
         </div>
-        <div className="flex items-center gap-1 text-xs text-green-400">
-          <TrendingUp size={14} />
-          <span>+5% this week</span>
-        </div>
+        <button className="text-blue-400 hover:text-blue-300 transition-colors">
+          <ChevronRight size={16} />
+        </button>
       </div>
     </div>
   );
