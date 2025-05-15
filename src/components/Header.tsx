@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "./ModeToggle";
 import { UserHoverCard } from "./UserHoverCard";
-import { EnhancedSearch } from "./EnhancedSearch";
+import { GlobalSearch } from "./GlobalSearch";
 import {
   Bell,
   HelpCircle,
@@ -111,9 +112,9 @@ const Header = () => {
             <span className="font-bold text-xl hidden md:inline">Polymath</span>
           </Link>
           
-          {/* Replace simple search with EnhancedSearch component */}
+          {/* Global Search component */}
           <div className="relative flex-1 max-w-md hidden md:block">
-            <EnhancedSearch />
+            <GlobalSearch />
           </div>
           
           {/* Mobile search trigger */}
@@ -140,7 +141,7 @@ const Header = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <EnhancedSearch />
+            <GlobalSearch />
           </div>
         )}
         
