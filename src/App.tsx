@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Forum from "./pages/Forum";
 import Library from "./pages/Library";
+import Quotes from "./pages/Quotes";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/quotes" element={<Quotes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

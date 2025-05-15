@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PromoBar } from "../components/PromoBar";
@@ -9,7 +8,7 @@ import { QuickStartItem } from "../components/QuickStartItem";
 import { FeaturedAppCard } from "../components/FeaturedAppCard";
 import { ModelCard } from "../components/ModelCard";
 import { UserProgressCard } from "../components/UserProgressCard";
-import { BookOpen, MessageSquare, Users, Library, Book, Sparkles, Calendar, BrainCircuit, Search } from "lucide-react";
+import { BookOpen, MessageSquare, Users, Library, Book, Sparkles, Calendar, BrainCircuit, Search, Quote } from "lucide-react";
 import { polymathToast } from "../components/ui/use-toast";
 import { disciplines, formatDaysAgo } from "../lib/utils";
 
@@ -141,12 +140,26 @@ const Index = () => {
                 Explore Intellectual Frontiers
               </h1>
               
-              <div className="grid grid-cols-2 gap-6 mb-12">
+              <div className="grid grid-cols-3 gap-6 mb-12">
                 <Link to="/forum">
                   <CreationCard type="discussion" />
                 </Link>
                 <Link to="/library">
                   <CreationCard type="knowledge" />
+                </Link>
+                <Link to="/quotes">
+                  <div className="creation-card bg-gradient-to-br from-[#36003B] to-[#500056] rounded-lg p-6 h-full flex flex-col">
+                    <div className="mb-4 p-3 rounded-full bg-[#FF3EA5]/20 w-fit">
+                      <Quote size={24} className="text-[#FF3EA5]" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">Share a Quote</h3>
+                    <p className="text-gray-300 mb-6">Discover and contribute to our collection of timeless wisdom.</p>
+                    <div className="mt-auto">
+                      <span className="text-xs text-[#FF3EA5] bg-[#FF3EA5]/10 px-2 py-1 rounded">
+                        NEW FEATURE
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               </div>
               
@@ -421,6 +434,30 @@ const Index = () => {
               
               <section className="mb-12">
                 <h2 className="text-2xl font-bold text-white mb-6">
+                  Wisdom Highlights
+                </h2>
+                <div className="bg-[#1A1A1A] p-6 rounded-lg">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="p-3 rounded-full bg-[#360036]">
+                      <Quote size={24} className="text-[#FF3EA5]" />
+                    </div>
+                    <div>
+                      <blockquote className="text-white text-lg font-medium italic mb-2">
+                        "The unexamined life is not worth living."
+                      </blockquote>
+                      <p className="text-gray-400">— Socrates</p>
+                    </div>
+                  </div>
+                  
+                  <Link to="/quotes" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+                    <span>Explore our wisdom collection</span>
+                    <BookOpen size={16} />
+                  </Link>
+                </div>
+              </section>
+              
+              <section className="mb-12">
+                <h2 className="text-2xl font-bold text-white mb-6">
                   Community Activity
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -475,7 +512,7 @@ const Index = () => {
                   </div>
                 </div>
               </section>
-
+              
               <section className="mb-12">
                 <h2 className="text-2xl font-bold text-white mb-6">
                   Upcoming Events
