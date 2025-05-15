@@ -57,14 +57,7 @@ const App = () => {
             <Route path="/forum" element={<Forum />} />
             <Route path="/library" element={<Library />} />
             <Route path="/quotes" element={<Quotes />} />
-            <Route path="/study-guides" element={<NotFound />} />
             <Route path="/community" element={<NotFound />} />
-            <Route path="/discord" element={<NotFound />} />
-            <Route path="/expert-qa" element={<NotFound />} />
-            <Route path="/disciplines" element={<NotFound />} />
-            <Route path="/events" element={<NotFound />} />
-            <Route path="/my-learning" element={<NotFound />} />
-            <Route path="/resources" element={<NotFound />} />
             <Route path="/settings" element={<NotFound />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
