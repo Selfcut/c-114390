@@ -16,10 +16,12 @@ export type ActivityType =
   | 'forum_post'
   | 'forum_reply'
   | 'wiki_edit'
-  | 'library_add';
+  | 'library_add'
+  | 'interaction';
 
 /**
  * Tracks user activity in the application
+ * @param userId The user ID
  * @param eventType The type of activity
  * @param metadata Additional information about the activity
  */
@@ -28,6 +30,11 @@ export const trackActivity = async (
   eventType: ActivityType, 
   metadata: Record<string, any> = {}
 ): Promise<boolean> => {
+  if (!userId) {
+    console.warn('Cannot track activity: No user ID provided');
+    return false;
+  }
+  
   try {
     const { error } = await supabase
       .from('user_activities')
@@ -61,6 +68,23 @@ export const useActivityTracker = () => {
     if (!user) return false;
     return trackActivity(user.id, eventType, metadata);
   };
+  
+  const trackView = async (section: string, metadata: Record<string, any> = {}) => {
+    return trackUserActivity('view', { section, ...metadata });
+  };
+  
+  const trackInteraction = async (action: string, target: string, metadata: Record<string, any> = {}) => {
+    return trackUserActivity('interaction', { action, target, ...metadata });
+  };
+  
+  const trackLearning = async (topic: string, activity: 'learned' | 'completed', metadata: Record<string, any> = {}) => {
+    return trackUserActivity(activity, { topic, ...metadata });
+  };
 
-  return { trackUserActivity };
+  return { 
+    trackUserActivity,
+    trackView,
+    trackInteraction,
+    trackLearning
+  };
 };

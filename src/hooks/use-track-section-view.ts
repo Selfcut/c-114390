@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { trackActivity } from '@/lib/activity-tracker';
+import { trackActivity, ActivityType } from '@/lib/activity-tracker';
 
 /**
  * Hook to track when a user views a section of the app
@@ -26,7 +26,7 @@ export const useTrackSectionView = (
     };
     
     trackView();
-  }, [user, section]);
+  }, [user, section, JSON.stringify(metadata)]);
 };
 
 /**
@@ -43,7 +43,7 @@ export const useUserInteractions = () => {
   ) => {
     if (!user) return;
     
-    await trackActivity(user.id, 'view', {
+    await trackActivity(user.id, 'interaction' as ActivityType, {
       action,
       targetType,
       targetId,
@@ -53,4 +53,47 @@ export const useUserInteractions = () => {
   };
   
   return { trackInteraction };
+};
+
+/**
+ * Hook to track learning activities
+ */
+export const useTrackLearning = () => {
+  const { user } = useAuth();
+  
+  const trackLearned = async (
+    topic: string,
+    resourceType: string,
+    resourceId: string,
+    metadata: Record<string, any> = {}
+  ) => {
+    if (!user) return;
+    
+    await trackActivity(user.id, 'learned', {
+      topic,
+      resourceType,
+      resourceId,
+      timestamp: new Date().toISOString(),
+      ...metadata
+    });
+  };
+  
+  const trackCompleted = async (
+    topic: string,
+    resourceType: string,
+    resourceId: string,
+    metadata: Record<string, any> = {}
+  ) => {
+    if (!user) return;
+    
+    await trackActivity(user.id, 'completed', {
+      topic,
+      resourceType,
+      resourceId,
+      timestamp: new Date().toISOString(),
+      ...metadata
+    });
+  };
+  
+  return { trackLearned, trackCompleted };
 };

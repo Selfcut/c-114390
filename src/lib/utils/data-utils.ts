@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 /**
  * Fetches user learning progress data
@@ -37,11 +38,19 @@ export const extractTopicsFromActivities = (activities: any[]) => {
   }>();
 
   activities.forEach(activity => {
-    // Safely access metadata properties with type checking
+    // Safely access metadata properties with proper type checking
     const metadata = activity.metadata as Record<string, any> | null;
-    const topic = metadata && typeof metadata === 'object' ? 
-      (metadata.topic as string || metadata.category as string || 'General') : 
-      'General';
+    
+    // Extract topic with safer type handling
+    let topic = 'General';
+    
+    if (metadata && typeof metadata === 'object') {
+      if (typeof metadata.topic === 'string') {
+        topic = metadata.topic;
+      } else if (typeof metadata.category === 'string') {
+        topic = metadata.category;
+      }
+    }
     
     if (!topics.has(topic)) {
       topics.set(topic, { 

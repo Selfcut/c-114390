@@ -14,7 +14,6 @@ interface ProgressCardProps {
   animationDelay?: string;
   recentActivity?: string;
   streakDays?: number;
-  className2?: string;
   onClick?: () => void;
 }
 

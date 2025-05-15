@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { UserWelcome } from "../components/UserWelcome";
@@ -13,9 +14,8 @@ import { CommunityActivity } from "@/components/dashboard/CommunityActivity";
 import { RecommendationsRow } from "../components/RecommendationsRow";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Json } from "@/integrations/supabase/types";
 import { getUserActivityStats } from "@/lib/utils/supabase-utils";
-import { ActivityType, trackActivity } from "@/lib/activity-tracker";
+import { trackActivity } from "@/lib/activity-tracker";
 import { fetchLearningProgress, extractTopicsFromActivities, createProgressDataFromTopics, addDefaultTopics } from "@/lib/utils/data-utils";
 
 // Define interfaces for our data
@@ -74,8 +74,7 @@ const Dashboard = () => {
           .from('user_activities')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
+          .order('created_at', { ascending: false });
           
         if (activitiesError) {
           console.error("Error fetching user activities:", activitiesError);
@@ -107,7 +106,7 @@ const Dashboard = () => {
           .eq('user_id', user.id);
         
         // Add user quote categories to topics
-        if (quoteData) {
+        if (quoteData && quoteData.length > 0) {
           quoteData.forEach(quote => {
             const category = quote.category;
             if (!topics.has(category)) {
@@ -135,6 +134,11 @@ const Dashboard = () => {
         setProgressData(userProgressData);
       } catch (error) {
         console.error("Error in dashboard data fetching:", error);
+        toast({
+          title: "Error loading dashboard data",
+          description: "Please try refreshing the page",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -144,7 +148,7 @@ const Dashboard = () => {
   }, [user, isAuthenticated]);
 
   // Get user name with fallback
-  const userName = user?.name || user?.username || localStorage.getItem('userName') || "Scholar";
+  const userName = user?.name || user?.username || "Scholar";
 
   // Badges for gamification (based on user level from activities)
   const userBadges = [
@@ -157,6 +161,22 @@ const Dashboard = () => {
   
   // Calculate achieved badges count
   const achievedBadges = userBadges.filter(badge => badge.achieved).length;
+  
+  // Handle clicking on a learning card
+  const handleLearningCardClick = async (item: ProgressData) => {
+    toast({
+      title: "Learning content opened",
+      description: `You opened: ${item.title}`,
+    });
+    
+    // Record activity for opening learning content
+    if (user) {
+      await trackActivity(user.id, 'view', { 
+        topic: item.title, 
+        type: 'learning' 
+      });
+    }
+  };
   
   // Tabs for dashboard sections
   const dashboardTabs = [
@@ -183,20 +203,7 @@ const Dashboard = () => {
       ) : (
         <LearningProgress 
           progressData={progressData}
-          onCardClick={(item) => {
-            toast({
-              title: "Learning content opened",
-              description: `You opened: ${item.title}`,
-            });
-            
-            // Record activity for opening learning content
-            if (user) {
-              trackActivity(user.id, 'view', { 
-                topic: item.title, 
-                type: 'learning' 
-              });
-            }
-          }}
+          onCardClick={handleLearningCardClick}
         />
       )
     },

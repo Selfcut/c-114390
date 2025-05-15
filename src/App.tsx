@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-context';
 import { AuthProvider } from '@/lib/auth-context';
 import { Toaster } from '@/components/ui/toaster';
-import { FloatingChatWidget } from '@/components/chat/FloatingChatWidget';
+import { FullHeightChatSidebar } from '@/components/chat/FullHeightChatSidebar';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initializeSupabase } from '@/integrations/supabase/init';
@@ -23,7 +24,6 @@ import Quotes from './components/Quotes';
 import Admin from './pages/Admin';
 import AI from './pages/AI';
 import NotFound from './pages/NotFound';
-import Index from './pages/Index';
 import Wiki from './pages/Wiki';
 
 // Initialize Supabase
@@ -53,7 +53,7 @@ const AuthCallback = () => {
   </div>;
 };
 
-// Root component that checks authentication and provides the floating chat widget
+// Root component that checks authentication and provides the chat sidebar
 const Root = () => {
   const { user, isLoading, isAuthenticated } = useAuth();
   
@@ -71,7 +71,7 @@ const Root = () => {
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
         <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
-        <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Index />} />
+        <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
@@ -140,7 +140,7 @@ const Root = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {user && <FloatingChatWidget currentUser={user} />}
+      {user && <FullHeightChatSidebar />}
     </div>
   );
 };
