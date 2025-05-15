@@ -1,153 +1,99 @@
-import { useState } from 'react';
-import { BookOpen, ArrowRight, Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from '@/components/ui/use-toast';
+import React from 'react';
+import { BookOpen, Flame, GraduationCap, Lightbulb, Rocket } from 'lucide-react';
+import { cn } from "@/lib/utils";
+// Update import for toast 
+import { toast } from "@/components/ui/use-toast";
 
-interface Topic {
-  id: string;
-  title: string;
+interface TopicRecommendationProps {
+  topic: string;
   description: string;
-  category: string;
-  level: string;
-  image: string;
-  popularity: number;
-  readTime: string;
+  icon: React.ReactNode;
+  onExplore: (topic: string) => void;
 }
+
+const TopicCard = ({ topic, description, icon, onExplore }: TopicRecommendationProps) => (
+  <div 
+    className="bg-[#1A1A1A] rounded-lg p-4 hover:bg-gray-800 transition-colors cursor-pointer"
+    onClick={() => onExplore(topic)}
+  >
+    <div className="flex items-center gap-3 mb-2">
+      <div className="p-2 rounded-full bg-gray-900/30">
+        {icon}
+      </div>
+      <h4 className="text-white font-medium">{topic}</h4>
+    </div>
+    <p className="text-sm text-gray-400">{description}</p>
+  </div>
+);
 
 interface TopicRecommendationsProps {
   className?: string;
 }
 
 export const TopicRecommendations = ({ className }: TopicRecommendationsProps) => {
-  const [hoveredTopic, setHoveredTopic] = useState<string | null>(null);
-  
-  const topics: Topic[] = [
+  const topics = [
     {
-      id: '1',
-      title: 'Introduction to Alchemy',
-      description: 'Learn the foundations of alchemical practices and their historical significance.',
-      category: 'Alchemy',
-      level: 'Beginner',
-      image: '/lovable-uploads/b67f802d-430a-4e5a-8755-b61e10470d58.png',
-      popularity: 94,
-      readTime: '25 min'
+      topic: "Alchemy",
+      description: "Explore the ancient art of transformation.",
+      icon: <Flame className="text-orange-400" size={20} />,
     },
     {
-      id: '2',
-      title: 'Hermetic Principles',
-      description: 'Explore the seven hermetic principles and their application to modern life.',
-      category: 'Hermeticism',
-      level: 'Intermediate',
-      image: '/lovable-uploads/d8b5e246-d962-466e-ad7d-61985e448fb9.png',
-      popularity: 88,
-      readTime: '35 min'
+      topic: "Hermeticism",
+      description: "Uncover the timeless wisdom of Hermes Trismegistus.",
+      icon: <BookOpen className="text-blue-400" size={20} />,
     },
     {
-      id: '3',
-      title: 'Sacred Geometry Fundamentals',
-      description: 'Discover the mathematical patterns found in nature and sacred architecture.',
-      category: 'Sacred Geometry',
-      level: 'Beginner',
-      image: '/lovable-uploads/a3dc041f-fb55-4108-807b-ca52164461d8.png',
-      popularity: 91,
-      readTime: '20 min'
-    }
+      topic: "Gnosticism",
+      description: "Delve into the mystical knowledge of Gnostic teachings.",
+      icon: <Lightbulb className="text-yellow-400" size={20} />,
+    },
+    {
+      topic: "Sacred Geometry",
+      description: "Discover the hidden patterns of the universe.",
+      icon: <GraduationCap className="text-purple-400" size={20} />,
+    },
   ];
-
-  const handleTopicClick = (topic: Topic) => {
-    // In a real app, this would navigate to the topic page
-    toast({
-      title: `Topic selected: ${topic.title}`,
-      description: 'Starting your learning journey.'
-    });
-  };
   
-  return (
-    <div className={cn('bg-[#1A1A1A] rounded-lg border border-gray-800 overflow-hidden', className)}>
-      <div className="p-5 border-b border-gray-800">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <BookOpen className="text-[#6E59A5]" size={20} />
-          Recommended For You
-        </h3>
-      </div>
-      
-      <div className="divide-y divide-gray-800">
-        {topics.map((topic) => (
-          <div
-            key={topic.id}
-            className="p-5 hover:bg-[#222] transition-colors relative overflow-hidden group"
-            onMouseEnter={() => setHoveredTopic(topic.id)}
-            onMouseLeave={() => setHoveredTopic(null)}
-            onClick={() => handleTopicClick(topic)}
-          >
-            {/* Background reveal effect */}
-            <div 
-              className={cn(
-                "absolute inset-0 opacity-0 bg-gradient-to-r from-[#1A1A1A] to-[#222222] transition-opacity duration-300",
-                hoveredTopic === topic.id && "opacity-100"
-              )}
-            />
-            
-            <div className="relative z-10 flex gap-4">
-              <div className="w-20 h-20 rounded overflow-hidden flex-shrink-0">
-                <img 
-                  src={topic.image} 
-                  alt={topic.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="text-white font-medium mb-1">{topic.title}</h4>
-                    <p className="text-gray-400 text-sm mb-2 line-clamp-2">{topic.description}</p>
-                  </div>
-                  
-                  <div className={cn(
-                    "w-8 h-8 rounded-full bg-[#6E59A5] text-white flex items-center justify-center opacity-0 transform translate-x-2 transition-all duration-300",
-                    hoveredTopic === topic.id && "opacity-100 translate-x-0"
-                  )}>
-                    <ArrowRight size={16} />
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="bg-[#363636] text-xs text-gray-300 px-2 py-0.5 rounded-full">
-                    {topic.category}
-                  </span>
-                  <span className="bg-[#363636] text-xs text-gray-300 px-2 py-0.5 rounded-full">
-                    {topic.level}
-                  </span>
-                  <span className="bg-[#363636] text-xs text-gray-300 px-2 py-0.5 rounded-full">
-                    {topic.readTime} read
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-1 mt-2">
-                  <Star size={14} className="text-yellow-500" />
-                  <span className="text-gray-400 text-xs">{topic.popularity}% positive reviews</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="p-4 border-t border-gray-800">
-        <button 
-          className="w-full py-2 bg-[#6E59A5] hover:bg-[#7E69AB] text-white rounded transition-colors flex items-center justify-center gap-2"
-          onClick={() => {
-            toast({
-              title: "More recommendations",
-              description: "Loading personalized recommendations based on your interests."
-            });
-          }}
-        >
-          <span>Explore All Recommendations</span>
-          <ArrowRight size={16} />
-        </button>
-      </div>
+  const handleExplore = (topic: string) => {
+    toast({
+      title: "Exploring Topic",
+      description: `Loading content for ${topic}`
+    });
+    
+    // Simulate navigation or content loading
+    console.log(`Exploring topic: ${topic}`);
+  };
+
+return (
+  <div className={cn("space-y-4", className)}>
+    <h3 className="text-xl font-bold text-white">Explore New Topics</h3>
+    <p className="text-sm text-gray-400">
+      Dive deeper into related subjects and expand your understanding.
+    </p>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {topics.map((topic, index) => (
+        <TopicCard
+          key={index}
+          topic={topic.topic}
+          description={topic.description}
+          icon={topic.icon}
+          onExplore={handleExplore}
+        />
+      ))}
     </div>
-  );
+    
+    <button 
+      onClick={() => {
+        toast({
+          title: "Loading More Topics",
+          description: "Fetching additional recommendations"
+        });
+      }}
+      className="w-full py-2 mt-4 bg-gray-800 hover:bg-gray-700 text-white rounded-md transition-colors"
+    >
+      Discover More Topics
+    </button>
+  </div>
+);
 };

@@ -143,6 +143,13 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
     }
   };
   
+  const handleBookmarkClick = (quoteId: string) => {
+    toast({
+      title: "Quote Bookmarked",
+      description: "Added to your collection"
+    });
+  };
+  
   const activeQuote = quotes[activeSlide];
   
   return (

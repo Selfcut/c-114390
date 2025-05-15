@@ -13,58 +13,13 @@ export function useProgressTracking(userId?: string | null) {
   const [isLoading, setIsLoading] = useState(true);
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   
-  // Get progress data from localStorage for non-authenticated users
-  // or from Supabase for authenticated users
+  // Get progress data from localStorage
   useEffect(() => {
     const fetchProgress = async () => {
       setIsLoading(true);
       
-      if (userId) {
-        try {
-          // Check if the user_progress table exists before trying to query it
-          const { data: tables, error: tablesError } = await supabase
-            .from('information_schema.tables')
-            .select('table_name')
-            .eq('table_name', 'user_progress')
-            .eq('table_schema', 'public');
-          
-          if (tablesError) {
-            console.error('Error checking for table:', tablesError);
-            loadFromLocalStorage();
-            return;
-          }
-          
-          // If the table exists, query it
-          if (tables && tables.length > 0) {
-            const { data, error } = await supabase
-              .from('user_progress')
-              .select('*')
-              .eq('user_id', userId);
-              
-            if (error) {
-              console.error('Error fetching progress:', error);
-              loadFromLocalStorage();
-            } else if (data) {
-              setProgressData(data.map(item => ({
-                topicId: item.topic_id || '',
-                progress: item.progress || 0,
-                lastViewed: new Date(item.last_viewed || new Date()),
-                completed: item.completed || false
-              })));
-            }
-          } else {
-            console.log('Table user_progress does not exist, using localStorage');
-            loadFromLocalStorage();
-          }
-        } catch (error) {
-          console.error('Error in progress tracking:', error);
-          loadFromLocalStorage();
-        }
-      } else {
-        // Not authenticated, use localStorage
-        loadFromLocalStorage();
-      }
-      
+      // For now, always use localStorage since the Supabase tables don't exist yet
+      loadFromLocalStorage();
       setIsLoading(false);
     };
     
@@ -109,46 +64,12 @@ export function useProgressTracking(userId?: string | null) {
       }
     });
     
-    // Then persist to storage
-    if (userId) {
-      try {
-        // Check if the user_progress table exists before trying to update it
-        const { data: tables, error: tablesError } = await supabase
-          .from('information_schema.tables')
-          .select('table_name')
-          .eq('table_name', 'user_progress')
-          .eq('table_schema', 'public');
-        
-        if (tablesError || !tables || tables.length === 0) {
-          console.log('user_progress table does not exist, using localStorage');
-          saveToLocalStorage([...progressData, updatedItem]);
-          return;
-        }
-        
-        // Store in Supabase if authenticated and table exists
-        const { error } = await supabase
-          .from('user_progress')
-          .upsert({
-            user_id: userId,
-            topic_id: topicId,
-            progress,
-            last_viewed: now.toISOString(),
-            completed
-          });
-          
-        if (error) {
-          console.error('Error updating progress in database:', error);
-          // Fallback to local storage
-          saveToLocalStorage([...progressData, updatedItem]);
-        }
-      } catch (error) {
-        console.error('Error in progress update:', error);
-        saveToLocalStorage([...progressData, updatedItem]);
-      }
-    } else {
-      // Save to localStorage if not authenticated
-      saveToLocalStorage([...progressData, updatedItem]);
-    }
+    // Save to localStorage
+    const updatedData = progressData.some(item => item.topicId === topicId)
+      ? progressData.map(item => item.topicId === topicId ? updatedItem : item)
+      : [...progressData, updatedItem];
+    
+    saveToLocalStorage(updatedData);
   };
   
   const saveToLocalStorage = (data: ProgressData[]) => {
