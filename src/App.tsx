@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +11,7 @@ import Quotes from "./pages/Quotes";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
 import { useEffect } from "react";
 import { polymathToast } from "./components/ui/use-toast";
-import { MainSidebar } from "./components/MainSidebar";
+import { Sidebar } from "./components/Sidebar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,7 +53,7 @@ const App = () => {
         <BrowserRouter>
           <WelcomeOverlay />
           <div className="flex min-h-screen">
-            <MainSidebar />
+            <Sidebar />
             <main className="flex-1">
               <Routes>
                 <Route path="/" element={<Index />} />
