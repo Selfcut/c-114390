@@ -153,13 +153,3 @@
   background-color: hsl(var(--card)) !important;
   border-color: hsl(var(--border)) !important;
 }
-
-/* Fix the theme toggle icon positioning */
-button[aria-label="Toggle theme"] svg {
-  position: static !important;
-}
-
-/* Ensure no absolutely positioned icons without containers */
-.absolute {
-  position: absolute !important;
-}
