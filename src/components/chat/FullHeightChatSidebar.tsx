@@ -1,121 +1,143 @@
 
 import React, { useState, useEffect } from "react";
+import { ChevronLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, X } from "lucide-react";
-import { ChatInterface } from "./ChatInterface";
-import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { publishChatSidebarToggle } from "@/lib/utils/event-utils";
 import { useAuth } from "@/lib/auth-context";
-import { trackActivity } from "@/lib/activity-tracker";
-import { dispatchChatSidebarToggle } from "@/lib/utils/event-utils";
-
-// Define type for conversation type
-type ConversationType = "direct" | "group" | "global";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 export const FullHeightChatSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedConversation, setSelectedConversation] = useState<any>(null);
-  const [conversationType, setConversationType] = useState<ConversationType>('direct');
-  const { user } = useAuth();
-
-  // Default conversation (for demo purposes - normally this would be the last active conversation)
-  useEffect(() => {
-    if (!selectedConversation) {
-      setSelectedConversation({
-        id: 'direct-user1',
-        name: 'Jane Smith',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-        status: 'online',
-        isOnline: true
-      });
-      setConversationType('direct');
+  const [conversations, setConversations] = useState([
+    {
+      id: "1",
+      name: "Global Chat",
+      avatar: "/placeholder.svg",
+      lastMessage: "Welcome to the Polymath community!",
+      unread: 2,
+      isGlobal: true
+    },
+    {
+      id: "2", 
+      name: "Philosophy Group",
+      avatar: "/placeholder.svg",
+      lastMessage: "What's everyone's take on existentialism?",
+      unread: 0,
+      isGroup: true
     }
-  }, [selectedConversation]);
+  ]);
+  const { user, isAuthenticated } = useAuth();
 
-  // Track chat visibility changes and notify layout
-  useEffect(() => {
-    dispatchChatSidebarToggle(isOpen);
-    
-    if (user && isOpen) {
-      trackActivity(user.id, 'view', {
-        section: 'chat',
-        action: 'open_sidebar',
-        timestamp: new Date().toISOString()
-      });
-    }
-  }, [isOpen, user]);
-
-  const toggleChat = () => {
-    setIsOpen(!isOpen);
+  // Toggle sidebar
+  const toggleSidebar = () => {
+    const newState = !isOpen;
+    setIsOpen(newState);
+    publishChatSidebarToggle(newState);
   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-  };
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768 && isOpen) {
+        setIsOpen(false);
+        publishChatSidebarToggle(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen]);
 
   return (
     <>
+      {/* Chat toggle button (visible when sidebar is closed) */}
       {!isOpen && (
         <Button
-          className="fixed right-5 top-20 z-50 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90"
-          onClick={toggleChat}
-          aria-label="Open chat"
+          onClick={toggleSidebar}
+          className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg z-50 bg-primary hover:bg-primary/90"
         >
-          <MessageSquare size={20} />
+          <MessageSquare className="h-6 w-6" />
         </Button>
       )}
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: 350 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 350 }}
-            transition={{ duration: 0.3 }}
-            className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-background border-l border-border shadow-xl w-[400px] overflow-hidden"
-          >
-            <div className="bg-primary/10 p-3 flex justify-between items-center border-b">
-              <div className="flex items-center">
-                <MessageSquare size={18} className="mr-2 text-primary" />
-                <h3 className="font-medium text-sm">
-                  {selectedConversation 
-                    ? `Chat with ${selectedConversation.name}` 
-                    : "Select a conversation"}
-                </h3>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleClose}
-                className="h-7 w-7"
-                aria-label="Close chat"
-              >
-                <X size={14} />
-              </Button>
-            </div>
-            
-            {selectedConversation && (
-              <div className="flex-1 overflow-hidden">
-                <ChatInterface
-                  chatType={conversationType}
-                  recipientId={conversationType === 'direct' ? selectedConversation.id : undefined}
-                  recipientName={conversationType === 'direct' ? selectedConversation.name : undefined}
-                  recipientAvatar={conversationType === 'direct' ? selectedConversation.avatar : undefined}
-                  recipientStatus={conversationType === 'direct' ? selectedConversation.status : undefined}
-                  groupId={conversationType === 'group' ? selectedConversation.id : undefined}
-                  groupName={conversationType === 'group' ? selectedConversation.name : undefined}
-                  groupAvatar={conversationType === 'group' ? selectedConversation.avatar : undefined}
-                  groupMembers={conversationType === 'group' && selectedConversation.members ? 
-                    selectedConversation.members.map((member: any) => ({
-                      ...member,
-                      status: member.status || 'offline'
-                    })) : 
-                    undefined}
-                />
+      {/* Chat sidebar */}
+      <aside 
+        className={`fixed top-0 right-0 h-full bg-background border-l border-border w-[400px] transform transition-transform duration-300 ease-in-out z-40 shadow-lg ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="border-b p-4 flex justify-between items-center">
+            <h2 className="text-lg font-semibold flex items-center">
+              <MessageSquare className="mr-2 h-5 w-5" />
+              Chat
+            </h2>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Chat content */}
+          <div className="flex-1 flex flex-col">
+            {isAuthenticated ? (
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-4">
+                  {conversations.map((convo) => (
+                    <Card key={convo.id} className="p-3 hover:bg-accent/30 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={convo.avatar} alt={convo.name} />
+                          <AvatarFallback>{convo.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center">
+                            <div className="font-medium flex items-center">
+                              {convo.name}
+                              {convo.isGlobal && (
+                                <Badge variant="secondary" className="ml-2 text-xs">Global</Badge>
+                              )}
+                              {convo.isGroup && (
+                                <Badge variant="outline" className="ml-2 text-xs">Group</Badge>
+                              )}
+                            </div>
+                            {convo.unread > 0 && (
+                              <Badge className="bg-primary">{convo.unread}</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {convo.lastMessage}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="flex-1 flex items-center justify-center p-6">
+                <div className="text-center">
+                  <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground opacity-50 mb-4" />
+                  <h3 className="font-medium mb-2">Sign in to chat</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Join the conversation by signing in to your account
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.location.href = '/auth'}
+                    className="mx-auto"
+                  >
+                    Sign In / Register
+                  </Button>
+                </div>
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      </aside>
     </>
   );
 };
