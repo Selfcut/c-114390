@@ -18,9 +18,9 @@ export const PageLayout = ({
   showHeader = true 
 }: PageLayoutProps) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       {showPromo && <PromoBar />}
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         {showSidebar && <Sidebar />}
         <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-64' : ''}`}>
           {showHeader && <Header />}
