@@ -1,28 +1,44 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* General Styles */
 body {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', 'Arial', sans-serif;
   background-color: #121212;
   color: #fff;
   line-height: 1.6;
   overflow-x: hidden;
-}
-
-/* Utility Classes */
-.container {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 0.5rem;
   color: #fff;
+}
+
+h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+p {
+  margin-bottom: 1rem;
 }
 
 a {
@@ -33,6 +49,14 @@ a {
 
 a:hover {
   color: #7E69AB;
+}
+
+/* Utility Classes */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 /* Layout Components */
@@ -82,6 +106,7 @@ button {
   border-radius: 0.3rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-weight: 500;
 }
 
 button:hover {

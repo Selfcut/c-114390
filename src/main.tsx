@@ -33,11 +33,18 @@ const initScrollAnimations = () => {
 
 // Execute after initial render
 window.addEventListener('load', () => {
-  setTimeout(initScrollAnimations, 500);
-  console.log('Styles loaded: Tailwind and CSS initialized');
+  setTimeout(() => {
+    initScrollAnimations();
+    console.log('Styles loaded: Tailwind and CSS initialized');
+  }, 100);
 });
 
 // Debug styles
 console.log('Styles loading check: index.css loaded');
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Force re-render to ensure styles are applied
+createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
