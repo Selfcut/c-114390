@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -292,7 +293,7 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       // Decrement like count using the correctly formatted RPC call
       const { error: decrementError } = await supabase.rpc(
-        'decrement_quote_likes',
+        'decrement_quote_likes' as any,
         { quote_id: quoteId }
       );
 
@@ -312,7 +313,7 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 
       // Increment like count using the correctly formatted RPC call
       const { error: incrementError } = await supabase.rpc(
-        'increment_quote_likes',
+        'increment_quote_likes' as any,
         { quote_id: quoteId }
       );
 
@@ -356,7 +357,7 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       // Decrement bookmark count using the correctly formatted RPC call
       const { error: decrementError } = await supabase.rpc(
-        'decrement_quote_bookmarks',
+        'decrement_quote_bookmarks' as any,
         { quote_id: quoteId }
       );
 
@@ -376,7 +377,7 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 
       // Increment bookmark count using the correctly formatted RPC call
       const { error: incrementError } = await supabase.rpc(
-        'increment_quote_bookmarks',
+        'increment_quote_bookmarks' as any,
         { quote_id: quoteId }
       );
 

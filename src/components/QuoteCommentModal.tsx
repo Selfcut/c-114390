@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { X, Send, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -155,7 +156,7 @@ export const QuoteCommentModal = ({
       
       // Update quote comment count using the correct RPC function call
       const { error: updateError } = await supabase.rpc(
-        'increment_quote_comments',
+        'increment_quote_comments' as any,
         { quote_id: quoteId }
       );
       
