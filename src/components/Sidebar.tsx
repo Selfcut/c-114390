@@ -170,7 +170,7 @@ export const Sidebar = () => {
 
   return (
     <div 
-      className={`bg-[#1A1A1A] flex flex-col ${
+      className={`bg-sidebar flex flex-col ${
         collapsed ? 'w-16' : 'w-64'
       } transition-all duration-300`}
     >
@@ -206,7 +206,7 @@ export const Sidebar = () => {
                 isActive(item.path)
                   ? 'bg-gray-800 text-white'
                   : 'text-white hover:text-white hover:bg-gray-800'
-              }`}
+              } transition-colors`}
             >
               <div className="flex items-center">
                 <span className="w-5 h-5">{item.icon}</span>
@@ -239,7 +239,7 @@ export const Sidebar = () => {
               onClick={() => toggleSection('myLearning')}
               className={`flex items-center ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } w-full px-3 py-2 rounded-md text-white hover:bg-gray-800`}
+              } w-full px-3 py-2 rounded-md text-white hover:bg-gray-800 transition-colors`}
             >
               <div className="flex items-center">
                 {!collapsed && (
@@ -261,7 +261,7 @@ export const Sidebar = () => {
                       isActive(item.path)
                         ? 'bg-gray-800 text-white'
                         : 'text-white hover:text-white hover:bg-gray-800'
-                    }`}
+                    } transition-colors`}
                   >
                     <div className="flex items-center">
                       <span className="w-4 h-4">{item.icon}</span>
@@ -279,13 +279,13 @@ export const Sidebar = () => {
             )}
           </div>
 
-          {/* Resources Section - Removing the bg-gray-900 class that was making it blue */}
-          <div className="rounded-md">
+          {/* Resources Section */}
+          <div>
             <button
               onClick={() => toggleSection('resources')}
               className={`flex items-center ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } w-full px-3 py-2 rounded-md text-white hover:bg-gray-800`}
+              } w-full px-3 py-2 rounded-md text-white hover:bg-gray-800 transition-colors p-3 gap-3`}
             >
               <div className="flex items-center">
                 {!collapsed && (
@@ -307,7 +307,7 @@ export const Sidebar = () => {
                       isActive(item.path)
                         ? 'bg-gray-800 text-white'
                         : 'text-white hover:text-white hover:bg-gray-800'
-                    }`}
+                    } transition-colors`}
                   >
                     <div className="flex items-center">
                       <span className="w-4 h-4">{item.icon}</span>
@@ -339,7 +339,7 @@ export const Sidebar = () => {
 
       <div className="p-4">
         {!collapsed ? (
-          <div className="bg-gray-800 rounded-lg p-3 text-sm text-white">
+          <div className="bg-gray-800 rounded-md p-3 text-sm text-white">
             <div className="font-medium text-white mb-1">Pro Tip</div>
             <p>Press <kbd className="bg-gray-700 px-1.5 py-0.5 rounded">⌘</kbd> + <kbd className="bg-gray-700 px-1.5 py-0.5 rounded">K</kbd> to search</p>
           </div>
@@ -352,3 +352,4 @@ export const Sidebar = () => {
     </div>
   );
 };
+
