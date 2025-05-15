@@ -77,7 +77,7 @@ export const ProgressCard = ({
         
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-400">{progress}% complete</span>
-          {streakDays !== undefined && (
+          {streakDays !== undefined && streakDays > 0 && (
             <div className="flex items-center gap-1.5">
               <Award size={14} className="text-yellow-500" />
               <span className="text-sm text-yellow-400">{streakDays} day streak</span>

@@ -97,11 +97,15 @@ export const createProgressDataFromTopics = (topics: Map<string, {
  */
 export const addDefaultTopics = () => {
   const defaultTopics = ['Mathematics & Logic', 'Philosophy', 'Physics', 'Computer Science'];
+  const currentDate = new Date().toLocaleDateString();
+  
   return defaultTopics.map((topic, index) => ({
     id: (index + 1000).toString(),
     title: topic,
     description: 'Begin your learning journey',
     progress: 0,
-    icon: ["book", "brain", "target", "clock"][index % 4]
+    icon: ["book", "brain", "target", "clock"][index % 4],
+    recentActivity: `No recent activity`,
+    streakDays: 0
   }));
 };
