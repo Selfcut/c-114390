@@ -2,7 +2,7 @@
 import React from "react";
 import { useTheme } from "@/lib/theme-context";
 import { Moon, Sun } from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 export const ThemeToggle: React.FC = () => {
@@ -19,11 +19,11 @@ export const ThemeToggle: React.FC = () => {
   };
   
   return (
-    <Toggle 
-      aria-label="Toggle theme"
-      className="border-0 hover:bg-transparent"
-      pressed={theme === "light"}
-      onPressedChange={handleToggle}
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleToggle}
+      className="w-9 px-0"
     >
       {theme === "dark" ? (
         <Sun className="h-5 w-5 text-yellow-500" />
@@ -33,6 +33,6 @@ export const ThemeToggle: React.FC = () => {
       <span className="sr-only">
         {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       </span>
-    </Toggle>
+    </Button>
   );
 };

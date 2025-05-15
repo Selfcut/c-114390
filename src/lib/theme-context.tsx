@@ -40,14 +40,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (theme === "light") {
       root.classList.add("light-mode");
       root.classList.remove("dark-mode");
+      document.body.style.backgroundColor = "white";
+      document.body.style.color = "#1a202c";
     } else {
       root.classList.add("dark-mode");
       root.classList.remove("light-mode");
+      document.body.style.backgroundColor = "#121212";
+      document.body.style.color = "white";
     }
+    
+    console.log(`Theme set to: ${theme}`);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === "dark" ? "light" : "dark");
+    setTheme(prev => {
+      const newTheme = prev === "dark" ? "light" : "dark";
+      console.log(`Toggling theme from ${prev} to ${newTheme}`);
+      return newTheme;
+    });
   };
 
   return (

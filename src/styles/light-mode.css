@@ -61,9 +61,20 @@
 }
 
 /* Light mode specific overrides */
+.light-mode {
+  background-color: white;
+  color: #1a202c;
+}
+
+.light-mode header {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: #e2e8f0;
+}
+
 .light-mode .sidebar {
   background-color: hsl(var(--sidebar-background));
   color: hsl(var(--sidebar-foreground));
+  border-right-color: #e2e8f0;
 }
 
 .light-mode .sidebar a,
@@ -76,12 +87,26 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+.light-mode .sidebar .bg-gray-800 {
+  background-color: #e2e8f0;
+}
+
+.light-mode .sidebar .text-white {
+  color: #1a202c;
+}
+
+.light-mode .sidebar .text-gray-300, 
+.light-mode .sidebar .text-gray-400 {
+  color: #4a5568;
+}
+
 .light-mode .knowledge-browser {
   background-color: hsl(var(--muted));
 }
 
 .light-mode .card {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
 }
 
 /* Override the enhanced card glow effect for light mode */
@@ -143,4 +168,18 @@
   background-color: white;
   border-color: #e2e8f0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Make sure all text is properly colored in light mode */
+.light-mode h1, 
+.light-mode h2, 
+.light-mode h3, 
+.light-mode h4, 
+.light-mode h5, 
+.light-mode h6 {
+  color: #1a202c;
+}
+
+.light-mode p {
+  color: #4a5568;
 }

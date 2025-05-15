@@ -8,9 +8,9 @@ select {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  border: 1px solid #333;
-  background-color: #222;
-  color: #fff;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   border-radius: 0.3rem;
   transition: border-color 0.3s ease;
 }
@@ -28,7 +28,7 @@ button {
   padding: 0.75rem 1.5rem;
   border: none;
   background-color: hsl(var(--primary));
-  color: #fff;
+  color: hsl(var(--primary-foreground));
   border-radius: 0.3rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -41,7 +41,8 @@ button:hover {
 
 /* Card Component */
 .card {
-  background-color: #1A1A1A;
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
   border-radius: 0.5rem;
   padding: 1.5rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -66,7 +67,7 @@ table {
 th, td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 th {

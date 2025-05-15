@@ -2,13 +2,13 @@
 /* Layout Components */
 .sidebar {
   background-color: hsl(var(--sidebar-background));
-  border-right: 1px solid #222;
+  border-right: 1px solid hsl(var(--sidebar-border));
 }
 
 .header {
-  background-color: #1A1A1A;
+  background-color: hsl(var(--background));
   padding: 1rem;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 /* Application Layout */
@@ -30,6 +30,6 @@
   .sidebar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid hsl(var(--border));
   }
 }

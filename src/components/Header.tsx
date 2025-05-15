@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Menu as MenuIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -16,7 +16,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export const Header: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
   
   return (
     <header className="sticky top-0 z-40 w-full bg-background/90 backdrop-blur-sm border-b border-border">
@@ -64,6 +69,17 @@ export const Header: React.FC = () => {
         
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={toggleMenu}
+            >
+              <MenuIcon className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+            
             {/* Theme toggle */}
             <ThemeToggle />
             
@@ -112,6 +128,52 @@ export const Header: React.FC = () => {
           </nav>
         </div>
       </div>
+      
+      {/* Mobile menu (shown when isMenuOpen is true) */}
+      {isMenuOpen && (
+        <div className="md:hidden border-t border-border">
+          <div className="container py-2 px-4">
+            <nav className="flex flex-col space-y-2">
+              <Link 
+                to="/" 
+                className={`p-2 rounded-md font-medium ${
+                  location.pathname === "/" ? "text-primary bg-muted" : "text-foreground"
+                }`}
+                onClick={toggleMenu}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/forum" 
+                className={`p-2 rounded-md font-medium ${
+                  location.pathname === "/forum" ? "text-primary bg-muted" : "text-foreground"
+                }`}
+                onClick={toggleMenu}
+              >
+                Forum
+              </Link>
+              <Link 
+                to="/library" 
+                className={`p-2 rounded-md font-medium ${
+                  location.pathname === "/library" ? "text-primary bg-muted" : "text-foreground"
+                }`}
+                onClick={toggleMenu}
+              >
+                Library
+              </Link>
+              <Link 
+                to="/quotes" 
+                className={`p-2 rounded-md font-medium ${
+                  location.pathname === "/quotes" ? "text-primary bg-muted" : "text-foreground"
+                }`}
+                onClick={toggleMenu}
+              >
+                Quotes
+              </Link>
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

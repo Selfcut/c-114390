@@ -23,8 +23,11 @@ import {
   BookOpenCheck
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/lib/theme-context';
 
 export const Sidebar = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [collapsed, setCollapsed] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     myLearning: false,
@@ -177,17 +180,17 @@ export const Sidebar = () => {
       <div className="flex items-center justify-between p-4">
         {!collapsed && (
           <div className="flex items-center space-x-2">
-            <div className="bg-white w-6 h-6 rounded flex items-center justify-center">
-              <Infinity size={16} className="text-black" />
+            <div className={`${isDark ? 'bg-white' : 'bg-gray-800'} w-6 h-6 rounded flex items-center justify-center`}>
+              <Infinity size={16} className={isDark ? 'text-black' : 'text-white'} />
             </div>
-            <h2 className="text-xl font-bold text-white">Polymath</h2>
+            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Polymath</h2>
           </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={`${
             collapsed ? 'mx-auto' : ''
-          } p-1.5 rounded-md bg-gray-800 text-white hover:text-white transition-colors`}
+          } p-1.5 rounded-md ${isDark ? 'bg-gray-800 text-white hover:text-white' : 'bg-gray-200 text-gray-800 hover:text-gray-900'} transition-colors`}
         >
           {collapsed ? <Menu size={18} /> : <X size={18} />}
         </button>
@@ -202,15 +205,15 @@ export const Sidebar = () => {
               to={item.path}
               className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 isActive(item.path)
-                  ? 'bg-gray-800 text-white'
-                  : 'text-white hover:text-white hover:bg-gray-800'
+                  ? isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
+                  : isDark ? 'text-white hover:text-white hover:bg-gray-800' : 'text-gray-800 hover:text-gray-900 hover:bg-gray-200'
               }`}
             >
-              <div className="text-gray-300">
+              <div className={isDark ? "text-gray-300" : "text-gray-700"}>
                 {item.icon}
               </div>
               {!collapsed && (
-                <span className="text-white text-sm font-medium flex-1 text-left">
+                <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-sm font-medium flex-1 text-left`}>
                   {item.title}
                 </span>
               )}
@@ -239,16 +242,16 @@ export const Sidebar = () => {
               onClick={() => toggleSection('myLearning')}
               className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } text-white hover:bg-gray-800`}
+              } ${isDark ? 'text-white hover:bg-gray-800' : 'text-gray-800 hover:bg-gray-200'}`}
             >
               <div className="flex items-center gap-3">
-                <BookText size={20} className="text-gray-300" />
+                <BookText size={20} className={isDark ? "text-gray-300" : "text-gray-700"} />
                 {!collapsed && (
-                  <span className="text-white text-sm font-medium flex-1 text-left">My Learning</span>
+                  <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-sm font-medium flex-1 text-left`}>My Learning</span>
                 )}
               </div>
               {!collapsed && (
-                <ChevronDown size={16} className={`text-gray-400 ${expandedSections.myLearning ? 'transform rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`${isDark ? 'text-gray-400' : 'text-gray-600'} ${expandedSections.myLearning ? 'transform rotate-180' : ''}`} />
               )}
             </button>
             
@@ -260,14 +263,14 @@ export const Sidebar = () => {
                     to={item.path}
                     className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
                       isActive(item.path)
-                        ? 'bg-gray-800 text-white'
-                        : 'text-white hover:text-white hover:bg-gray-800'
+                        ? isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
+                        : isDark ? 'text-white hover:text-white hover:bg-gray-800' : 'text-gray-800 hover:text-gray-900 hover:bg-gray-200'
                     }`}
                   >
-                    <div className="text-gray-300">
+                    <div className={isDark ? "text-gray-300" : "text-gray-700"}>
                       {item.icon}
                     </div>
-                    <span className="text-white text-xs font-medium flex-1 text-left">
+                    <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-xs font-medium flex-1 text-left`}>
                       {item.title}
                     </span>
                     
@@ -288,16 +291,16 @@ export const Sidebar = () => {
               onClick={() => toggleSection('resources')}
               className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${
                 collapsed ? 'justify-center' : 'justify-between'
-              } text-white hover:bg-gray-800`}
+              } ${isDark ? 'text-white hover:bg-gray-800' : 'text-gray-800 hover:bg-gray-200'}`}
             >
               <div className="flex items-center gap-3">
-                <Library size={20} className="text-gray-300" />
+                <Library size={20} className={isDark ? "text-gray-300" : "text-gray-700"} />
                 {!collapsed && (
-                  <span className="text-white text-sm font-medium flex-1 text-left">Resources</span>
+                  <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-sm font-medium flex-1 text-left`}>Resources</span>
                 )}
               </div>
               {!collapsed && (
-                <ChevronDown size={16} className={`text-gray-400 ${expandedSections.resources ? 'transform rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`${isDark ? 'text-gray-400' : 'text-gray-600'} ${expandedSections.resources ? 'transform rotate-180' : ''}`} />
               )}
             </button>
             
@@ -309,14 +312,14 @@ export const Sidebar = () => {
                     to={item.path}
                     className={`w-full flex items-center gap-3 p-2 pl-6 pr-3 rounded-md transition-colors ${
                       isActive(item.path)
-                        ? 'bg-gray-800 text-white'
-                        : 'text-white hover:text-white hover:bg-gray-800'
+                        ? isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
+                        : isDark ? 'text-white hover:text-white hover:bg-gray-800' : 'text-gray-800 hover:text-gray-900 hover:bg-gray-200'
                     }`}
                   >
-                    <div className="text-gray-300">
+                    <div className={isDark ? "text-gray-300" : "text-gray-700"}>
                       {item.icon}
                     </div>
-                    <span className="text-white text-xs font-medium flex-1 text-left">
+                    <span className={`${isDark ? 'text-white' : 'text-gray-800'} text-xs font-medium flex-1 text-left`}>
                       {item.title}
                     </span>
                     
@@ -327,7 +330,7 @@ export const Sidebar = () => {
                         </span>
                       )}
                       {item.hasEditIcon && (
-                        <span className="text-gray-400">
+                        <span className={isDark ? "text-gray-400" : "text-gray-600"}>
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 20h9"></path>
                             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -345,13 +348,13 @@ export const Sidebar = () => {
 
       <div className="p-4">
         {!collapsed ? (
-          <div className="bg-gray-800 rounded-md p-3 text-sm text-white">
-            <div className="font-medium text-white mb-1">Pro Tip</div>
-            <p>Press <kbd className="bg-gray-700 px-1.5 py-0.5 rounded">⌘</kbd> + <kbd className="bg-gray-700 px-1.5 py-0.5 rounded">K</kbd> to search</p>
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-200'} rounded-md p-3 text-sm ${isDark ? 'text-white' : 'text-gray-800'}`}>
+            <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>Pro Tip</div>
+            <p>Press <kbd className={`${isDark ? 'bg-gray-700' : 'bg-gray-300'} px-1.5 py-0.5 rounded`}>⌘</kbd> + <kbd className={`${isDark ? 'bg-gray-700' : 'bg-gray-300'} px-1.5 py-0.5 rounded`}>K</kbd> to search</p>
           </div>
         ) : (
           <div className="flex justify-center">
-            <BookText size={20} className="text-white" />
+            <BookText size={20} className={isDark ? "text-white" : "text-gray-800"} />
           </div>
         )}
       </div>
