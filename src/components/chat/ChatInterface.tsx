@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,7 +25,7 @@ import {
   FileIcon,
   Mic,
   Video,
-  Gif,
+  Gift,
   ChevronDown,
   Search,
   VideoIcon,
@@ -87,7 +86,10 @@ const generateMockMessages = () => {
       reactions: [
         { emoji: "👍", count: 2, users: ["user1", "user3"] },
         { emoji: "❤️", count: 1, users: ["user1"] }
-      ]
+      ],
+      isEdited: false,
+      replyTo: null,
+      mentions: []
     },
     {
       id: "msg2",
@@ -623,10 +625,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               sender={message.sender}
               isCurrentUser={message.sender.id === currentUserId}
               timestamp={message.timestamp}
-              isEdited={message.isEdited}
+              isEdited={message.isEdited || false}
               reactions={message.reactions}
-              replyTo={message.replyTo}
-              mentions={message.mentions}
+              replyTo={message.replyTo || undefined}
+              mentions={message.mentions || []}
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
               onReply={handleReplyMessage}
@@ -729,7 +731,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   className="justify-start font-normal gap-2"
                   onClick={() => setIsAttachmentMenuOpen(false)}
                 >
-                  <Gif size={16} />
+                  <Gift size={16} />
                   <span>GIF</span>
                 </Button>
               </div>
@@ -818,7 +820,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 size="icon"
                 className="h-9 w-9 rounded-full flex-shrink-0"
               >
-                <Gif size={20} />
+                <Gift size={20} />
               </Button>
             </PopoverTrigger>
             <PopoverContent side="top" align="end" className="w-72 p-2">

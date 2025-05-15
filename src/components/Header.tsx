@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -119,7 +118,7 @@ const Header = () => {
 
   const formatNotificationTime = (timestamp) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now - timestamp) / (1000 * 60));
+    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60));
     
     if (diffInMinutes < 60) {
       return `${diffInMinutes}m ago`;

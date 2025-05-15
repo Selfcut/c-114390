@@ -17,6 +17,7 @@ export interface UserProfile {
   joinedAt?: Date;
   isGhostMode: boolean;
   isAdmin?: boolean;
+  role?: 'admin' | 'moderator' | 'user';
   notificationSettings: {
     desktopNotifications: boolean;
     soundNotifications: boolean;

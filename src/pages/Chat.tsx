@@ -5,6 +5,7 @@ import { ChatInterface } from "../components/chat/ChatInterface";
 import { ConversationList, Conversation } from "../components/chat/ConversationList";
 import { EmptyConversationState } from "../components/chat/EmptyConversationState";
 import { useSearchParams } from "react-router-dom";
+import { UserStatus } from "@/types/user";
 
 const Chat = () => {
   const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ const Chat = () => {
         id: `direct-${directParam}`,
         name: directParam,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${directParam}`,
-        status: "online"
+        status: "online" as UserStatus
       });
       setConversationType('direct');
     }
@@ -60,7 +61,7 @@ const Chat = () => {
                 selectedConversation.members.map(member => ({
                   ...member,
                   // Add a default status since the member object doesn't have one
-                  status: 'offline'
+                  status: 'offline' as UserStatus
                 })) :
                 undefined}
             />
