@@ -49,6 +49,8 @@ export const extractTopicsFromActivities = (activities: any[]) => {
         topic = metadata.topic;
       } else if (typeof metadata.category === 'string') {
         topic = metadata.category;
+      } else if (typeof metadata.section === 'string') {
+        topic = metadata.section;
       }
     }
     
@@ -113,8 +115,53 @@ export const addDefaultTopics = () => {
     title: topic,
     description: 'Begin your learning journey',
     progress: 0,
-    icon: ["book", "brain", "target", "clock"][index % 4],
+    icon: ["book", "brain", "target", "clock"][index % 4] as "book" | "brain" | "target" | "clock",
     recentActivity: `No recent activity`,
     streakDays: 0
   }));
+};
+
+/**
+ * Fetches user profile data from Supabase
+ */
+export const fetchUserProfile = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in fetchUserProfile:", error);
+    return null;
+  }
+};
+
+/**
+ * Updates user profile in Supabase
+ */
+export const updateUserProfile = async (userId: string, updates: any) => {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId);
+      
+    if (error) {
+      console.error("Error updating user profile:", error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error in updateUserProfile:", error);
+    return { success: false, error };
+  }
 };

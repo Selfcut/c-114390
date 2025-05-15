@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, X, ChevronRight } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import { ChatInterface } from "./ChatInterface";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -57,8 +57,9 @@ export const FullHeightChatSidebar = () => {
     <>
       {!isOpen && (
         <Button
-          className="fixed right-5 top-20 z-50 h-10 w-10 rounded-full shadow-lg"
+          className="fixed right-5 top-20 z-50 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90"
           onClick={toggleChat}
+          aria-label="Open chat"
         >
           <MessageSquare size={20} />
         </Button>
@@ -71,7 +72,7 @@ export const FullHeightChatSidebar = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 350 }}
             transition={{ duration: 0.3 }}
-            className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-background border-l border-border shadow-xl w-[400px]"
+            className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-background border-l border-border shadow-xl w-[400px] overflow-hidden"
           >
             <div className="bg-primary/10 p-3 flex justify-between items-center border-b">
               <div className="flex items-center">
@@ -82,16 +83,15 @@ export const FullHeightChatSidebar = () => {
                     : "Select a conversation"}
                 </h3>
               </div>
-              <div className="flex items-center space-x-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClose}
-                  className="h-7 w-7"
-                >
-                  <X size={14} />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleClose}
+                className="h-7 w-7"
+                aria-label="Close chat"
+              >
+                <X size={14} />
+              </Button>
             </div>
             
             {selectedConversation && (
