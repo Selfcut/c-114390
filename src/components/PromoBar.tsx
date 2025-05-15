@@ -8,7 +8,7 @@ export const PromoBar = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-promo text-promo-foreground py-2 px-4 flex items-center justify-center relative animate-fade-in">
+    <div className="bg-purple-800 text-white py-2 px-4 flex items-center justify-center relative animate-fade-in">
       <div className="flex items-center justify-center w-full space-x-2">
         <span className="text-yellow-300">⚡ Limited-time offer!</span>
         <span>Unlock a year of limitless creativity with all annual plans at 50% off.</span>

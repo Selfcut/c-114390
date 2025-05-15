@@ -49,7 +49,7 @@ const AuthCallback = () => {
 
 // Root component that checks authentication and provides the floating chat widget
 const Root = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen bg-background text-foreground">
@@ -63,9 +63,9 @@ const Root = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
         <Route path="/dashboard" element={
