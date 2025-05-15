@@ -66,6 +66,38 @@ const polymathToast = {
   quoteSubmitted: () => toast({
     title: "Quote submitted",
     description: "Your wisdom has been added to our collection."
+  }),
+  bookAdded: () => toast({
+    title: "Book Added to Library",
+    description: "This book has been added to your personal collection."
+  }),
+  courseEnrolled: () => toast({
+    title: "Course Enrollment Complete",
+    description: "You now have access to all course materials and discussions."
+  }),
+  certificateEarned: () => toast({
+    title: "Certificate Earned",
+    description: "Congratulations! Your certificate is available in your profile."
+  }),
+  bookmarkAdded: () => toast({
+    title: "Bookmark Added",
+    description: "You can access this bookmark in your reading list."
+  }),
+  meditationComplete: () => toast({
+    title: "Meditation Complete",
+    description: "Your practice has been recorded in your mindfulness journal."
+  }),
+  journalEntrySaved: () => toast({
+    title: "Journal Entry Saved",
+    description: "Your reflections have been saved and encrypted."
+  }),
+  commentAdded: () => toast({
+    title: "Comment Added",
+    description: "Your insights have been shared with the community."
+  }),
+  reactionAdded: () => toast({
+    title: "Reaction Added",
+    description: "Your reaction has been recorded."
   })
 };
 

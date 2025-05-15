@@ -91,26 +91,54 @@
   }
 }
 
+/* Feature cards with improved animation */
 .feature-card {
-  transition: transform 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .feature-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.feature-card:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.03), rgba(255,255,255,0));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.feature-card:hover:after {
+  opacity: 1;
 }
 
 .run-button {
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .run-button:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  filter: brightness(1.15);
+  transform: translateY(-2px) scale(1.02);
 }
 
-/* Adding explicit styling for sidebar to ensure it works correctly */
+.run-button:active {
+  transform: translateY(0) scale(0.98);
+  filter: brightness(0.95);
+}
+
+/* Enhanced sidebar styling */
 .bg-sidebar {
   background-color: hsl(var(--sidebar-background));
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
 .transition-colors {
@@ -143,34 +171,35 @@
   display: flex;
 }
 
-/* Updated bg-accent class as requested */
+/* Corrected bg-accent class */
 .bg-accent {
   background-color: hsl(var(--accent));
 }
 
 /* Enhanced hover effects */
 .hover-lift {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.3);
 }
 
 /* Quick fade-in animation for content */
 .fade-in {
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 0.6s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* Subtle pulse animation for buttons */
 .pulse-on-hover:hover {
-  animation: pulse 1.5s infinite;
+  animation: pulse 1.8s infinite;
 }
 
 @keyframes pulse {
@@ -179,18 +208,20 @@
   100% { transform: scale(1); }
 }
 
-/* Enhanced card styling */
+/* Enhanced card styling with no blue borders */
 .enhanced-card {
-  transition: all 0.3s ease;
-  border: 1px solid hsla(var(--border), 0.5);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 1px solid hsla(var(--border), 0.6);
+  outline: none;
 }
 
 .enhanced-card:hover {
   border-color: hsla(var(--primary), 0.5);
   box-shadow: 0 0 0 1px hsla(var(--primary), 0.1);
+  outline: none;
 }
 
-/* Button hover effect */
+/* Advanced button hover effect */
 .button-hover-effect {
   position: relative;
   overflow: hidden;
@@ -205,9 +236,137 @@
   height: 100%;
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateX(-100%);
-  transition: transform 0.3s ease-out;
+  transition: transform 0.35s ease-out;
 }
 
 .button-hover-effect:hover:after {
   transform: translateX(0);
+}
+
+/* Remove all blue outlines */
+:focus {
+  outline: none !important;
+}
+
+button:focus, a:focus, input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Ripple effect for clickable items */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple:after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform .5s, opacity 1s;
+}
+
+.ripple:active:after {
+  transform: scale(0, 0);
+  opacity: .3;
+  transition: 0s;
+}
+
+/* Enhance skeleton loading animation */
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
+
+/* Page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.page-transition-exit {
+  opacity: 1;
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Stylish content highlight on hover */
+.content-highlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.content-highlight:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 95%, hsla(var(--primary), 0.5) 95%);
+  background-size: 200% 200%;
+  background-position: 100% 100%;
+  transition: background-position 0.5s ease;
+}
+
+.content-highlight:hover:before {
+  background-position: 0% 0%;
+}
+
+/* Image hover zoom effect */
+.img-zoom-container {
+  overflow: hidden;
+}
+
+.img-zoom {
+  transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.img-zoom-container:hover .img-zoom {
+  transform: scale(1.07);
+}
+
+/* Text reveal animation */
+.reveal-text {
+  position: relative;
+  overflow: hidden;
+}
+
+.reveal-text:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background-color: hsla(var(--primary), 0.2);
+  transition: width 0.4s ease;
+}
+
+.reveal-text:hover:after {
+  width: 100%;
 }

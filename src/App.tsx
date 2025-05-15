@@ -13,11 +13,13 @@ import { WelcomeOverlay } from "./components/WelcomeOverlay";
 import { useEffect } from "react";
 import { polymathToast } from "./components/ui/use-toast";
 
+// Create a new query client with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      staleTime: 60000, // 1 minute
     },
   },
 });
@@ -57,6 +59,19 @@ const App = () => {
             <Route path="/forum" element={<Forum />} />
             <Route path="/library" element={<Library />} />
             <Route path="/quotes" element={<Quotes />} />
+            {/* Mystic topic routes */}
+            <Route path="/topics/alchemy" element={<NotFound />} />
+            <Route path="/topics/hermeticism" element={<NotFound />} />
+            <Route path="/topics/gnosticism" element={<NotFound />} />
+            <Route path="/topics/kabbalah" element={<NotFound />} />
+            <Route path="/topics/astrology" element={<NotFound />} />
+            <Route path="/topics/sacred-geometry" element={<NotFound />} />
+            {/* Book routes */}
+            <Route path="/books/alchemists-path" element={<NotFound />} />
+            <Route path="/books/shadows-of-anubis" element={<NotFound />} />
+            <Route path="/books/ninth-dot" element={<NotFound />} />
+            <Route path="/books" element={<NotFound />} />
+            {/* Community routes */}
             <Route path="/community" element={<NotFound />} />
             <Route path="/discord" element={<NotFound />} />
             <Route path="/expert-qa" element={<NotFound />} />
@@ -76,6 +91,8 @@ const App = () => {
             <Route path="/academic-journals" element={<NotFound />} />
             <Route path="/book-reviews" element={<NotFound />} />
             <Route path="/settings" element={<NotFound />} />
+            <Route path="/art-poetry" element={<NotFound />} />
+            <Route path="/youtube" element={<NotFound />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
