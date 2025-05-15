@@ -251,21 +251,21 @@ export const Quotes = () => {
                 filteredQuotes.map(quote => (
                   <QuoteCard
                     key={quote.id}
-                    quote={quote.text}
+                    id={quote.id}
+                    text={quote.text}
                     author={quote.author}
                     source={quote.source}
+                    category={quote.tags[0] || ""} // Use first tag as category
                     tags={quote.tags}
+                    likes={quote.likes}
+                    comments={quote.comments}
                     user={{
                       name: quote.user.name,
                       avatar: quote.user.avatar,
-                      status: quote.user.status
+                      status: quote.user.status === "do_not_disturb" ? 
+                        "do-not-disturb" : quote.user.status
                     }}
-                    stats={{
-                      likes: quote.likes,
-                      bookmarks: quote.bookmarks,
-                      comments: quote.comments
-                    }}
-                    date={quote.createdAt}
+                    isBookmarked={false}
                     onLike={() => {}}
                     onBookmark={() => {}}
                     onComment={() => {}}
@@ -299,7 +299,7 @@ export const Quotes = () => {
                             contributor.status === 'online' ? 'bg-green-500' : 
                             contributor.status === 'away' ? 'bg-amber-500' :
                             contributor.status === 'do-not-disturb' ? 'bg-red-500' :
-                            'bg-gray-400'
+                            contributor.status === 'invisible' || contributor.status === 'offline' ? 'bg-gray-400' : 'bg-gray-400'
                           } ring-1 ring-white`}
                         />
                       </div>

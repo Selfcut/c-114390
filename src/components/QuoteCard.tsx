@@ -9,7 +9,8 @@ interface QuoteCardProps {
   text: string;
   author: string;
   source?: string;
-  category: string;
+  category?: string;
+  tags?: string[];  // Add tags as an optional property
   likes: number;
   comments?: number;
   imageUrl?: string;
@@ -25,6 +26,7 @@ export const QuoteCard = ({
   author,
   source,
   category,
+  tags = [],
   likes,
   comments = 0,
   imageUrl,
@@ -88,19 +90,32 @@ export const QuoteCard = ({
           <div className="p-2 rounded-full bg-[#360036] mr-3">
             <Quote size={18} className="text-[#FF3EA5]" />
           </div>
-          <span className="text-xs text-[#FF3EA5] font-medium bg-[#360036]/30 px-2 py-0.5 rounded">
-            {quoteData.category}
-          </span>
+          {category && (
+            <span className="text-xs text-[#FF3EA5] font-medium bg-[#360036]/30 px-2 py-0.5 rounded">
+              {category}
+            </span>
+          )}
         </div>
 
         <blockquote className="text-white text-lg font-medium mb-4 italic">
           "{quoteData.text}"
         </blockquote>
         
-        <div className="text-gray-400 text-sm mb-6">
+        <div className="text-gray-400 text-sm mb-3">
           <span className="font-medium text-white">{quoteData.author}</span>
           {source && <span> • {source}</span>}
         </div>
+        
+        {/* Show tags if provided */}
+        {tags && tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-4">
+            {tags.map((tag, index) => (
+              <span key={index} className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
         
         <div className="flex justify-between items-center mt-auto">
           <div className="flex gap-4">

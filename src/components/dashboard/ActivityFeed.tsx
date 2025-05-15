@@ -93,7 +93,7 @@ export const ActivityFeed = () => {
                 <UserHoverCard
                   username={activity.user.username}
                   avatar={activity.user.avatar}
-                  status={activity.user.status}
+                  isOnline={activity.user.status === "online"}
                   displayName={activity.user.name}
                 >
                   <Avatar className="h-8 w-8 flex-shrink-0">

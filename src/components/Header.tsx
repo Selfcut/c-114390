@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -95,7 +94,7 @@ const Header = () => {
                 <UserHoverCard 
                   username={user.name.toLowerCase().replace(/\s+/g, '')}
                   avatar={user.avatar}
-                  status={user.status}
+                  isOnline={user.status === "online"}
                   displayName={user.name}
                 >
                   <DropdownMenuItem asChild>

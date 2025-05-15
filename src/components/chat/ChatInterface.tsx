@@ -32,7 +32,7 @@ interface MessageType {
     name: string;
     username: string;
     avatar: string;
-    status: "online" | "offline" | "away" | "do_not_disturb";
+    status: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
   };
   timestamp: Date;
   reactions: Reaction[];

@@ -16,6 +16,7 @@ interface MessageReactionsProps {
   reactions: Reaction[];
   messageId: string;
   onReactionAdd: (messageId: string, emoji: string) => void;
+  onReact?: (emoji: string) => void; // Add this prop
   onReactionRemove?: (messageId: string, emoji: string) => void;
 }
 
@@ -26,7 +27,8 @@ export const MessageReactions = ({
   reactions, 
   messageId, 
   onReactionAdd,
-  onReactionRemove
+  onReactionRemove,
+  onReact
 }: MessageReactionsProps) => {
   // Current user ID (would come from auth context in a real app)
   const currentUserId = "current-user";
@@ -43,6 +45,11 @@ export const MessageReactions = ({
       onReactionRemove(messageId, emoji);
     } else {
       onReactionAdd(messageId, emoji);
+    }
+    
+    // Call onReact if provided
+    if (onReact) {
+      onReact(emoji);
     }
   };
 

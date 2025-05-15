@@ -1,14 +1,18 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, X, Minimize, Maximize } from "lucide-react";
 import { ChatInterface } from "./ChatInterface";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Define type for conversation type
+type ConversationType = "direct" | "group" | "global";
+
 export const FloatingChatWidget = ({ currentUser }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(null);
-  const [conversationType, setConversationType] = useState('direct');
+  const [conversationType, setConversationType] = useState<ConversationType>('direct');
 
   // Default conversation (for demo purposes - normally this would be the last active conversation)
   useEffect(() => {
@@ -122,7 +126,7 @@ export const FloatingChatWidget = ({ currentUser }) => {
                   selectedConversation.members.map(member => ({
                     ...member,
                     // Add a default status for each member
-                    status: 'offline'
+                    status: member.status || 'offline'
                   })) : 
                   undefined}
               />

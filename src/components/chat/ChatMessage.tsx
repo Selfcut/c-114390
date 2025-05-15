@@ -76,6 +76,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
+  // Handle reaction to message
+  const handleReact = (emoji: string) => {
+    if (onReact) {
+      onReact(id, emoji);
+    }
+  };
+
   return (
     <div 
       className={`flex gap-2 mb-4 group ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
@@ -132,7 +139,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <div className={`mt-1 ${isOwnMessage ? 'mr-2' : 'ml-2'}`}>
             <MessageReactions 
               reactions={reactions} 
-              onReact={(emoji) => onReact && onReact(id, emoji)} 
+              messageId={id}
+              onReactionAdd={(msgId, emoji) => onReact && onReact(msgId, emoji)}
+              onReactionRemove={(msgId, emoji) => onReact && onReact(msgId, emoji)}
+              onReact={handleReact}
             />
           </div>
         )}

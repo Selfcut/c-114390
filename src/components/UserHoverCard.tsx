@@ -14,6 +14,7 @@ export interface UserHoverCardProps {
   displayName: string;
   avatar?: string;
   isOnline?: boolean;
+  status?: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
   children: React.ReactNode;
 }
 
@@ -22,15 +23,31 @@ export function UserHoverCard({
   displayName,
   avatar,
   isOnline = false,
+  status = "offline",
   children
 }: UserHoverCardProps) {
+  // Determine if online based on status or isOnline prop
+  const effectiveIsOnline = status === "online" || isOnline;
+  
+  // Get status indicator color
+  const getStatusColor = () => {
+    switch (status) {
+      case "online": return "bg-green-500";
+      case "away": return "bg-amber-500";
+      case "do-not-disturb": return "bg-red-500";
+      case "invisible":
+      case "offline":
+      default: return "bg-gray-500";
+    }
+  };
+  
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
         <div className="cursor-pointer relative">
           {children}
-          {isOnline && (
-            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-background" />
+          {effectiveIsOnline && (
+            <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full ${getStatusColor()} ring-2 ring-background`} />
           )}
         </div>
       </HoverCardTrigger>
@@ -44,8 +61,13 @@ export function UserHoverCard({
             <h4 className="text-sm font-semibold">{displayName}</h4>
             <p className="text-xs text-muted-foreground">@{username}</p>
             <div className="flex items-center pt-2">
-              <span className="flex h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-              <span className="text-xs text-muted-foreground">{isOnline ? 'Online' : 'Offline'}</span>
+              <span className={`flex h-2 w-2 rounded-full ${getStatusColor()} mr-2`}></span>
+              <span className="text-xs text-muted-foreground">
+                {status === "online" ? "Online" : 
+                 status === "away" ? "Away" :
+                 status === "do-not-disturb" ? "Do not disturb" :
+                 status === "invisible" ? "Invisible" : "Offline"}
+              </span>
             </div>
           </div>
           <div className="flex flex-col gap-2">

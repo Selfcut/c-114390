@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +25,7 @@ interface QuoteData {
     name: string;
     username: string;
     avatar?: string;
-    status: "online" | "offline" | "away" | "do_not_disturb";
+    status: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
   };
 }
 
@@ -245,7 +244,7 @@ const Quotes = () => {
                           username={quote.submittedBy.username}
                           displayName={quote.submittedBy.name}
                           avatar={quote.submittedBy.avatar || ""}
-                          status={quote.submittedBy.status}
+                          isOnline={quote.submittedBy.status === "online"}
                         >
                           <span className="font-medium cursor-pointer hover:text-foreground">
                             {quote.submittedBy.name}
