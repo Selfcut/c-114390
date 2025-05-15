@@ -83,3 +83,54 @@
 .light-mode .gradient-glow::before {
   background: radial-gradient(circle at center, rgba(0, 120, 255, 0.2) 0%, transparent 70%);
 }
+
+/* Adjust buttons for light mode */
+.light-mode button.bg-blue-600,
+.light-mode button.bg-blue-700 {
+  background-color: hsl(var(--primary));
+}
+
+/* Adjust KnowledgeBrowser component for light mode */
+.light-mode .knowledge-browser {
+  background-color: #f0f4f8;
+  border-color: #e1e8ed;
+}
+
+.light-mode .knowledge-browser h3,
+.light-mode .knowledge-browser h4 {
+  color: #1a202c;
+}
+
+.light-mode .knowledge-browser input {
+  background-color: white;
+  border-color: #cbd5e0;
+  color: #1a202c;
+}
+
+.light-mode .knowledge-browser button {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.light-mode .knowledge-browser button.bg-blue-700 {
+  background-color: hsl(var(--primary));
+  color: white;
+}
+
+.light-mode .knowledge-browser button:hover {
+  background-color: #e2e8f0;
+}
+
+/* Fix StylesDebugger in light mode */
+.light-mode .styles-debugger {
+  background-color: white;
+  color: #1a202c;
+  border-color: #e2e8f0;
+}
+
+/* Adjust dropdown menus for light mode */
+.light-mode .dropdown-content {
+  background-color: white;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

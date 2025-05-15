@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { useTheme } from '@/lib/theme-context';
@@ -120,10 +121,12 @@ export const StylesDebugger = () => {
     setShowDetails(!showDetails);
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 p-4 bg-[#1A1A1A] rounded-lg border border-gray-800 shadow-lg max-w-sm">
+    <div className={`styles-debugger fixed bottom-4 right-4 z-50 p-4 ${isDark ? 'bg-[#1A1A1A]' : 'bg-white'} rounded-lg border ${isDark ? 'border-gray-800' : 'border-gray-200'} shadow-lg max-w-sm`}>
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-white font-bold">Styles Debugger</h2>
+        <h2 className={isDark ? 'text-white' : 'text-gray-800'}>Styles Debugger</h2>
         <Button 
           variant="outline" 
           size="sm"
@@ -148,7 +151,7 @@ export const StylesDebugger = () => {
           </div>
           
           <div className="mb-4">
-            <p className="font-bold text-sm mb-1">Text Styles:</p>
+            <p className={`font-bold text-sm mb-1 ${isDark ? 'text-white' : 'text-gray-800'}`}>Text Styles:</p>
             <p className="text-sm" data-test="font-test">Normal text</p>
             <p className="text-sm font-bold">Bold text</p>
             <p className="text-sm italic">Italic text</p>
@@ -160,7 +163,7 @@ export const StylesDebugger = () => {
           </Button>
           
           <div className="space-y-1">
-            <p className="text-xs text-gray-400">Style Status:</p>
+            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Style Status:</p>
             <p className={`text-xs ${styleStatus.tailwind ? 'text-green-500' : 'text-red-500'}`}>
               Tailwind: {styleStatus.tailwind ? '✓' : '✗'}
             </p>
@@ -184,15 +187,15 @@ export const StylesDebugger = () => {
             </p>
           </div>
           
-          <div className="mt-4 pt-2 border-t border-gray-700">
-            <p className="text-xs text-gray-500">Color Values:</p>
+          <div className={`mt-4 pt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>Color Values:</p>
             <p className="text-xs">Primary: {styleStatus.primaryColor?.toString()}</p>
             <p className="text-xs">Secondary: {styleStatus.secondaryColor?.toString()}</p>
             <p className="text-xs">Sidebar: {styleStatus.sidebarColor?.toString()}</p>
           </div>
           
-          <div className="mt-4 pt-2 border-t border-gray-700">
-            <p className="text-xs text-gray-500">Layout Debug:</p>
+          <div className={`mt-4 pt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>Layout Debug:</p>
             <p className="text-xs">Root Width: {document.getElementById('root')?.offsetWidth || 'Unknown'}</p>
             <p className="text-xs">Window Width: {window.innerWidth}</p>
           </div>
