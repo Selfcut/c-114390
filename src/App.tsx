@@ -9,6 +9,7 @@ import { polymathToast } from "./components/ui/use-toast";
 import { ThemeProvider } from "./lib/theme-context";
 import { AuthProvider } from "./lib/auth-context";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { FloatingChatWidget } from "./components/chat/FloatingChatWidget";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -90,6 +91,9 @@ const App = () => {
                   {/* Catch-all route for 404 */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                
+                {/* Floating chat widget available on all pages */}
+                <FloatingChatWidget />
               </div>
             </BrowserRouter>
           </TooltipProvider>

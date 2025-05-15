@@ -7,42 +7,47 @@ import {
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { MessageSquare, UserPlus } from "lucide-react";
 
 export interface UserHoverCardProps {
   children: React.ReactNode;
   username: string;
   avatar?: string;
-  avatarUrl?: string; // Added this to support the property name used in UserProfile.tsx
+  avatarUrl?: string;
   status?: "online" | "offline" | "away" | "do_not_disturb";
   displayName: string;
-  isOnline?: boolean; // Added this to support the property used in UserProfile.tsx
+  isOnline?: boolean;
+  bio?: string;
+  joinedDate?: string;
+  mutualFriends?: number;
+  mutualServers?: number;
 }
 
 export const UserHoverCard = ({ 
   children, 
   username, 
   avatar,
-  avatarUrl, // Added this property
-  status = "offline", // Default to offline if not provided
+  avatarUrl,
+  status = "offline",
   displayName,
-  isOnline = false // Default to false if not provided
+  isOnline = false,
+  bio = "No bio set",
+  joinedDate = "Recently joined",
+  mutualFriends = 0,
+  mutualServers = 0
 }: UserHoverCardProps) => {
   // Use avatarUrl as a fallback if avatar is not provided
   const avatarSrc = avatar || avatarUrl;
   
   // If isOnline is true and status is not explicitly set, use "online"
-  const effectiveStatus = isOnline && !status ? "online" : status;
+  const effectiveStatus = isOnline && status === "offline" ? "online" : status;
 
   // Function to determine the color of the status indicator
   const getStatusColor = (status: "online" | "offline" | "away" | "do_not_disturb") => {
     switch (status) {
       case "online":
         return "bg-green-500";
-      case "offline":
-        return "bg-gray-500";
       case "away":
         return "bg-yellow-500";
       case "do_not_disturb":
@@ -55,15 +60,17 @@ export const UserHoverCard = ({
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        {children}
+        <div className="cursor-pointer">
+          {children}
+        </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 p-0 shadow-lg" align="end">
-        <div className="h-24 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-t-md relative" />
-        <div className="px-4 pb-4">
-          <div className="flex items-end gap-4 -mt-10">
+      <HoverCardContent className="w-80 p-0">
+        <div className="bg-gradient-to-b from-primary/30 to-transparent h-12 rounded-t-md relative"></div>
+        <div className="px-4 pb-4 pt-10 relative">
+          <div className="absolute -top-6 left-4 flex items-end">
             <div className="relative">
-              <Avatar className="h-16 w-16 border-4 border-background">
-                <AvatarImage src={avatarSrc} alt={displayName} />
+              <Avatar className="h-16 w-16 border-4 border-background shadow-md">
+                <AvatarImage src={avatarSrc} />
                 <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
               </Avatar>
               <span 
@@ -71,10 +78,10 @@ export const UserHoverCard = ({
               />
             </div>
             <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">{displayName}</h4>
-                  <p className="text-sm text-muted-foreground">@{username}</p>
+              <div className="flex items-center gap-2 ml-3 mb-1">
+                <div className="flex flex-col">
+                  <h4 className="font-semibold text-base">{displayName}</h4>
+                  <span className="text-xs text-muted-foreground">@{username}</span>
                 </div>
                 <Badge 
                   variant="outline" 
@@ -89,27 +96,32 @@ export const UserHoverCard = ({
             </div>
           </div>
           
-          <div className="mt-3">
-            <p className="text-sm">
-              Philosopher, mathematician, and science enthusiast. Exploring the intersection of quantum physics and consciousness.
-            </p>
-            <div className="flex items-center pt-2 text-muted-foreground text-xs">
-              <CalendarDays className="mr-1 h-3 w-3" />
-              <span>Joined March 2024</span>
-            </div>
+          <div className="mt-6 mb-4">
+            <p className="text-sm text-muted-foreground">{bio}</p>
+            <p className="text-xs text-muted-foreground mt-2">Joined {joinedDate}</p>
           </div>
           
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            <Button asChild variant="outline" size="sm" className="w-full">
-              <Link to={`/profile/${username}`} className="flex items-center justify-center">
-                View Profile
-              </Link>
+          {(mutualFriends > 0 || mutualServers > 0) && (
+            <div className="border-t border-border pt-3 mt-3">
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                {mutualFriends > 0 && (
+                  <span>{mutualFriends} mutual friend{mutualFriends !== 1 ? 's' : ''}</span>
+                )}
+                {mutualServers > 0 && (
+                  <span>{mutualServers} mutual server{mutualServers !== 1 ? 's' : ''}</span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-2 mt-4">
+            <Button size="sm" className="w-full">
+              <MessageSquare size={14} className="mr-1" />
+              Message
             </Button>
-            <Button asChild variant="default" size="sm" className="w-full">
-              <Link to={`/chat?direct=${username}`} className="flex items-center justify-center">
-                <MessageSquare className="mr-1 h-3 w-3" />
-                Message
-              </Link>
+            <Button size="sm" variant="outline" className="w-full">
+              <UserPlus size={14} className="mr-1" />
+              Add Friend
             </Button>
           </div>
         </div>

@@ -1,138 +1,104 @@
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, Search, FileImage } from "lucide-react";
+
+// Mock GIFs for demonstration purposes
+// In a real application, you would fetch these from the Tenor API
+const mockGifs = [
+  { id: '1', url: 'https://media.tenor.com/YGm1ZvZ-T8QAAAAC/waving-hello.gif', alt: 'Waving hello' },
+  { id: '2', url: 'https://media.tenor.com/9SYoex7TMd8AAAAC/hello-cute.gif', alt: 'Hello cute' },
+  { id: '3', url: 'https://media.tenor.com/B5qmLu7dpXcAAAAd/good-morning-hello.gif', alt: 'Good morning hello' },
+  { id: '4', url: 'https://media.tenor.com/S_PadIIOchAAAAAC/yoda-hello.gif', alt: 'Yoda hello' },
+  { id: '5', url: 'https://media.tenor.com/HNUmdm5Qs0EAAAAC/hello-cat.gif', alt: 'Hello cat' },
+  { id: '6', url: 'https://media.tenor.com/iMdvUZ4fYGUAAAAC/bear-hello.gif', alt: 'Bear hello' },
+];
 
 interface GifPickerProps {
-  onGifSelect: (gifUrl: string) => void;
-  onClose: () => void;
+  onGifSelect: (gif: { url: string; alt: string }) => void;
 }
 
-// Mock GIFs for demo purposes
-const mockGifs = [
-  "https://media.tenor.com/images/b88845161e958bc16a67770a38765119/tenor.gif",
-  "https://media.tenor.com/images/ac9b076c16cdf27853803a823389ff41/tenor.gif",
-  "https://media.tenor.com/images/2c8964a279327e9c43bc2171e10c6a88/tenor.gif",
-  "https://media.tenor.com/images/1066356420fe2b326f3b592f002988ca/tenor.gif",
-  "https://media.tenor.com/images/d7e5e826fa952e8fac4dd93d27142cc3/tenor.gif",
-  "https://media.tenor.com/images/05a0b63a4205f7c926a48b1ebbe41ca6/tenor.gif",
-  "https://media.tenor.com/images/c4c49c809ef4dcec04f1fee5da9cdcf8/tenor.gif",
-  "https://media.tenor.com/images/875997324f87ddb9df50b7609c57f7de/tenor.gif",
-  "https://media.tenor.com/images/8d1b80af308b4e778dc4c917d028c135/tenor.gif",
-  "https://media.tenor.com/images/2d70bc05aef85a90149c14203911e27d/tenor.gif",
-  "https://media.tenor.com/images/248360fb4697b04d30c6c43269fee062/tenor.gif",
-  "https://media.tenor.com/images/3f1198cfcd977db7c38997bd88f3c503/tenor.gif"
-];
-
-// Mock trending categories
-const trendingCategories = [
-  "Reactions", "Greetings", "Thank You", "Laughing", "Mindblown", "Love", "Cute", "Sad", "Angry"
-];
-
-export const GifPicker = ({ onGifSelect, onClose }: GifPickerProps) => {
+export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
+  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Close the GIF picker when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-    
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose]);
+  const [gifs, setGifs] = useState(mockGifs);
 
-  // Simulate GIF search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
     setIsLoading(true);
     
-    // Simulate API call delay
+    // Mock search delay - in a real app, this would be an API call to Tenor
     setTimeout(() => {
+      // Filter gifs based on search query (mock implementation)
+      const filteredGifs = mockGifs.filter(gif => 
+        gif.alt.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setGifs(filteredGifs);
       setIsLoading(false);
     }, 500);
   };
 
-  // Filter GIFs based on search (mock implementation)
-  const filteredGifs = mockGifs;
+  const handleGifClick = (gif: { url: string; alt: string }) => {
+    onGifSelect(gif);
+    setOpen(false);
+  };
 
   return (
-    <Card className="w-80" ref={containerRef}>
-      <div className="flex items-center justify-between p-2 border-b">
-        <h3 className="font-medium text-sm">GIF</h3>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-          <X size={14} />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground"
+        >
+          <FileImage size={18} />
+          <span className="sr-only">GIF picker</span>
         </Button>
-      </div>
-      
-      <div className="p-2 border-b">
-        <form onSubmit={handleSearch}>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-2">
+        <form onSubmit={handleSearch} className="mb-2">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search GIFs"
-              className="pl-8 h-8"
+              placeholder="Search GIFs..."
+              className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </form>
-      </div>
-      
-      {!searchQuery && (
-        <div className="p-2 border-b">
-          <h4 className="text-xs font-medium mb-2">Trending Categories</h4>
-          <div className="flex flex-wrap gap-1">
-            {trendingCategories.map(category => (
-              <Button 
-                key={category} 
-                variant="outline" 
-                size="sm" 
-                className="h-6 text-xs"
-                onClick={() => setSearchQuery(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+        
+        <div className="h-60 overflow-y-auto">
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : gifs.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {gifs.map((gif) => (
+                <button
+                  key={gif.id}
+                  className="overflow-hidden rounded-md hover:opacity-80 transition-opacity"
+                  onClick={() => handleGifClick(gif)}
+                >
+                  <img 
+                    src={gif.url} 
+                    alt={gif.alt} 
+                    className="w-full h-24 object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-muted-foreground text-sm">No GIFs found</p>
+            </div>
+          )}
         </div>
-      )}
-      
-      <ScrollArea className="h-64">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2 p-2">
-            {filteredGifs.map((gif, index) => (
-              <button
-                key={index}
-                className="rounded overflow-hidden hover:ring-2 hover:ring-primary transition-all"
-                onClick={() => onGifSelect(gif)}
-              >
-                <img src={gif} alt={`GIF ${index + 1}`} className="w-full h-auto" />
-              </button>
-            ))}
-          </div>
-        )}
-      </ScrollArea>
-      
-      <div className="p-2 border-t">
-        <p className="text-xs text-muted-foreground text-center">
-          Powered by Tenor
-        </p>
-      </div>
-    </Card>
+      </PopoverContent>
+    </Popover>
   );
 };

@@ -1,58 +1,120 @@
 
 import React, { useState, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Send, Paperclip, Mic, MicOff } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { UserHoverCard } from "../UserHoverCard";
 import { EmojiPicker } from "./EmojiPicker";
 import { GifPicker } from "./GifPicker";
-import { MessageReactions } from "./MessageReactions";
-import {
-  Send,
-  Paperclip,
-  Mic,
-  Video,
-  Image,
-  Smile,
-  Gift,
-  MoreHorizontal,
-  Search,
-  Phone,
-  Users,
-  Info,
-  Pin,
-  UserPlus,
-  AtSign,
-  Hash
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar: string;
-  timestamp: Date;
-  status: "sent" | "delivered" | "read";
-  isEdited?: boolean;
-  reactions?: { emoji: string; count: number; users: string[] }[];
-  attachments?: { type: "image" | "gif" | "file"; url: string }[];
-  mentions?: string[];
-}
+import { ChatMessage } from "./ChatMessage";
+import { Reaction } from "./MessageReactions";
 
 interface ChatInterfaceProps {
   chatType: 'direct' | 'group' | 'global';
   recipientId?: string;
   recipientName?: string;
   recipientAvatar?: string;
-  recipientStatus?: "online" | "offline" | "away" | "do_not_disturb";
+  recipientStatus?: string;
   groupId?: string;
   groupName?: string;
   groupAvatar?: string;
-  groupMembers?: number;
+  groupMembers?: Array<{ id: string; name: string; avatar: string; status: string }>;
 }
+
+// Mock messages for demonstration
+const generateMockMessages = () => {
+  const currentTime = new Date();
+  
+  return [
+    {
+      id: '1',
+      content: 'Hey! How are you doing today?',
+      sender: {
+        id: 'user-2',
+        name: 'Jane Smith',
+        username: 'janesmith',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
+        status: 'online' as const,
+      },
+      timestamp: new Date(currentTime.getTime() - 1000 * 60 * 30), // 30 minutes ago
+      reactions: [
+        { emoji: '👍', count: 2, users: ['current-user', 'user-3'] },
+        { emoji: '❤️', count: 1, users: ['user-4'] }
+      ],
+      isCurrentUser: false,
+    },
+    {
+      id: '2',
+      content: 'I\'m doing well! Just finished reading that book you recommended.',
+      sender: {
+        id: 'current-user',
+        name: 'John Doe',
+        username: 'johndoe',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+        status: 'online' as const,
+      },
+      timestamp: new Date(currentTime.getTime() - 1000 * 60 * 25), // 25 minutes ago
+      reactions: [],
+      isCurrentUser: true,
+    },
+    {
+      id: '3',
+      content: 'What did you think of it? I loved the part about quantum consciousness!',
+      sender: {
+        id: 'user-2',
+        name: 'Jane Smith',
+        username: 'janesmith',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
+        status: 'online' as const,
+      },
+      timestamp: new Date(currentTime.getTime() - 1000 * 60 * 20), // 20 minutes ago
+      reactions: [],
+      isCurrentUser: false,
+    },
+    {
+      id: '4',
+      content: 'It was fascinating! I especially enjoyed the discussion on emergent properties of complex systems.',
+      sender: {
+        id: 'current-user',
+        name: 'John Doe',
+        username: 'johndoe',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+        status: 'online' as const,
+      },
+      timestamp: new Date(currentTime.getTime() - 1000 * 60 * 15), // 15 minutes ago
+      reactions: [
+        { emoji: '🧠', count: 1, users: ['user-2'] },
+      ],
+      isCurrentUser: true,
+      mentions: [{ id: 'user-2', name: 'Jane' }],
+      attachments: [
+        { 
+          id: 'att-1', 
+          type: 'image' as const, 
+          url: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb',
+          name: 'quantum-diagram.jpg' 
+        }
+      ]
+    },
+    {
+      id: '5',
+      content: 'Yes! That was my favorite chapter too. We should discuss this more during our study group tomorrow @John',
+      sender: {
+        id: 'user-2',
+        name: 'Jane Smith',
+        username: 'janesmith',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
+        status: 'online' as const,
+      },
+      timestamp: new Date(currentTime.getTime() - 1000 * 60 * 5), // 5 minutes ago
+      reactions: [],
+      isCurrentUser: false,
+      mentions: [{ id: 'current-user', name: 'John' }],
+    }
+  ];
+};
 
 export const ChatInterface = ({
   chatType,
@@ -65,774 +127,347 @@ export const ChatInterface = ({
   groupAvatar,
   groupMembers
 }: ChatInterfaceProps) => {
-  const [messageText, setMessageText] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [activeUsers, setActiveUsers] = useState<string[]>([]);
-  
-  const messageEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Mock current user data (would come from auth context in a real app)
-  const currentUser = {
-    id: "current-user",
-    name: "You",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=You"
-  };
-
-  // Load mock messages
-  useEffect(() => {
-    // Simulate API call to fetch messages
-    const mockMessages: Message[] = [
-      {
-        id: "1",
-        content: "Hi there! How's your research going?",
-        senderId: chatType === 'direct' ? recipientId || '' : "user-1",
-        senderName: chatType === 'direct' ? recipientName || 'User' : "Alex Morgan",
-        senderAvatar: chatType === 'direct' ? recipientAvatar || '' : "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        timestamp: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
-        status: "read",
-        reactions: [
-          { emoji: "👍", count: 2, users: ["user-2", "user-3"] },
-          { emoji: "❤️", count: 1, users: ["user-4"] }
-        ]
-      },
-      {
-        id: "2",
-        content: "I'm making good progress on the quantum consciousness model.",
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        senderAvatar: currentUser.avatar,
-        timestamp: new Date(Date.now() - 55 * 60 * 1000), // 55 mins ago
-        status: "read"
-      },
-      {
-        id: "3",
-        content: "That's fantastic! Would you like to discuss your findings over a call?",
-        senderId: chatType === 'direct' ? recipientId || '' : "user-1",
-        senderName: chatType === 'direct' ? recipientName || 'User' : "Alex Morgan",
-        senderAvatar: chatType === 'direct' ? recipientAvatar || '' : "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        timestamp: new Date(Date.now() - 45 * 60 * 1000), // 45 mins ago
-        status: "read"
-      },
-      {
-        id: "4",
-        content: "Sure, that would be helpful. When are you available?",
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        senderAvatar: currentUser.avatar,
-        timestamp: new Date(Date.now() - 40 * 60 * 1000), // 40 mins ago
-        status: "read"
-      },
-      {
-        id: "5",
-        content: "I'm free tomorrow afternoon. Would 3 PM work for you?",
-        senderId: chatType === 'direct' ? recipientId || '' : "user-1",
-        senderName: chatType === 'direct' ? recipientName || 'User' : "Alex Morgan",
-        senderAvatar: chatType === 'direct' ? recipientAvatar || '' : "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 mins ago
-        status: "read"
-      },
-      {
-        id: "6",
-        content: "Perfect! I'll send a calendar invite. By the way, check out this interesting paper I found.",
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        senderAvatar: currentUser.avatar,
-        timestamp: new Date(Date.now() - 25 * 60 * 1000), // 25 mins ago
-        status: "read",
-        attachments: [
-          { type: "file", url: "/path-to-file/quantum-paper.pdf" }
-        ]
-      },
-      {
-        id: "7",
-        content: "Thanks for sharing! This looks very relevant to our discussion.",
-        senderId: chatType === 'direct' ? recipientId || '' : "user-1",
-        senderName: chatType === 'direct' ? recipientName || 'User' : "Alex Morgan",
-        senderAvatar: chatType === 'direct' ? recipientAvatar || '' : "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        timestamp: new Date(Date.now() - 10 * 60 * 1000), // 10 mins ago
-        status: "delivered",
-        reactions: [
-          { emoji: "🙏", count: 1, users: [currentUser.id] }
-        ]
-      }
-    ];
-    
-    setMessages(mockMessages);
-    
-    // Simulate other users currently viewing this chat
-    if (chatType !== 'direct') {
-      setActiveUsers(["user-1", "user-2", "user-3"]);
-    }
-    
-    // Scroll to bottom when messages change
-    setTimeout(() => {
-      scrollToBottom();
-    }, 100);
-  }, [chatType, recipientId, recipientName, recipientAvatar]);
+  const [messages, setMessages] = useState(generateMockMessages());
+  const [messageInput, setMessageInput] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Group messages by sender and time
+  const groupedMessages = React.useMemo(() => {
+    const groups: Array<{
+      sender: typeof messages[0]['sender'];
+      messages: Array<typeof messages[0] & {
+        isFirstInGroup: boolean;
+        isLastInGroup: boolean;
+      }>;
+    }> = [];
 
-  // Handle message submission
-  const handleSendMessage = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    
-    if (!messageText.trim()) return;
-    
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      content: messageText,
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-      senderAvatar: currentUser.avatar,
-      timestamp: new Date(),
-      status: "sent"
-    };
-    
-    setMessages([...messages, newMessage]);
-    setMessageText("");
-    
-    // Focus back on the input field
-    inputRef.current?.focus();
-    
-    // Close emoji and GIF pickers
-    setIsEmojiPickerOpen(false);
-    setIsGifPickerOpen(false);
-  };
+    messages.forEach((message, i) => {
+      const prevMessage = messages[i - 1];
+      const isSameSenderAsPrev = prevMessage && prevMessage.sender.id === message.sender.id;
+      const isWithinTimeWindow = prevMessage && 
+        (message.timestamp.getTime() - prevMessage.timestamp.getTime() < 1000 * 60 * 5); // 5 minutes
 
-  // Handle input changes and textarea auto-resize
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessageText(e.target.value);
-    
-    // Auto-resize textarea
-    e.target.style.height = "auto";
-    e.target.style.height = `${e.target.scrollHeight}px`;
-    
-    // Simulate typing indicator
-    if (!isTyping && e.target.value) {
-      setIsTyping(true);
-      // In a real app, would emit typing event to other users
-    } else if (isTyping && !e.target.value) {
-      setIsTyping(false);
-      // In a real app, would emit stopped typing event
-    }
-  };
-
-  // Handle file upload
-  const handleFileUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Process file selection
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    // Here you would upload the file to a storage service
-    // For demo, we'll just create a message with a mock attachment
-    
-    const file = files[0];
-    const isImage = file.type.startsWith('image/');
-    
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      content: isImage ? "" : `Shared a file: ${file.name}`,
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-      senderAvatar: currentUser.avatar,
-      timestamp: new Date(),
-      status: "sent",
-      attachments: [
-        { 
-          type: isImage ? "image" : "file", 
-          url: isImage 
-            ? URL.createObjectURL(file) 
-            : `/files/${file.name}`
+      if (isSameSenderAsPrev && isWithinTimeWindow) {
+        // Add to the last group
+        const lastGroup = groups[groups.length - 1];
+        
+        // Mark the previous message as not last in group
+        if (lastGroup.messages.length > 0) {
+          lastGroup.messages[lastGroup.messages.length - 1].isLastInGroup = false;
         }
-      ]
-    };
-    
-    setMessages([...messages, newMessage]);
-    
-    // Reset the input
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  // Handle emoji selection
-  const handleEmojiSelect = (emoji: string) => {
-    setMessageText(prev => prev + emoji);
-    setIsEmojiPickerOpen(false);
-    inputRef.current?.focus();
-  };
-
-  // Handle GIF selection
-  const handleGifSelect = (gifUrl: string) => {
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      content: "",
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-      senderAvatar: currentUser.avatar,
-      timestamp: new Date(),
-      status: "sent",
-      attachments: [{ type: "gif", url: gifUrl }]
-    };
-    
-    setMessages([...messages, newMessage]);
-    setIsGifPickerOpen(false);
-  };
-
-  // Handle reaction to a message
-  const handleReactionAdd = (messageId: string, emoji: string) => {
-    setMessages(prevMessages => 
-      prevMessages.map(message => {
-        if (message.id === messageId) {
-          const reactions = message.reactions || [];
-          const existingReaction = reactions.find(r => r.emoji === emoji);
-          
-          if (existingReaction) {
-            // User already reacted with this emoji, toggle it off
-            if (existingReaction.users.includes(currentUser.id)) {
-              return {
-                ...message,
-                reactions: reactions.map(r => 
-                  r.emoji === emoji 
-                    ? { 
-                        ...r, 
-                        count: r.count - 1, 
-                        users: r.users.filter(id => id !== currentUser.id)
-                      }
-                    : r
-                ).filter(r => r.count > 0)
-              };
-            }
-            
-            // Add user to existing reaction
-            return {
-              ...message,
-              reactions: reactions.map(r => 
-                r.emoji === emoji 
-                  ? { ...r, count: r.count + 1, users: [...r.users, currentUser.id] }
-                  : r
-              )
-            };
-          }
-          
-          // Add new reaction
-          return {
+        
+        lastGroup.messages.push({
+          ...message,
+          isFirstInGroup: false,
+          isLastInGroup: true
+        });
+      } else {
+        // Create a new group
+        groups.push({
+          sender: message.sender,
+          messages: [{
             ...message,
-            reactions: [...reactions, { emoji, count: 1, users: [currentUser.id] }]
-          };
-        }
-        return message;
-      })
-    );
+            isFirstInGroup: true,
+            isLastInGroup: true
+          }]
+        });
+      }
+    });
+
+    return groups;
+  }, [messages]);
+
+  const handleSendMessage = () => {
+    if (!messageInput.trim()) return;
+
+    const newMessage = {
+      id: `msg-${Date.now()}`,
+      content: messageInput,
+      sender: {
+        id: 'current-user',
+        name: 'John Doe',
+        username: 'johndoe',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+        status: 'online' as const,
+      },
+      timestamp: new Date(),
+      reactions: [] as Reaction[],
+      isCurrentUser: true,
+      mentions: [] as Array<{ id: string; name: string }>,
+      attachments: [] as Array<{ id: string; type: 'image' | 'gif' | 'file'; url: string; name?: string }>,
+    };
+    
+    setMessages([...messages, newMessage]);
+    setMessageInput("");
+    setReplyingTo(null);
   };
 
-  // Format timestamp for display
-  const formatMessageTime = (timestamp: Date) => {
-    const now = new Date();
-    const messageDate = new Date(timestamp);
-    
-    // Same day - show time
-    if (messageDate.toDateString() === now.toDateString()) {
-      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // Yesterday
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    if (messageDate.toDateString() === yesterday.toDateString()) {
-      return `Yesterday ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    }
-    
-    // Within a week
-    const oneWeekAgo = new Date(now);
-    oneWeekAgo.setDate(now.getDate() - 7);
-    if (messageDate > oneWeekAgo) {
-      const options: Intl.DateTimeFormatOptions = { weekday: 'short', hour: '2-digit', minute: '2-digit' };
-      return messageDate.toLocaleString([], options);
-    }
-    
-    // Older messages
-    return messageDate.toLocaleDateString();
-  };
-
-  // Get status icon for messages
-  const getStatusIcon = (status: "sent" | "delivered" | "read") => {
-    switch (status) {
-      case "sent":
-        return <span className="text-gray-400">✓</span>;
-      case "delivered":
-        return <span className="text-gray-400">✓✓</span>;
-      case "read":
-        return <span className="text-blue-400">✓✓</span>;
-      default:
-        return null;
-    }
-  };
-
-  // Handle key press in the input field
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Send message on Enter without Shift
-    if (e.key === "Enter" && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setMessageInput(prev => prev + emoji);
+  };
+
+  const handleGifSelect = (gif: { url: string; alt: string }) => {
+    // In a real app, this would send a message with a GIF attachment
+    const newMessage = {
+      id: `msg-${Date.now()}`,
+      content: "",
+      sender: {
+        id: 'current-user',
+        name: 'John Doe',
+        username: 'johndoe',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+        status: 'online' as const,
+      },
+      timestamp: new Date(),
+      reactions: [] as Reaction[],
+      isCurrentUser: true,
+      attachments: [{
+        id: `gif-${Date.now()}`,
+        type: 'gif' as const,
+        url: gif.url,
+        name: gif.alt
+      }]
+    };
+    
+    setMessages([...messages, newMessage]);
+  };
+
+  const handleReactionAdd = (messageId: string, emoji: string) => {
+    setMessages(prev => prev.map(message => {
+      if (message.id === messageId) {
+        // Check if reaction already exists
+        const existingReaction = message.reactions.find(r => r.emoji === emoji);
+        
+        if (existingReaction) {
+          // If user has already reacted, don't add again
+          if (existingReaction.users.includes('current-user')) {
+            return message;
+          }
+          
+          // Add user to existing reaction
+          return {
+            ...message,
+            reactions: message.reactions.map(r => 
+              r.emoji === emoji 
+                ? { ...r, count: r.count + 1, users: [...r.users, 'current-user'] }
+                : r
+            )
+          };
+        }
+        
+        // Add new reaction
+        return {
+          ...message,
+          reactions: [
+            ...message.reactions,
+            { emoji, count: 1, users: ['current-user'] }
+          ]
+        };
+      }
+      return message;
+    }));
+  };
+
+  const handleReactionRemove = (messageId: string, emoji: string) => {
+    setMessages(prev => prev.map(message => {
+      if (message.id === messageId) {
+        const updatedReactions = message.reactions.map(r => {
+          if (r.emoji === emoji && r.users.includes('current-user')) {
+            // Remove current user from the reaction
+            const updatedUsers = r.users.filter(userId => userId !== 'current-user');
+            return {
+              ...r,
+              count: r.count - 1,
+              users: updatedUsers
+            };
+          }
+          return r;
+        }).filter(r => r.count > 0); // Remove reactions with zero count
+        
+        return {
+          ...message,
+          reactions: updatedReactions
+        };
+      }
+      return message;
+    }));
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages(prev => prev.filter(message => message.id !== messageId));
+  };
+
+  const toggleVoiceRecording = () => {
+    // In a real app, this would handle voice recording permissions and recording logic
+    setIsRecording(!isRecording);
+  };
+
   return (
     <div className="flex flex-col h-full">
-      {/* Chat Header */}
-      <div className="p-4 border-b flex items-center justify-between">
+      {/* Chat header */}
+      <div className="border-b py-3 px-4 flex justify-between items-center">
         <div className="flex items-center">
-          {chatType === 'direct' ? (
-            <UserHoverCard 
-              username={recipientName?.toLowerCase().replace(/\s+/g, '') || ""}
-              avatar={recipientAvatar || ""}
-              status={recipientStatus || "offline"}
-              displayName={recipientName || ""}
-            >
-              <div className="flex items-center cursor-pointer">
-                <div className="relative">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={recipientAvatar} alt={recipientName} />
-                    <AvatarFallback>{recipientName?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  {recipientStatus && (
-                    <span 
-                      className={cn(
-                        "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background",
-                        recipientStatus === "online" ? "bg-green-500" :
-                        recipientStatus === "away" ? "bg-yellow-500" :
-                        recipientStatus === "do_not_disturb" ? "bg-red-500" :
-                        "bg-gray-500"
-                      )}
-                    ></span>
-                  )}
-                </div>
-                <div className="ml-3">
-                  <h2 className="font-semibold">{recipientName}</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {recipientStatus === "online" ? "Online" : 
-                     recipientStatus === "away" ? "Away" :
-                     recipientStatus === "do_not_disturb" ? "Do not disturb" :
-                     "Offline"}
-                  </p>
-                </div>
+          {chatType === 'direct' && recipientName ? (
+            <div className="flex items-center">
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={recipientAvatar} />
+                <AvatarFallback>{recipientName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-medium text-sm">{recipientName}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {recipientStatus === 'online' ? 'Online' : 'Offline'}
+                </p>
               </div>
-            </UserHoverCard>
+            </div>
           ) : (
             <div className="flex items-center">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={groupAvatar} alt={groupName} />
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={groupAvatar} />
                 <AvatarFallback>{groupName?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="ml-3">
-                <h2 className="font-semibold">{groupName}</h2>
+              <div>
+                <h3 className="font-medium text-sm">{groupName}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {groupMembers} members • {activeUsers.length} online
+                  {groupMembers?.length} members
                 </p>
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center space-x-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                  <Phone size={18} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Start voice call</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                  <Video size={18} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Start video call</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                  <Search size={18} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Search in conversation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                  <Info size={18} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Conversation info</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                  <MoreHorizontal size={18} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>More options</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div>
+          {groupMembers && groupMembers.length > 0 && (
+            <div className="flex -space-x-2">
+              {groupMembers.slice(0, 3).map(member => (
+                <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
+                  <AvatarImage src={member.avatar} />
+                  <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              ))}
+              {groupMembers.length > 3 && (
+                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs">
+                  +{groupMembers.length - 3}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Chat Messages */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => {
-            const isOwnMessage = message.senderId === currentUser.id;
-            
-            return (
-              <div 
-                key={message.id} 
-                className={cn(
-                  "flex gap-2",
-                  isOwnMessage ? "flex-row-reverse" : ""
-                )}
-              >
-                <div className="flex-shrink-0 pt-1">
-                  <UserHoverCard 
-                    username={message.senderName.toLowerCase().replace(/\s+/g, '')}
-                    avatar={message.senderAvatar}
-                    status={isOwnMessage ? "online" : (recipientStatus || "offline")}
-                    displayName={message.senderName}
-                  >
-                    <Avatar className="h-8 w-8 cursor-pointer">
-                      <AvatarImage src={message.senderAvatar} alt={message.senderName} />
-                      <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </UserHoverCard>
-                </div>
-                
-                <div 
-                  className={cn(
-                    "flex flex-col max-w-[80%]",
-                    isOwnMessage ? "items-end" : ""
-                  )}
-                >
-                  {!isOwnMessage && (
-                    <div className="mb-1 flex items-center">
-                      <span className="text-sm font-medium">{message.senderName}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {formatMessageTime(message.timestamp)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div 
-                    className={cn(
-                      "rounded-lg py-2 px-3 relative group",
-                      isOwnMessage
-                        ? "bg-primary text-primary-foreground rounded-tr-none"
-                        : "bg-muted text-foreground rounded-tl-none"
-                    )}
-                  >
-                    {/* Message content */}
-                    <div className="whitespace-pre-wrap break-words">{message.content}</div>
-                    
-                    {/* Message attachments */}
-                    {message.attachments && message.attachments.map((attachment, index) => (
-                      <div key={index} className="mt-2">
-                        {attachment.type === 'image' && (
-                          <div className="rounded-md overflow-hidden max-w-xs">
-                            <img src={attachment.url} alt="Attachment" className="max-w-full h-auto" />
-                          </div>
-                        )}
-                        {attachment.type === 'gif' && (
-                          <div className="rounded-md overflow-hidden max-w-xs">
-                            <img src={attachment.url} alt="GIF" className="max-w-full h-auto" />
-                          </div>
-                        )}
-                        {attachment.type === 'file' && (
-                          <div className="flex items-center bg-background/50 rounded p-2">
-                            <Paperclip size={16} className="mr-2" />
-                            <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
-                              {attachment.url.split('/').pop()}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* Reactions */}
-                    {message.reactions && message.reactions.length > 0 && (
-                      <MessageReactions 
-                        reactions={message.reactions} 
-                        messageId={message.id} 
-                        onReactionAdd={handleReactionAdd}
-                      />
-                    )}
-                    
-                    {/* Message status for own messages */}
-                    {isOwnMessage && (
-                      <div className="absolute right-0 -bottom-5 text-xs text-muted-foreground flex items-center">
-                        <span className="mr-1">{formatMessageTime(message.timestamp)}</span>
-                        {getStatusIcon(message.status)}
-                        {message.isEdited && <span className="ml-1">(edited)</span>}
-                      </div>
-                    )}
-                    
-                    {/* Message actions that appear on hover */}
-                    <div className={cn(
-                      "absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity",
-                      isOwnMessage ? "right-0" : "left-0"
-                    )}>
-                      <div className="flex items-center gap-1 bg-popover rounded-full p-1 shadow-md">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleReactionAdd(message.id, '👍')}>
-                                <span className="text-sm">👍</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>React with 👍</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleReactionAdd(message.id, '❤️')}>
-                                <span className="text-sm">❤️</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>React with ❤️</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsEmojiPickerOpen(true)}>
-                                <Smile size={14} />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Add reaction</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <Pin size={14} />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Pin message</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          
-          {/* Typing indicator */}
-          {isTyping && (
-            <div className="flex gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={recipientAvatar} alt={recipientName} />
-                <AvatarFallback>{recipientName?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="bg-muted rounded-lg py-2 px-3 text-muted-foreground flex items-center space-x-1">
-                <div className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                <div className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: "100ms" }}></div>
-                <div className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: "200ms" }}></div>
-              </div>
+      {/* Chat messages */}
+      <ScrollArea className="flex-1 p-0">
+        <div className="flex flex-col py-4">
+          {groupedMessages.map((group, groupIndex) => (
+            <div key={groupIndex} className="mb-1">
+              {group.messages.map(message => (
+                <ChatMessage
+                  key={message.id}
+                  id={message.id}
+                  content={message.content}
+                  sender={message.sender}
+                  timestamp={message.timestamp}
+                  reactions={message.reactions}
+                  isCurrentUser={message.isCurrentUser}
+                  isFirstInGroup={message.isFirstInGroup}
+                  isLastInGroup={message.isLastInGroup}
+                  mentions={message.mentions}
+                  attachments={message.attachments}
+                  onReply={(msgId) => setReplyingTo(msgId)}
+                  onDelete={handleDeleteMessage}
+                  onReactionAdd={handleReactionAdd}
+                  onReactionRemove={handleReactionRemove}
+                />
+              ))}
             </div>
-          )}
-          
-          {/* Active users indicator for groups */}
-          {chatType !== 'direct' && activeUsers.length > 0 && (
-            <div className="flex items-center gap-2 mt-4">
-              <div className="flex -space-x-1">
-                {activeUsers.slice(0, 3).map((userId, index) => (
-                  <Avatar key={userId} className="h-5 w-5 border border-background">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`} />
-                    <AvatarFallback>{userId.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {activeUsers.length} {activeUsers.length === 1 ? 'person' : 'people'} viewing this conversation
-              </span>
-            </div>
-          )}
-          
-          {/* This element helps scroll to bottom */}
-          <div ref={messageEndRef} />
+          ))}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
       
-      {/* Message Input */}
-      <div className="p-4 border-t">
-        <form onSubmit={handleSendMessage} className="flex flex-col gap-2">
-          <div className="relative">
-            <textarea
-              ref={inputRef}
-              value={messageText}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyPress}
-              placeholder={`Message ${recipientName || groupName || 'chat'}`}
-              className="w-full resize-none overflow-hidden min-h-[40px] max-h-[200px] px-4 py-2 pr-12 rounded-md bg-muted focus:outline-none focus:ring-1 focus:ring-ring"
-              rows={1}
-            />
-            <div className="absolute right-2 top-2 flex">
-              {messageText && (
-                <Button type="submit" size="icon" variant="ghost" className="h-7 w-7">
-                  <Send size={16} />
-                </Button>
-              )}
+      {/* Reply indicator */}
+      {replyingTo && (
+        <div className="border-t border-border bg-muted/50 px-4 py-2 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="w-1 h-8 bg-primary rounded mr-2"></div>
+            <div>
+              <p className="text-xs text-muted-foreground">Replying to</p>
+              <p className="text-sm truncate max-w-[200px]">
+                {messages.find(m => m.id === replyingTo)?.content || ""}
+              </p>
             </div>
           </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setReplyingTo(null)}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
+      
+      {/* Message input */}
+      <div className="border-t p-3">
+        <div className="flex items-center bg-muted/50 rounded-md">
+          <div className="flex items-center px-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground"
+            >
+              <Paperclip size={18} />
+            </Button>
+            <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+            <GifPicker onGifSelect={handleGifSelect} />
+          </div>
           
-          <div className="flex items-center space-x-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={handleFileUpload}>
-                    <Paperclip size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add attachment</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}>
-                    <Smile size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add emoji</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setIsGifPickerOpen(!isGifPickerOpen)}>
-                    <Gift size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add GIF</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-                    <Mic size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Voice message</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-                    <AtSign size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Mention user</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            {chatType !== 'direct' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-                      <Hash size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Mention channel</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+          <Input
+            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+            placeholder={`Message ${
+              chatType === 'direct' ? recipientName : groupName
+            }...`}
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          
+          <div className="flex items-center px-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground"
+              onClick={toggleVoiceRecording}
+            >
+              {isRecording ? (
+                <MicOff size={18} className="text-red-500" />
+              ) : (
+                <Mic size={18} />
+              )}
+            </Button>
+            <Button
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={handleSendMessage}
+              disabled={!messageInput.trim() && !isRecording}
+            >
+              <Send size={16} />
+            </Button>
           </div>
-        </form>
-        
-        {/* File input (hidden) */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileSelected}
-          className="hidden"
-        />
-        
-        {/* Emoji Picker Popover */}
-        {isEmojiPickerOpen && (
-          <div className="absolute bottom-20 right-4">
-            <EmojiPicker onEmojiSelect={handleEmojiSelect} onClose={() => setIsEmojiPickerOpen(false)} />
-          </div>
-        )}
-        
-        {/* GIF Picker Popover */}
-        {isGifPickerOpen && (
-          <div className="absolute bottom-20 right-4">
-            <GifPicker onGifSelect={handleGifSelect} onClose={() => setIsGifPickerOpen(false)} />
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

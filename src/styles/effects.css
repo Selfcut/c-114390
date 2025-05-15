@@ -1,230 +1,117 @@
 
-/* Hover Effects */
+/* Effects */
+
+/* Button hover lift effect */
 .hover-lift {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.hover-grow {
-  transition: transform 0.3s ease;
-}
-
-.hover-grow:hover {
-  transform: scale(1.03);
-}
-
-.hover-glow {
-  transition: box-shadow 0.3s ease;
-}
-
-.hover-glow:hover {
-  box-shadow: 0 0 15px rgba(110, 89, 165, 0.4);
-}
-
-/* Interaction effects */
-.button-hover-effect {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.button-hover-effect:hover {
   transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
 }
 
-.button-hover-effect:active {
-  transform: translateY(0);
-}
-
-.button-hover-effect::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-}
-
-.button-hover-effect:hover::after {
-  transform: translateX(0);
-}
-
-/* Card effects */
+/* Enhanced card styling */
 .enhanced-card {
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+  border: 1px solid hsl(var(--border));
 }
 
 .enhanced-card:hover {
-  transform: translateY(-4px);
-  border-color: hsl(var(--primary) / 0.5);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: hsl(var(--primary) / 0.3);
 }
 
-/* Link hover effects */
-.link-hover {
+/* Glowing effect */
+.glow {
   position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 
-.link-hover::after {
-  content: '';
+.glow::after {
+  content: "";
   position: absolute;
-  width: 100%;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  background-color: currentColor;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.3s ease;
-}
-
-.link-hover:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-
-/* Feature Card Hover Effects */
-.feature-card {
-  transition: all 0.3s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-4px);
-}
-
-.feature-card:hover .run-button {
-  background-color: hsl(var(--primary) / 0.8);
-}
-
-/* Text highlight effects */
-.text-gradient {
-  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-fill-color: transparent;
-}
-
-.text-gradient-glow {
-  text-shadow: 0 0 20px rgba(110, 89, 165, 0.5);
-}
-
-/* Gradient border hover */
-.gradient-border-hover {
-  position: relative;
-  background: transparent;
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  transition: all 0.3s ease;
-}
-
-.gradient-border-hover::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    rgba(var(--primary-rgb), 0.1),
+    transparent 30%
+  );
+  animation: rotate 4s linear infinite;
   z-index: -1;
-  margin: -1px;
-  border-radius: inherit;
-  background: linear-gradient(45deg, transparent, rgba(110, 89, 165, 0.3), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
-.gradient-border-hover:hover::before {
-  opacity: 1;
+@keyframes rotate {
+  100% {
+    transform: rotate(1turn);
+  }
 }
 
-/* Icon hover effects */
-.icon-hover {
-  transition: transform 0.3s ease, color 0.3s ease;
+/* Badge pulse */
+.badge-pulse {
+  animation: pulse 2s infinite;
 }
 
-.icon-hover:hover {
-  transform: translateY(-2px);
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+/* Chat message mentions styling */
+.mention {
+  display: inline-block;
+  background-color: hsl(var(--primary) / 0.1);
   color: hsl(var(--primary));
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
-/* Glassmorphism effect */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-/* Remove blue outline on focus */
-:focus {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
-
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Tooltip custom styles */
-.custom-tooltip {
-  position: relative;
-}
-
-.custom-tooltip::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.5rem;
-  background-color: hsl(var(--popover));
-  color: hsl(var(--popover-foreground));
-  border-radius: var(--radius);
-  font-size: 0.75rem;
-  white-space: nowrap;
+/* Chat message hover interactions */
+.message-actions {
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 50;
+  transition: opacity 0.2s ease-out;
 }
 
-.custom-tooltip:hover::before {
+.message:hover .message-actions {
   opacity: 1;
 }
 
-/* Badge highlight glow */
-.badge-glow {
-  box-shadow: 0 0 8px rgba(110, 89, 165, 0.6);
+/* Fix purple buttons with invisible text */
+.bg-primary:hover, .bg-[#6E59A5]:hover, .bg-[#7E69B5]:hover {
+  color: hsl(var(--primary-foreground)) !important;
 }
 
-/* Achievement badge effect */
-.achievement-badge {
-  position: relative;
+button.bg-primary, button.bg-[#6E59A5], button.bg-[#7E69B5] {
+  color: hsl(var(--primary-foreground)) !important;
 }
 
-.achievement-badge::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  bottom: -2px;
-  left: -2px;
-  border-radius: inherit;
-  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--secondary)));
-  z-index: -1;
-  opacity: 0.3;
+/* Remove blue focus outlines */
+:focus {
+  outline: none !important;
+}
+
+/* Fix hover effect for sidebar items */
+.sidebar-item {
+  transition: background-color 0.2s ease-out, color 0.2s ease-out;
+}
+
+.sidebar-item:hover {
+  background-color: hsl(var(--accent) / 0.8);
+  color: hsl(var(--accent-foreground));
 }
