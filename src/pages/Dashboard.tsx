@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { UserWelcome } from "../components/UserWelcome";
@@ -16,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Json } from "@/integrations/supabase/types";
 import { getUserActivityStats } from "@/lib/utils/supabase-utils";
+import { ActivityType, trackActivity } from "@/lib/activity-tracker";
+import { fetchLearningProgress, extractTopicsFromActivities, createProgressDataFromTopics, addDefaultTopics } from "@/lib/utils/data-utils";
 
 // Define interfaces for our data
 interface ProgressData {
@@ -62,6 +63,12 @@ const Dashboard = () => {
       setIsLoading(true);
       
       try {
+        // Record dashboard view
+        await trackActivity(user.id, 'view', { 
+          section: 'dashboard',
+          timestamp: new Date().toISOString()
+        });
+        
         // Fetch user activities
         const { data: activities, error: activitiesError } = await supabase
           .from('user_activities')
@@ -87,53 +94,11 @@ const Dashboard = () => {
           });
         }
 
-        // Fetch user learning progress data
-        const { data: learningData, error: learningError } = await supabase
-          .from('user_activities')
-          .select('event_type, metadata, created_at')
-          .eq('user_id', user.id)
-          .in('event_type', ['read', 'learned', 'completed'])
-          .order('created_at', { ascending: false });
-          
-        if (learningError) {
-          console.error("Error fetching learning data:", learningError);
-        }
-
+        // Fetch user learning data
+        const learningData = await fetchLearningProgress(user.id);
+        
         // Get topics from activities
-        const topics = new Map<string, {
-          activities: number,
-          lastActivity: Date,
-          progress: number
-        }>();
-
-        if (learningData) {
-          learningData.forEach(activity => {
-            // Safely access metadata properties with type checking
-            const metadata = activity.metadata as Record<string, any> | null;
-            const topic = metadata && typeof metadata === 'object' ? 
-              (metadata.topic as string || metadata.category as string || 'General') : 
-              'General';
-            
-            if (!topics.has(topic)) {
-              topics.set(topic, { 
-                activities: 0, 
-                lastActivity: new Date(activity.created_at),
-                progress: 0
-              });
-            }
-            
-            const topicData = topics.get(topic)!;
-            topicData.activities += 1;
-            
-            const activityDate = new Date(activity.created_at);
-            if (activityDate > topicData.lastActivity) {
-              topicData.lastActivity = activityDate;
-            }
-            
-            // Calculate progress (more activities = more progress, max 100)
-            topicData.progress = Math.min(100, topicData.activities * 20);
-          });
-        }
+        const topics = extractTopicsFromActivities(learningData);
 
         // Get categories the user has quoted
         const { data: quoteData } = await supabase
@@ -159,36 +124,12 @@ const Dashboard = () => {
           });
         }
 
-        // Create progress data based on actual user activities
-        const userProgressData: ProgressData[] = Array.from(topics.entries()).map(([topic, data], index) => {
-          // Choose icon based on topic name
-          const icons = ["book", "brain", "target", "clock", "award", "trend"];
-          const iconIndex = Math.abs(topic.charCodeAt(0) + topic.length) % icons.length;
-          
-          return {
-            id: (index + 1).toString(),
-            title: topic,
-            description: `${data.activities} learning activities`,
-            progress: data.progress,
-            icon: icons[iconIndex],
-            recentActivity: `Last activity: ${new Date(data.lastActivity).toLocaleDateString()}`,
-            streakDays: data.activities > 2 ? Math.max(1, Math.floor(data.activities / 2)) : undefined
-          };
-        });
+        // Create progress data based on topics
+        let userProgressData = createProgressDataFromTopics(topics);
         
         // Ensure we have at least some progress items
         if (userProgressData.length === 0) {
-          // Add default learning topics if user has no activity
-          const defaultTopics = ['Mathematics & Logic', 'Philosophy', 'Physics', 'Computer Science'];
-          defaultTopics.forEach((topic, index) => {
-            userProgressData.push({
-              id: (index + 1000).toString(),
-              title: topic,
-              description: 'Begin your learning journey',
-              progress: 0,
-              icon: ["book", "brain", "target", "clock"][index % 4]
-            });
-          });
+          userProgressData = addDefaultTopics();
         }
         
         setProgressData(userProgressData);
@@ -250,19 +191,10 @@ const Dashboard = () => {
             
             // Record activity for opening learning content
             if (user) {
-              supabase
-                .from('user_activities')
-                .insert({
-                  user_id: user.id,
-                  event_type: 'view',
-                  metadata: { topic: item.title, type: 'learning' }
-                })
-                .then(() => {
-                  // Refresh data after activity is recorded
-                  setTimeout(() => {
-                    // We'll skip the immediate refresh to avoid too many requests
-                  }, 1000);
-                });
+              trackActivity(user.id, 'view', { 
+                topic: item.title, 
+                type: 'learning' 
+              });
             }
           }}
         />
