@@ -4,7 +4,8 @@ import { PromoBar } from "../PromoBar";
 import { Sidebar } from "../Sidebar";
 import Header from "../Header";
 import { subscribeToChatSidebarToggle } from "@/lib/utils/event-utils";
-import { useTrackSectionView } from "@/hooks/use-track-section-view";
+import { useAuth } from "@/lib/auth-context";
+import { trackActivity } from "@/lib/activity-tracker";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -23,13 +24,21 @@ export const PageLayout = ({
 }: PageLayoutProps) => {
   // Create a state to track if the chat sidebar is open
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { user } = useAuth();
   
   // Track section view if section name is provided
   useEffect(() => {
-    if (sectionName) {
-      useTrackSectionView(sectionName);
+    if (sectionName && user) {
+      const trackView = async () => {
+        await trackActivity(user.id, 'view', {
+          section: sectionName,
+          timestamp: new Date().toISOString()
+        });
+      };
+      
+      trackView();
     }
-  }, [sectionName]);
+  }, [sectionName, user]);
 
   // Listen to chat sidebar toggle events
   useEffect(() => {
