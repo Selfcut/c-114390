@@ -36,7 +36,8 @@ export const ChatInputArea = ({
   ];
 
   const handleInsertEmoji = (emoji: string) => {
-    setMessage((prev) => prev + emoji);
+    // Fix: Change from passing a function to directly concatenating the strings
+    setMessage(message + emoji);
   };
 
   return (
