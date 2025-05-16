@@ -3,16 +3,14 @@ import { useState, useEffect } from 'react';
 import { subscribeToChatSidebarToggle, publishChatSidebarToggle } from "@/lib/utils/event-utils";
 
 export const useChatSidebarToggle = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => {
+    // Initialize from localStorage if available
+    const savedState = localStorage.getItem('chatSidebarOpen');
+    return savedState === 'true';
+  });
   
   // Initialize sidebar state and listen for toggle events
   useEffect(() => {
-    // Initialize from localStorage if available
-    const savedState = localStorage.getItem('chatSidebarOpen');
-    if (savedState !== null) {
-      setIsOpen(savedState === 'true');
-    }
-    
     // Subscribe to chat sidebar toggle events
     const unsubscribe = subscribeToChatSidebarToggle((newState) => {
       if (typeof newState === 'function') {

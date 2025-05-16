@@ -30,6 +30,12 @@ export const PageLayout = ({
     return saved === 'true' ? true : false;
   });
   
+  // Get sidebar collapsed state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true' ? true : false;
+  });
+  
   const { user } = useAuth();
   const isAuthenticated = !!user;
   
@@ -54,10 +60,28 @@ export const PageLayout = ({
       localStorage.setItem('chatSidebarOpen', String(isOpen));
     });
 
+    // Listen for sidebar collapse changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'sidebar-collapsed') {
+        setSidebarCollapsed(e.newValue === 'true');
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  
+  // Set CSS variable for sidebar width
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sidebar-width',
+      sidebarCollapsed ? '64px' : '256px'
+    );
+  }, [sidebarCollapsed]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
