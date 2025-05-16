@@ -6,54 +6,98 @@ import { MediaFilters } from "../components/media/MediaFilters";
 import { MediaFeed } from "../components/media/MediaFeed";
 import { CreatePostDialog } from "../components/media/CreatePostDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth/auth-context";
+import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Define the media post type
+export interface MediaPost {
+  id: string;
+  user_id: string;
+  title: string;
+  content?: string;
+  type: 'image' | 'video' | 'document' | 'youtube' | 'text';
+  url?: string;
+  likes: number;
+  comments: number;
+  created_at: string;
+  updated_at: string;
+  // Join with profiles
+  profiles?: {
+    name: string;
+    username: string;
+    avatar_url?: string;
+  };
+}
 
 const Media = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<MediaPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [filterType, setFilterType] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "popular">("newest");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch posts from Supabase
   const fetchPosts = async (page = 0, append = false) => {
     try {
       setIsLoading(true);
+      setError(null);
       
       const pageSize = 10;
       const startIndex = page * pageSize;
       
-      // Using any type to bypass TypeScript errors
-      let query = (supabase as any)
+      let query = supabase
         .from('media_posts')
         .select('*, profiles(name, username, avatar_url)')
-        .range(startIndex, startIndex + pageSize - 1)
-        .order(sortBy === 'newest' ? 'created_at' : 'likes', { ascending: sortBy === 'oldest' });
+        .range(startIndex, startIndex + pageSize - 1);
       
+      // Apply filters
       if (filterType !== 'all') {
         query = query.eq('type', filterType);
       }
+
+      // Apply sorting
+      if (sortBy === 'newest') {
+        query = query.order('created_at', { ascending: false });
+      } else if (sortBy === 'oldest') {
+        query = query.order('created_at', { ascending: true });
+      } else if (sortBy === 'popular') {
+        query = query.order('likes', { ascending: false });
+      }
       
-      const { data, error } = await query;
+      const { data, error: fetchError } = await query;
       
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       
-      setPosts(prev => (append ? [...prev, ...(data || [])] : (data || [])));
-      setHasMore((data || []).length === pageSize);
+      // Transform data to match our interface
+      const transformedData: MediaPost[] = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        title: item.title,
+        content: item.content,
+        type: item.type,
+        url: item.url,
+        likes: item.likes || 0,
+        comments: item.comments || 0,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        profiles: item.profiles
+      }));
+
+      setPosts(prev => (append ? [...prev, ...transformedData] : transformedData));
+      setHasMore(transformedData.length === pageSize);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching media posts:", err);
-      toast({
-        title: "Error loading content",
-        description: "There was a problem loading media posts.",
-        variant: "destructive"
-      });
+      setError("Failed to load media posts. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +136,21 @@ const Media = () => {
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
         
-        const { error: uploadError, data } = await (supabase as any)
+        // Create storage bucket if it doesn't exist (this would normally be done via SQL)
+        try {
+          const { data: bucketData } = await supabase
+            .storage
+            .getBucket('media');
+            
+          if (!bucketData) {
+            // In a real app, you would create the bucket via SQL migrations
+            console.error("Media bucket doesn't exist. Please create it via SQL migrations.");
+          }
+        } catch (error) {
+          console.error("Error checking bucket:", error);
+        }
+        
+        const { error: uploadError, data } = await supabase
           .storage
           .from('media')
           .upload(filePath, postData.file);
@@ -100,7 +158,7 @@ const Media = () => {
         if (uploadError) throw uploadError;
         
         // Get public URL
-        const { data: { publicUrl } } = (supabase as any)
+        const { data: { publicUrl } } = supabase
           .storage
           .from('media')
           .getPublicUrl(filePath);
@@ -109,7 +167,7 @@ const Media = () => {
       }
 
       // Create the media post
-      const { error: insertError } = await (supabase as any)
+      const { error: insertError, data } = await supabase
         .from('media_posts')
         .insert({
           user_id: user.id,
@@ -119,12 +177,25 @@ const Media = () => {
           url: postData.type === 'youtube' ? postData.youtubeUrl : fileUrl,
           likes: 0,
           comments: 0
-        });
+        })
+        .select();
         
       if (insertError) throw insertError;
 
-      // Refresh the feed
-      fetchPosts(0, false);
+      // Add the new post to state with profile data
+      if (data && data.length > 0) {
+        const newPost: MediaPost = {
+          ...data[0],
+          profiles: {
+            name: user.name,
+            username: user.username,
+            avatar_url: user.avatar
+          }
+        };
+        
+        setPosts(prev => [newPost, ...prev]);
+      }
+
       setIsCreateDialogOpen(false);
       
       toast({
@@ -156,13 +227,21 @@ const Media = () => {
           setSortBy={setSortBy}
         />
         
-        <MediaFeed 
-          posts={posts}
-          isLoading={isLoading}
-          hasMore={hasMore}
-          loadMore={loadMore}
-          currentUser={user}
-        />
+        {error ? (
+          <Alert variant="destructive" className="my-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : (
+          <MediaFeed 
+            posts={posts}
+            isLoading={isLoading}
+            hasMore={hasMore}
+            loadMore={loadMore}
+            currentUser={user}
+          />
+        )}
 
         <CreatePostDialog 
           isOpen={isCreateDialogOpen}

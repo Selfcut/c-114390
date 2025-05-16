@@ -1,949 +1,607 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Save, 
-  RefreshCcw, 
-  Settings, 
-  Layers, 
-  FileText, 
-  Image,
-  Upload,
-  Link,
-  Palette,
-  Sparkles,
-  Loader2
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2, Save, ShieldAlert, Globe, Upload, Mail, Bell, Key, Lock, Database, FileText, MessageSquare } from "lucide-react";
 
 export const AdminSettings = () => {
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Site Settings
-  const [siteSettings, setSiteSettings] = useState({
-    siteName: "Polymath Platform",
-    siteDescription: "A knowledge-sharing and learning community for interdisciplinary thinkers",
-    siteUrl: "https://polymath-platform.com",
-    supportEmail: "support@polymath-platform.com",
-    maintenanceMode: false,
-    inviteOnly: false
+  // General settings
+  const [siteName, setSiteName] = useState("Polymath Platform");
+  const [siteDescription, setSiteDescription] = useState("A platform for sharing and connecting knowledge");
+  const [allowRegistration, setAllowRegistration] = useState(true);
+  const [requireEmailVerification, setRequireEmailVerification] = useState(true);
+  
+  // Content settings
+  const [maxTitleLength, setMaxTitleLength] = useState(100);
+  const [maxContentLength, setMaxContentLength] = useState(5000);
+  const [maxFileSize, setMaxFileSize] = useState(10);
+  const [allowedMediaTypes, setAllowedMediaTypes] = useState({
+    image: true,
+    video: true,
+    document: true,
+    youtube: true
   });
   
-  // Content Settings
-  const [contentSettings, setSiteContentSettings] = useState({
-    maxPostTitleLength: 100,
-    maxPostContentLength: 5000,
-    maxCommentLength: 1000,
-    allowedFileSizeInMB: 10,
-    allowImages: true,
-    allowVideos: true,
-    allowDocuments: true,
-    allowExternalLinks: true,
-    requireApproval: false
+  // User settings
+  const [defaultUserRole, setDefaultUserRole] = useState("user");
+  const [autoApproveUsers, setAutoApproveUsers] = useState(true);
+  const [userProfileFields, setUserProfileFields] = useState({
+    bio: true,
+    website: true,
+    location: false,
+    socialLinks: false
   });
   
-  // User Settings
-  const [userSettings, setUserSettings] = useState({
-    allowRegistration: true,
-    requireEmailVerification: true,
-    maxSessionLengthDays: 30,
-    defaultUserRole: "user",
-    allowMultipleLogins: true,
-    lockoutAttempts: 5
-  });
-  
-  // Integration Settings
-  const [integrationSettings, setIntegrationSettings] = useState({
-    googleAnalyticsId: "",
-    recaptchaSiteKey: "",
-    mailchimpApiKey: "",
-    enableSocialLogins: false,
-    enableGoogleLogin: false,
-    enableGithubLogin: false,
-    enableTwitterLogin: false
-  });
-  
-  // Appearance Settings
-  const [appearanceSettings, setAppearanceSettings] = useState({
-    defaultTheme: "dark",
-    primaryColor: "#9b87f5",
-    secondaryColor: "#7E69AB",
-    accentColor: "#6E59A5",
-    customCss: "",
-    customHeader: "",
-    customFooter: ""
-  });
-  
-  // Media Settings
-  const [mediaSettings, setMediaSettings] = useState({
-    maxImageSizeMB: 5,
-    maxVideoSizeMB: 50,
-    maxDocumentSizeMB: 20,
-    allowedImageFormats: "jpg,jpeg,png,gif,webp",
-    allowedVideoFormats: "mp4,webm,ogg",
-    allowedDocumentFormats: "pdf,doc,docx,xls,xlsx,ppt,pptx,txt",
-    storageProvider: "supabase"
+  // Notification settings
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [notificationEvents, setNotificationEvents] = useState({
+    newComment: true,
+    newFollower: true,
+    contentMention: true,
+    systemAnnouncement: true
   });
 
-  // Handle site settings submit
-  const handleSiteSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      
-      // In a real app, store these settings in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
+  const handleSaveSettings = async (tab: string) => {
+    setIsSubmitting(true);
+    
+    // Simulate API call to save settings
+    setTimeout(() => {
+      setIsSubmitting(false);
       
       toast({
         title: "Settings saved",
-        description: "Site settings have been updated successfully",
+        description: `${tab} settings have been updated successfully.`
       });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: "Error saving settings",
-        description: "Something went wrong while saving the settings",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle content settings submit
-  const handleContentSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      
-      // In a real app, store these settings in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Settings saved",
-        description: "Content settings have been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: "Error saving settings",
-        description: "Something went wrong while saving the settings",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle user settings submit
-  const handleUserSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      
-      // In a real app, store these settings in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Settings saved",
-        description: "User settings have been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: "Error saving settings",
-        description: "Something went wrong while saving the settings",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle integration settings submit
-  const handleIntegrationSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      
-      // In a real app, store these settings in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Settings saved",
-        description: "Integration settings have been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: "Error saving settings",
-        description: "Something went wrong while saving the settings",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle appearance settings submit
-  const handleAppearanceSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      
-      // In a real app, store these settings in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Settings saved",
-        description: "Appearance settings have been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: "Error saving settings",
-        description: "Something went wrong while saving the settings",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle media settings submit
-  const handleMediaSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      
-      // In a real app, store these settings in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Settings saved",
-        description: "Media settings have been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: "Error saving settings",
-        description: "Something went wrong while saving the settings",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Make user an admin
-  const makeUserAdmin = async () => {
-    try {
-      setIsSaving(true);
-      
-      const userId = "dc7bedf3-14c3-4376-adfb-de5ac8207adc";
-      
-      // Update user role in profiles table
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ role: 'admin' })
-        .eq('id', userId);
-        
-      if (updateError) throw updateError;
-      
-      // Add user to admin roles table if it exists
-      try {
-        await supabase
-          .from('user_roles')
-          .upsert(
-            { user_id: userId, role: 'admin' },
-            { onConflict: 'user_id,role' }
-          );
-      } catch (roleError) {
-        console.log("No user_roles table exists:", roleError);
-      }
-      
-      toast({
-        title: "Admin access granted",
-        description: "User has been granted admin privileges",
-      });
-    } catch (error) {
-      console.error("Error granting admin access:", error);
-      toast({
-        title: "Error granting admin access",
-        description: "Something went wrong while granting admin privileges",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    }, 1500);
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Platform Settings</CardTitle>
-        <CardDescription>
-          Configure and customize the Polymath platform
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="site">
-          <TabsList className="w-full grid grid-cols-3 md:grid-cols-6">
-            <TabsTrigger value="site">Site</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="media">Media</TabsTrigger>
-          </TabsList>
-          
-          {/* Site Settings */}
-          <TabsContent value="site" className="py-4">
-            <form onSubmit={handleSiteSettingsSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="siteName">Site Name</Label>
-                  <Input 
-                    id="siteName" 
-                    value={siteSettings.siteName} 
-                    onChange={(e) => setSiteSettings({...siteSettings, siteName: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="siteUrl">Site URL</Label>
-                  <Input 
-                    id="siteUrl" 
-                    value={siteSettings.siteUrl} 
-                    onChange={(e) => setSiteSettings({...siteSettings, siteUrl: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="siteDescription">Site Description</Label>
-                  <Textarea 
-                    id="siteDescription" 
-                    value={siteSettings.siteDescription} 
-                    onChange={(e) => setSiteSettings({...siteSettings, siteDescription: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="supportEmail">Support Email</Label>
-                  <Input 
-                    id="supportEmail" 
-                    type="email"
-                    value={siteSettings.supportEmail} 
-                    onChange={(e) => setSiteSettings({...siteSettings, supportEmail: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="block mb-2">Special Actions</Label>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={makeUserAdmin}
-                      disabled={isSaving}
-                    >
-                      Make User Admin
-                    </Button>
-                    
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => {
-                        toast({
-                          title: "Cache cleared",
-                          description: "System cache has been cleared",
-                        });
-                      }}
-                    >
-                      <RefreshCcw className="w-4 h-4 mr-2" />
-                      Clear Cache
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between py-2">
-                <div className="flex flex-col">
-                  <Label htmlFor="maintenanceMode" className="mb-1">Maintenance Mode</Label>
-                  <span className="text-xs text-muted-foreground">Make the site unavailable for regular users</span>
-                </div>
-                <Switch 
-                  id="maintenanceMode" 
-                  checked={siteSettings.maintenanceMode}
-                  onCheckedChange={(checked) => setSiteSettings({...siteSettings, maintenanceMode: checked})}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between py-2">
-                <div className="flex flex-col">
-                  <Label htmlFor="inviteOnly" className="mb-1">Invite Only</Label>
-                  <span className="text-xs text-muted-foreground">Restrict registrations to invited users only</span>
-                </div>
-                <Switch 
-                  id="inviteOnly" 
-                  checked={siteSettings.inviteOnly}
-                  onCheckedChange={(checked) => setSiteSettings({...siteSettings, inviteOnly: checked})}
-                />
-              </div>
-              
-              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Settings
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
-          
-          {/* Content Settings */}
-          <TabsContent value="content" className="py-4">
-            <form onSubmit={handleContentSettingsSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxPostTitleLength">Maximum Post Title Length</Label>
-                  <Input 
-                    id="maxPostTitleLength" 
-                    type="number"
-                    value={contentSettings.maxPostTitleLength} 
-                    onChange={(e) => setSiteContentSettings({...contentSettings, maxPostTitleLength: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="maxPostContentLength">Maximum Post Content Length</Label>
-                  <Input 
-                    id="maxPostContentLength" 
-                    type="number"
-                    value={contentSettings.maxPostContentLength} 
-                    onChange={(e) => setSiteContentSettings({...contentSettings, maxPostContentLength: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="maxCommentLength">Maximum Comment Length</Label>
-                  <Input 
-                    id="maxCommentLength" 
-                    type="number"
-                    value={contentSettings.maxCommentLength} 
-                    onChange={(e) => setSiteContentSettings({...contentSettings, maxCommentLength: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="allowedFileSizeInMB">Maximum File Size (MB)</Label>
-                  <Input 
-                    id="allowedFileSizeInMB" 
-                    type="number"
-                    value={contentSettings.allowedFileSizeInMB} 
-                    onChange={(e) => setSiteContentSettings({...contentSettings, allowedFileSizeInMB: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-4 py-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="allowImages" className="mb-1">Allow Images</Label>
-                    <span className="text-xs text-muted-foreground">Enable uploading and embedding of images</span>
-                  </div>
-                  <Switch 
-                    id="allowImages" 
-                    checked={contentSettings.allowImages}
-                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowImages: checked})}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="allowVideos" className="mb-1">Allow Videos</Label>
-                    <span className="text-xs text-muted-foreground">Enable uploading and embedding of videos</span>
-                  </div>
-                  <Switch 
-                    id="allowVideos" 
-                    checked={contentSettings.allowVideos}
-                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowVideos: checked})}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="allowDocuments" className="mb-1">Allow Documents</Label>
-                    <span className="text-xs text-muted-foreground">Enable uploading and sharing of documents</span>
-                  </div>
-                  <Switch 
-                    id="allowDocuments" 
-                    checked={contentSettings.allowDocuments}
-                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowDocuments: checked})}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="allowExternalLinks" className="mb-1">Allow External Links</Label>
-                    <span className="text-xs text-muted-foreground">Enable embedding of external links</span>
-                  </div>
-                  <Switch 
-                    id="allowExternalLinks" 
-                    checked={contentSettings.allowExternalLinks}
-                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowExternalLinks: checked})}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="requireApproval" className="mb-1">Require Content Approval</Label>
-                    <span className="text-xs text-muted-foreground">Require admin approval before content is published</span>
-                  </div>
-                  <Switch 
-                    id="requireApproval" 
-                    checked={contentSettings.requireApproval}
-                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, requireApproval: checked})}
-                  />
-                </div>
-              </div>
-              
-              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Settings
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
-          
-          {/* User Settings */}
-          <TabsContent value="users" className="py-4">
-            <form onSubmit={handleUserSettingsSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxSessionLengthDays">Session Length (Days)</Label>
-                  <Input 
-                    id="maxSessionLengthDays" 
-                    type="number"
-                    value={userSettings.maxSessionLengthDays} 
-                    onChange={(e) => setUserSettings({...userSettings, maxSessionLengthDays: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="lockoutAttempts">Failed Login Attempts Before Lockout</Label>
-                  <Input 
-                    id="lockoutAttempts" 
-                    type="number"
-                    value={userSettings.lockoutAttempts} 
-                    onChange={(e) => setUserSettings({...userSettings, lockoutAttempts: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="defaultUserRole">Default User Role</Label>
-                  <select
-                    id="defaultUserRole"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={userSettings.defaultUserRole}
-                    onChange={(e) => setUserSettings({...userSettings, defaultUserRole: e.target.value})}
-                  >
-                    <option value="user">User</option>
-                    <option value="contributor">Contributor</option>
-                    <option value="moderator">Moderator</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="space-y-4 py-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="allowRegistration" className="mb-1">Allow Registration</Label>
-                    <span className="text-xs text-muted-foreground">Enable new user registrations</span>
-                  </div>
-                  <Switch 
-                    id="allowRegistration" 
-                    checked={userSettings.allowRegistration}
-                    onCheckedChange={(checked) => setUserSettings({...userSettings, allowRegistration: checked})}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="requireEmailVerification" className="mb-1">Require Email Verification</Label>
-                    <span className="text-xs text-muted-foreground">Users must verify email before they can log in</span>
-                  </div>
-                  <Switch 
-                    id="requireEmailVerification" 
-                    checked={userSettings.requireEmailVerification}
-                    onCheckedChange={(checked) => setUserSettings({...userSettings, requireEmailVerification: checked})}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="allowMultipleLogins" className="mb-1">Allow Multiple Sessions</Label>
-                    <span className="text-xs text-muted-foreground">Allow users to be logged in on multiple devices</span>
-                  </div>
-                  <Switch 
-                    id="allowMultipleLogins" 
-                    checked={userSettings.allowMultipleLogins}
-                    onCheckedChange={(checked) => setUserSettings({...userSettings, allowMultipleLogins: checked})}
-                  />
-                </div>
-              </div>
-              
-              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Settings
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
-          
-          {/* Integration Settings */}
-          <TabsContent value="integrations" className="py-4">
-            <form onSubmit={handleIntegrationSettingsSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="googleAnalyticsId">Google Analytics ID</Label>
-                  <Input 
-                    id="googleAnalyticsId" 
-                    value={integrationSettings.googleAnalyticsId} 
-                    onChange={(e) => setIntegrationSettings({...integrationSettings, googleAnalyticsId: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="recaptchaSiteKey">Google reCAPTCHA Site Key</Label>
-                  <Input 
-                    id="recaptchaSiteKey" 
-                    value={integrationSettings.recaptchaSiteKey} 
-                    onChange={(e) => setIntegrationSettings({...integrationSettings, recaptchaSiteKey: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="mailchimpApiKey">Mailchimp API Key</Label>
-                  <Input 
-                    id="mailchimpApiKey" 
-                    value={integrationSettings.mailchimpApiKey} 
-                    onChange={(e) => setIntegrationSettings({...integrationSettings, mailchimpApiKey: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-4 py-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Label htmlFor="enableSocialLogins" className="mb-1">Enable Social Logins</Label>
-                    <span className="text-xs text-muted-foreground">Enable authentication with social media accounts</span>
-                  </div>
-                  <Switch 
-                    id="enableSocialLogins" 
-                    checked={integrationSettings.enableSocialLogins}
-                    onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableSocialLogins: checked})}
-                  />
-                </div>
-                
-                {integrationSettings.enableSocialLogins && (
-                  <div className="pl-6 space-y-4 border-l-2 border-muted">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="enableGoogleLogin">Google Login</Label>
-                      <Switch 
-                        id="enableGoogleLogin" 
-                        checked={integrationSettings.enableGoogleLogin}
-                        onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableGoogleLogin: checked})}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Platform Settings</h2>
+          <p className="text-muted-foreground">
+            Configure global settings for the Polymath platform
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="general">
+        <div className="flex flex-col md:flex-row gap-6">
+          <Card className="md:w-64 flex-shrink-0">
+            <CardContent className="p-4">
+              <TabsList className="flex flex-col items-start w-full">
+                <TabsTrigger value="general" className="w-full justify-start mb-1 gap-2">
+                  <Globe size={16} />
+                  <span>General</span>
+                </TabsTrigger>
+                <TabsTrigger value="content" className="w-full justify-start mb-1 gap-2">
+                  <FileText size={16} />
+                  <span>Content</span>
+                </TabsTrigger>
+                <TabsTrigger value="users" className="w-full justify-start mb-1 gap-2">
+                  <Key size={16} />
+                  <span>Users & Access</span>
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="w-full justify-start mb-1 gap-2">
+                  <Bell size={16} />
+                  <span>Notifications</span>
+                </TabsTrigger>
+                <TabsTrigger value="moderation" className="w-full justify-start mb-1 gap-2">
+                  <ShieldAlert size={16} />
+                  <span>Moderation</span>
+                </TabsTrigger>
+                <TabsTrigger value="performance" className="w-full justify-start mb-1 gap-2">
+                  <Database size={16} />
+                  <span>Performance</span>
+                </TabsTrigger>
+                <TabsTrigger value="backup" className="w-full justify-start mb-1 gap-2">
+                  <Lock size={16} />
+                  <span>Backup & Security</span>
+                </TabsTrigger>
+              </TabsList>
+            </CardContent>
+          </Card>
+
+          <div className="flex-1">
+            <TabsContent value="general" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>General Settings</CardTitle>
+                  <CardDescription>
+                    Configure basic platform settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="siteName">Platform Name</Label>
+                      <Input
+                        id="siteName"
+                        value={siteName}
+                        onChange={(e) => setSiteName(e.target.value)}
                       />
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="enableGithubLogin">GitHub Login</Label>
-                      <Switch 
-                        id="enableGithubLogin" 
-                        checked={integrationSettings.enableGithubLogin}
-                        onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableGithubLogin: checked})}
+                    <div className="space-y-2">
+                      <Label htmlFor="siteDescription">Platform Description</Label>
+                      <Input
+                        id="siteDescription"
+                        value={siteDescription}
+                        onChange={(e) => setSiteDescription(e.target.value)}
                       />
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="enableTwitterLogin">Twitter Login</Label>
-                      <Switch 
-                        id="enableTwitterLogin" 
-                        checked={integrationSettings.enableTwitterLogin}
-                        onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableTwitterLogin: checked})}
-                      />
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="registration">Allow User Registration</Label>
+                        <Switch
+                          id="registration"
+                          checked={allowRegistration}
+                          onCheckedChange={setAllowRegistration}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        If disabled, new users cannot register on the platform
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="emailVerification">Require Email Verification</Label>
+                        <Switch
+                          id="emailVerification"
+                          checked={requireEmailVerification}
+                          onCheckedChange={setRequireEmailVerification}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Users must verify their email address before accessing the platform
+                      </p>
                     </div>
                   </div>
-                )}
-              </div>
-              
-              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Settings
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
-          
-          {/* Appearance Settings */}
-          <TabsContent value="appearance" className="py-4">
-            <form onSubmit={handleAppearanceSettingsSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="defaultTheme">Default Theme</Label>
-                  <select
-                    id="defaultTheme"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={appearanceSettings.defaultTheme}
-                    onChange={(e) => setAppearanceSettings({...appearanceSettings, defaultTheme: e.target.value})}
+                  
+                  <Button 
+                    className="w-full sm:w-auto"
+                    onClick={() => handleSaveSettings('General')}
+                    disabled={isSubmitting}
                   >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="system">System</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="color" 
-                      id="primaryColor"
-                      value={appearanceSettings.primaryColor}
-                      onChange={(e) => setAppearanceSettings({...appearanceSettings, primaryColor: e.target.value})}
-                      className="w-10 h-10 rounded"
-                    />
-                    <Input 
-                      value={appearanceSettings.primaryColor} 
-                      onChange={(e) => setAppearanceSettings({...appearanceSettings, primaryColor: e.target.value})}
-                    />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        <span>Save Settings</span>
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="content" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Settings</CardTitle>
+                  <CardDescription>
+                    Configure content creation and media settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="maxTitleLength">Maximum Title Length: {maxTitleLength} characters</Label>
+                      </div>
+                      <Slider
+                        id="maxTitleLength"
+                        min={50}
+                        max={200}
+                        step={10}
+                        value={[maxTitleLength]}
+                        onValueChange={([value]) => setMaxTitleLength(value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="maxContentLength">Maximum Content Length: {maxContentLength} characters</Label>
+                      </div>
+                      <Slider
+                        id="maxContentLength"
+                        min={1000}
+                        max={10000}
+                        step={500}
+                        value={[maxContentLength]}
+                        onValueChange={([value]) => setMaxContentLength(value)}
+                      />
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="maxFileSize">Maximum File Upload Size: {maxFileSize} MB</Label>
+                      </div>
+                      <Slider
+                        id="maxFileSize"
+                        min={1}
+                        max={50}
+                        step={1}
+                        value={[maxFileSize]}
+                        onValueChange={([value]) => setMaxFileSize(value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Allowed Media Types</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge 
+                          variant={allowedMediaTypes.image ? "default" : "outline"} 
+                          className="cursor-pointer"
+                          onClick={() => setAllowedMediaTypes({
+                            ...allowedMediaTypes,
+                            image: !allowedMediaTypes.image
+                          })}
+                        >
+                          Images
+                        </Badge>
+                        <Badge 
+                          variant={allowedMediaTypes.video ? "default" : "outline"} 
+                          className="cursor-pointer"
+                          onClick={() => setAllowedMediaTypes({
+                            ...allowedMediaTypes,
+                            video: !allowedMediaTypes.video
+                          })}
+                        >
+                          Videos
+                        </Badge>
+                        <Badge 
+                          variant={allowedMediaTypes.document ? "default" : "outline"} 
+                          className="cursor-pointer"
+                          onClick={() => setAllowedMediaTypes({
+                            ...allowedMediaTypes,
+                            document: !allowedMediaTypes.document
+                          })}
+                        >
+                          Documents
+                        </Badge>
+                        <Badge 
+                          variant={allowedMediaTypes.youtube ? "default" : "outline"} 
+                          className="cursor-pointer"
+                          onClick={() => setAllowedMediaTypes({
+                            ...allowedMediaTypes,
+                            youtube: !allowedMediaTypes.youtube
+                          })}
+                        >
+                          YouTube Links
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Click to toggle allowed media types
+                      </p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="color" 
-                      id="secondaryColor"
-                      value={appearanceSettings.secondaryColor}
-                      onChange={(e) => setAppearanceSettings({...appearanceSettings, secondaryColor: e.target.value})}
-                      className="w-10 h-10 rounded"
-                    />
-                    <Input 
-                      value={appearanceSettings.secondaryColor} 
-                      onChange={(e) => setAppearanceSettings({...appearanceSettings, secondaryColor: e.target.value})}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="accentColor">Accent Color</Label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="color" 
-                      id="accentColor"
-                      value={appearanceSettings.accentColor}
-                      onChange={(e) => setAppearanceSettings({...appearanceSettings, accentColor: e.target.value})}
-                      className="w-10 h-10 rounded"
-                    />
-                    <Input 
-                      value={appearanceSettings.accentColor} 
-                      onChange={(e) => setAppearanceSettings({...appearanceSettings, accentColor: e.target.value})}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="customCss">Custom CSS</Label>
-                  <Textarea 
-                    id="customCss" 
-                    value={appearanceSettings.customCss} 
-                    onChange={(e) => setAppearanceSettings({...appearanceSettings, customCss: e.target.value})}
-                    placeholder="/* Add your custom CSS here */"
-                    className="font-mono h-32"
-                  />
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="customHeader">Custom Header HTML</Label>
-                  <Textarea 
-                    id="customHeader" 
-                    value={appearanceSettings.customHeader} 
-                    onChange={(e) => setAppearanceSettings({...appearanceSettings, customHeader: e.target.value})}
-                    placeholder="<!-- Add custom HTML for the header -->"
-                    className="font-mono h-32"
-                  />
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="customFooter">Custom Footer HTML</Label>
-                  <Textarea 
-                    id="customFooter" 
-                    value={appearanceSettings.customFooter} 
-                    onChange={(e) => setAppearanceSettings({...appearanceSettings, customFooter: e.target.value})}
-                    placeholder="<!-- Add custom HTML for the footer -->"
-                    className="font-mono h-32"
-                  />
-                </div>
-              </div>
-              
-              <div className="pt-4">
-                <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Palette className="mr-2 h-4 w-4" />
-                      Save Appearance
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-          
-          {/* Media Settings */}
-          <TabsContent value="media" className="py-4">
-            <form onSubmit={handleMediaSettingsSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxImageSizeMB">Max Image Size (MB)</Label>
-                  <Input 
-                    id="maxImageSizeMB" 
-                    type="number"
-                    value={mediaSettings.maxImageSizeMB} 
-                    onChange={(e) => setMediaSettings({...mediaSettings, maxImageSizeMB: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="maxVideoSizeMB">Max Video Size (MB)</Label>
-                  <Input 
-                    id="maxVideoSizeMB" 
-                    type="number"
-                    value={mediaSettings.maxVideoSizeMB} 
-                    onChange={(e) => setMediaSettings({...mediaSettings, maxVideoSizeMB: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="maxDocumentSizeMB">Max Document Size (MB)</Label>
-                  <Input 
-                    id="maxDocumentSizeMB" 
-                    type="number"
-                    value={mediaSettings.maxDocumentSizeMB} 
-                    onChange={(e) => setMediaSettings({...mediaSettings, maxDocumentSizeMB: parseInt(e.target.value)})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="storageProvider">Storage Provider</Label>
-                  <select
-                    id="storageProvider"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={mediaSettings.storageProvider}
-                    onChange={(e) => setMediaSettings({...mediaSettings, storageProvider: e.target.value})}
+                  
+                  <Button 
+                    className="w-full sm:w-auto"
+                    onClick={() => handleSaveSettings('Content')}
+                    disabled={isSubmitting}
                   >
-                    <option value="supabase">Supabase Storage</option>
-                    <option value="s3">Amazon S3</option>
-                    <option value="local">Local Storage</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="allowedImageFormats">Allowed Image Formats</Label>
-                  <Input 
-                    id="allowedImageFormats" 
-                    value={mediaSettings.allowedImageFormats} 
-                    onChange={(e) => setMediaSettings({...mediaSettings, allowedImageFormats: e.target.value})}
-                  />
-                  <p className="text-xs text-muted-foreground">Comma separated list of extensions</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="allowedVideoFormats">Allowed Video Formats</Label>
-                  <Input 
-                    id="allowedVideoFormats" 
-                    value={mediaSettings.allowedVideoFormats} 
-                    onChange={(e) => setMediaSettings({...mediaSettings, allowedVideoFormats: e.target.value})}
-                  />
-                  <p className="text-xs text-muted-foreground">Comma separated list of extensions</p>
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="allowedDocumentFormats">Allowed Document Formats</Label>
-                  <Input 
-                    id="allowedDocumentFormats" 
-                    value={mediaSettings.allowedDocumentFormats} 
-                    onChange={(e) => setMediaSettings({...mediaSettings, allowedDocumentFormats: e.target.value})}
-                  />
-                  <p className="text-xs text-muted-foreground">Comma separated list of extensions</p>
-                </div>
-              </div>
-              
-              <div className="pt-4">
-                <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Image className="mr-2 h-4 w-4" />
-                      Save Media Settings
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        <span>Save Settings</span>
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="users" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Users & Access Settings</CardTitle>
+                  <CardDescription>
+                    Configure user accounts and access control
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="defaultRole">Default User Role</Label>
+                      <Select value={defaultUserRole} onValueChange={setDefaultUserRole}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="contributor">Contributor</SelectItem>
+                          <SelectItem value="editor">Editor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="autoApprove">Auto-approve New Users</Label>
+                        <Switch
+                          id="autoApprove"
+                          checked={autoApproveUsers}
+                          onCheckedChange={setAutoApproveUsers}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        If disabled, new users will require admin approval
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <Label>User Profile Fields</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="bioField" className="cursor-pointer">Bio</Label>
+                          <Switch
+                            id="bioField"
+                            checked={userProfileFields.bio}
+                            onCheckedChange={(checked) => setUserProfileFields({
+                              ...userProfileFields,
+                              bio: checked
+                            })}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="websiteField" className="cursor-pointer">Website</Label>
+                          <Switch
+                            id="websiteField"
+                            checked={userProfileFields.website}
+                            onCheckedChange={(checked) => setUserProfileFields({
+                              ...userProfileFields,
+                              website: checked
+                            })}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="locationField" className="cursor-pointer">Location</Label>
+                          <Switch
+                            id="locationField"
+                            checked={userProfileFields.location}
+                            onCheckedChange={(checked) => setUserProfileFields({
+                              ...userProfileFields,
+                              location: checked
+                            })}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="socialField" className="cursor-pointer">Social Media Links</Label>
+                          <Switch
+                            id="socialField"
+                            checked={userProfileFields.socialLinks}
+                            onCheckedChange={(checked) => setUserProfileFields({
+                              ...userProfileFields,
+                              socialLinks: checked
+                            })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="w-full sm:w-auto"
+                    onClick={() => handleSaveSettings('User')}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        <span>Save Settings</span>
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="notifications" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notification Settings</CardTitle>
+                  <CardDescription>
+                    Configure platform notification settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="emailNotifications">Email Notifications</Label>
+                        <Switch
+                          id="emailNotifications"
+                          checked={emailNotifications}
+                          onCheckedChange={setEmailNotifications}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Send notification emails to users
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="pushNotifications">Push Notifications</Label>
+                        <Switch
+                          id="pushNotifications"
+                          checked={pushNotifications}
+                          onCheckedChange={setPushNotifications}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Enable browser push notifications
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <Label>Notification Events</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="newComment" className="cursor-pointer">New Comments</Label>
+                          <Switch
+                            id="newComment"
+                            checked={notificationEvents.newComment}
+                            onCheckedChange={(checked) => setNotificationEvents({
+                              ...notificationEvents,
+                              newComment: checked
+                            })}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="newFollower" className="cursor-pointer">New Followers</Label>
+                          <Switch
+                            id="newFollower"
+                            checked={notificationEvents.newFollower}
+                            onCheckedChange={(checked) => setNotificationEvents({
+                              ...notificationEvents,
+                              newFollower: checked
+                            })}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="contentMention" className="cursor-pointer">Content Mentions</Label>
+                          <Switch
+                            id="contentMention"
+                            checked={notificationEvents.contentMention}
+                            onCheckedChange={(checked) => setNotificationEvents({
+                              ...notificationEvents,
+                              contentMention: checked
+                            })}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="systemAnnouncement" className="cursor-pointer">System Announcements</Label>
+                          <Switch
+                            id="systemAnnouncement"
+                            checked={notificationEvents.systemAnnouncement}
+                            onCheckedChange={(checked) => setNotificationEvents({
+                              ...notificationEvents,
+                              systemAnnouncement: checked
+                            })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="w-full sm:w-auto"
+                    onClick={() => handleSaveSettings('Notification')}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        <span>Save Settings</span>
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="moderation" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Moderation Settings</CardTitle>
+                  <CardDescription>
+                    Configure content moderation settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <p>Moderation settings will be available soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="performance" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Settings</CardTitle>
+                  <CardDescription>
+                    Configure system performance settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <p>Performance settings will be available soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="backup" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Backup & Security Settings</CardTitle>
+                  <CardDescription>
+                    Configure backup and security settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <p>Backup & Security settings will be available soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </div>
+        </div>
+      </Tabs>
+    </div>
   );
 };

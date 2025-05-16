@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast({
         title: "Profile updated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Failed to update profile",
         description: error.message,
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast({
         title: `Status updated to ${status}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating status:', error);
     }
   };

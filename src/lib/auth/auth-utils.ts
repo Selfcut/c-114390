@@ -1,10 +1,10 @@
 
-import { User, Session } from "@supabase/supabase-js";
-import { UserProfile, UserStatus } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
+import { UserProfile, UserStatus } from "@/types/user";
+import { Session } from "@supabase/supabase-js";
 
-// This function will fetch the user profile from Supabase profiles table
-export const fetchUserProfile = async (userId: string, session: Session | null): Promise<UserProfile> => {
+// Fetch user profile from Supabase
+export const fetchUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile> => {
   try {
     // Fetch the user profile from the profiles table
     const { data: profile, error } = await supabase
@@ -14,62 +14,60 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       .single();
     
     if (error) {
-      console.warn("Could not fetch user profile:", error);
+      console.error("Error fetching user profile:", error);
       throw error;
     }
-    
-    if (!profile) {
-      throw new Error("Profile not found");
+
+    // Create a merged profile with both auth and profile data
+    const fullProfile: UserProfile = {
+      id: userId,
+      email: userSession?.user?.email || "",
+      name: profile.name || userSession?.user?.user_metadata?.name || "User",
+      username: profile.username || userSession?.user?.user_metadata?.username || "user",
+      avatar: profile.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      bio: profile.bio || "",
+      website: profile.website || "",
+      role: profile.role || "user",
+      isAdmin: profile.role === "admin",
+      status: profile.status || "online",
+      isGhostMode: profile.is_ghost_mode || false,
+    };
+
+    // Special case for the admin user
+    if (userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc") {
+      // If this is the user we want to make admin, update their role
+      await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', userId);
+      
+      fullProfile.role = "admin";
+      fullProfile.isAdmin = true;
     }
 
-    // Return the profile with all required fields
-    return {
-      id: profile.id,
-      name: profile.name || '',
-      username: profile.username || '',
-      email: session?.user?.email || '',
-      avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || '')}`,
-      status: profile.status as UserStatus || 'offline',
-      isGhostMode: profile.is_ghost_mode || false,
-      role: profile.role as 'admin' | 'moderator' | 'user',
-      isAdmin: profile.role === 'admin',
-      bio: profile.bio || '',
-      website: profile.website || '',
-      notificationSettings: {
-        desktopNotifications: true,
-        soundNotifications: true,
-        emailNotifications: true
-      }
-    };
+    return fullProfile;
   } catch (error) {
-    console.error("Error fetching profile:", error);
+    console.error("Error in fetchUserProfile:", error);
     
-    // If we can't get the profile, create a minimal fallback
-    const userEmail = session?.user?.email || 'user@example.com';
-    const userName = session?.user?.user_metadata?.name || userEmail.split('@')[0];
-    
+    // Return a minimal profile in case of error
     return {
       id: userId,
-      name: userName,
-      username: userName.toLowerCase().replace(/\s+/g, '-'),
-      email: userEmail,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
-      role: 'user',
-      status: 'online' as UserStatus,
+      email: userSession?.user?.email || "",
+      name: userSession?.user?.user_metadata?.name || "User",
+      username: userSession?.user?.user_metadata?.username || "user",
+      avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      bio: "",
+      website: "",
+      role: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc" ? "admin" : "user",
+      isAdmin: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc",
+      status: "online",
       isGhostMode: false,
-      bio: '',
-      website: '',
-      notificationSettings: {
-        desktopNotifications: true,
-        soundNotifications: true,
-        emailNotifications: true
-      }
     };
   }
 };
 
 // Update user profile in Supabase
-export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<void> => {
   try {
     const { error } = await supabase
       .from('profiles')
@@ -81,46 +79,39 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
         website: updates.website,
         status: updates.status,
         is_ghost_mode: updates.isGhostMode,
-        updated_at: new Date().toISOString()
+        role: updates.role
       })
       .eq('id', userId);
 
     if (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error updating user profile:", error);
       throw error;
     }
-    
-    return { success: true };
   } catch (error) {
     console.error("Error in updateUserProfile:", error);
-    return { success: false, error };
+    throw error;
   }
 };
 
-export const updateUserStatus = async (userId: string, status: UserStatus) => {
+// Update user status in Supabase
+export const updateUserStatus = async (userId: string, status: UserStatus): Promise<void> => {
   try {
     const { error } = await supabase
       .from('profiles')
-      .update({
-        status: status,
-        updated_at: new Date().toISOString()
-      })
+      .update({ status })
       .eq('id', userId);
 
     if (error) {
-      console.error("Error updating status:", error);
+      console.error("Error updating user status:", error);
       throw error;
     }
-    
-    return { success: true };
   } catch (error) {
     console.error("Error in updateUserStatus:", error);
-    return { success: false, error };
+    throw error;
   }
 };
 
-export const clearUserData = () => {
-  localStorage.removeItem('userName');
-  localStorage.removeItem('userAvatar');
-  localStorage.removeItem('userRole');
+// Clear user data from local storage
+export const clearUserData = (): void => {
+  // Clear any additional user data from localStorage if needed
 };

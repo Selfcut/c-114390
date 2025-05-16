@@ -1,244 +1,406 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { FileVideo, FileImage, File, Youtube, Upload, Loader2 } from 'lucide-react';
+import { useState, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Image, Film, FileText, Youtube, Upload, Loader2, X } from "lucide-react";
 
 interface CreatePostDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (postData: any) => void;
+  onSubmit: (data: any) => void;
   isSubmitting: boolean;
 }
 
-export const CreatePostDialog = ({ isOpen, onOpenChange, onSubmit, isSubmitting }: CreatePostDialogProps) => {
-  const [postType, setPostType] = useState('video');
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [previewUrl, setPreviewUrl] = useState('');
+export const CreatePostDialog = ({
+  isOpen,
+  onOpenChange,
+  onSubmit,
+  isSubmitting
+}: CreatePostDialogProps) => {
+  const [activeTab, setActiveTab] = useState<string>("text");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Reset form when closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      resetForm();
+    }
+    onOpenChange(open);
+  };
+
+  const resetForm = () => {
+    setActiveTab("text");
+    setTitle("");
+    setContent("");
+    setYoutubeUrl("");
+    setSelectedFile(null);
+    setFilePreview(null);
+    setFileError(null);
+  };
+
+  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files && e.target.files[0];
-    if (!selectedFile) return;
-    
-    setFile(selectedFile);
-    
-    // Create a preview URL for images
-    if (selectedFile.type.startsWith('image/')) {
-      const objectUrl = URL.createObjectURL(selectedFile);
-      setPreviewUrl(objectUrl);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setFileError(`File too large. Maximum size is 10MB.`);
+      setSelectedFile(null);
+      setFilePreview(null);
+      return;
+    }
+
+    setFileError(null);
+    setSelectedFile(file);
+
+    // Create preview for images
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFilePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     } else {
-      setPreviewUrl('');
+      setFilePreview(null);
     }
   };
 
+  // Handle form submission
   const handleSubmit = () => {
-    // Validate based on post type
     if (!title) {
-      alert('Please add a title for your post');
       return;
     }
-    
-    if (postType === 'youtube' && !youtubeUrl) {
-      alert('Please add a YouTube URL');
-      return;
-    }
-    
-    if (postType !== 'youtube' && !file) {
-      alert('Please upload a file');
-      return;
-    }
-    
-    onSubmit({
-      type: postType,
+
+    const postData: any = {
       title,
-      content,
-      file,
-      youtubeUrl
-    });
-  };
+      type: activeTab,
+    };
 
-  const handleTypeChange = (value: string) => {
-    setPostType(value);
-    setFile(null);
-    setYoutubeUrl('');
-    setPreviewUrl('');
-  };
-
-  // Reset form when dialog closes
-  React.useEffect(() => {
-    if (!isOpen) {
-      setTitle('');
-      setContent('');
-      setFile(null);
-      setYoutubeUrl('');
-      setPreviewUrl('');
+    switch (activeTab) {
+      case "text":
+        postData.content = content;
+        break;
+      case "image":
+      case "video":
+      case "document":
+        postData.file = selectedFile;
+        break;
+      case "youtube":
+        postData.youtubeUrl = youtubeUrl;
+        break;
     }
-  }, [isOpen]);
+
+    onSubmit(postData);
+  };
+
+  // Clear file selection
+  const clearFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Get file type from activeTab
+  const getMediaType = () => {
+    switch (activeTab) {
+      case "image":
+        return "image/*";
+      case "video":
+        return "video/*";
+      case "document":
+        return ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx";
+      default:
+        return "";
+    }
+  };
+
+  // Determine if form is valid
+  const isFormValid = () => {
+    if (!title) return false;
+
+    switch (activeTab) {
+      case "text":
+        return !!content;
+      case "image":
+      case "video":
+      case "document":
+        return !!selectedFile && !fileError;
+      case "youtube":
+        return !!youtubeUrl;
+      default:
+        return false;
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share Media Content</DialogTitle>
-          <DialogDescription>
-            Upload videos, images, documents, or share YouTube links with the community.
-          </DialogDescription>
+          <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>
-        
-        <Tabs defaultValue="video" value={postType} onValueChange={handleTypeChange} className="mt-4">
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="video" className="flex gap-2 items-center">
-              <FileVideo className="h-4 w-4" />
-              <span>Video</span>
-            </TabsTrigger>
-            <TabsTrigger value="image" className="flex gap-2 items-center">
-              <FileImage className="h-4 w-4" />
-              <span>Image</span>
-            </TabsTrigger>
-            <TabsTrigger value="document" className="flex gap-2 items-center">
-              <File className="h-4 w-4" />
-              <span>Document</span>
-            </TabsTrigger>
-            <TabsTrigger value="youtube" className="flex gap-2 items-center">
-              <Youtube className="h-4 w-4" />
-              <span>YouTube</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input 
-                id="title" 
-                placeholder="Add a title for your post" 
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="content">Description (optional)</Label>
-              <Textarea 
-                id="content" 
-                placeholder="Add a description for your post" 
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-              />
-            </div>
-            
-            <TabsContent value="video" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="videoUpload">Upload Video</Label>
-                <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center">
-                  <FileVideo className="h-10 w-10 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Drag and drop video files here or click to browse
-                  </p>
-                  <Input 
-                    id="videoUpload" 
-                    type="file" 
-                    accept="video/*"
-                    className="mt-2 max-w-sm"
-                    onChange={handleFileChange}
-                  />
-                  {file && (
-                    <p className="text-sm mt-2">Selected: {file.name}</p>
-                  )}
-                </div>
+
+        <div className="space-y-6 py-4">
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              placeholder="Add a title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1"
+              required
+            />
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-5">
+              <TabsTrigger value="text" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Text</span>
+              </TabsTrigger>
+              <TabsTrigger value="image" className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                <span className="hidden sm:inline">Image</span>
+              </TabsTrigger>
+              <TabsTrigger value="video" className="flex items-center gap-2">
+                <Film className="h-4 w-4" />
+                <span className="hidden sm:inline">Video</span>
+              </TabsTrigger>
+              <TabsTrigger value="document" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Document</span>
+              </TabsTrigger>
+              <TabsTrigger value="youtube" className="flex items-center gap-2">
+                <Youtube className="h-4 w-4" />
+                <span className="hidden sm:inline">YouTube</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="text" className="mt-4">
+              <div>
+                <Label htmlFor="content">Content</Label>
+                <Textarea
+                  id="content"
+                  placeholder="Share your thoughts..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="mt-1"
+                  rows={6}
+                />
               </div>
             </TabsContent>
-            
-            <TabsContent value="image" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="imageUpload">Upload Image</Label>
-                <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center">
-                  <FileImage className="h-10 w-10 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Drag and drop image files here or click to browse
-                  </p>
-                  <Input 
-                    id="imageUpload" 
-                    type="file" 
+
+            <TabsContent value="image" className="mt-4">
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
                     accept="image/*"
-                    className="mt-2 max-w-sm"
                     onChange={handleFileChange}
+                    className="hidden"
+                    id="image-upload"
                   />
-                  {previewUrl && (
-                    <div className="mt-4 max-w-xs">
-                      <img 
-                        src={previewUrl} 
-                        alt="Preview" 
-                        className="rounded-md max-h-40 object-contain"
-                      />
-                    </div>
-                  )}
+                  <Label htmlFor="image-upload" className="cursor-pointer w-full h-full">
+                    {filePreview ? (
+                      <div className="relative">
+                        <img
+                          src={filePreview}
+                          alt="Preview"
+                          className="max-h-60 mx-auto"
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-0 right-0 h-7 w-7"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            clearFile();
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p>Click to upload an image</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          JPG, PNG, GIF up to 10MB
+                        </p>
+                      </div>
+                    )}
+                  </Label>
                 </div>
+
+                {fileError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{fileError}</AlertDescription>
+                  </Alert>
+                )}
               </div>
             </TabsContent>
-            
-            <TabsContent value="document" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="documentUpload">Upload Document</Label>
-                <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center">
-                  <File className="h-10 w-10 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Drag and drop document files here or click to browse
-                  </p>
-                  <Input 
-                    id="documentUpload" 
-                    type="file" 
-                    accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx"
-                    className="mt-2 max-w-sm"
+
+            <TabsContent value="video" className="mt-4">
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/*"
                     onChange={handleFileChange}
+                    className="hidden"
+                    id="video-upload"
                   />
-                  {file && (
-                    <p className="text-sm mt-2">Selected: {file.name}</p>
-                  )}
+                  <Label htmlFor="video-upload" className="cursor-pointer w-full h-full">
+                    {selectedFile && selectedFile.type.startsWith("video/") ? (
+                      <div className="relative flex items-center justify-center">
+                        <Film className="h-20 w-20 text-muted-foreground mb-2" />
+                        <p className="text-sm mt-2">
+                          Selected: {selectedFile.name}
+                        </p>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-0 right-0 h-7 w-7"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            clearFile();
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p>Click to upload a video</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          MP4, WebM up to 10MB
+                        </p>
+                      </div>
+                    )}
+                  </Label>
                 </div>
+
+                {fileError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{fileError}</AlertDescription>
+                  </Alert>
+                )}
               </div>
             </TabsContent>
-            
-            <TabsContent value="youtube" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="youtubeUrl">YouTube URL</Label>
-                <Input 
-                  id="youtubeUrl" 
-                  placeholder="https://www.youtube.com/watch?v=..." 
+
+            <TabsContent value="document" className="mt-4">
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="document-upload"
+                  />
+                  <Label htmlFor="document-upload" className="cursor-pointer w-full h-full">
+                    {selectedFile ? (
+                      <div className="relative flex items-center justify-center">
+                        <FileText className="h-20 w-20 text-muted-foreground mb-2" />
+                        <p className="text-sm mt-2">
+                          Selected: {selectedFile.name}
+                        </p>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-0 right-0 h-7 w-7"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            clearFile();
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p>Click to upload a document</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PDF, DOC, XLS, PPT up to 10MB
+                        </p>
+                      </div>
+                    )}
+                  </Label>
+                </div>
+
+                {fileError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{fileError}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="youtube" className="mt-4">
+              <div>
+                <Label htmlFor="youtube-url">YouTube URL</Label>
+                <Input
+                  id="youtube-url"
+                  placeholder="https://www.youtube.com/watch?v=..."
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className="mt-1"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Share a YouTube video by pasting the URL here
+                <p className="text-xs text-muted-foreground mt-1">
+                  Paste a link to a YouTube video
                 </p>
               </div>
             </TabsContent>
-          </div>
-        </Tabs>
-        
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button 
+          </Tabs>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || (!title) || (postType === 'youtube' && !youtubeUrl) || (postType !== 'youtube' && !file)}
+            disabled={isSubmitting || !isFormValid()}
             className="flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Uploading...</span>
+                <span>Creating Post...</span>
               </>
             ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                <span>Share</span>
-              </>
+              <span>Create Post</span>
             )}
           </Button>
         </DialogFooter>

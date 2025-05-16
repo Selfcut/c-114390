@@ -1,21 +1,24 @@
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
-import { UserProfile } from "../components/UserProfile";
+import { useAuth } from "@/lib/auth/auth-context";
+import { UserProfileComponent } from "../components/profile/UserProfileComponent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { PageLayout } from "../components/layouts/PageLayout";
+import { UserProfile as UserProfileType } from "../types/user";
+import { useToast } from "@/components/ui/use-toast";
+import { trackActivity } from "@/lib/activity-tracker";
 
 const Profile = () => {
   const { username } = useParams();
-  const { user: currentUser } = useAuth();
-  const [profileData, setProfileData] = useState(null);
+  const { user: currentUser, updateProfile } = useAuth();
+  const [profileData, setProfileData] = useState<UserProfileType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch profile data from Supabase
   useEffect(() => {
@@ -42,8 +45,31 @@ const Profile = () => {
         if (fetchError) throw fetchError;
         if (!data) throw new Error("Profile not found");
         
-        setProfileData(data);
-      } catch (err) {
+        // Convert Supabase profile to our UserProfile type
+        const userProfile: UserProfileType = {
+          id: data.id,
+          name: data.name || "",
+          username: data.username,
+          email: currentUser?.email || "",
+          avatar: data.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${data.username}`,
+          bio: data.bio || "",
+          website: data.website || "",
+          status: data.status || "offline",
+          isGhostMode: data.is_ghost_mode || false,
+          role: data.role || "user",
+          isAdmin: data.role === "admin"
+        };
+        
+        setProfileData(userProfile);
+        
+        // Track profile view if viewing someone else's profile
+        if (currentUser && username && username !== currentUser.username) {
+          await trackActivity(currentUser.id, 'view', { 
+            section: 'profile',
+            profile: username
+          });
+        }
+      } catch (err: any) {
         console.error("Error fetching profile:", err);
         setError(err.message);
       } finally {
@@ -53,11 +79,14 @@ const Profile = () => {
     
     if (currentUser || username) {
       fetchProfile();
+    } else {
+      // Redirect to login if no current user and no username provided
+      navigate('/auth');
     }
-  }, [username, currentUser]);
+  }, [username, currentUser, navigate]);
 
   // Handle profile update
-  const handleUpdateProfile = async (updates) => {
+  const handleUpdateProfile = async (updates: Partial<UserProfileType>) => {
     try {
       if (!currentUser?.id) {
         toast({
@@ -69,7 +98,7 @@ const Profile = () => {
       }
       
       // Check if this is the current user's profile
-      if (profileData.id !== currentUser.id) {
+      if (profileData?.id !== currentUser.id) {
         toast({
           title: "Not authorized",
           description: "You can only edit your own profile",
@@ -78,21 +107,17 @@ const Profile = () => {
         return;
       }
       
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', currentUser.id);
-        
-      if (error) throw error;
+      await updateProfile(updates);
       
       // Update local state
-      setProfileData({ ...profileData, ...updates });
+      setProfileData(prev => prev ? { ...prev, ...updates } : null);
       
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully",
+      // Track profile update activity
+      await trackActivity(currentUser.id, 'update', { 
+        section: 'profile',
+        fields: Object.keys(updates).join(',')
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating profile:", err);
       toast({
         title: "Update failed",
@@ -104,56 +129,62 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="space-y-8">
-          <div className="flex flex-col md:flex-row gap-6">
-            <Skeleton className="h-40 w-40 rounded-full" />
-            <div className="space-y-4 flex-1">
-              <Skeleton className="h-8 w-1/3" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-1/2" />
-              <div className="flex gap-2">
-                <Skeleton className="h-9 w-24" />
-                <Skeleton className="h-9 w-24" />
+      <PageLayout>
+        <div className="container mx-auto py-8">
+          <div className="space-y-8">
+            <div className="flex flex-col md:flex-row gap-6">
+              <Skeleton className="h-40 w-40 rounded-full" />
+              <div className="space-y-4 flex-1">
+                <Skeleton className="h-8 w-1/3" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-24" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <Skeleton className="h-6 w-40" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Skeleton className="h-40" />
+                <Skeleton className="h-40" />
+                <Skeleton className="h-40" />
               </div>
             </div>
           </div>
-          
-          <div className="space-y-6">
-            <Skeleton className="h-6 w-40" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Skeleton className="h-40" />
-              <Skeleton className="h-40" />
-              <Skeleton className="h-40" />
-            </div>
-          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            Error loading profile: {error}
-          </AlertDescription>
-        </Alert>
-      </div>
+      <PageLayout>
+        <div className="container mx-auto py-8">
+          <Alert variant="destructive">
+            <AlertDescription>
+              Error loading profile: {error}
+            </AlertDescription>
+          </Alert>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      {profileData && (
-        <UserProfile 
-          profile={profileData} 
-          isCurrentUser={currentUser?.id === profileData.id}
-          onUpdateProfile={handleUpdateProfile}
-        />
-      )}
-    </div>
+    <PageLayout>
+      <div className="container mx-auto py-8">
+        {profileData && (
+          <UserProfileComponent
+            profile={profileData}
+            isCurrentUser={currentUser?.id === profileData.id}
+            onUpdateProfile={handleUpdateProfile}
+          />
+        )}
+      </div>
+    </PageLayout>
   );
 };
 
