@@ -355,3 +355,5 @@ export const AdminSettings = () => {
     </div>
   );
 };
+
+export default AdminSettings;

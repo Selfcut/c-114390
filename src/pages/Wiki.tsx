@@ -87,8 +87,8 @@ const Wiki = () => {
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
-        {/* Wiki Header - Combined into one header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 stagger-fade animate-in">
+        {/* Wiki Header - Only one header now */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <BookOpen size={28} className="text-primary" />
             Knowledge Wiki
@@ -102,7 +102,7 @@ const Wiki = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar with categories */}
           <div className="lg:col-span-1">
             <CategorySidebar 

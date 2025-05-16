@@ -144,7 +144,7 @@ const WikiArticlePage = () => {
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                     {getCategoryIcon(article.category)}
                   </div>
-                  <span className="text-sm text-muted-foreground">{article.category}</span>
+                  <span className="text-sm text-muted-foreground capitalize">{article.category}</span>
                 </div>
                 <CardTitle className="text-3xl mb-2">{article.title}</CardTitle>
                 <p className="text-muted-foreground">{article.description}</p>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Loader2 } from "lucide-react";
 import { WikiArticleCard } from "./WikiArticleCard";
 import { WikiArticle } from "./types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ArticleListProps {
   filteredArticles: WikiArticle[];
@@ -24,16 +25,16 @@ export const ArticleList = ({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="border rounded-lg p-5 space-y-3 animate-pulse">
+          <div key={i} className="border rounded-lg p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-muted"></div>
-              <div className="h-4 w-28 bg-muted rounded"></div>
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <Skeleton className="h-4 w-28" />
             </div>
-            <div className="h-4 w-full bg-muted rounded"></div>
-            <div className="h-4 w-3/4 bg-muted rounded"></div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
             <div className="flex gap-2">
-              <div className="h-3 w-20 bg-muted rounded"></div>
-              <div className="h-3 w-20 bg-muted rounded"></div>
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-20" />
             </div>
           </div>
         ))}
