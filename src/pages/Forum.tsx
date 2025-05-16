@@ -82,14 +82,14 @@ const Forum = () => {
   };
   
   return (
-    <div className="w-full py-8 px-4 sm:px-8 lg:px-12">
+    <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
           <MessageSquare size={28} />
           Forum
         </h1>
         <Button 
-          className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
+          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
           onClick={handleCreateDiscussion}
         >
           <PenSquare size={18} />
@@ -130,10 +130,10 @@ const Forum = () => {
             />
           ))
         ) : (
-          <div className="bg-[#1A1A1A] rounded-lg p-8 text-center">
-            <p className="text-gray-400">No discussions found matching your criteria.</p>
+          <div className="bg-card rounded-lg p-8 text-center">
+            <p className="text-muted-foreground">No discussions found matching your criteria.</p>
             <button 
-              className="mt-4 bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md transition-colors hover-lift"
+              className="mt-4 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-colors hover-lift"
               onClick={() => {
                 setSearchTerm('');
                 setActiveTag(null);
