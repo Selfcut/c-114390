@@ -136,8 +136,8 @@ const WikiArticlePage = () => {
           <ArrowLeft size={16} className="mr-2" /> Back to Wiki
         </Button>
         
-        <Card>
-          <CardHeader className="border-b">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b pb-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -164,7 +164,7 @@ const WikiArticlePage = () => {
             </div>
           </CardHeader>
           
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 px-6 md:px-8">
             <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <UserCircle size={16} />

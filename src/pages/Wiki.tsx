@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { WikiHeader } from "@/components/wiki/WikiHeader";
-import { CategorySidebar } from "@/components/wiki/CategorySidebar";
 import { WikiSearchBar } from "@/components/wiki/WikiSearchBar";
 import { ArticleList } from "@/components/wiki/ArticleList";
 import { CreateArticleDialog } from "@/components/wiki/CreateArticleDialog";
@@ -11,6 +9,9 @@ import { getCategoryIcon, filterArticles } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
 import { fetchWikiArticles } from "@/utils/wikiUtils";
 import { PageLayout } from "@/components/layouts/PageLayout";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Plus } from "lucide-react";
+import { CategorySidebar } from "@/components/wiki/CategorySidebar";
 
 const Wiki = () => {
   const { toast } = useToast();
@@ -70,11 +71,36 @@ const Wiki = () => {
     setSearchQuery("");
     setSelectedCategory(null);
   };
+  
+  const handleCreateArticle = () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create new wiki articles",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsCreateDialogOpen(true);
+  };
 
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
-        <WikiHeader onCreateArticle={() => setIsCreateDialogOpen(true)} />
+        {/* Wiki Header - Combined into one header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 stagger-fade animate-in">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <BookOpen size={28} className="text-primary" />
+            Knowledge Wiki
+          </h1>
+          <Button 
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto"
+            onClick={handleCreateArticle}
+          >
+            <Plus size={18} />
+            <span>New Article</span>
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
           {/* Sidebar with categories */}

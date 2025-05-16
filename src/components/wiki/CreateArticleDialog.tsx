@@ -17,24 +17,13 @@ import { WikiArticle } from "./types";
 import { createWikiArticle } from "@/utils/wikiUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { categories } from "./CategorySidebar";
 
 interface CreateArticleDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (newArticle: WikiArticle) => void;
 }
-
-const categories = [
-  { id: "physics", name: "Physics" },
-  { id: "mathematics", name: "Mathematics" },
-  { id: "philosophy", name: "Philosophy" },
-  { id: "consciousness", name: "Consciousness" },
-  { id: "systems", name: "Systems Theory" },
-  { id: "biology", name: "Biology" },
-  { id: "psychology", name: "Psychology" },
-  { id: "computer-science", name: "Computer Science" },
-  { id: "history", name: "History" },
-];
 
 export const CreateArticleDialog = ({ 
   isOpen, 
@@ -85,7 +74,8 @@ export const CreateArticleDialog = ({
         description,
         content,
         category,
-        user_id: user.id
+        user_id: user.id,
+        author_name: user.name || user.username
       });
       
       if (error) throw new Error(error.toString());
