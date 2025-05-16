@@ -82,7 +82,7 @@ const Forum = () => {
   };
   
   return (
-    <main className="py-8 px-8 lg:px-12">
+    <div className="py-8 px-8 lg:px-12">
       <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
         <h1 className="text-3xl font-bold text-white flex items-center gap-3">
           <MessageSquare size={28} />
@@ -122,7 +122,7 @@ const Forum = () => {
       
       <div className="grid grid-cols-1 gap-4 stagger-fade animate-in">
         {filteredDiscussions.length > 0 ? (
-          filteredDiscussions.map((discussion, index) => (
+          filteredDiscussions.map((discussion) => (
             <DiscussionTopicCard 
               key={discussion.id} 
               discussion={discussion} 
@@ -154,7 +154,7 @@ const Forum = () => {
           </Button>
         </div>
       )}
-    </main>
+    </div>
   );
 };
 

@@ -102,21 +102,21 @@ const Root = () => {
         } />
         <Route path="/forum" element={
           <ProtectedRoute allowGuests={true}>
-            <PageLayout allowGuests={true} sectionName="Forum">
+            <PageLayout allowGuests={true}>
               <Forum />
             </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/library" element={
           <ProtectedRoute allowGuests={true}>
-            <PageLayout allowGuests={true} sectionName="Library">
+            <PageLayout allowGuests={true}>
               <Library />
             </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/wiki" element={
           <ProtectedRoute allowGuests={true}>
-            <PageLayout allowGuests={true} sectionName="Wiki">
+            <PageLayout allowGuests={true}>
               <Wiki />
             </PageLayout>
           </ProtectedRoute>
@@ -144,7 +144,7 @@ const Root = () => {
         } />
         <Route path="/quotes" element={
           <ProtectedRoute allowGuests={true}>
-            <PageLayout allowGuests={true} sectionName="Quotes">
+            <PageLayout allowGuests={true}>
               <Quotes />
             </PageLayout>
           </ProtectedRoute>
