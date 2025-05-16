@@ -46,7 +46,7 @@ export const KnowledgeEntryCard = ({
         className
       )}
       onClick={onClick}
-      style={{ display: "flex", flexDirection: "column" }}
+      style={{ display: "flex", flexDirection: "column", width: "100%" }}
     >
       {coverImage && !imageError && (
         <div className={cn("w-full overflow-hidden", variant === "default" ? "h-40" : "h-32")}>

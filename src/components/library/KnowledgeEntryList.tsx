@@ -49,7 +49,7 @@ export const KnowledgeEntryList = ({
           ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
           : 'grid-cols-1'
       }`}
-      style={{ minWidth: "100%" }}
+      style={{ width: "100%", display: "grid" }}
     >
       {entries.map(entry => (
         <KnowledgeEntryCard

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { polymathToast } from "../components/ui/use-toast";
 import { LibraryHeader } from "../components/library/LibraryHeader";
@@ -141,12 +142,14 @@ const Library = () => {
         </div>
       </div>
       
-      <KnowledgeEntryList 
-        entries={filteredEntries} 
-        viewMode={viewMode} 
-        onEntryClick={handleEntryClick}
-        onResetFilters={handleResetFilters}
-      />
+      <div className="w-full" style={{ display: "block", width: "100%" }}>
+        <KnowledgeEntryList 
+          entries={filteredEntries} 
+          viewMode={viewMode} 
+          onEntryClick={handleEntryClick}
+          onResetFilters={handleResetFilters}
+        />
+      </div>
       
       <LearningPathRecommendations />
     </main>

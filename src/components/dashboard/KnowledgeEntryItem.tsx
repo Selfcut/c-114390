@@ -26,12 +26,12 @@ export const KnowledgeEntryItem = ({
         className
       )}
       onClick={onClick}
-      style={{ width: "100%", display: "flex" }}
+      style={{ width: "100%", display: "flex", maxWidth: "100%" }}
     >
       <div className="p-2 rounded-full bg-[#360036] flex-shrink-0">
         <Book size={16} className="text-[#FF3EA5]" />
       </div>
-      <div className="overflow-hidden flex-grow">
+      <div className="overflow-hidden flex-grow w-full">
         <h4 className="text-white font-medium text-sm truncate">{title}</h4>
         <p className="text-xs text-gray-400 mt-1 truncate">
           {author} • {readTime} • {timeAgo}
