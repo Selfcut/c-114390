@@ -36,15 +36,16 @@ export const formatMessageWithMentions = (content: string): React.ReactNode => {
       if (mention) {
         formattedContent.push(
           spacer,
-          <span key={`mention-${i}`} className="text-primary font-medium">
-            @{mention}
-          </span>
+          React.createElement("span", {
+            key: `mention-${i}`,
+            className: "text-primary font-medium"
+          }, `@${mention}`)
         );
       }
     }
   }
   
-  return <>{formattedContent}</>;
+  return React.createElement(React.Fragment, null, ...formattedContent);
 };
 
 // Parse markdown content with image support for GIFs
@@ -72,13 +73,20 @@ export const parseMarkdown = (content: string): React.ReactNode => {
       
       if (url) {
         formattedContent.push(
-          <div key={`img-${i}`} className="my-2 rounded overflow-hidden max-w-xs">
-            <img src={url} alt={alt} className="max-w-full" />
-          </div>
+          React.createElement("div", {
+            key: `img-${i}`,
+            className: "my-2 rounded overflow-hidden max-w-xs"
+          }, 
+            React.createElement("img", {
+              src: url,
+              alt: alt,
+              className: "max-w-full"
+            })
+          )
         );
       }
     }
   }
   
-  return <>{formattedContent}</>;
+  return React.createElement(React.Fragment, null, ...formattedContent);
 };
