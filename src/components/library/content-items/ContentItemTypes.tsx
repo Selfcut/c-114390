@@ -1,7 +1,6 @@
-
 import { ReactNode } from 'react';
 
-export type ContentItemType = 'knowledge' | 'media' | 'quote' | 'ai';
+export type ContentItemType = 'knowledge' | 'media' | 'quote' | 'ai' | 'wiki';
 
 export interface ContentItemAuthor {
   name: string;
@@ -55,6 +54,7 @@ export const getTypeIcon = (type: ContentItemType) => {
     case 'media': return { icon: 'Image', color: 'text-green-500' };
     case 'quote': return { icon: 'Quote', color: 'text-purple-500' };
     case 'ai': return { icon: 'Brain', color: 'text-amber-500' };
+    case 'wiki': return { icon: 'BookOpen', color: 'text-indigo-500' };
     default: return { icon: 'BookOpen', color: 'text-blue-500' };
   }
 };

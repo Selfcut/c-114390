@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -314,7 +313,7 @@ export const AdminSettings = () => {
               <CardDescription>Configure advanced platform settings (use with caution)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Alert variant="warning">
+              <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Warning</AlertTitle>
                 <AlertDescription>Changing these settings may affect system stability</AlertDescription>

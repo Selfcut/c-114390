@@ -37,14 +37,15 @@ export const useContentNavigation = () => {
       case 'quote':
         handleQuoteClick(id);
         break;
-      case 'wiki':
-        handleWikiClick(id);
-        break;
       case 'ai':
         handleKnowledgeClick(id); // AI content typically routes to knowledge
         break;
       default:
         console.warn(`Unknown content type: ${itemType}`);
+        // For any wiki related navigation from unified components
+        if (typeof itemType === 'string' && itemType === 'wiki') {
+          handleWikiClick(id);
+        }
     }
   };
 
