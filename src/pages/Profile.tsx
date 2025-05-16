@@ -6,7 +6,7 @@ import { UserProfileComponent } from "../components/profile/UserProfileComponent
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageLayout } from "../components/layouts/PageLayout";
-import { UserProfile as UserProfileType } from "../types/user";
+import { UserProfile as UserProfileType, UserStatus } from "../types/user";
 import { useToast } from "@/hooks/use-toast";
 import { trackActivity } from "@/lib/activity-tracker";
 
@@ -53,10 +53,15 @@ const Profile = () => {
           avatar: data.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${data.username}`,
           bio: data.bio || "",
           website: data.website || "",
-          status: data.status || "offline",
+          status: (data.status as UserStatus) || "offline",
           isGhostMode: data.is_ghost_mode || false,
           role: data.role || "user",
-          isAdmin: data.role === "admin"
+          isAdmin: data.role === "admin",
+          notificationSettings: {
+            desktopNotifications: true,
+            soundNotifications: true,
+            emailNotifications: true
+          }
         };
         
         setProfileData(userProfile);
@@ -104,6 +109,16 @@ const Profile = () => {
           variant: "destructive",
         });
         return;
+      }
+      
+      // Ensure notificationSettings is properly structured
+      if (updates.notificationSettings) {
+        // Make sure all required fields are present
+        updates.notificationSettings = {
+          desktopNotifications: updates.notificationSettings.desktopNotifications ?? true,
+          soundNotifications: updates.notificationSettings.soundNotifications ?? true,
+          emailNotifications: updates.notificationSettings.emailNotifications ?? true
+        };
       }
       
       await updateProfile(updates);

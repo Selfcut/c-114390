@@ -14,9 +14,9 @@ export interface UserProfile {
   status: UserStatus;
   isGhostMode?: boolean;
   notificationSettings?: {
-    desktopNotifications?: boolean;
-    soundNotifications?: boolean;
-    emailNotifications?: boolean;
+    desktopNotifications: boolean;
+    soundNotifications: boolean;
+    emailNotifications: boolean;
   };
 }
 

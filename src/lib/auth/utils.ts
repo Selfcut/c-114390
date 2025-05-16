@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { UserProfile } from "./types";
+import { UserProfile, UserStatus } from "@/types/user";
 
 // Fetch user profile from database
 export const fetchUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile | null> => {
@@ -40,7 +40,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
         website: profile.website || "",
         role: profile.role || "user",
         isAdmin: profile.role === "admin",
-        status: profile.status || "online",
+        status: profile.status as UserStatus || "online",
         isGhostMode: profile.is_ghost_mode || false,
       };
 
