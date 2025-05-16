@@ -1,7 +1,8 @@
+
 import React from "react";
 import { PageLayout } from "../../components/layouts/PageLayout";
 import { TabNav } from "../../components/TabNav";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 import { AdminContentManagement } from "@/components/admin/AdminContentManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
@@ -35,11 +36,11 @@ const AdminPanel = () => {
       label: "Special Effects",
       content: <AdminSpecialEffects />,
     },
-	{
-		id: "settings",
-		label: "Settings",
-		content: <AdminSettings />,
-	  },
+    {
+      id: "settings",
+      label: "Settings",
+      content: <AdminSettings />,
+    },
   ];
 
   return (

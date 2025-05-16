@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +12,7 @@ interface AdminDashboardProps {
   isAdmin?: boolean;
 }
 
-const AdminDashboard = ({ isAdmin }: AdminDashboardProps = {}) => {
+export const AdminDashboard = ({ isAdmin }: AdminDashboardProps = {}) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
