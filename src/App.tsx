@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-context';
-import { AuthProvider } from '@/lib/auth-context';
+import { AuthProvider } from '@/lib/auth'; // Updated import path
 import { Toaster } from '@/components/ui/toaster';
 import { FullHeightChatSidebar } from '@/components/chat/FullHeightChatSidebar';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth'; // Updated import path
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initializeSupabase } from '@/integrations/supabase/init';
 import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';

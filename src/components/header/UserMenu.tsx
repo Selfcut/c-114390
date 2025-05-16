@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import {
   LogOut,
   Crown
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();

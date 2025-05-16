@@ -5,7 +5,7 @@ import {
   Home, Library, MessageSquare, User, Settings, 
   Youtube, Book, FileText, Shield, Cog, Menu, X 
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth"; // Updated import path
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
