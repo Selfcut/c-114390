@@ -1,6 +1,6 @@
-
 import confetti from 'canvas-confetti';
 import { toast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 
 // Basic confetti celebration
 export const triggerConfetti = () => {
