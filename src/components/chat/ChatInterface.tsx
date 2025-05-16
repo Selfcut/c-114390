@@ -37,41 +37,9 @@ import {
   Users,
 } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
+import { ChatMessage as ChatMessageType } from "./types";
 import { UserStatus } from "@/types/user";
-
-// Define the message type to ensure consistent structure
-interface ChatMessageType {
-  id: string;
-  content: string;
-  sender: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-    status: UserStatus;
-  };
-  timestamp: Date;
-  reactions: Array<{
-    emoji: string;
-    count: number;
-    users: string[];
-  }>;
-  isEdited: boolean;
-  replyTo: {
-    id: string;
-    content: string;
-    sender: { name: string };
-  } | null;
-  mentions: string[];
-  attachments?: Array<{
-    id: string;
-    type: "image" | "file" | "audio" | "video" | "gif";
-    url: string;
-    name: string;
-    size?: number;
-    dimensions?: { width: number; height: number };
-  }>;
-}
+import { format } from "date-fns";
 
 // Emoji data for quick selection
 const emojiCategories = [
@@ -109,189 +77,107 @@ const generateMockMessages = (): ChatMessageType[] => {
     {
       id: "msg1",
       content: "Hey there! How's it going?",
-      sender: {
-        id: "user2",
-        name: "Jane Smith",
-        username: "janesmith",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Jane",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 60 * 60 * 1000), // 1 hour ago
+      senderName: "Jane Smith",
+      userId: "user2",
+      createdAt: new Date(now.getTime() - 60 * 60 * 1000).toISOString(), // 1 hour ago
+      conversationId: "chat1",
       reactions: [
         { emoji: "👍", count: 2, users: ["user1", "user3"] },
         { emoji: "❤️", count: 1, users: ["user1"] }
-      ],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      ]
     },
     {
       id: "msg2",
       content: "I'm doing well, thanks for asking! Just working on some new ideas.",
-      sender: {
-        id: "user1",
-        name: "John Doe",
-        username: "johndoe",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=John",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 55 * 60 * 1000), // 55 mins ago
-      reactions: [],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      senderName: "John Doe",
+      userId: "user1",
+      createdAt: new Date(now.getTime() - 55 * 60 * 1000).toISOString(), // 55 mins ago
+      conversationId: "chat1"
     },
     {
       id: "msg3",
       content: "That's great to hear! What kind of ideas are you working on?",
-      sender: {
-        id: "user2",
-        name: "Jane Smith",
-        username: "janesmith",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Jane",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 50 * 60 * 1000), // 50 mins ago
-      reactions: [],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      senderName: "Jane Smith",
+      userId: "user2",
+      createdAt: new Date(now.getTime() - 50 * 60 * 1000).toISOString(), // 50 mins ago
+      conversationId: "chat1"
     },
     {
       id: "msg4",
       content: "I've been exploring some concepts around consciousness and how it relates to artificial intelligence. It's fascinating to think about the parallels and differences between human and machine cognition.",
-      sender: {
-        id: "user1",
-        name: "John Doe",
-        username: "johndoe",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=John",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 45 * 60 * 1000), // 45 mins ago
+      senderName: "John Doe",
+      userId: "user1",
+      createdAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(), // 45 mins ago
+      conversationId: "chat1",
       reactions: [
         { emoji: "🤔", count: 1, users: ["user2"] }
-      ],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      ]
     },
     {
       id: "msg5",
       content: "That sounds really interesting! Have you read any good papers on the topic lately?",
-      sender: {
-        id: "user2",
-        name: "Jane Smith",
-        username: "janesmith",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Jane",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 40 * 60 * 1000), // 40 mins ago
-      reactions: [],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      senderName: "Jane Smith",
+      userId: "user2",
+      createdAt: new Date(now.getTime() - 40 * 60 * 1000).toISOString(), // 40 mins ago
+      conversationId: "chat1"
     },
     {
       id: "msg6",
       content: "Yes! I just finished reading a paper by @davidchalmers on the 'hard problem' of consciousness. I can share it with you if you're interested.",
-      sender: {
-        id: "user1",
-        name: "John Doe",
-        username: "johndoe",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=John",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 35 * 60 * 1000), // 35 mins ago
+      senderName: "John Doe",
+      userId: "user1",
+      createdAt: new Date(now.getTime() - 35 * 60 * 1000).toISOString(), // 35 mins ago
+      conversationId: "chat1",
       mentions: ["davidchalmers"],
       reactions: [
         { emoji: "👍", count: 1, users: ["user2"] }
-      ],
-      isEdited: false,
-      replyTo: null
+      ]
     },
     {
       id: "msg7",
       content: "That would be great! I've been meaning to explore that topic more deeply.",
-      sender: {
-        id: "user2",
-        name: "Jane Smith",
-        username: "janesmith",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Jane",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 30 * 60 * 1000), // 30 mins ago
-      reactions: [],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      senderName: "Jane Smith",
+      userId: "user2",
+      createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // 30 mins ago
+      conversationId: "chat1"
     },
     {
       id: "msg8",
       content: "Here's the link: https://example.com/consciousness-paper. Let me know what you think after reading it!",
-      sender: {
-        id: "user1",
-        name: "John Doe",
-        username: "johndoe",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=John",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 25 * 60 * 1000), // 25 mins ago
+      senderName: "John Doe",
+      userId: "user1",
+      createdAt: new Date(now.getTime() - 25 * 60 * 1000).toISOString(), // 25 mins ago
+      conversationId: "chat1",
       reactions: [
         { emoji: "🙏", count: 1, users: ["user2"] }
-      ],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      ]
     },
     {
       id: "msg9",
       content: "Thanks! I'll check it out and get back to you. Also, have you seen the latest research on quantum consciousness by Penrose?",
-      sender: {
-        id: "user2",
-        name: "Jane Smith",
-        username: "janesmith",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Jane",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 20 * 60 * 1000), // 20 mins ago
-      reactions: [],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      senderName: "Jane Smith",
+      userId: "user2",
+      createdAt: new Date(now.getTime() - 20 * 60 * 1000).toISOString(), // 20 mins ago
+      conversationId: "chat1"
     },
     {
       id: "msg10",
       content: "I have! The Orchestrated Objective Reduction theory is quite fascinating, though controversial. I'm not entirely convinced by all aspects of it yet.",
-      sender: {
-        id: "user1",
-        name: "John Doe",
-        username: "johndoe",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=John",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 15 * 60 * 1000), // 15 mins ago
-      reactions: [],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      senderName: "John Doe",
+      userId: "user1",
+      createdAt: new Date(now.getTime() - 15 * 60 * 1000).toISOString(), // 15 mins ago
+      conversationId: "chat1"
     },
     {
       id: "msg11",
       content: "I agree. It's an interesting approach, but needs more empirical evidence. Maybe we can discuss it more after I read this paper you shared!",
-      sender: {
-        id: "user2",
-        name: "Jane Smith",
-        username: "janesmith",
-        avatar: "https://api.dicebear.com/7.x/personas/svg?seed=Jane",
-        status: "online" as UserStatus
-      },
-      timestamp: new Date(now.getTime() - 10 * 60 * 1000), // 10 mins ago
+      senderName: "Jane Smith",
+      userId: "user2",
+      createdAt: new Date(now.getTime() - 10 * 60 * 1000).toISOString(), // 10 mins ago
+      conversationId: "chat1",
       reactions: [
         { emoji: "👍", count: 1, users: ["user1"] }
-      ],
-      isEdited: false,
-      replyTo: null,
-      mentions: []
+      ]
     }
   ];
 };
@@ -383,14 +269,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const newMessage: ChatMessageType = {
         id: `msg${Date.now()}`,
         content: message,
-        sender: {
-          id: currentUserId,
-          name: "John Doe",
-          username: "johndoe",
-          avatar: "https://api.dicebear.com/7.x/personas/svg?seed=John",
-          status: "online" as UserStatus
-        },
-        timestamp: new Date(),
+        senderName: "John Doe",
+        userId: currentUserId,
+        createdAt: new Date().toISOString(),
+        conversationId: messages[0]?.conversationId || "chat1",
         reactions: [],
         isEdited: false,
         replyTo: replyingTo,
@@ -426,7 +308,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setReplyingTo({
         id: messageToReply.id,
         content: messageToReply.content,
-        sender: { name: messageToReply.sender.name }
+        sender: { name: messageToReply.senderName }
       });
       textareaRef.current?.focus();
     }
@@ -550,22 +432,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  // Format time
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-      return `${days}d`;
-    } else if (hours > 0) {
-      return `${hours}h`;
-    } else if (minutes > 0) {
-      return `${minutes}m`;
-    } else {
-      return "now";
+  // Format time - convert Date to string format
+  const formatTime = (timestamp: string): string => {
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+  
+      if (days > 0) {
+        return `${days}d`;
+      } else if (hours > 0) {
+        return `${hours}h`;
+      } else if (minutes > 0) {
+        return `${minutes}m`;
+      } else {
+        return "now";
+      }
+    } catch (error) {
+      return "Invalid time";
     }
   };
 
@@ -706,20 +593,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               key={message.id}
               message={message}
               formatTime={formatTime}
-              id={message.id}
-              content={message.content}
-              sender={message.sender}
-              isCurrentUser={message.sender.id === currentUserId}
-              timestamp={message.timestamp}
-              isEdited={message.isEdited || false}
-              reactions={message.reactions}
-              replyTo={message.replyTo || undefined}
-              mentions={message.mentions || []}
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
               onReply={handleReplyMessage}
               onReactionAdd={handleAddReaction}
               onReactionRemove={handleRemoveReaction}
+              isCurrentUser={message.userId === currentUserId}
+              id={message.id}
+              content={message.content}
+              timestamp={message.createdAt}
+              sender={{
+                id: message.userId,
+                name: message.senderName,
+                username: message.userId.replace("user", ""),
+                avatar: `https://api.dicebear.com/7.x/personas/svg?seed=${message.senderName}`,
+                status: "online" as UserStatus
+              }}
+              isEdited={message.isEdited || false}
+              reactions={message.reactions || []}
+              replyTo={message.replyTo}
+              mentions={message.mentions || []}
             />
           ))}
           <div ref={messagesEndRef} />
