@@ -55,7 +55,7 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
 
   if (!isAdmin) {
     return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-center text-red-500">Access Denied</CardTitle>
         </CardHeader>
@@ -68,20 +68,20 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="space-y-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
+            <Card key={i} className="w-full">
               <CardContent className="p-4">
-                <Skeleton className="h-20" />
+                <Skeleton className="h-20 w-full" />
               </CardContent>
             </Card>
           ))}
         </div>
         
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-6">
-            <Skeleton className="h-64" />
+            <Skeleton className="h-64 w-full" />
           </CardContent>
         </Card>
       </div>
@@ -89,9 +89,9 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+    <div className="space-y-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <Card className="w-full">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Users</p>
@@ -103,7 +103,7 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Active Users</p>
@@ -115,7 +115,7 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Content Items</p>
@@ -127,7 +127,7 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">System Alerts</p>
@@ -140,12 +140,12 @@ export const AdminDashboard = ({ isAdmin = false }: AdminDashboardProps) => {
         </Card>
       </div>
       
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>System Overview</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center">
+        <CardContent className="w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <BarChart3 size={100} className="text-muted-foreground/30" />
             <p className="ml-4 text-muted-foreground">Analytics charts will appear here.</p>
           </div>

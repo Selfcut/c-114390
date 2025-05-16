@@ -1,3 +1,4 @@
+
 export interface ChatMessage {
   id: string;
   content: string;
@@ -39,7 +40,6 @@ export interface Conversation {
   members?: Array<{id: string; name: string; avatar: string;}>;
 }
 
-// Add this interface to the existing types
 export interface ConversationItem {
   id: string;
   name: string;
@@ -48,4 +48,9 @@ export interface ConversationItem {
   created_at?: string;
   is_group?: boolean;
   is_global?: boolean;
+}
+
+export interface ChatInterfaceProps {
+  initialConversations?: ConversationItem[];
+  chatType?: "direct" | "global" | "group";
 }

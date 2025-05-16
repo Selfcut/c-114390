@@ -204,14 +204,14 @@ const Wiki = () => {
   };
 
   return (
-    <main className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
+    <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 stagger-fade animate-in">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <BookOpen size={28} className="text-primary" />
           Knowledge Wiki
         </h1>
         <Button 
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto"
           onClick={handleCreateArticle}
         >
           <Plus size={18} />
@@ -221,8 +221,8 @@ const Wiki = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar with categories */}
-        <div className="lg:col-span-1">
-          <Card>
+        <div className="lg:col-span-1 w-full">
+          <Card className="w-full sticky top-20">
             <CardContent className="p-4">
               <h2 className="text-lg font-medium mb-4">Categories</h2>
               <div className="space-y-1">
@@ -251,14 +251,14 @@ const Wiki = () => {
         </div>
 
         {/* Main content */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 w-full">
           {/* Search */}
           <div className="mb-6">
-            <div className="relative">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
                 placeholder="Search wiki articles..."
-                className="pl-10"
+                className="pl-10 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -267,9 +267,9 @@ const Wiki = () => {
 
           {/* Articles */}
           {filteredArticles.length > 0 ? (
-            <div className="space-y-4 stagger-fade animate-in">
+            <div className="space-y-4 stagger-fade animate-in w-full">
               {filteredArticles.map(article => (
-                <Card key={article.id} className="hover:shadow-md transition-shadow">
+                <Card key={article.id} className="hover:shadow-md transition-shadow w-full">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -318,7 +318,7 @@ const Wiki = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-muted/30 rounded-lg p-8 text-center">
+            <div className="bg-muted/30 rounded-lg p-8 text-center w-full">
               <BookOpen size={48} className="text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">No wiki articles found matching your criteria.</p>
               <Button onClick={() => { setSearchQuery(""); setSelectedCategory(null); }}>
@@ -421,7 +421,7 @@ const Wiki = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </div>
   );
 };
 
