@@ -1,4 +1,5 @@
-import { MessageSquare, ThumbsUp, Tag, Users, Clock } from "lucide-react";
+
+import { MessageSquare, ThumbsUp, Tag, Clock } from "lucide-react";
 import { formatTimeAgo, DiscussionTopic } from "../lib/discussions-utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
