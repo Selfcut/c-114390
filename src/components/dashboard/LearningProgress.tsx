@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { ProgressCard } from "../ProgressCard";
 import { BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { trackActivity } from "@/lib/activity-tracker";
 
 interface ProgressItem {

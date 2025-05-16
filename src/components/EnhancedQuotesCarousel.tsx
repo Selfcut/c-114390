@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Quote, Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { fetchQuotes, likeQuote, checkUserLikedQuote } from "@/lib/quotes-service";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 
 interface EnhancedQuotesCarouselProps {
   className?: string;

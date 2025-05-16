@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
 import {
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { CustomTooltip } from "./ui/CustomTooltip";
 import { publishSidebarCollapse, subscribeToSidebarCollapse } from "@/lib/utils/event-utils";
 import { HeaderLogo } from "./header/HeaderLogo";

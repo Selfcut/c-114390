@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { ChatInterface } from "../components/chat/ChatInterface";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 import { ConversationItem } from "../components/chat/types";
 import { Card } from "@/components/ui/card";

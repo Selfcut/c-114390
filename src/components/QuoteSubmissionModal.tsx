@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Send, Tag, Plus } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";

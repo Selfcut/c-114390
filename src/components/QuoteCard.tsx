@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageSquare, Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import { UserStatus } from "@/types/user";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { likeQuote, bookmarkQuote, checkUserLikedQuote, checkUserBookmarkedQuote } from "@/lib/quotes-service";
 import { QuoteCommentModal } from "./QuoteCommentModal";
 import { toast } from "./ui/use-toast";

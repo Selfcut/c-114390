@@ -1,11 +1,27 @@
-
-import React, { useState, useEffect } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
+import React, { useState, useEffect } from 'react';
+import { PageLayout } from '@/components/layouts/PageLayout';
+import { 
+  Search, 
+  Filter, 
+  ChevronDown, 
+  ChevronUp, 
+  Plus, 
+  BookOpen,
+  RefreshCw,
+  Quote as QuoteIcon,
+  ThumbsUp,
+  Calendar,
+  Tag
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { QuoteCard } from '@/components/QuoteCard';
+import { QuoteSubmissionModal } from '@/components/QuoteSubmissionModal';
+import { useAuth } from '@/lib/auth';
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Quote, Search, Filter, Heart, Share, Bookmark, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserHoverCard } from "../components/UserHoverCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,8 +34,6 @@ import {
   checkUserBookmarkedQuote,
   QuoteWithUser
 } from "@/lib/quotes-service";
-import { QuoteSubmissionModal } from "@/components/QuoteSubmissionModal";
-import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuoteCardProps {
@@ -271,121 +285,120 @@ const Quotes = () => {
 
   return (
     <PageLayout>
-      <main className="py-8 px-6 md:px-12">
-        <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Quote size={28} className="text-primary" />
-            Wisdom Quotes
-          </h1>
-          <Button 
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-            onClick={() => {
-              if (!isAuthenticated) {
-                toast({
-                  title: "Authentication required",
-                  description: "Please log in to submit quotes",
-                  variant: "destructive"
-                });
-                return;
-              }
-              setIsModalOpen(true);
-            }}
-          >
-            <Plus size={18} />
-            <span>Submit Quote</span>
-          </Button>
-        </div>
+    <main className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <QuoteIcon size={28} className="text-primary" />
+          Wisdom Quotes
+        </h1>
+        <Button 
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+          onClick={() => {
+            if (!isAuthenticated) {
+              toast({
+                title: "Authentication required",
+                description: "Please log in to submit quotes",
+                variant: "destructive"
+              });
+              return;
+            }
+            setIsModalOpen(true);
+          }}
+        >
+          <Plus size={18} />
+          <span>Submit Quote</span>
+        </Button>
+      </div>
 
-        {/* Search and filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input
-              placeholder="Search quotes..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {filterTag && (
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
-                {filterTag}
-                <button onClick={() => setFilterTag(null)} className="ml-1 hover:text-white">
-                  ×
-                </button>
-              </Badge>
-            )}
-          </div>
+      {/* Search and filters */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            placeholder="Search quotes..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-
-        {/* Tags scroller */}
-        <div className="mb-6">
-          <h2 className="text-sm font-medium mb-2 flex items-center">
-            <Filter size={14} className="mr-2" />
-            Filter by Tag
-          </h2>
-          <ScrollArea className="whitespace-nowrap pb-4">
-            <div className="flex gap-2">
-              {allTags.map(tag => (
-                <Button
-                  key={tag}
-                  variant={filterTag === tag ? "default" : "outline"} 
-                  size="sm"
-                  className="h-8"
-                  onClick={() => setFilterTag(filterTag === tag ? null : tag)}
-                >
-                  {tag}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Quotes grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-fade animate-in">
-          {isLoading ? (
-            // Loading placeholders
-            Array(6).fill(0).map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="h-4 w-12 bg-muted rounded mb-4"></div>
-                  <div className="h-20 bg-muted rounded mb-4"></div>
-                  <div className="flex items-center mb-4">
-                    <div className="h-8 w-8 bg-muted rounded-full mr-3"></div>
-                    <div>
-                      <div className="h-4 w-24 bg-muted rounded"></div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : filteredQuotes.length > 0 ? (
-            filteredQuotes.map(quote => (
-              <QuoteCard
-                key={quote.id}
-                quote={quote}
-                isLiked={!!userLikes[quote.id]}
-                isBookmarked={!!userBookmarks[quote.id]}
-                onLike={() => handleLike(quote.id)}
-                onBookmark={() => handleBookmark(quote.id)}
-                onTagClick={(tag) => setFilterTag(tag)}
-              />
-            ))
-          ) : (
-            <div className="col-span-1 md:col-span-2 lg:col-span-3">
-              <div className="bg-muted/30 rounded-lg p-8 text-center">
-                <Quote size={48} className="text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">No quotes found matching your criteria.</p>
-                <Button onClick={() => { setSearchQuery(""); setFilterTag(null); }}>
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {filterTag && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
+              {filterTag}
+              <button onClick={() => setFilterTag(null)} className="ml-1 hover:text-white">
+                ×
+              </button>
+            </Badge>
           )}
         </div>
-      </main>
+      </div>
+
+      {/* Tags scroller */}
+      <div className="mb-6">
+        <h2 className="text-sm font-medium mb-2 flex items-center">
+          <Filter size={14} className="mr-2" />
+          Filter by Tag
+        </h2>
+        <ScrollArea className="whitespace-nowrap pb-4">
+          <div className="flex gap-2">
+            {allTags.map(tag => (
+              <Button
+                key={tag}
+                variant={filterTag === tag ? "default" : "outline"} 
+                size="sm"
+                className="h-8"
+                onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+              >
+                {tag}
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Quotes grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-fade animate-in">
+        {isLoading ? (
+          // Loading placeholders
+          Array(6).fill(0).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="h-4 w-12 bg-muted rounded mb-4"></div>
+                <div className="h-20 bg-muted rounded mb-4"></div>
+                <div className="flex items-center mb-4">
+                  <div className="h-8 w-8 bg-muted rounded-full mr-3"></div>
+                  <div>
+                    <div className="h-4 w-24 bg-muted rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredQuotes.length > 0 ? (
+          filteredQuotes.map(quote => (
+            <QuoteCard
+              key={quote.id}
+              quote={quote}
+              isLiked={!!userLikes[quote.id]}
+              isBookmarked={!!userBookmarks[quote.id]}
+              onLike={() => handleLike(quote.id)}
+              onBookmark={() => handleBookmark(quote.id)}
+              onTagClick={(tag) => setFilterTag(tag)}
+            />
+          ))
+        ) : (
+          <div className="col-span-1 md:col-span-2 lg:col-span-3">
+            <div className="bg-muted/30 rounded-lg p-8 text-center">
+              <QuoteIcon size={48} className="text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">No quotes found matching your criteria.</p>
+              <Button onClick={() => { setSearchQuery(""); setFilterTag(null); }}>
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
       
       {/* Quote submission modal */}
       {isModalOpen && (
@@ -395,6 +408,7 @@ const Quotes = () => {
           onSubmit={handleQuoteSubmitted}
         />
       )}
+    </main>
     </PageLayout>
   );
 };

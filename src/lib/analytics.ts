@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth';
 
 export type AnalyticsEvent = 
   | 'page_view'

@@ -1,101 +1,137 @@
+import React from 'react';
+import { MessageSquare, BookOpen, Badge, Heart, Clock, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/lib/auth-context";
-import { Eye, Plus, Edit, Trash, Activity } from 'lucide-react';
-import { Card } from "@/components/ui/card";
+interface ActivityItemProps {
+  type: 'comment' | 'like' | 'bookmark' | 'view';
+  title: string;
+  timestamp: string;
+  link?: string;
+}
+
+const mockActivityData: ActivityItemProps[] = [
+  {
+    type: 'comment',
+    title: 'New comment on "The Meaning of Life"',
+    timestamp: '2 minutes ago',
+    link: '/forum/meaning-of-life'
+  },
+  {
+    type: 'like',
+    title: 'Liked your quote on Stoicism',
+    timestamp: '15 minutes ago',
+    link: '/quotes/stoicism'
+  },
+  {
+    type: 'bookmark',
+    title: 'Bookmarked the article "Quantum Physics Explained"',
+    timestamp: '30 minutes ago',
+    link: '/library/quantum-physics'
+  },
+  {
+    type: 'view',
+    title: 'Viewed the "Artificial Intelligence Ethics" wiki page',
+    timestamp: '1 hour ago',
+    link: '/wiki/ai-ethics'
+  },
+  {
+    type: 'comment',
+    title: 'Replied to your discussion on "The Future of Education"',
+    timestamp: '2 hours ago',
+    link: '/forum/future-of-education'
+  },
+  {
+    type: 'like',
+    title: 'Liked your post on Systems Thinking',
+    timestamp: '4 hours ago',
+    link: '/media/systems-thinking'
+  },
+  {
+    type: 'bookmark',
+    title: 'Bookmarked the quote by Seneca',
+    timestamp: '6 hours ago',
+    link: '/quotes/seneca'
+  },
+  {
+    type: 'view',
+    title: 'Explored the "History of Philosophy" section',
+    timestamp: '10 hours ago',
+    link: '/library/history-of-philosophy'
+  }
+];
 
 interface ActivityFeedProps {
   limit?: number;
 }
 
-export const ActivityFeed = ({ limit = 5 }: ActivityFeedProps) => {
-  const [activities, setActivities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const ActivityFeed: React.FC<ActivityFeedProps> = ({ limit = 5 }) => {
+  const { toast } = useToast();
   const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchActivities = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        
-        const { data, error } = await supabase
-          .from('user_activities')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(limit);
-          
-        if (error) throw error;
-        
-        setActivities(data || []);
-      } catch (error) {
-        console.error('Error fetching activities:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const isAuthenticated = !!user;
+  
+  const displayedActivities = mockActivityData.slice(0, limit);
+  
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'comment':
+        return <MessageSquare size={16} className="text-blue-500" />;
+      case 'like':
+        return <Heart size={16} className="text-red-500" />;
+      case 'bookmark':
+        return <BookOpen size={16} className="text-yellow-500" />;
+      case 'view':
+      default:
+        return <Clock size={16} className="text-gray-500" />;
+    }
+  };
+  
+  const handleActivityClick = (activity: ActivityItemProps) => {
+    if (!activity.link) {
+      toast({
+        title: "No Link Available",
+        description: "This activity does not have a direct link.",
+      });
+      return;
+    }
     
-    fetchActivities();
-  }, [user, limit]);
-  
-  if (isLoading) {
-    return (
-      <div className="space-y-4 w-full">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex gap-3 w-full">
-            <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
-            <div className="space-y-2 flex-1 w-full">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  
-  if (activities.length === 0) {
-    return (
-      <Card className="p-6 text-center w-full">
-        <Activity size={32} className="text-muted-foreground mx-auto mb-3" />
-        <p className="text-muted-foreground">No recent activity found.</p>
-      </Card>
-    );
-  }
-  
+    window.location.href = activity.link;
+  };
+
   return (
-    <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-      <div className="space-y-6 w-full">
-        {activities.map((activity: any, index: number) => (
-          <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0 w-full">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              {/* Icon based on activity type */}
-              {activity.event_type === 'view' && <Eye size={14} className="text-primary" />}
-              {activity.event_type === 'create' && <Plus size={14} className="text-green-500" />}
-              {activity.event_type === 'update' && <Edit size={14} className="text-amber-500" />}
-              {activity.event_type === 'delete' && <Trash size={14} className="text-red-500" />}
-              {!['view', 'create', 'update', 'delete'].includes(activity.event_type) && 
-                <Activity size={14} className="text-blue-500" />
-              }
-            </div>
-            <div className="flex-1 min-w-0">
+    <div className="bg-background border border-border rounded-lg p-4">
+      <h3 className="font-semibold text-lg mb-3">Recent Activity</h3>
+      {isAuthenticated ? (
+        <ul className="space-y-3">
+          {displayedActivities.map((activity, index) => (
+            <li 
+              key={index} 
+              className="flex items-center gap-3 hover:bg-accent/40 p-2 rounded-md transition-colors cursor-pointer"
+              onClick={() => handleActivityClick(activity)}
+            >
+              {getActivityIcon(activity.type)}
               <p className="text-sm">
-                <span className="font-medium">You</span> {activity.event_type}ed{' '}
-                {activity.metadata?.section || activity.metadata?.type || 'content'}
-                {activity.metadata?.topic ? `: ${activity.metadata.topic}` : ''}
+                {activity.title}
+                <span className="text-xs text-muted-foreground ml-1">{activity.timestamp}</span>
               </p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(activity.created_at).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+            </li>
+          ))}
+          <li className="text-center">
+            <Button variant="link" size="sm" className="gap-1">
+              <RefreshCw size={14} className="mr-1" />
+              Load More
+            </Button>
+          </li>
+        </ul>
+      ) : (
+        <div className="text-center py-6">
+          <p className="text-muted-foreground">Sign in to view your activity</p>
+          <Button variant="secondary" size="sm" asChild>
+            <a href="/auth">Sign In</a>
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };

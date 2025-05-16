@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { WikiHeader } from "@/components/wiki/WikiHeader";
 import { CategorySidebar } from "@/components/wiki/CategorySidebar";
 import { WikiSearchBar } from "@/components/wiki/WikiSearchBar";

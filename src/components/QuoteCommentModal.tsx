@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Send, MessageSquare } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { supabase } from "@/integrations/supabase/client";
