@@ -14,10 +14,7 @@ export interface WikiArticleRaw {
   views?: number;
   last_updated?: string;
   created_at?: string;
-  profiles?: {
-    name?: string;
-    avatar_url?: string;
-  };
+  author_name?: string; // Store author name directly instead of through profiles
 }
 
 // Function to get all wiki articles
@@ -30,10 +27,10 @@ export const fetchWikiArticles = async (options?: {
   const page = options?.page || 0;
 
   try {
-    // Create a basic query that doesn't join with profiles
+    // Create a basic query without trying to join with profiles
     let query = supabase
       .from('wiki_articles')
-      .select('*, profiles(name, avatar_url)')
+      .select('*')
       .order('last_updated', { ascending: false })
       .limit(pageSize)
       .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -57,7 +54,7 @@ export const fetchWikiArticles = async (options?: {
       lastUpdated: formatLastUpdated(article.last_updated || ''),
       contributors: article.contributors || 1,
       views: article.views || 0,
-      author: article.profiles?.name || 'Unknown'
+      author: article.author_name || 'Unknown'
     }));
 
     return { 
@@ -75,7 +72,7 @@ export const fetchWikiArticleById = async (id: string) => {
   try {
     const { data, error } = await supabase
       .from('wiki_articles')
-      .select('*, profiles(name, avatar_url)')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -95,7 +92,7 @@ export const fetchWikiArticleById = async (id: string) => {
       lastUpdated: formatLastUpdated(data.last_updated || ''),
       contributors: data.contributors || 1,
       views: data.views || 0,
-      author: data.profiles?.name || 'Unknown'
+      author: data.author_name || 'Unknown'
     };
 
     // Update view count
@@ -115,6 +112,7 @@ export const createWikiArticle = async (articleData: {
   content: string;
   category: string;
   user_id: string;
+  author_name?: string;
 }) => {
   try {
     const { data, error } = await supabase
@@ -124,9 +122,10 @@ export const createWikiArticle = async (articleData: {
         description: articleData.description,
         content: articleData.content,
         category: articleData.category,
-        user_id: articleData.user_id
+        user_id: articleData.user_id,
+        author_name: articleData.author_name || 'Anonymous'
       })
-      .select('*, profiles(name)')
+      .select()
       .single();
 
     if (error) throw error;
@@ -145,7 +144,7 @@ export const createWikiArticle = async (articleData: {
       lastUpdated: "Just now",
       contributors: 1,
       views: 0,
-      author: data.profiles?.name || 'You'
+      author: data.author_name || 'You'
     };
 
     return { article };

@@ -1,5 +1,6 @@
 
 import { useNavigate } from 'react-router-dom';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export const useContentNavigation = () => {
   const navigate = useNavigate();
@@ -24,10 +25,31 @@ export const useContentNavigation = () => {
     navigate(`/media/${id}`);
   };
 
+  // Generic handler that routes based on content type
+  const handleContentClick = (id: string, itemType: ContentItemType) => {
+    switch(itemType) {
+      case 'knowledge':
+        handleKnowledgeClick(id);
+        break;
+      case 'media':
+        handleMediaClick(id);
+        break;
+      case 'quote':
+        handleQuoteClick(id);
+        break;
+      case 'ai':
+        handleKnowledgeClick(id); // AI content typically routes to knowledge
+        break;
+      default:
+        console.warn(`Unknown content type: ${itemType}`);
+    }
+  };
+
   return {
     handleKnowledgeClick,
     handleWikiClick,
     handleQuoteClick,
     handleMediaClick,
+    handleContentClick
   };
 };
