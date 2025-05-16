@@ -83,8 +83,8 @@ const Forum = () => {
   };
   
   return (
-    <PageLayout allowGuests={true}>
-      <main className="py-8 px-12">
+    <PageLayout allowGuests={true} sectionName="Forum">
+      <main className="py-8 px-8 lg:px-12">
         <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <MessageSquare size={28} />

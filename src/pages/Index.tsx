@@ -1,8 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { PromoBar } from "../components/PromoBar";
-import { Sidebar } from "../components/Sidebar";
-import Header from "../components/Header";
+import { PageLayout } from "../components/layouts/PageLayout";
 import { polymathToast } from "../components/ui/use-toast";
 import { formatDaysAgo } from "../lib/utils";
 import { WelcomeMessage } from "../components/WelcomeMessage";
@@ -67,45 +65,36 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <PromoBar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <div className="flex-1 overflow-auto">
-            <main className="py-8 px-8 lg:px-12">
-              {/* Enhanced Welcome Message */}
-              <WelcomeMessage />
-              
-              {/* Explore Section with Creation Cards */}
-              <ExploreSection />
-              
-              {/* Enhanced Quotes Carousel */}
-              <QuoteSection />
+    <PageLayout sectionName="Dashboard" allowGuests={true}>
+      <main className="py-8 px-8 lg:px-12">
+        {/* Enhanced Welcome Message */}
+        <WelcomeMessage />
+        
+        {/* Explore Section with Creation Cards */}
+        <ExploreSection />
+        
+        {/* Enhanced Quotes Carousel */}
+        <QuoteSection />
 
-              {/* Main Content Grid */}
-              <MainContentGrid />
-              
-              {/* Secondary Content */}
-              <SecondaryContent />
-              
-              {/* Membership Benefits */}
-              <MembershipSection />
-              
-              {/* Learning Progress & Pathways */}
-              <LearningSection />
+        {/* Main Content Grid */}
+        <MainContentGrid />
+        
+        {/* Secondary Content */}
+        <SecondaryContent />
+        
+        {/* Membership Benefits */}
+        <MembershipSection />
+        
+        {/* Learning Progress & Pathways */}
+        <LearningSection />
 
-              {/* Disciplines, Methodologies, and Wisdom */}
-              <DisciplinesSection />
-              
-              {/* Footer Content - Events & Search */}
-              <FooterSection />
-            </main>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Disciplines, Methodologies, and Wisdom */}
+        <DisciplinesSection />
+        
+        {/* Footer Content - Events & Search */}
+        <FooterSection />
+      </main>
+    </PageLayout>
   );
 };
 
