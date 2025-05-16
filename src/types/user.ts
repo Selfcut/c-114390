@@ -22,7 +22,7 @@ export interface UserProfile {
   bio: string;
   website: string;
   status: UserStatus;
-  isGhostMode: boolean;
+  isGhostMode?: boolean; // Made optional to match the usage in auth-context.tsx
   role: UserRole;
   isAdmin?: boolean;
   notificationSettings?: NotificationSettings;
