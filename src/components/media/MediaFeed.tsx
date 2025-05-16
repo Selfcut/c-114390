@@ -3,8 +3,6 @@ import { useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { MessageSquare, ThumbsUp, Loader2 } from "lucide-react";
 import { ImageCard } from "./media-cards/ImageCard";
@@ -37,7 +35,7 @@ export const MediaFeed = ({
     if (inView && hasMore && !isLoading) {
       loadMore();
     }
-  }, [inView, hasMore, isLoading]);
+  }, [inView, hasMore, isLoading, loadMore]);
 
   // Render media content based on type
   const renderMediaContent = (post: MediaPost) => {
@@ -64,21 +62,21 @@ export const MediaFeed = ({
           <Card key={index}>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="h-10 w-10 rounded-full bg-muted"></div>
                 <div>
-                  <Skeleton className="h-5 w-32 mb-1" />
-                  <Skeleton className="h-4 w-24" />
+                  <div className="h-5 w-32 mb-1 bg-muted"></div>
+                  <div className="h-4 w-24 bg-muted"></div>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pb-2">
-              <Skeleton className="h-6 w-full mb-4" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
+              <div className="h-6 w-full mb-4 bg-muted"></div>
+              <div className="h-[200px] w-full rounded-lg bg-muted"></div>
             </CardContent>
             <CardFooter>
               <div className="flex justify-between w-full">
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-6 w-20" />
+                <div className="h-6 w-20 bg-muted"></div>
+                <div className="h-6 w-20 bg-muted"></div>
               </div>
             </CardFooter>
           </Card>

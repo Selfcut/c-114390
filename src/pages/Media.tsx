@@ -11,8 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaFeed } from "@/components/media/MediaFeed";
-import { Plus, YouTube, Image as ImageIcon, FileText, Loader2, Upload } from "lucide-react";
+import { Plus, Image as ImageIcon, FileText, Loader2, Upload, Youtube } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserStatus } from "@/types/user";
 
 export interface MediaPost {
   id: string;
@@ -26,8 +27,8 @@ export interface MediaPost {
   comments?: number;
   views?: number;
   profiles?: {
-    name: string;
-    avatar_url: string;
+    name?: string;
+    avatar_url?: string;
   };
 }
 
@@ -85,13 +86,19 @@ const Media = () => {
 
         if (error) throw error;
         
+        // Handle the case where profiles might be an error object or missing properties
+        const formattedData = data?.map(post => ({
+          ...post,
+          profiles: post.profiles?.error ? { name: "Unknown", avatar_url: undefined } : post.profiles
+        })) as MediaPost[];
+        
         if (page === 0) {
-          setPosts(data as MediaPost[]);
+          setPosts(formattedData || []);
         } else {
-          setPosts(prev => [...prev, ...(data as MediaPost[])]);
+          setPosts(prev => [...prev, ...(formattedData || [])]);
         }
         
-        setHasMore(data.length === 10);
+        setHasMore(data && data.length === 10);
 
       } catch (error: any) {
         console.error('Error fetching media posts:', error);
@@ -286,7 +293,7 @@ const Media = () => {
             website: '',
             role: '',
             isAdmin: false,
-            status: 'active',
+            status: 'online' as UserStatus,
             isGhostMode: false
           } : null}
         />
@@ -308,7 +315,7 @@ const Media = () => {
                   Text
                 </TabsTrigger>
                 <TabsTrigger value="youtube" className="flex items-center gap-1">
-                  <YouTube size={14} />
+                  <Youtube size={14} />
                   YouTube
                 </TabsTrigger>
                 <TabsTrigger value="image" className="flex items-center gap-1">
