@@ -29,7 +29,7 @@ export interface MediaPost {
   profiles?: {
     name?: string;
     avatar_url?: string;
-  };
+  } | null;
 }
 
 const Media = () => {
@@ -86,16 +86,22 @@ const Media = () => {
 
         if (error) throw error;
         
-        // Handle the case where profiles might be an error object or missing properties
-        const formattedData = data?.map(post => ({
-          ...post,
-          profiles: post.profiles?.error ? { name: "Unknown", avatar_url: undefined } : post.profiles
-        })) as MediaPost[];
+        // Handle the case where profiles might be an error object
+        const formattedData = data?.map(post => {
+          // If profiles is an error object or undefined, provide default values
+          if (!post.profiles || typeof post.profiles === 'string' || 'error' in post.profiles) {
+            return {
+              ...post,
+              profiles: { name: "Unknown", avatar_url: undefined }
+            } as MediaPost;
+          }
+          return post as MediaPost;
+        }) || [];
         
         if (page === 0) {
-          setPosts(formattedData || []);
+          setPosts(formattedData);
         } else {
-          setPosts(prev => [...prev, ...(formattedData || [])]);
+          setPosts(prev => [...prev, ...formattedData]);
         }
         
         setHasMore(data && data.length === 10);

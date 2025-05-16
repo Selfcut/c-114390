@@ -1,258 +1,231 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { WikiArticle } from "@/components/wiki/types";
+import { format } from "date-fns";
 
-// Type for raw Supabase wiki article data
-export interface WikiArticleRaw {
-  id: string;
-  title: string;
-  description: string;
-  content?: string;
-  category: string;
-  user_id: string;
-  author_name?: string;
-  contributors?: number;
-  views?: number;
-  last_updated?: string;
-  created_at?: string;
-}
-
-// Function to get all wiki articles
-export const fetchWikiArticles = async (options?: {
+// Fetch wiki articles with pagination and filtering
+export const fetchWikiArticles = async ({
+  category,
+  page = 0,
+  pageSize = 10
+}: {
   category?: string;
   page?: number;
   pageSize?: number;
 }) => {
-  const pageSize = options?.pageSize || 9;
-  const page = options?.page || 0;
-
   try {
-    // Create a basic query
+    // Start with the base query
     let query = supabase
       .from('wiki_articles')
       .select('*')
-      .order('last_updated', { ascending: false })
-      .limit(pageSize)
-      .range(page * pageSize, (page + 1) * pageSize - 1);
-
-    // Add category filter if specified
-    if (options?.category) {
-      query = query.eq('category', options.category);
+      .order('created_at', { ascending: false });
+    
+    // Add category filter if provided
+    if (category) {
+      query = query.eq('category', category);
     }
-
-    const { data: articles, error } = await query;
-
+    
+    // Add pagination
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1);
+    
+    // Execute query
+    const { data, error } = await query;
+    
     if (error) throw error;
-
-    // Format the returned data
-    const formattedArticles: WikiArticle[] = (articles || []).map(article => ({
+    
+    // Format the dates and map to WikiArticle type
+    const formattedArticles = data.map(article => ({
       id: article.id,
       title: article.title,
-      description: article.description,
-      category: article.category,
-      content: article.content,
-      lastUpdated: formatLastUpdated(article.last_updated || ''),
+      description: article.description || "",
+      content: article.content || "",
+      category: article.category || "general",
+      imageUrl: article.image_url,
+      author: article.author_name || "Unknown",
+      authorId: article.user_id,
       contributors: article.contributors || 1,
       views: article.views || 0,
-      author: article.author_name || 'Unknown'
-    }));
-
-    return { 
-      articles: formattedArticles, 
-      hasMore: formattedArticles.length === pageSize
-    };
-  } catch (err) {
-    console.error('Error fetching wiki articles:', err);
-    return { articles: [], hasMore: false, error: err };
+      lastUpdated: format(new Date(article.updated_at || article.created_at), 'MMM d, yyyy'),
+      tags: article.tags || []
+    })) as WikiArticle[];
+    
+    // Check if there are more articles to load
+    const { count, error: countError } = await supabase
+      .from('wiki_articles')
+      .count();
+    
+    if (countError) throw countError;
+    
+    const totalCount = count ? parseInt(count.toString()) : 0;
+    const hasMore = (page + 1) * pageSize < totalCount;
+    
+    return { articles: formattedArticles, hasMore, error: null };
+  } catch (error) {
+    console.error('Error fetching wiki articles:', error);
+    return { articles: [], hasMore: false, error };
   }
 };
 
-// Function to get a single wiki article by ID
-export const fetchWikiArticleById = async (id: string) => {
+// Fetch a single wiki article by ID
+export const fetchWikiArticleById = async (articleId: string) => {
   try {
     const { data, error } = await supabase
       .from('wiki_articles')
       .select('*')
-      .eq('id', id)
+      .eq('id', articleId)
       .single();
-
+    
     if (error) throw error;
     
     if (!data) {
-      return { article: null, error: "Article not found" };
+      return { article: null, error: 'Article not found' };
     }
-
-    // Format the returned data
+    
+    // Convert to WikiArticle format
     const article: WikiArticle = {
       id: data.id,
       title: data.title,
-      description: data.description,
-      category: data.category,
-      content: data.content,
-      lastUpdated: formatLastUpdated(data.last_updated || ''),
+      description: data.description || "",
+      content: data.content || "",
+      category: data.category || "general",
+      imageUrl: data.image_url,
+      author: data.author_name || "Unknown",
+      authorId: data.user_id,
       contributors: data.contributors || 1,
       views: data.views || 0,
-      author: data.author_name || 'Unknown'
+      lastUpdated: format(new Date(data.updated_at || data.created_at), 'MMM d, yyyy'),
+      tags: data.tags || []
     };
-
+    
     // Update view count
-    await incrementWikiViews(id);
-
-    return { article };
-  } catch (err) {
-    console.error('Error fetching wiki article:', err);
-    return { article: null, error: err };
+    const { error: updateError } = await supabase
+      .from('wiki_articles')
+      .update({ views: (data.views || 0) + 1 })
+      .eq('id', articleId);
+    
+    if (updateError) {
+      console.error('Error updating view count:', updateError);
+    }
+    
+    return { article, error: null };
+  } catch (error) {
+    console.error('Error fetching wiki article:', error);
+    return { article: null, error };
   }
 };
 
-// Function to create a new wiki article
-export const createWikiArticle = async (articleData: {
-  title: string;
-  description: string;
-  content: string;
-  category: string;
-  user_id: string;
-  author_name?: string;
-}) => {
+// Create a new wiki article
+export const createWikiArticle = async (article: Partial<WikiArticle>, userId: string) => {
   try {
+    // Get user profile info for author name
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', userId)
+      .single();
+    
+    if (userError) throw userError;
+    
     const { data, error } = await supabase
       .from('wiki_articles')
       .insert({
-        title: articleData.title,
-        description: articleData.description,
-        content: articleData.content,
-        category: articleData.category,
-        user_id: articleData.user_id,
-        author_name: articleData.author_name || 'Anonymous'
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        category: article.category,
+        image_url: article.imageUrl,
+        user_id: userId,
+        author_name: userData?.name || 'Unknown',
+        tags: article.tags || [],
+        views: 0,
+        contributors: 1
       })
       .select()
       .single();
-
+      
     if (error) throw error;
-
-    if (!data) {
-      return { article: null, error: "Failed to create article" };
-    }
-
-    // Format the returned data
-    const article: WikiArticle = {
+    
+    // Convert to WikiArticle format
+    const createdArticle: WikiArticle = {
       id: data.id,
       title: data.title,
-      description: data.description,
-      category: data.category,
-      content: data.content,
-      lastUpdated: "Just now",
-      contributors: 1,
-      views: 0,
-      author: data.author_name || 'You'
+      description: data.description || "",
+      content: data.content || "",
+      category: data.category || "general",
+      imageUrl: data.image_url,
+      author: data.author_name || "Unknown",
+      authorId: data.user_id,
+      contributors: data.contributors || 1,
+      views: data.views || 0,
+      lastUpdated: format(new Date(data.created_at), 'MMM d, yyyy'),
+      tags: data.tags || []
     };
-
-    return { article };
-  } catch (err) {
-    console.error('Error creating wiki article:', err);
-    return { article: null, error: err };
+    
+    return { article: createdArticle, error: null };
+  } catch (error) {
+    console.error('Error creating wiki article:', error);
+    return { article: null, error };
   }
 };
 
-// Function to update an existing wiki article
+// Update an existing wiki article
 export const updateWikiArticle = async (
-  id: string,
-  updates: {
-    title?: string;
-    description?: string;
-    content?: string;
-    category?: string;
-  }
+  articleId: string, 
+  updates: Partial<WikiArticle>,
+  userId: string
 ) => {
   try {
-    // Increment contributors count
-    await supabase.rpc('increment_counter_fn', {
-      row_id: id,
-      column_name: 'contributors',
-      table_name: 'wiki_articles'
-    });
+    // First check if this is a new contributor
+    const { data: existing, error: fetchError } = await supabase
+      .from('wiki_articles')
+      .select('user_id, contributors')
+      .eq('id', articleId)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    
+    // Determine if this is a new contributor
+    const isNewContributor = existing.user_id !== userId;
+    const contributors = isNewContributor ? (existing.contributors || 1) + 1 : existing.contributors;
     
     // Update the article
     const { data, error } = await supabase
       .from('wiki_articles')
       .update({
-        ...updates,
-        last_updated: new Date().toISOString()
+        title: updates.title,
+        description: updates.description,
+        content: updates.content,
+        category: updates.category,
+        image_url: updates.imageUrl,
+        tags: updates.tags,
+        contributors,
+        updated_at: new Date().toISOString()
       })
-      .eq('id', id)
+      .eq('id', articleId)
       .select()
       .single();
-
+    
     if (error) throw error;
-
-    if (!data) {
-      return { article: null, error: "Failed to update article" };
-    }
-
-    // Format the returned data
-    const article: WikiArticle = {
+    
+    // Convert to WikiArticle format
+    const updatedArticle: WikiArticle = {
       id: data.id,
       title: data.title,
-      description: data.description,
-      category: data.category,
-      content: data.content,
-      lastUpdated: "Just now",
+      description: data.description || "",
+      content: data.content || "",
+      category: data.category || "general",
+      imageUrl: data.image_url,
+      author: data.author_name || "Unknown",
+      authorId: data.user_id,
       contributors: data.contributors || 1,
       views: data.views || 0,
-      author: data.author_name || 'Unknown'
+      lastUpdated: format(new Date(data.updated_at), 'MMM d, yyyy'),
+      tags: data.tags || []
     };
-
-    return { article };
-  } catch (err) {
-    console.error('Error updating wiki article:', err);
-    return { article: null, error: err };
-  }
-};
-
-// Function to delete a wiki article
-export const deleteWikiArticle = async (id: string) => {
-  try {
-    const { error } = await supabase
-      .from('wiki_articles')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
-    return { success: true };
-  } catch (err) {
-    console.error('Error deleting wiki article:', err);
-    return { success: false, error: err };
-  }
-};
-
-// Function to increment view count for an article
-export const incrementWikiViews = async (id: string) => {
-  try {
-    // Use our RPC function to increment the view count
-    await supabase.rpc('increment_counter_fn', {
-      row_id: id,
-      column_name: 'views',
-      table_name: 'wiki_articles'
-    });
     
-    return { success: true };
-  } catch (err) {
-    console.error('Error incrementing view count:', err);
-    return { success: false, error: err };
+    return { article: updatedArticle, error: null };
+  } catch (error) {
+    console.error('Error updating wiki article:', error);
+    return { article: null, error };
   }
-};
-
-// Format the last updated date
-export const formatLastUpdated = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays < 1) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return date.toLocaleDateString();
 };

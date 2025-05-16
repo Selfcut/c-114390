@@ -5,11 +5,14 @@ import {
   LayoutDashboard,
   MessageSquare,
   BookOpen,
+  Settings,
+  User,
   ShieldCheck,
   GraduationCap,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Youtube,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
@@ -62,14 +65,24 @@ export const CollapsibleSidebar = () => {
     },
     {
       icon: <BookOpen className="h-5 w-5" />,
-      label: "Knowledge Hub",
-      path: "/library",
-    },
-    {
-      icon: <GraduationCap className="h-5 w-5" />,
       label: "Wiki",
       path: "/wiki",
     },
+    {
+      icon: <Youtube className="h-5 w-5" />,
+      label: "Media",
+      path: "/media",
+    },
+    {
+      icon: <User className="h-5 w-5" />,
+      label: "Profile",
+      path: "/profile",
+    },
+    {
+      icon: <Settings className="h-5 w-5" />,
+      label: "Settings",
+      path: "/settings",
+    }
   ];
 
   // Add admin entry if user is admin

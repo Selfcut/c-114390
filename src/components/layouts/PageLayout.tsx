@@ -2,6 +2,7 @@
 import React from "react";
 import Header from "../Header";
 import { CollapsibleSidebar } from "../CollapsibleSidebar";
+import { FullHeightChatSidebar } from "../chat/FullHeightChatSidebar";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,15 @@ interface PageLayoutProps {
 }
 
 export const PageLayout = ({ children, allowGuests = false }: PageLayoutProps) => {
+  // Ensure sidebar width variable is set on mount
+  React.useEffect(() => {
+    const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      sidebarCollapsed ? '64px' : '256px'
+    );
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

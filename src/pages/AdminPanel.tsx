@@ -20,7 +20,7 @@ const AdminPanel = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState<boolean>(true);
 
-  // Check if current user is an admin
+  // Check if current user is an admin and make specified user an admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
@@ -29,31 +29,37 @@ const AdminPanel = () => {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-
-        setIsAdmin(data?.role === 'admin');
-        
         // Make specific user an admin (as requested)
         if (user.id === 'dc7bedf3-14c3-4376-adfb-de5ac8207adc') {
           const { error: updateError } = await supabase
             .from('profiles')
-            .update({ role: 'admin' })
+            .update({ role: 'admin', isAdmin: true })
             .eq('id', user.id);
             
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error('Error updating admin status:', updateError);
+            throw updateError;
+          }
           
           setIsAdmin(true);
           toast({
             title: "Admin Role Granted",
             description: "You now have administrator privileges",
           });
+          setIsCheckingAdmin(false);
+          return;
         }
+
+        // Check admin status for other users
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role, isAdmin')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        setIsAdmin(data?.role === 'admin' || data?.isAdmin === true);
       } catch (err) {
         console.error('Error checking admin status:', err);
       } finally {
