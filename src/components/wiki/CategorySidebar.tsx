@@ -2,12 +2,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Atom, BookText, Brain, Code, GitBranch, History, Leaf, Calculator2, Book } from "lucide-react";
+import { Atom, BookText, Brain, Code, GitBranch, History, Leaf, Calculator, Book } from "lucide-react";
 
 // Export the categories for reuse
 export const categories = [
   { id: "physics", name: "Physics", icon: <Atom size={16} /> },
-  { id: "mathematics", name: "Mathematics", icon: <Calculator2 size={16} /> },
+  { id: "mathematics", name: "Mathematics", icon: <Calculator size={16} /> },
   { id: "philosophy", name: "Philosophy", icon: <Book size={16} /> },
   { id: "consciousness", name: "Consciousness", icon: <Brain size={16} /> },
   { id: "systems", name: "Systems Theory", icon: <GitBranch size={16} /> },
