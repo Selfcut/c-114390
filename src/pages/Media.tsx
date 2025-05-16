@@ -83,11 +83,17 @@ const Media = () => {
         
         // Handle the profiles relationship with null checks
         if (item.profiles && typeof item.profiles === 'object') {
-          const profiles = item.profiles;
+          // Explicitly type the profiles to avoid TypeScript errors
+          const safeProfiles = item.profiles as { 
+            name?: string; 
+            username?: string; 
+            avatar_url?: string; 
+          };
+          
           profileData = {
-            name: profiles.name || 'Unknown User',
-            username: profiles.username || 'unknown',
-            avatar_url: profiles.avatar_url
+            name: safeProfiles.name || 'Unknown User',
+            username: safeProfiles.username || 'unknown',
+            avatar_url: safeProfiles.avatar_url
           };
         }
         
