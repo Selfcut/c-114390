@@ -27,7 +27,7 @@ export const AdminSpecialEffects = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <CustomTooltip content="Trigger confetti celebration">
+          <CustomTooltip content="Trigger confetti celebration" side="top">
             <Button 
               onClick={() => triggerConfetti()} 
               variant="outline" 
@@ -38,7 +38,7 @@ export const AdminSpecialEffects = () => {
             </Button>
           </CustomTooltip>
           
-          <CustomTooltip content="Make it rain confetti from the top">
+          <CustomTooltip content="Make it rain confetti from the top" side="top">
             <Button 
               onClick={() => makeItRain()} 
               variant="outline" 
@@ -49,7 +49,7 @@ export const AdminSpecialEffects = () => {
             </Button>
           </CustomTooltip>
           
-          <CustomTooltip content="Trigger a fire effect from the bottom">
+          <CustomTooltip content="Trigger a fire effect from the bottom" side="top">
             <Button 
               onClick={() => triggerFireEffect()} 
               variant="outline" 
@@ -60,7 +60,7 @@ export const AdminSpecialEffects = () => {
             </Button>
           </CustomTooltip>
           
-          <CustomTooltip content="Trigger a subtle admin flourish">
+          <CustomTooltip content="Trigger a subtle admin flourish" side="top">
             <Button 
               onClick={(e) => adminFlourish(e.currentTarget)} 
               variant="outline" 
@@ -71,7 +71,7 @@ export const AdminSpecialEffects = () => {
             </Button>
           </CustomTooltip>
           
-          <CustomTooltip content="Trigger a starfall effect">
+          <CustomTooltip content="Trigger a starfall effect" side="top">
             <Button 
               onClick={() => triggerStarfall()} 
               variant="outline" 
@@ -82,7 +82,7 @@ export const AdminSpecialEffects = () => {
             </Button>
           </CustomTooltip>
           
-          <CustomTooltip content="Matrix-like digital rain effect">
+          <CustomTooltip content="Matrix-like digital rain effect" side="top">
             <Button 
               onClick={() => digitalRain()} 
               variant="outline" 

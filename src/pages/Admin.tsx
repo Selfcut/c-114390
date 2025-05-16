@@ -4,7 +4,8 @@ import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateAdminAccount } from "@/components/admin/CreateAdminAccount";
-import { BarChart, Users, Settings, Shield, Database, FileText, Bell } from "lucide-react";
+import { AdminSpecialEffects } from "@/components/admin/AdminSpecialEffects";
+import { BarChart, Users, Settings, Shield, Database, FileText, Bell, Wand2 } from "lucide-react";
 
 const Admin = () => {
   // Tabs for admin dashboard
@@ -27,6 +28,9 @@ const Admin = () => {
           </Card>
           
           <CreateAdminAccount />
+          
+          {/* Add the AdminSpecialEffects component */}
+          <AdminSpecialEffects />
         </div>
       )
     },
@@ -63,6 +67,16 @@ const Admin = () => {
               <p>Content management interface will appear here.</p>
             </CardContent>
           </Card>
+        </div>
+      )
+    },
+    {
+      id: "special-effects",
+      label: "Special Effects",
+      icon: <Wand2 size={16} className="mr-1" />,
+      content: (
+        <div className="space-y-6">
+          <AdminSpecialEffects />
         </div>
       )
     },
