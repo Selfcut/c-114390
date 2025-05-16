@@ -2,7 +2,7 @@
 import { Session } from "@supabase/supabase-js";
 
 // User status type
-export type UserStatus = 'online' | 'away' | 'do-not-disturb' | 'offline' | 'invisible';
+export type UserStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
 
 // User roles
 export type UserRole = 'admin' | 'moderator' | 'user' | string;
@@ -20,6 +20,11 @@ export interface UserProfile {
   isAdmin: boolean;
   status: UserStatus;
   isGhostMode?: boolean;
+  notificationSettings?: {
+    desktopNotifications: boolean;
+    soundNotifications: boolean;
+    emailNotifications: boolean;
+  };
 }
 
 // Auth context type

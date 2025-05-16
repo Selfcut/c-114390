@@ -124,7 +124,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         return "bg-green-500";
       case "away":
         return "bg-yellow-500";
-      case "do-not-disturb":
+      case "dnd":
         return "bg-red-500";
       case "invisible":
       case "offline":

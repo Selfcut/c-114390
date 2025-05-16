@@ -6,7 +6,7 @@ import { UserProfileComponent } from "../components/profile/UserProfileComponent
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageLayout } from "../components/layouts/PageLayout";
-import { UserProfile as UserProfileType, UserRole } from "../types/user";
+import { UserProfile as UserProfileType } from "../types/user";
 import { useToast } from "@/hooks/use-toast";
 import { trackActivity } from "@/lib/activity-tracker";
 
@@ -55,7 +55,7 @@ const Profile = () => {
           website: data.website || "",
           status: data.status || "offline",
           isGhostMode: data.is_ghost_mode || false,
-          role: (data.role as UserRole) || "user",
+          role: data.role || "user",
           isAdmin: data.role === "admin"
         };
         

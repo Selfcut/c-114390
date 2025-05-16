@@ -27,9 +27,9 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       avatar: profile.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: profile.bio || "",
       website: profile.website || "",
-      role: (profile.role as UserRole) || "user",
+      role: profile.role || "user",
       isAdmin: profile.role === "admin",
-      status: profile.status || "online",
+      status: (profile.status as UserStatus) || "online",
       isGhostMode: profile.is_ghost_mode || false,
     };
 

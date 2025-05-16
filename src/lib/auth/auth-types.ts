@@ -1,7 +1,7 @@
 
 import { User } from "@supabase/supabase-js";
 
-export type UserStatus = "online" | "offline" | "away" | "busy";
+export type UserStatus = "online" | "offline" | "away" | "dnd" | "invisible";
 
 export interface UserProfile {
   id: string;

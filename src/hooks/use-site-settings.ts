@@ -18,10 +18,24 @@ export interface SiteSettings {
   maxUsernameLength: number;
   requireEmailVerification: boolean;
   maxUploadSizeMB: number;
-  wikiSettings: {
+  maxTitleLength: number;
+  maxContentLength: number;
+  maxFileSize: number;
+  defaultUserRole: string;
+  autoApproveContent: boolean;
+  wikiEditorOptions: {
     enablePublicEditing: boolean;
     requireApproval: boolean;
     maxArticleLength: number;
+    allowImages: boolean;
+    allowVideos: boolean;
+    allowLinks: boolean;
+    maxImageSize: number;
+  };
+  userLimitations: {
+    maxPostsPerDay: number;
+    maxUploadsPerDay: number;
+    maxCommentsPerDay: number;
   };
   forumSettings: {
     enableThreads: boolean;
@@ -50,10 +64,24 @@ const defaultSettings: SiteSettings = {
   maxUsernameLength: 20,
   requireEmailVerification: false,
   maxUploadSizeMB: 10,
-  wikiSettings: {
+  maxTitleLength: 100,
+  maxContentLength: 10000,
+  maxFileSize: 5,
+  defaultUserRole: 'user',
+  autoApproveContent: false,
+  wikiEditorOptions: {
     enablePublicEditing: false,
     requireApproval: true,
-    maxArticleLength: 20000
+    maxArticleLength: 20000,
+    allowImages: true,
+    allowVideos: true,
+    allowLinks: true,
+    maxImageSize: 5
+  },
+  userLimitations: {
+    maxPostsPerDay: 10,
+    maxUploadsPerDay: 20,
+    maxCommentsPerDay: 50
   },
   forumSettings: {
     enableThreads: true,
@@ -105,9 +133,13 @@ export const useSiteSettings = () => {
         const mergedSettings = {
           ...defaultSettings,
           ...loadedSettings,
-          wikiSettings: {
-            ...defaultSettings.wikiSettings,
-            ...(loadedSettings.wikiSettings || {})
+          wikiEditorOptions: {
+            ...defaultSettings.wikiEditorOptions,
+            ...(loadedSettings.wikiEditorOptions || {})
+          },
+          userLimitations: {
+            ...defaultSettings.userLimitations,
+            ...(loadedSettings.userLimitations || {})
           },
           forumSettings: {
             ...defaultSettings.forumSettings,

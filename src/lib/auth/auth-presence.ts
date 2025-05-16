@@ -32,27 +32,27 @@ export const usePresenceManagement = (user: UserProfile | null, setUser: React.D
     try {
       if (!user) throw new Error("User not authenticated");
       
-      const isDoNotDisturb = user.status === "do-not-disturb";
-      const newStatus: UserStatus = isDoNotDisturb ? "online" : "do-not-disturb";
+      const isDoNotDisturb = user.status === "dnd";
+      const newStatus: UserStatus = isDoNotDisturb ? "online" : "dnd";
       
       // Update local state
       setUser(prevUser => prevUser ? { ...prevUser, status: newStatus } : null);
       
       // Update notification settings
-      if (newStatus === "do-not-disturb") {
-        setUser(prevUser => prevUser ? {
+      if (newStatus === "dnd") {
+        setUser(prevUser => prevUser && prevUser.notificationSettings ? {
           ...prevUser,
           notificationSettings: {
             ...prevUser.notificationSettings,
             soundNotifications: false,
             desktopNotifications: false
           }
-        } : null);
+        } : prevUser);
       }
       
       toast({
-        title: `Do Not Disturb ${newStatus === "do-not-disturb" ? 'enabled' : 'disabled'}`,
-        description: newStatus === "do-not-disturb" ? 
+        title: `Do Not Disturb ${newStatus === "dnd" ? 'enabled' : 'disabled'}`,
+        description: newStatus === "dnd" ? 
           "All notifications are now muted" : 
           "Notifications have been restored",
       });
