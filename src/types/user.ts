@@ -24,6 +24,6 @@ export interface UserProfile {
   status: UserStatus;
   isGhostMode: boolean;
   role: UserRole;
-  isAdmin?: boolean; // Added this property
+  isAdmin?: boolean;
   notificationSettings?: NotificationSettings;
 }

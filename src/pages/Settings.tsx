@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
@@ -86,21 +87,28 @@ const Settings = () => {
           
         if (error) throw error;
         
-        setProfile(data);
+        // Ensure data has the properties we need, even if they're undefined in the database
+        const profileData = {
+          ...data,
+          bio: data.bio || "",
+          website: data.website || ""
+        };
+        
+        setProfile(profileData);
         
         // Set profile settings
         setProfileSettings({
-          name: data.name || "",
-          username: data.username || "",
+          name: profileData.name || "",
+          username: profileData.username || "",
           email: user.email || "",
-          bio: data.bio || "",
-          website: data.website || ""
+          bio: profileData.bio || "",
+          website: profileData.website || ""
         });
         
         // Set privacy settings
         setPrivacySettings(prev => ({
           ...prev,
-          ghostMode: data.is_ghost_mode || false
+          ghostMode: profileData.is_ghost_mode || false
         }));
         
       } catch (err) {

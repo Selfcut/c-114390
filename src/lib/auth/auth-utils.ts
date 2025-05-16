@@ -1,3 +1,4 @@
+
 import { User, Session } from "@supabase/supabase-js";
 import { UserProfile, UserStatus } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,8 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       isGhostMode: profile.is_ghost_mode || false,
       role: profile.role as 'admin' | 'moderator' | 'user',
       isAdmin: profile.role === 'admin',
+      bio: profile.bio || '',
+      website: profile.website || '',
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
@@ -52,8 +55,10 @@ export const fetchUserProfile = async (userId: string, session: Session | null):
       email: userEmail,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`,
       role: 'user',
-      status: 'online' as UserStatus, // Fixed: explicitly cast this as UserStatus
+      status: 'online' as UserStatus,
       isGhostMode: false,
+      bio: '',
+      website: '',
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
@@ -72,6 +77,8 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
         name: updates.name,
         username: updates.username,
         avatar_url: updates.avatar,
+        bio: updates.bio,
+        website: updates.website,
         status: updates.status,
         is_ghost_mode: updates.isGhostMode,
         updated_at: new Date().toISOString()

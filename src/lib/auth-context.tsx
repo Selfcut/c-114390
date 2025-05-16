@@ -93,7 +93,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           avatar: userSession?.user?.user_metadata.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
           role: "user",
           isAdmin: false,
-          status: "online"
+          status: "online",
+          bio: "",
+          website: ""
         };
         setUser(minimalUser);
       } else if (profile) {
