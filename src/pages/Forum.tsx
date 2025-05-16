@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { DiscussionTopicCard } from "../components/DiscussionTopicCard";
 import { DiscussionFilters } from "../components/DiscussionFilters";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { 
   DiscussionTopic, 
   mockDiscussions, 
