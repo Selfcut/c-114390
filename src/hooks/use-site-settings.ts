@@ -3,8 +3,102 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { set, get } from 'lodash';
+import { Json } from '@/integrations/supabase/types';
 
-const DEFAULT_SETTINGS = {
+// Export the SiteSettings interface so it can be imported by other files
+export interface SiteSettings {
+  site: {
+    name: string;
+    tagline: string;
+    description: string;
+    logo: string;
+    favicon: string;
+    language: string;
+  };
+  users: {
+    allowRegistration: boolean;
+    requireEmailVerification: boolean;
+    allowSocialLogin: boolean;
+    autoApproveUsers: boolean;
+    defaultUserRole: string;
+    allowAvatars: boolean;
+    allowBios: boolean;
+    allowWebsites: boolean;
+    allowStatusChanges: boolean;
+    maxBioLength: number;
+    trackUserActivity: boolean;
+    allowGhostMode: boolean;
+    inactiveUserDays: number;
+    accountDeletionPolicy: string;
+  };
+  forum: {
+    allowGuestViewing: boolean;
+    requireApproval: boolean;
+    allowImages: boolean;
+    allowFormatting: boolean;
+    maxPostLength: number;
+    minPostLength: number;
+    postsPerPage: number;
+    allowComments: boolean;
+    nestedComments: boolean;
+    commentModeration: boolean;
+    allowVoting: boolean;
+    maxCommentLength: number;
+    nestedCommentsLevel: number;
+  };
+  wiki: {
+    allowGuestViewing: boolean;
+    allowAllUsersToEdit: boolean;
+    requireApproval: boolean;
+    showEditHistory: boolean;
+    defaultArticleStatus: string;
+    editRoles: string;
+    enableMarkdown: boolean;
+    enableWikiLinks: boolean;
+    allowImages: boolean;
+    enableTableOfContents: boolean;
+    maxArticleLength: number;
+    allowedCategories: string[];
+    articlesPerPage: number;
+  };
+  chat: {
+    enabled: boolean;
+    allowDirectMessages: boolean;
+    allowGroupChats: boolean;
+    maxMessageLength: number;
+    enableMentions: boolean;
+    enableEmojis: boolean;
+    enableFileSharing: boolean;
+    maxFileSize: number;
+    allowedFileTypes: string[];
+  };
+  content: {
+    moderationEnabled: boolean;
+    allowedMediaTypes: string[];
+    maxUploadSize: number;
+    maxTitleLength: number;
+    enableTags: boolean;
+    maxTagsPerItem: number;
+    defaultSorting: string;
+  };
+  appearance: {
+    defaultTheme: string;
+    allowUserThemes: boolean;
+    accentColor: string;
+    buttonStyle: string;
+    fontFamily: string;
+    enableAnimations: boolean;
+  };
+  advanced: {
+    cacheTime: number;
+    debug: boolean;
+    analyticsEnabled: boolean;
+    enableApiAccess: boolean;
+    maintenanceMode: boolean;
+  };
+}
+
+const DEFAULT_SETTINGS: SiteSettings = {
   site: {
     name: 'Polymath',
     tagline: 'Knowledge Community Platform',
@@ -97,8 +191,8 @@ const DEFAULT_SETTINGS = {
 };
 
 export const useSiteSettings = () => {
-  const [settings, setSettings] = useState<any>(DEFAULT_SETTINGS);
-  const [originalSettings, setOriginalSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+  const [originalSettings, setOriginalSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +217,7 @@ export const useSiteSettings = () => {
             .insert([
               {
                 id: 'global',
-                settings: DEFAULT_SETTINGS
+                settings: DEFAULT_SETTINGS as Json
               }
             ]);
 
@@ -134,10 +228,11 @@ export const useSiteSettings = () => {
         } else {
           throw error;
         }
-      } else {
+      } else if (data?.settings) {
+        // Merge the loaded settings with defaults to ensure all properties exist
         const loadedSettings = {
           ...DEFAULT_SETTINGS,
-          ...data.settings
+          ...(data.settings as unknown as SiteSettings)
         };
         
         setSettings(loadedSettings);
@@ -168,8 +263,8 @@ export const useSiteSettings = () => {
       const { error } = await supabase
         .from('site_settings')
         .update({
-          settings: settings,
-          updated_at: new Date()
+          settings: settings as unknown as Json,
+          updated_at: new Date().toISOString()
         })
         .eq('id', 'global');
 
@@ -181,6 +276,8 @@ export const useSiteSettings = () => {
         title: "Settings saved",
         description: "Your changes have been applied successfully",
       });
+      
+      return true;
     } catch (err: any) {
       console.error('Error saving site settings:', err);
       setError(`Failed to save settings: ${err.message}`);
@@ -189,6 +286,7 @@ export const useSiteSettings = () => {
         description: err.message,
         variant: "destructive"
       });
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -208,15 +306,15 @@ export const useSiteSettings = () => {
     }
   };
 
-  const updateSetting = (path: string, value: any) => {
-    setSettings((prev: any) => ({
+  const updateSetting = (path: keyof SiteSettings, value: any) => {
+    setSettings((prev) => ({
       ...prev,
       [path]: value
     }));
   };
 
   const updateNestedSetting = (parentPath: string, key: string, value: any) => {
-    setSettings((prev: any) => {
+    setSettings((prev) => {
       const newSettings = { ...prev };
       const path = parentPath ? `${parentPath}.${key}` : key;
       set(newSettings, path, value);

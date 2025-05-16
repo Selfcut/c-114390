@@ -23,8 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate, Routes, Route } from 'react-router-dom';
-import ForumPostDetail from '../components/forum/ForumPostDetail';
+import { useNavigate } from 'react-router-dom';
 
 interface DiscussionTopic {
   id: string;
@@ -63,47 +62,104 @@ const Forum = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [allTags, setAllTags] = useState<string[]>([]);
   
-  // Fetch discussions from Supabase
+  // Fetch discussions (using simulated data until forum_posts table is created)
   useEffect(() => {
     const fetchDiscussions = async () => {
       try {
         setIsLoading(true);
         
-        const { data, error } = await supabase
-          .from('forum_posts')
-          .select(`
-            *,
-            profiles:user_id (username, name, avatar_url)
-          `)
-          .order('is_pinned', { ascending: false })
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
+        // Simulated forum data until the forum_posts table is created
+        const simulatedDiscussions: DiscussionTopic[] = [
+          {
+            id: "1",
+            title: "The Relationship Between Consciousness and Quantum Mechanics",
+            content: "Recent theories in quantum physics suggest consciousness might play a role in quantum wave function collapse. What are your thoughts on this intersection?",
+            author: "QuantumThinker",
+            authorId: "user-123",
+            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=QuantumThinker",
+            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            tags: ["quantum-physics", "consciousness", "philosophy"],
+            upvotes: 24,
+            views: 142,
+            comments: 8,
+            isPinned: true,
+            isPopular: true
+          },
+          {
+            id: "2",
+            title: "Exploring Eastern Philosophy in Modern Context",
+            content: "How can ancient Eastern philosophical concepts like non-attachment and mindfulness be meaningfully integrated into modern Western society?",
+            author: "PhilosophyExplorer",
+            authorId: "user-456",
+            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhilosophyExplorer",
+            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            tags: ["eastern-philosophy", "mindfulness", "modern-society"],
+            upvotes: 18,
+            views: 97,
+            comments: 12,
+            isPinned: false,
+            isPopular: true
+          },
+          {
+            id: "3",
+            title: "The Ethics of Artificial Intelligence Development",
+            content: "As AI systems become more advanced, what ethical frameworks should guide their development and implementation?",
+            author: "EthicalTech",
+            authorId: "user-789",
+            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=EthicalTech",
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            tags: ["ethics", "artificial-intelligence", "technology"],
+            upvotes: 32,
+            views: 203,
+            comments: 15,
+            isPinned: false,
+            isPopular: true
+          },
+          {
+            id: "4",
+            title: "Art as a Gateway to Spiritual Experience",
+            content: "Throughout history, art has been used as a means to transcend ordinary consciousness. Let's discuss how different art forms achieve this effect.",
+            author: "ArtisticSoul",
+            authorId: "user-101",
+            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ArtisticSoul",
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            tags: ["art", "spirituality", "consciousness"],
+            upvotes: 21,
+            views: 89,
+            comments: 7,
+            isPinned: false,
+            isPopular: false
+          },
+          {
+            id: "5",
+            title: "Understanding the Nature of Time",
+            content: "Is time a fundamental aspect of reality or merely a construct of human perception? Let's examine philosophical and scientific perspectives.",
+            author: "TimeExplorer",
+            authorId: "user-202",
+            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TimeExplorer",
+            createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000),
+            tags: ["time", "philosophy", "physics"],
+            upvotes: 14,
+            views: 76,
+            comments: 9,
+            isPinned: false,
+            isPopular: false
+          }
+        ];
         
-        // Extract unique tags
+        // Extract unique tags from simulated discussions
         const tags = Array.from(
-          new Set(data.flatMap(post => post.tags || []))
+          new Set(simulatedDiscussions.flatMap(post => post.tags || []))
         );
         setAllTags(tags);
         
-        // Transform data to match the DiscussionTopic interface
-        const formattedDiscussions: DiscussionTopic[] = data.map(post => ({
-          id: post.id,
-          title: post.title,
-          content: post.content,
-          author: post.profiles?.name || post.profiles?.username || 'Anonymous',
-          authorId: post.user_id,
-          authorAvatar: post.profiles?.avatar_url,
-          createdAt: new Date(post.created_at),
-          tags: post.tags || [],
-          upvotes: post.upvotes || 0,
-          views: post.views || 0,
-          comments: post.comments || 0,
-          isPinned: post.is_pinned || false,
-          isPopular: (post.views || 0) > 50 || (post.upvotes || 0) > 10
-        }));
+        setDiscussions(simulatedDiscussions);
         
-        setDiscussions(formattedDiscussions);
+        toast({
+          description: "Using simulated forum data for development",
+          variant: "default"
+        });
+        
       } catch (err) {
         console.error('Error fetching discussions:', err);
         toast({
@@ -198,22 +254,9 @@ const Forum = () => {
         ? newDiscussion.tags.split(',').map(tag => tag.trim()).filter(Boolean) 
         : [];
 
-      const { data, error } = await supabase
-        .from('forum_posts')
-        .insert({
-          title: newDiscussion.title,
-          content: newDiscussion.content,
-          user_id: user?.id,
-          tags: tagsArray.length > 0 ? tagsArray : null
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Add to local state
+      // Simulate adding a new post (until forum_posts table is created)
       const newPost: DiscussionTopic = {
-        id: data.id,
+        id: `new-${Date.now()}`,
         title: newDiscussion.title,
         content: newDiscussion.content,
         author: user?.name || user?.username || 'Anonymous',
@@ -222,12 +265,13 @@ const Forum = () => {
         createdAt: new Date(),
         tags: tagsArray,
         upvotes: 0,
-        views: 0,
+        views: 1,
         comments: 0,
         isPinned: false,
         isPopular: false
       };
 
+      // Add to local state (simulating database storage)
       setDiscussions(prevDiscussions => [newPost, ...prevDiscussions]);
       setIsCreateDialogOpen(false);
       setNewDiscussion({ title: '', content: '', tags: '' });
@@ -238,7 +282,7 @@ const Forum = () => {
       });
       
       // Navigate to the new post
-      navigate(`/forum/${data.id}`);
+      navigate(`/forum/${newPost.id}`);
     } catch (err) {
       console.error('Error creating discussion:', err);
       toast({

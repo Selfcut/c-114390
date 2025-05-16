@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   ArrowLeft,
   MessageSquare,
@@ -34,6 +33,125 @@ interface DiscussionComment {
   upvotes: number;
 }
 
+// Simulated post data for development
+const simulatedPosts = [
+  {
+    id: "1",
+    title: "The Relationship Between Consciousness and Quantum Mechanics",
+    content: "Recent theories in quantum physics suggest consciousness might play a role in quantum wave function collapse. This intersection of physics and philosophy opens up fascinating questions about the nature of reality and our role as observers.\n\nSome researchers propose that consciousness might be an emergent property of quantum processes in the brain, while others argue that quantum mechanics itself might be incomplete without accounting for consciousness.\n\nWhat are your thoughts on these theories? Have you encountered any compelling evidence or arguments in either direction?",
+    authorName: "QuantumThinker",
+    authorId: "user-123",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=QuantumThinker",
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    tags: ["quantum-physics", "consciousness", "philosophy"],
+    upvotes: 24,
+    views: 142,
+    comments: 8,
+    is_pinned: true
+  },
+  {
+    id: "2",
+    title: "Exploring Eastern Philosophy in Modern Context",
+    content: "How can ancient Eastern philosophical concepts like non-attachment and mindfulness be meaningfully integrated into modern Western society? These concepts seem increasingly relevant to addressing contemporary problems like burnout, anxiety, and overconsumption.\n\nI've been studying both Buddhist and Taoist texts and finding remarkable similarities with modern psychological approaches to wellbeing. Yet there seems to be resistance to fully embracing these ideas in mainstream Western culture.\n\nDoes anyone have experience practicing Eastern philosophical principles in a Western context? What challenges or benefits have you found?",
+    authorName: "PhilosophyExplorer",
+    authorId: "user-456",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhilosophyExplorer",
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    tags: ["eastern-philosophy", "mindfulness", "modern-society"],
+    upvotes: 18,
+    views: 97,
+    comments: 12,
+    is_pinned: false
+  },
+  {
+    id: "3",
+    title: "The Ethics of Artificial Intelligence Development",
+    content: "As AI systems become more advanced, what ethical frameworks should guide their development and implementation? This question becomes increasingly urgent as AI is deployed in critical domains like healthcare, criminal justice, and autonomous vehicles.\n\nTraditional ethical frameworks like utilitarianism, deontology, and virtue ethics each provide different perspectives, but none seem fully adequate for the unique challenges AI presents.\n\nShould we be creating new ethical frameworks specifically for AI? How do we balance innovation with caution? And who should ultimately decide these standards?",
+    authorName: "EthicalTech",
+    authorId: "user-789",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=EthicalTech",
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    tags: ["ethics", "artificial-intelligence", "technology"],
+    upvotes: 32,
+    views: 203,
+    comments: 15,
+    is_pinned: false
+  }
+];
+
+// Simulated comments for development
+const simulatedComments = {
+  "1": [
+    {
+      id: "comment-1-1",
+      authorId: "user-444",
+      authorName: "PhysicsProfessor",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhysicsProfessor",
+      content: "This topic fascinates me. The observer effect in quantum mechanics doesn't necessarily imply consciousness is involved - it's more about measurement and interaction. But the questions this raises are profound and worthwhile.",
+      createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000),
+      upvotes: 7
+    },
+    {
+      id: "comment-1-2",
+      authorId: "user-555",
+      authorName: "MindExplorer",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=MindExplorer",
+      content: "I recommend looking into the work of Roger Penrose and Stuart Hameroff on quantum consciousness. Their Orchestrated Objective Reduction theory suggests quantum processes in microtubules within neurons could be the seat of consciousness.",
+      createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000),
+      upvotes: 5
+    },
+    {
+      id: "comment-1-3",
+      authorId: "user-666",
+      authorName: "SkepticalThinker",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SkepticalThinker",
+      content: "While these ideas are interesting to think about, I remain skeptical that quantum effects play any significant role in consciousness. The brain is simply too warm and wet for quantum coherence to be maintained long enough to matter for neural processing.",
+      createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000),
+      upvotes: 3
+    }
+  ],
+  "2": [
+    {
+      id: "comment-2-1",
+      authorId: "user-777",
+      authorName: "ZenPractitioner",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ZenPractitioner",
+      content: "I've been practicing meditation and mindfulness for over a decade, and I've found that the key is to adapt these practices to your own cultural context rather than trying to adopt the entire Eastern philosophical framework.",
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      upvotes: 9
+    },
+    {
+      id: "comment-2-2",
+      authorId: "user-888",
+      authorName: "ComparativePhilosopher",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ComparativePhilosopher",
+      content: "There are actually many parallels between Eastern concepts and Western philosophical traditions that often go unnoticed. Stoicism, for instance, shares much in common with Buddhism regarding detachment and equanimity.",
+      createdAt: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+      upvotes: 6
+    }
+  ],
+  "3": [
+    {
+      id: "comment-3-1",
+      authorId: "user-999",
+      authorName: "AIResearcher",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AIResearcher",
+      content: "The current approach of training AI on human-generated data often leads to systems reflecting and potentially amplifying societal biases. We need more diverse input in both AI development and ethical oversight.",
+      createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      upvotes: 12
+    },
+    {
+      id: "comment-3-2",
+      authorId: "user-111",
+      authorName: "EthicsScholar",
+      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=EthicsScholar",
+      content: "I think we need a hybrid approach that combines existing ethical frameworks with new principles specific to AI. Transparency, fairness, non-maleficence, responsibility, and privacy should be foundational.",
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      upvotes: 8
+    }
+  ]
+};
+
 export const ForumPostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
@@ -54,52 +172,39 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Since forum_posts table doesn't exist in the database yet, we'll simulate post data
-        // In a real application, this would fetch from the actual table
-        // This is a temporary solution until the DB schema is updated
-        
-        // Simulate a post object
-        const simulatedPost = {
-          id: postId,
-          title: "Discussion Topic",
-          content: "This is a placeholder for forum post content. The forum_posts table needs to be created in the database.",
-          authorName: "User",
-          authorId: "user-id",
-          authorAvatar: "",
-          created_at: new Date().toISOString(),
-          tags: ["philosophy", "discussion"],
-          upvotes: 5,
-          views: 10,
-          comments: 2
-        };
-        
-        // Simulate comments
-        const simulatedComments = [
-          {
-            id: "comment-1",
-            authorId: "user-id-1",
-            authorName: "Commenter 1",
-            content: "This is a placeholder comment. The forum_comments table needs to be created in the database.",
-            createdAt: new Date(Date.now() - 3600000),
-            upvotes: 2
-          },
-          {
-            id: "comment-2",
-            authorId: "user-id-2",
-            authorName: "Commenter 2",
-            content: "Another placeholder comment.",
-            createdAt: new Date(Date.now() - 7200000),
-            upvotes: 1
+        // Use simulated data until forum_posts table is created
+        setTimeout(() => {
+          // Find the post in our simulated data
+          const foundPost = simulatedPosts.find(p => p.id === postId);
+          
+          if (foundPost) {
+            setPost(foundPost);
+            
+            // Get simulated comments for this post
+            const postComments = simulatedComments[postId as keyof typeof simulatedComments] || [];
+            setComments(postComments);
+          } else if (postId.startsWith('new-')) {
+            // Handle dynamically created posts from Forum.tsx
+            setPost({
+              id: postId,
+              title: "New Discussion Topic",
+              content: "This is a newly created discussion topic. In a production environment, this would be stored in the database.",
+              authorName: user?.name || user?.username || "Anonymous",
+              authorId: user?.id || "user-id",
+              authorAvatar: user?.avatar || "",
+              created_at: new Date().toISOString(),
+              tags: ["discussion"],
+              upvotes: 0,
+              views: 1,
+              comments: 0,
+              is_pinned: false
+            });
+            setComments([]);
           }
-        ];
+          
+          setIsLoading(false);
+        }, 500); // Simulate network delay
         
-        setPost(simulatedPost);
-        setComments(simulatedComments);
-        
-        toast({
-          description: "Note: Using placeholder data until forum database tables are created",
-          variant: "default"
-        });
       } catch (error) {
         console.error('Error fetching post:', error);
         toast({
@@ -107,13 +212,12 @@ export const ForumPostDetail = () => {
           description: "Failed to load discussion post",
           variant: "destructive"
         });
-      } finally {
         setIsLoading(false);
       }
     };
     
     fetchPost();
-  }, [postId, toast]);
+  }, [postId, toast, user]);
   
   const handleBack = () => {
     navigate('/forum');
@@ -140,19 +244,18 @@ export const ForumPostDetail = () => {
     setIsSubmittingComment(true);
     
     try {
-      // In a real application, this would insert into the forum_comments table
-      // For now, we'll simulate adding a comment
-      
+      // Simulate adding a comment (until forum_comments table is created)
       const newCommentObj: DiscussionComment = {
         id: `comment-${Date.now()}`,
         authorId: user.id,
-        authorName: user.name || user.username,
+        authorName: user.name || user.username || 'Anonymous',
         authorAvatar: user.avatar,
         content: newComment.trim(),
         createdAt: new Date(),
         upvotes: 0
       };
       
+      // Add to local state
       setComments(prev => [...prev, newCommentObj]);
       setNewComment('');
       
@@ -291,7 +394,7 @@ export const ForumPostDetail = () => {
         </CardHeader>
         <CardContent>
           <div className="prose dark:prose-invert max-w-none">
-            <p>{post.content}</p>
+            <p className="whitespace-pre-line">{post.content}</p>
           </div>
           
           {/* Tags */}
