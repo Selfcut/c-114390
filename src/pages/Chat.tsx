@@ -1,76 +1,54 @@
 
-import React, { useState, useEffect } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
+import { useState, useEffect } from "react";
 import { ChatInterface } from "../components/chat/ChatInterface";
-import { ConversationList, Conversation } from "../components/chat/ConversationList";
-import { EmptyConversationState } from "../components/chat/EmptyConversationState";
-import { useSearchParams } from "react-router-dom";
-import { UserStatus } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 const Chat = () => {
-  const [searchParams] = useSearchParams();
-  const directParam = searchParams.get('direct');
-  
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [conversationType, setConversationType] = useState<'direct' | 'group' | 'global'>('direct');
-  
-  // Check if we need to preselect a conversation based on URL params
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [conversations, setConversations] = useState([]);
+
+  // Fetch conversations from Supabase
   useEffect(() => {
-    if (directParam) {
-      // Here you would fetch the conversation details based on the username
-      // For now we'll just use a placeholder
-      setSelectedConversation({
-        id: `direct-${directParam}`,
-        name: directParam,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${directParam}`,
-        status: "online" as UserStatus
-      });
-      setConversationType('direct');
-    }
-  }, [directParam]);
-  
-  // Handle conversation selection
-  const handleConversationSelect = (conversation: Conversation, type: 'direct' | 'group' | 'global') => {
-    setSelectedConversation(conversation);
-    setConversationType(type);
-  };
-  
-  return (
-    <PageLayout>
-      <div className="h-full flex">
-        {/* Chat sidebar with conversation list */}
-        <ConversationList
-          onSelectConversation={handleConversationSelect}
-          selectedConversationId={selectedConversation?.id}
-          conversationType={conversationType}
-        />
+    const fetchConversations = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .order('updated_at', { ascending: false });
         
-        {/* Chat main area */}
-        <div className="flex-1 flex flex-col">
-          {selectedConversation ? (
-            <ChatInterface 
-              chatType={conversationType}
-              recipientId={conversationType === 'direct' ? selectedConversation.id : undefined}
-              recipientName={conversationType === 'direct' ? selectedConversation.name : undefined}
-              recipientAvatar={conversationType === 'direct' ? selectedConversation.avatar : undefined}
-              recipientStatus={conversationType === 'direct' ? selectedConversation.status as UserStatus : undefined}
-              groupId={conversationType === 'group' ? selectedConversation.id : undefined}
-              groupName={conversationType === 'group' ? selectedConversation.name : undefined}
-              groupAvatar={conversationType === 'group' ? selectedConversation.avatar : undefined}
-              groupMembers={conversationType === 'group' && selectedConversation.members ? 
-                selectedConversation.members.map(member => ({
-                  ...member,
-                  // Add a default status since the member object doesn't have one
-                  status: 'offline' as UserStatus
-                })) :
-                undefined}
-            />
-          ) : (
-            <EmptyConversationState />
-          )}
+        if (error) throw error;
+        setConversations(data || []);
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchConversations();
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 size={40} className="animate-spin text-primary" />
+          <p className="text-lg">Loading conversations...</p>
         </div>
       </div>
-    </PageLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-[calc(100vh-4rem)]">
+      <ChatInterface initialConversations={conversations} />
+    </div>
   );
 };
 

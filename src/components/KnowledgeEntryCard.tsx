@@ -1,14 +1,16 @@
 
-import { Book, BookOpen, Calendar, Tag } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatTimeAgo } from "../lib/discussions-utils";
+import { Book, Calendar, User } from "lucide-react";
 
 interface KnowledgeEntryCardProps {
   title: string;
   author: string;
-  readTime: string;
+  readTime?: string;
   createdAt: Date;
   summary: string;
-  categories: string[];
+  categories?: string[];
   coverImage?: string;
   onClick?: () => void;
 }
@@ -19,53 +21,67 @@ export const KnowledgeEntryCard = ({
   readTime,
   createdAt,
   summary,
-  categories,
+  categories = [],
   coverImage,
   onClick
 }: KnowledgeEntryCardProps) => {
   return (
-    <div 
-      className="bg-[#1A1A1A] rounded-lg overflow-hidden flex flex-col md:flex-row hover:bg-[#222222] transition-colors cursor-pointer"
+    <Card 
+      className="h-full flex flex-col hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden hover:border-primary/50"
       onClick={onClick}
     >
       {coverImage && (
-        <div className="w-full md:w-48 h-40 md:h-auto">
-          <img src={coverImage} alt={title} className="w-full h-full object-cover" />
+        <div className="w-full h-40 overflow-hidden">
+          <img 
+            src={coverImage} 
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
+          />
         </div>
       )}
       
-      <div className="p-4 flex-1">
-        <h3 className="font-semibold text-white text-lg">{title}</h3>
-        <p className="text-gray-400 text-sm mt-2 line-clamp-2">{summary}</p>
-        
-        <div className="flex flex-wrap gap-2 mt-3">
-          {categories.map((category, index) => (
-            <span 
-              key={index} 
-              className="bg-gray-800 text-gray-300 text-xs px-2 py-0.5 rounded flex items-center gap-1"
-            >
-              <Tag size={10} />
-              {category}
-            </span>
-          ))}
-        </div>
-        
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-400">
-              {author}
-            </span>
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <BookOpen size={12} /> 
-              {readTime}
-            </span>
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Calendar size={12} /> 
-              {formatTimeAgo(createdAt)}
-            </span>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-lg line-clamp-2">{title}</h3>
           </div>
         </div>
-      </div>
-    </div>
+      </CardHeader>
+      
+      <CardContent className="pb-2 flex-grow">
+        <p className="text-muted-foreground text-sm line-clamp-3 mb-4">
+          {summary}
+        </p>
+        
+        <div className="flex flex-wrap gap-2 mt-2">
+          {categories.map((category, i) => (
+            <Badge key={i} variant="outline" className="text-xs">
+              {category}
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
+      
+      <CardFooter className="pt-2 text-xs text-muted-foreground border-t">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <User size={12} />
+            <span>{author}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {readTime && (
+              <div className="flex items-center gap-1">
+                <Book size={12} />
+                <span>{readTime}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1">
+              <Calendar size={12} />
+              <span>{formatTimeAgo(createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };

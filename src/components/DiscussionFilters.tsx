@@ -90,7 +90,7 @@ export const DiscussionFilters = ({
                 <span>{sortOption.charAt(0).toUpperCase() + sortOption.slice(1)}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-popover border border-border">
               <DropdownMenuItem 
                 className="flex items-center gap-2"
                 onClick={() => handleSortChange('popular')}
@@ -126,7 +126,7 @@ export const DiscussionFilters = ({
                 {activeTag && <Badge className="ml-2 text-xs">{activeTag}</Badge>}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-popover border border-border">
               {availableTags.map((tag, index) => (
                 <DropdownMenuItem 
                   key={index}

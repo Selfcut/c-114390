@@ -1,218 +1,162 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, Book, Award, Star, Heart, Eye, Bookmark, Edit, ArrowRight } from "lucide-react";
-import { Button } from "../ui/button";
-import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { formatTimeAgo } from "@/lib/discussions-utils";
+import { MessageSquare, ThumbsUp, FileText, Clock, Book, Bookmark, Lightbulb, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "../ui/badge";
 
-interface Activity {
+interface ActivityItem {
   id: string;
-  user_id: string;
-  event_type: string;
-  metadata: any;
-  created_at: string;
-  user?: {
-    name?: string;
-    username?: string;
-    avatar_url?: string;
+  type: "discussion" | "comment" | "like" | "quote" | "wiki" | "document" | "achievement";
+  content: string;
+  user: {
+    name: string;
+    avatar?: string;
   };
+  timestamp: Date;
+  link?: string;
 }
 
-interface ActivityFeedProps {
-  limit?: number;
-}
-
-export const ActivityFeed = ({ limit = 10 }: ActivityFeedProps) => {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-
+export const ActivityFeed = () => {
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch activities from API
   useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoading(true);
-        // First get the activities
-        const { data: activitiesData, error } = await supabase
-          .from('user_activities')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(limit);
-
-        if (error) {
-          console.error('Error fetching activities:', error);
-          return;
+    // Simulate API call with delay
+    const timeout = setTimeout(() => {
+      // Mock data for now - would be replaced with an API call to fetch real activities
+      setActivities([
+        {
+          id: "1",
+          type: "discussion",
+          content: "started a discussion: 'Exploring the relationship between quantum physics and consciousness'",
+          user: {
+            name: "Alex Morgan",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
+          },
+          timestamp: new Date(Date.now() - 25 * 60 * 1000) // 25 minutes ago
+        },
+        {
+          id: "2",
+          type: "comment",
+          content: "commented on 'Mathematical models for complex adaptive systems'",
+          user: {
+            name: "Taylor Reed",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Taylor"
+          },
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+        },
+        {
+          id: "3",
+          type: "like",
+          content: "liked your comment on 'The role of metaphor in scientific discovery'",
+          user: {
+            name: "Jordan Chen",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan"
+          },
+          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000) // 4 hours ago
+        },
+        {
+          id: "4",
+          type: "wiki",
+          content: "created a wiki article: 'An Introduction to Systems Thinking'",
+          user: {
+            name: "Sam Wilson",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam"
+          },
+          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000) // 12 hours ago
+        },
+        {
+          id: "5",
+          type: "quote",
+          content: "shared a new quote from Richard Feynman",
+          user: {
+            name: "Morgan Smith",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Morgan"
+          },
+          timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000) // 18 hours ago
         }
-
-        if (!activitiesData || activitiesData.length === 0) {
-          setActivities([]);
-          setLoading(false);
-          return;
-        }
-
-        // Then fetch user data for each activity separately
-        const activitiesWithUsers = await Promise.all(
-          activitiesData.map(async (activity) => {
-            if (!activity.user_id) return activity;
-            
-            // Get user data for each activity
-            const { data: userData } = await supabase
-              .from('profiles')
-              .select('name, username, avatar_url')
-              .eq('id', activity.user_id)
-              .single();
-              
-            return {
-              ...activity,
-              user: userData || { name: 'Unknown User', username: 'unknown' }
-            };
-          })
-        );
-        
-        setActivities(activitiesWithUsers);
-      } catch (error) {
-        console.error('Error in activity feed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Set up real-time subscription for new activities
-    const channel = supabase
-      .channel('public:user_activities')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'user_activities'
-      }, async (payload) => {
-        // Fetch the user details for the new activity
-        const { data: userData } = await supabase
-          .from('profiles')
-          .select('name, username, avatar_url')
-          .eq('id', payload.new.user_id)
-          .single();
-          
-        // Add the new activity to the state
-        const newActivity = {
-          ...payload.new,
-          user: userData || {}
-        } as Activity;
-        
-        setActivities(prev => [newActivity, ...prev].slice(0, limit));
-      })
-      .subscribe();
-
-    fetchActivities();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [limit]);
-
-  // Get the right icon for the activity type
+      ]);
+      setIsLoading(false);
+    }, 1500);
+    
+    return () => clearTimeout(timeout);
+  }, []);
+  
+  // Get icon based on activity type
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'comment':
-        return <MessageSquare size={16} className="mr-2" />;
-      case 'read':
-        return <Book size={16} className="mr-2" />;
-      case 'achievement':
-        return <Award size={16} className="mr-2" />;
-      case 'bookmark':
-        return <Bookmark size={16} className="mr-2" />;
-      case 'like':
-      case 'quote_liked':
-        return <Heart size={16} className="mr-2 text-red-500" />;
-      case 'view':
-        return <Eye size={16} className="mr-2" />;
-      case 'edit':
-        return <Edit size={16} className="mr-2" />;
+      case "discussion":
+        return <MessageSquare size={16} className="text-blue-500" />;
+      case "comment":
+        return <MessageSquare size={16} className="text-green-500" />;
+      case "like":
+        return <ThumbsUp size={16} className="text-pink-500" />;
+      case "quote":
+        return <Bookmark size={16} className="text-purple-500" />;
+      case "wiki":
+        return <FileText size={16} className="text-amber-500" />;
+      case "document":
+        return <Book size={16} className="text-teal-500" />;
+      case "achievement":
+        return <Award size={16} className="text-rose-500" />;
       default:
-        return <Star size={16} className="mr-2" />;
-    }
-  };
-
-  // Format the activity message based on type and metadata
-  const getActivityMessage = (activity: Activity) => {
-    const { event_type, metadata } = activity;
-    const username = activity.user?.name || activity.user?.username || "A user";
-    
-    switch (event_type) {
-      case 'comment':
-        return <><span className="font-medium">{username}</span> commented on <span className="text-primary">{metadata?.title || "a post"}</span></>;
-      case 'like':
-        return <><span className="font-medium">{username}</span> liked <span className="text-primary">{metadata?.title || "a post"}</span></>;
-      case 'bookmark':
-        return <><span className="font-medium">{username}</span> bookmarked <span className="text-primary">{metadata?.title || "a resource"}</span></>;
-      case 'achievement':
-        return <><span className="font-medium">{username}</span> earned the <Badge variant="outline" className="ml-1 mr-1">{metadata?.name || "achievement"}</Badge> badge</>;
-      case 'read':
-        return <><span className="font-medium">{username}</span> read <span className="text-primary">{metadata?.title || "an article"}</span></>;
-      case 'quote_created':
-        return <><span className="font-medium">{username}</span> shared a new quote: <span className="italic">"{metadata?.text?.substring(0, 50)}..."</span></>;
-      case 'quote_liked':
-        return <><span className="font-medium">{username}</span> liked a quote by <span className="text-primary">{metadata?.author || "an author"}</span></>;
-      default:
-        return <><span className="font-medium">{username}</span> performed an action</>;
+        return <Clock size={16} className="text-gray-500" />;
     }
   };
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((_, i) => (
-              <div key={i} className="flex items-start gap-4 pb-4 border-b last:border-0">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-3 w-1/4" />
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center justify-between">
+          <span>Community Activity</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 max-h-[400px] overflow-y-auto">
+        {isLoading ? (
+          // Loading skeleton
+          [...Array(5)].map((_, i) => (
+            <div key={i} className="flex gap-3 mb-4">
+              <Skeleton className="h-9 w-9 rounded-full flex-shrink-0" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))
+        ) : activities.length > 0 ? (
+          activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-3 pb-3">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={activity.user.avatar} />
+                <AvatarFallback>{activity.user.name[0].toUpperCase()}</AvatarFallback>
+              </Avatar>
+              
+              <div className="space-y-1 flex-1 min-w-0">
+                <p className="text-sm">
+                  <span className="font-medium">{activity.user.name}</span>
+                  {" "}
+                  <span className="text-muted-foreground">{activity.content}</span>
+                </p>
+                <div className="flex items-center text-xs text-muted-foreground gap-2">
+                  <div className="flex items-center gap-1">
+                    {getActivityIcon(activity.type)}
+                    <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-normal">
+                      {activity.type}
+                    </Badge>
+                  </div>
+                  <span>{formatTimeAgo(activity.timestamp)}</span>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : activities.length > 0 ? (
-          <>
-            <div className="space-y-4">
-              {activities.map((activity) => (
-                <div key={activity.id} className="flex items-start pb-4 border-b last:border-b-0">
-                  <Avatar className="h-10 w-10 mr-4">
-                    <AvatarImage 
-                      src={activity.user?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${activity.user?.username || activity.user_id}`} 
-                    />
-                    <AvatarFallback>
-                      {(activity.user?.name || activity.user?.username || "U")[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div>
-                    <div className="flex items-center text-sm">
-                      {getActivityIcon(activity.event_type)}
-                      <p>{getActivityMessage(activity)}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                </div>
-              ))}
             </div>
-            
-            <div className="mt-4 text-center">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" 
-                onClick={() => window.location.href = "/activity"}>
-                View all activity
-                <ArrowRight size={14} className="ml-2" />
-              </Button>
-            </div>
-          </>
+          ))
         ) : (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">No recent activity</p>
+          <div className="flex flex-col items-center justify-center text-center py-8">
+            <Lightbulb size={40} className="text-muted-foreground mb-2 opacity-20" />
+            <p className="text-muted-foreground">No recent activity to display</p>
           </div>
         )}
       </CardContent>

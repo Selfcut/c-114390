@@ -1,112 +1,205 @@
 
 import { useState } from "react";
-import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PageLayout } from "@/components/layouts/PageLayout";
-import { 
-  Users, 
-  BarChart3, 
-  Settings, 
-  AlertCircle, 
-  MessageSquare, 
-  BookOpen, 
-  Shield, 
-  Database, 
-  Layout, 
-  Flag,
-  ChevronRight
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LayoutDashboard, Users, Settings, FileText, Shield, Database, BookOpen, Lock } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 import { AdminContentManagement } from "@/components/admin/AdminContentManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { AdminSettings } from "@/components/admin/AdminSettings";
+import { AdminSpecialEffects } from "@/components/admin/AdminSpecialEffects";
+import { CreateAdminAccount } from "@/components/admin/CreateAdminAccount";
+import { useAuth } from "@/lib/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AdminPanel = () => {
-  const navigate = useNavigate();
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [isLoadingContent, setIsLoadingContent] = useState(true);
   const location = useLocation();
-  const [currentPath, setCurrentPath] = useState(location.pathname);
+  const { user } = useAuth();
   
-  // Handle navigation
-  const handleNavigate = (path: string) => {
-    navigate(path);
-    setCurrentPath(path);
+  // Check if user has admin role
+  const isAdmin = user?.role === "admin";
+  
+  // Get the current route to determine which tab is active
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.includes("/users")) return "users";
+    if (path.includes("/content")) return "content";
+    if (path.includes("/reports")) return "reports";
+    if (path.includes("/settings")) return "settings";
+    if (path.includes("/special-effects")) return "special-effects";
+    if (path.includes("/create-admin")) return "create-admin";
+    return "dashboard";
   };
   
-  // Check if a nav item is active
-  const isActive = (path: string) => {
-    return currentPath.includes(path);
+  // Simulate data loading
+  const simulateLoading = (setter) => {
+    setTimeout(() => {
+      setter(false);
+    }, 1500);
   };
-  
-  const adminNavItems = [
-    { path: "/admin", icon: <BarChart3 size={18} />, label: "Dashboard" },
-    { path: "/admin/users", icon: <Users size={18} />, label: "User Management" },
-    { path: "/admin/content", icon: <BookOpen size={18} />, label: "Content Management" },
-    { path: "/admin/reports", icon: <Flag size={18} />, label: "Reports & Moderation" },
-    { path: "/admin/settings", icon: <Settings size={18} />, label: "Admin Settings" },
-  ];
   
   return (
-    <PageLayout showSidebar={false}>
-      <div className="flex h-full">
-        {/* Admin Sidebar */}
-        <aside className="w-64 bg-background border-r border-border h-full flex-shrink-0">
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center space-x-2">
-              <Shield size={20} className="text-primary" />
-              <h2 className="text-lg font-bold">Admin Panel</h2>
-            </div>
-          </div>
-          
-          <nav className="p-2">
-            <ul className="space-y-1">
-              {adminNavItems.map((item) => (
-                <li key={item.path}>
-                  <Button
-                    variant={isActive(item.path) ? "default" : "ghost"}
-                    className={`w-full justify-start ${
-                      isActive(item.path) ? "" : "hover:bg-accent hover:text-accent-foreground"
-                    }`}
-                    onClick={() => handleNavigate(item.path)}
-                  >
-                    {item.icon}
-                    <span className="ml-2">{item.label}</span>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-            
-            <div className="pt-4 mt-4 border-t border-border">
-              <ul className="space-y-1">
-                <li>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
-                    asChild
-                  >
-                    <Link to="/dashboard">
-                      <ChevronRight size={18} />
-                      <span className="ml-2">Back to App</span>
-                    </Link>
-                  </Button>
-                </li>
-              </ul>
-            </div>
-          </nav>
-        </aside>
-        
-        {/* Content Area */}
-        <div className="flex-1 h-full overflow-auto">
-          <Routes>
-            <Route path="/" element={<AdminDashboard />} />
-            <Route path="/users" element={<AdminUserManagement />} />
-            <Route path="/content" element={<AdminContentManagement />} />
-            <Route path="/reports" element={<AdminReports />} />
-            <Route path="/settings" element={<AdminSettings />} />
-          </Routes>
-        </div>
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Shield className="text-primary" size={32} />
+          Admin Panel
+        </h1>
       </div>
-    </PageLayout>
+
+      <Tabs defaultValue={getActiveTab()} className="mb-8">
+        <TabsList className="flex flex-wrap justify-start mb-6 border-b w-full bg-transparent p-0 h-auto">
+          <Link to="/admin" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="dashboard" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "dashboard" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </TabsTrigger>
+          </Link>
+          <Link to="/admin/users" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="users" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "users" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <Users size={18} />
+              <span>Users</span>
+            </TabsTrigger>
+          </Link>
+          <Link to="/admin/content" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="content" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "content" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <BookOpen size={18} />
+              <span>Content</span>
+            </TabsTrigger>
+          </Link>
+          <Link to="/admin/reports" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="reports" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "reports" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <FileText size={18} />
+              <span>Reports</span>
+            </TabsTrigger>
+          </Link>
+          <Link to="/admin/settings" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="settings" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "settings" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <Settings size={18} />
+              <span>Settings</span>
+            </TabsTrigger>
+          </Link>
+          <Link to="/admin/special-effects" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="special-effects" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "special-effects" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <Database size={18} />
+              <span>Special Effects</span>
+            </TabsTrigger>
+          </Link>
+          <Link to="/admin/create-admin" className="flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="create-admin" 
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 ${getActiveTab() === "create-admin" ? "border-primary" : "border-transparent"} rounded-none data-[state=active]:bg-muted/50 transition-all duration-200`}
+            >
+              <Lock size={18} />
+              <span>Create Admin</span>
+            </TabsTrigger>
+          </Link>
+        </TabsList>
+      </Tabs>
+
+      {/* Admin routes */}
+      <Routes>
+        <Route index element={<AdminDashboard isAdmin={isAdmin} />} />
+        <Route path="users" element={
+          isLoadingUsers ? (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <Skeleton className="h-8 w-64" />
+                  <Skeleton className="h-10 w-24" />
+                </div>
+                <div className="space-y-6">
+                  {Array(5).fill(0).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div>
+                          <Skeleton className="h-5 w-32 mb-1" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Skeleton className="h-9 w-9" />
+                        <Skeleton className="h-9 w-9" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6">
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                {simulateLoading(setIsLoadingUsers)}
+              </CardContent>
+            </Card>
+          ) : (
+            <AdminUserManagement />
+          )
+        } />
+        <Route path="content" element={
+          isLoadingContent ? (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <Skeleton className="h-8 w-64" />
+                  <Skeleton className="h-10 w-24" />
+                </div>
+                <div className="space-y-6">
+                  {Array(3).fill(0).map((_, i) => (
+                    <div key={i}>
+                      <Skeleton className="h-6 w-48 mb-2" />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {Array(3).fill(0).map((_, j) => (
+                          <div key={j} className="border rounded-lg p-4">
+                            <Skeleton className="h-5 w-32 mb-2" />
+                            <Skeleton className="h-4 w-full mb-1" />
+                            <Skeleton className="h-4 w-2/3" />
+                            <div className="flex gap-2 mt-4">
+                              <Skeleton className="h-6 w-16" />
+                              <Skeleton className="h-6 w-16" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {simulateLoading(setIsLoadingContent)}
+              </CardContent>
+            </Card>
+          ) : (
+            <AdminContentManagement />
+          )
+        } />
+        <Route path="reports" element={<AdminReports />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="special-effects" element={<AdminSpecialEffects />} />
+        <Route path="create-admin" element={<CreateAdminAccount />} />
+        <Route path="*" element={<Navigate to="/admin" replace />} />
+      </Routes>
+    </div>
   );
 };
 

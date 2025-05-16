@@ -36,7 +36,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   
   return (
     <div 
-      className={`bg-card rounded-lg p-5 hover:bg-accent/20 transition-colors cursor-pointer hover-lift relative ${isPinned ? 'border-l-4 border-primary' : ''}`}
+      className={`bg-card rounded-lg p-5 hover:bg-accent/20 transition-colors cursor-pointer hover-lift relative border border-border ${isPinned ? 'border-l-4 border-primary' : ''}`}
       onClick={onClick}
     >
       {isPinned && (

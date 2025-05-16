@@ -1,227 +1,215 @@
 
-// Define the DiscussionTopic interface
+import { supabase } from "@/integrations/supabase/client";
+
+// Define the discussion topic interface
 export interface DiscussionTopic {
   id: string;
   title: string;
   author: string;
   authorAvatar?: string;
-  date?: string;
-  tags: string[];
-  upvotes: number;
-  replies?: number;
-  comments?: number;
-  views: number;
-  isPinned?: boolean;
-  isPopular?: boolean;
-  isNew?: boolean;
-  excerpt?: string;
   createdAt: Date;
-  content?: string;  // Content property for discussion
+  tags?: string[];
+  upvotes?: number;
+  views?: number;
+  replies?: number;
+  excerpt?: string;
+  content?: string;
+  isPinned?: boolean;
+  isNew?: boolean;
+  isPopular?: boolean;
 }
 
+// Function to format time ago for display
+export const formatTimeAgo = (date: Date): string => {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+  
+  if (diffInSeconds < 60) {
+    return "Just now";
+  }
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} ${diffInMinutes === 1 ? "minute" : "minutes"} ago`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} ${diffInHours === 1 ? "hour" : "hours"} ago`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return `${diffInDays} ${diffInDays === 1 ? "day" : "days"} ago`;
+  }
+  
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInWeeks < 4) {
+    return `${diffInWeeks} ${diffInWeeks === 1 ? "week" : "weeks"} ago`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${diffInMonths} ${diffInMonths === 1 ? "month" : "months"} ago`;
+  }
+  
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${diffInYears} ${diffInYears === 1 ? "year" : "years"} ago`;
+};
+
+// Mock discussions data (used as a fallback)
 export const mockDiscussions: DiscussionTopic[] = [
   {
-    id: '1',
-    title: 'The Nature of Consciousness and Its Philosophical Implications',
-    author: 'PhilosophyMind',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PhilosophyMind',
-    date: '2023-11-15',
-    tags: ['Philosophy', 'Consciousness', 'Mind'],
-    upvotes: 128,
-    replies: 42,
-    views: 1024,
-    isPinned: true,
-    isPopular: true,
-    excerpt: 'An exploration of the hard problem of consciousness and its implications for our understanding of reality and the mind-body problem.',
-    createdAt: new Date('2023-11-15')
+    id: "1",
+    title: "Exploring the intersection of quantum physics and consciousness",
+    author: "QuantumThinker",
+    authorAvatar: "",
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    tags: ["Quantum Physics", "Consciousness", "Philosophy"],
+    upvotes: 42,
+    replies: 13,
+    views: 156,
+    content: "I've been diving deep into the fascinating intersection between quantum physics and consciousness. The observer effect suggests that the act of observation impacts what's being observed at a quantum level. Does this imply consciousness plays a fundamental role in the fabric of reality?",
+    isPinned: true
   },
   {
-    id: '2',
-    title: 'Quantum Mechanics and the Observer Effect',
-    author: 'QuantumExplorer',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=QuantumExplorer',
-    date: '2023-11-12',
-    tags: ['Physics', 'Quantum Mechanics', 'Science'],
-    upvotes: 95,
-    replies: 37,
-    views: 876,
-    isPopular: true,
-    excerpt: 'Discussing the role of observation in quantum mechanics and how it challenges our classical understanding of reality.',
-    createdAt: new Date('2023-11-12')
+    id: "2",
+    title: "Mathematical models for understanding complex adaptive systems",
+    author: "ComplexityScholar",
+    authorAvatar: "",
+    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+    tags: ["Mathematics", "Complex Systems", "Modeling"],
+    upvotes: 29,
+    replies: 7,
+    views: 98,
+    content: "Complex adaptive systems exist throughout nature and society - from ecosystems to economies. I'm working on mathematical models that might help us better understand these systems. Has anyone explored using fractals and power laws to model emergent behaviors?",
+    isNew: true
   },
   {
-    id: '3',
-    title: 'The Fermi Paradox: Where Is Everybody?',
-    author: 'CosmicThinker',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CosmicThinker',
-    date: '2023-11-10',
-    tags: ['Astronomy', 'Extraterrestrial Life', 'Space'],
-    upvotes: 87,
-    replies: 29,
-    views: 742,
-    excerpt: 'Examining the contradiction between the high probability of extraterrestrial civilizations and the lack of contact or evidence.',
-    createdAt: new Date('2023-11-10')
-  },
-  {
-    id: '4',
-    title: 'Emergence Theory and Complex Systems',
-    author: 'ComplexityScience',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ComplexityScience',
-    date: '2023-11-08',
-    tags: ['Complexity', 'Systems Theory', 'Emergence'],
-    upvotes: 76,
-    replies: 23,
-    views: 651,
-    excerpt: 'How complex systems give rise to emergent properties that cannot be predicted from the behavior of individual components.',
-    createdAt: new Date('2023-11-08')
-  },
-  {
-    id: '5',
-    title: 'The Ethics of Artificial Intelligence Development',
-    author: 'EthicalTech',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EthicalTech',
-    date: '2023-11-05',
-    tags: ['AI', 'Ethics', 'Technology'],
-    upvotes: 112,
-    replies: 45,
-    views: 932,
-    isNew: true,
-    excerpt: 'Discussing the moral implications and responsibilities in developing increasingly autonomous AI systems.',
-    createdAt: new Date('2023-11-05')
-  },
-  {
-    id: '6',
-    title: 'Free Will in a Deterministic Universe',
-    author: 'MetaphysicalMind',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MetaphysicalMind',
-    date: '2023-11-03',
-    tags: ['Philosophy', 'Free Will', 'Determinism'],
-    upvotes: 92,
-    replies: 38,
-    views: 814,
-    excerpt: 'Can free will exist in a universe governed by deterministic physical laws? Exploring compatibilism and libertarian perspectives.',
-    createdAt: new Date('2023-11-03')
-  },
-  {
-    id: '7',
-    title: 'The Mathematics of Infinity and Beyond',
-    author: 'MathExplorer',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MathExplorer',
-    date: '2023-10-30',
-    tags: ['Mathematics', 'Infinity', 'Set Theory'],
+    id: "3",
+    title: "The role of metaphor in scientific discovery",
+    author: "CognitivePoet",
+    authorAvatar: "",
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    tags: ["Philosophy of Science", "Language", "Cognition"],
     upvotes: 68,
-    replies: 21,
-    views: 573,
-    excerpt: 'Exploring different sizes of infinity, Cantor\'s diagonal argument, and the continuum hypothesis.',
-    createdAt: new Date('2023-10-30')
+    replies: 24,
+    views: 224,
+    content: "Throughout history, metaphors have played a crucial role in scientific breakthroughs. From Darwin's 'tree of life' to Bohr's 'planetary' model of the atom, metaphorical thinking seems essential to conceptual innovation. How do these linguistic bridges between domains enable new discoveries?",
+    isPopular: true
   },
   {
-    id: '8',
-    title: 'The Evolution of Altruism: A Biological Paradox',
-    author: 'EvolutionaryBiologist',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EvolutionaryBiologist',
-    date: '2023-10-28',
-    tags: ['Biology', 'Evolution', 'Altruism'],
-    upvotes: 79,
-    replies: 27,
-    views: 682,
-    isNew: true,
-    excerpt: 'How does altruistic behavior evolve when natural selection favors self-interest? Examining kin selection and group selection theories.',
-    createdAt: new Date('2023-10-28')
+    id: "4",
+    title: "Integrating Eastern and Western approaches to consciousness",
+    author: "MindfulIntegrator",
+    authorAvatar: "",
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    tags: ["Consciousness", "Philosophy", "Cognitive Science"],
+    upvotes: 35,
+    replies: 16,
+    views: 143,
+    content: "Western science approaches consciousness through neuroscience and cognitive models, while Eastern traditions have millennia of meditation-based insights. How might we create a framework that integrates both empirical third-person and experiential first-person perspectives on consciousness?"
   },
   {
-    id: '9',
-    title: 'The Simulation Hypothesis: Are We Living in a Computer Simulation?',
-    author: 'SimulationTheorist',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SimulationTheorist',
-    date: '2023-10-25',
-    tags: ['Philosophy', 'Technology', 'Reality'],
-    upvotes: 103,
-    replies: 41,
-    views: 897,
-    isPopular: true,
-    excerpt: 'Examining the philosophical and scientific arguments for and against the simulation hypothesis proposed by Nick Bostrom.',
-    createdAt: new Date('2023-10-25')
-  },
-  {
-    id: '10',
-    title: 'The Hard Problem of Consciousness: Qualia and Subjective Experience',
-    author: 'ConsciousnessResearcher',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ConsciousnessResearcher',
-    date: '2023-10-22',
-    tags: ['Philosophy', 'Consciousness', 'Neuroscience'],
-    upvotes: 89,
-    replies: 34,
-    views: 762,
-    excerpt: 'Why explaining subjective experience is so difficult for science and philosophy. Exploring the explanatory gap between physical processes and qualia.',
-    createdAt: new Date('2023-10-22')
+    id: "5",
+    title: "Emergence of intelligence in decentralized systems",
+    author: "ComplexityEngineer",
+    authorAvatar: "",
+    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
+    tags: ["AI", "Complex Systems", "Emergence"],
+    upvotes: 47,
+    replies: 19,
+    views: 185,
+    content: "From ant colonies to neural networks, intelligence can emerge from simple units following basic rules with no centralized control. What principles govern this emergence? Can we design better AI systems by mimicking these natural emergent processes rather than top-down approaches?"
   }
 ];
 
-// Format time ago function
-export const formatTimeAgo = (date: Date): string => {
-  const now = new Date();
-  const secondsAgo = Math.floor((now.getTime() - date.getTime()) / 1000);
+// Function to sort discussions based on the specified option
+export const getSortedDiscussions = (
+  discussions: DiscussionTopic[], 
+  sortOption: 'popular' | 'new' | 'upvotes'
+): DiscussionTopic[] => {
+  let sortedDiscussions = [...discussions];
   
-  if (secondsAgo < 60) {
-    return `${secondsAgo}s ago`;
-  }
+  // First, always place pinned discussions at the top
+  sortedDiscussions.sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
+  });
   
-  const minutesAgo = Math.floor(secondsAgo / 60);
-  if (minutesAgo < 60) {
-    return `${minutesAgo}m ago`;
-  }
-  
-  const hoursAgo = Math.floor(minutesAgo / 60);
-  if (hoursAgo < 24) {
-    return `${hoursAgo}h ago`;
-  }
-  
-  const daysAgo = Math.floor(hoursAgo / 24);
-  if (daysAgo < 30) {
-    return `${daysAgo}d ago`;
-  }
-  
-  const monthsAgo = Math.floor(daysAgo / 30);
-  if (monthsAgo < 12) {
-    return `${monthsAgo}mo ago`;
-  }
-  
-  const yearsAgo = Math.floor(monthsAgo / 12);
-  return `${yearsAgo}y ago`;
-};
-
-// Sort discussions based on option
-export const getSortedDiscussions = (discussions: DiscussionTopic[], sortOption: 'popular' | 'new' | 'upvotes'): DiscussionTopic[] => {
-  const sortedDiscussions = [...discussions];
-  
+  // Then apply the selected sort option
   switch (sortOption) {
-    case 'popular':
-      return sortedDiscussions.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        if (a.isPopular && !b.isPopular) return -1;
-        if (!a.isPopular && b.isPopular) return 1;
-        return b.views - a.views;
-      });
     case 'new':
       return sortedDiscussions.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return b.createdAt.getTime() - a.createdAt.getTime();
+        if (a.isPinned && b.isPinned || !a.isPinned && !b.isPinned) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        return 0;
       });
     case 'upvotes':
       return sortedDiscussions.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return b.upvotes - a.upvotes;
+        if (a.isPinned && b.isPinned || !a.isPinned && !b.isPinned) {
+          return (b.upvotes || 0) - (a.upvotes || 0);
+        }
+        return 0;
       });
+    case 'popular':
     default:
-      return sortedDiscussions;
+      return sortedDiscussions.sort((a, b) => {
+        if (a.isPinned && b.isPinned || !a.isPinned && !b.isPinned) {
+          // Popular is a combination of recency, upvotes, and views
+          const aScore = (a.upvotes || 0) * 2 + (a.views || 0) / 10 + (a.replies || 0) * 3;
+          const bScore = (b.upvotes || 0) * 2 + (b.views || 0) / 10 + (b.replies || 0) * 3;
+          return bScore - aScore;
+        }
+        return 0;
+      });
   }
 };
 
-// Filter discussions by tag
+// Function to filter discussions by tag
 export const filterDiscussionsByTag = (discussions: DiscussionTopic[], tag: string): DiscussionTopic[] => {
-  return discussions.filter(discussion => discussion.tags && discussion.tags.includes(tag));
+  return discussions.filter(discussion => discussion.tags?.includes(tag));
+};
+
+// Function to fetch discussions from Supabase (for future implementation)
+export const fetchDiscussions = async (): Promise<DiscussionTopic[]> => {
+  try {
+    // This is a placeholder for future Supabase integration
+    // For now, return mock data
+    return mockDiscussions;
+    
+    // When Supabase tables are set up, the function would look like this:
+    /*
+    const { data, error } = await supabase
+      .from('discussions')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching discussions:', error);
+      return mockDiscussions;
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      author: item.author,
+      authorAvatar: item.author_avatar,
+      createdAt: new Date(item.created_at),
+      tags: item.tags,
+      upvotes: item.upvotes,
+      replies: item.replies,
+      views: item.views,
+      content: item.content,
+      isPinned: item.is_pinned,
+      isNew: (new Date().getTime() - new Date(item.created_at).getTime()) < 24 * 60 * 60 * 1000,
+      isPopular: item.views > 100 || item.upvotes > 30
+    }));
+    */
+  } catch (error) {
+    console.error('Error in fetchDiscussions:', error);
+    return mockDiscussions;
+  }
 };
