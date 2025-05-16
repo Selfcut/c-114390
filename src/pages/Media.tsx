@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
 import { MediaHeader } from "../components/media/MediaHeader";
 import { MediaFilters } from "../components/media/MediaFilters";
 import { MediaFeed } from "../components/media/MediaFeed";
@@ -239,41 +237,39 @@ const Media = () => {
   };
 
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8 px-4">
-        <MediaHeader onCreatePost={() => setIsCreateDialogOpen(true)} />
-        
-        <MediaFilters 
-          filterType={filterType}
-          setFilterType={setFilterType}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
+    <div className="container mx-auto py-8 px-4">
+      <MediaHeader onCreatePost={() => setIsCreateDialogOpen(true)} />
+      
+      <MediaFilters 
+        filterType={filterType}
+        setFilterType={setFilterType}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+      />
+      
+      {error ? (
+        <Alert variant="destructive" className="my-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : (
+        <MediaFeed 
+          posts={posts}
+          isLoading={isLoading}
+          hasMore={hasMore}
+          loadMore={loadMore}
+          currentUser={user}
         />
-        
-        {error ? (
-          <Alert variant="destructive" className="my-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : (
-          <MediaFeed 
-            posts={posts}
-            isLoading={isLoading}
-            hasMore={hasMore}
-            loadMore={loadMore}
-            currentUser={user}
-          />
-        )}
+      )}
 
-        <CreatePostDialog 
-          isOpen={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          onSubmit={handleCreatePost}
-          isSubmitting={isSubmitting}
-        />
-      </div>
-    </PageLayout>
+      <CreatePostDialog 
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSubmit={handleCreatePost}
+        isSubmitting={isSubmitting}
+      />
+    </div>
   );
 };
 

@@ -2,10 +2,9 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-context';
-import { AuthProvider } from '@/lib/auth'; // Updated import path
+import { AuthProvider } from '@/lib/auth'; 
 import { Toaster } from '@/components/ui/toaster';
-import { FullHeightChatSidebar } from '@/components/chat/FullHeightChatSidebar';
-import { useAuth } from '@/lib/auth'; // Updated import path
+import { useAuth } from '@/lib/auth'; 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initializeSupabase } from '@/integrations/supabase/init';
 import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
@@ -55,7 +54,7 @@ const AuthCallback = () => {
   </div>;
 };
 
-// Root component that checks authentication and provides the chat sidebar
+// Root component that checks authentication
 const Root = () => {
   const { user, isLoading, isAuthenticated } = useAuth();
   
@@ -87,6 +86,7 @@ const Root = () => {
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
+        {/* Protected routes */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <PageLayout>
@@ -182,9 +182,6 @@ const Root = () => {
         {/* Fallback route - 404 page */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
-      {/* Show chat sidebar for all users (including guests) */}
-      <FullHeightChatSidebar />
     </div>
   );
 };
