@@ -19,8 +19,8 @@ export interface UserProfile {
   username: string;
   email: string;
   avatar: string;
-  bio?: string;
-  website?: string;
+  bio: string;
+  website: string;
   status: UserStatus;
   isGhostMode: boolean;
   role: UserRole;

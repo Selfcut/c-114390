@@ -22,8 +22,8 @@ interface UserProfile {
   name: string;
   username: string;
   avatar: string;
-  bio?: string;
-  website?: string;
+  bio: string;
+  website: string;
   role: string;
   isAdmin: boolean;
   status: "online" | "away" | "do-not-disturb" | "invisible" | "offline";
