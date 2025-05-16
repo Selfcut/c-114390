@@ -19,9 +19,9 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       return {
         id: userId,
         email: userSession?.user?.email || "",
-        name: userSession?.user?.user_metadata.name || userSession?.user?.email?.split('@')[0] || "User",
-        username: userSession?.user?.user_metadata.username || userSession?.user?.email?.split('@')[0] || "user",
-        avatar: userSession?.user?.user_metadata.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+        name: userSession?.user?.user_metadata?.name || userSession?.user?.email?.split('@')[0] || "User",
+        username: userSession?.user?.user_metadata?.username || userSession?.user?.email?.split('@')[0] || "user",
+        avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
         role: "user",
         isAdmin: false,
         status: "online",
@@ -33,14 +33,14 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       const fullProfile: UserProfile = {
         id: userId,
         email: userSession?.user?.email || "",
-        name: profile.name || userSession?.user?.user_metadata.name || "User",
-        username: profile.username || userSession?.user?.user_metadata.username || "user",
-        avatar: profile.avatar_url || userSession?.user?.user_metadata.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+        name: profile.name || userSession?.user?.user_metadata?.name || "User",
+        username: profile.username || userSession?.user?.user_metadata?.username || "user",
+        avatar: profile.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
         bio: profile.bio || "",
         website: profile.website || "",
         role: profile.role || "user",
         isAdmin: profile.role === "admin",
-        status: profile.status as UserStatus || "online",
+        status: (profile.status as UserStatus) || "online",
         isGhostMode: profile.is_ghost_mode || false,
       };
 

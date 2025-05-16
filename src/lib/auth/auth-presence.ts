@@ -39,7 +39,7 @@ export const usePresenceManagement = (user: UserProfile | null, setUser: React.D
       setUser(prevUser => prevUser ? { ...prevUser, status: newStatus } : null);
       
       // Update notification settings
-      if (newStatus === "dnd") {
+      if (newStatus === "dnd" && user.notificationSettings) {
         setUser(prevUser => prevUser && prevUser.notificationSettings ? {
           ...prevUser,
           notificationSettings: {

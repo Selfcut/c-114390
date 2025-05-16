@@ -1,28 +1,6 @@
 
 import { User } from "@supabase/supabase-js";
-
-export type UserStatus = "online" | "offline" | "away" | "dnd" | "invisible";
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  name: string;
-  username: string;
-  avatar: string;
-  bio?: string;
-  website?: string;
-  role: string;
-  isAdmin: boolean;
-  status: UserStatus;
-  isGhostMode?: boolean;
-  notificationSettings?: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
-}
-
-export type AppRole = "admin" | "moderator" | "user";
+import { UserProfile, UserStatus, UserRole } from "@/types/user";
 
 export interface AuthError {
   message: string;
@@ -42,3 +20,6 @@ export interface AuthContextType {
   toggleGhostMode: () => Promise<void>;
   toggleDoNotDisturb: () => Promise<void>;
 }
+
+// Re-export types from the main user.ts
+export { UserProfile, UserStatus, UserRole };

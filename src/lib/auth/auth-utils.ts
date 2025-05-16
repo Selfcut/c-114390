@@ -67,7 +67,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
 };
 
 // Update user profile in Supabase
-export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<void> => {
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<{error: any}> => {
   try {
     const { error } = await supabase
       .from('profiles')
@@ -85,11 +85,13 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
 
     if (error) {
       console.error("Error updating user profile:", error);
-      throw error;
+      return { error };
     }
+    
+    return { error: null };
   } catch (error) {
     console.error("Error in updateUserProfile:", error);
-    throw error;
+    return { error };
   }
 };
 

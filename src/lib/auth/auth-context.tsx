@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { AuthContextType, UserProfile } from "./types";
+import { AuthContextType, UserProfile } from "@/types/user";
 import { fetchUserProfile } from "./utils";
 import { signIn, signOut, signUp } from "./auth-methods";
 import { updateUserProfile } from "./utils";
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => { 
           fetchUserProfile(newSession.user.id, newSession)
             .then(profile => {
-              if (profile) setUser(profile);
+              if (profile) setUser(profile as any);
             });
         }, 0);
       } else {
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (initialSession?.user) {
         fetchUserProfile(initialSession.user.id, initialSession)
           .then(profile => {
-            if (profile) setUser(profile);
+            if (profile) setUser(profile as any);
           })
           .finally(() => setIsLoading(false));
       } else {
