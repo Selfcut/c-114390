@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
@@ -10,7 +9,7 @@ import { AdminSettings } from "@/components/admin/AdminSettings";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shield, Bell } from "lucide-react";
 
@@ -31,35 +30,38 @@ const AdminPanel = () => {
       try {
         // Make specific user an admin (as requested)
         if (user.id === 'dc7bedf3-14c3-4376-adfb-de5ac8207adc') {
+          // First check if the role column exists
           const { error: updateError } = await supabase
             .from('profiles')
-            .update({ role: 'admin', isAdmin: true })
+            .update({ role: 'admin' })
             .eq('id', user.id);
             
           if (updateError) {
             console.error('Error updating admin status:', updateError);
-            throw updateError;
+          } else {
+            setIsAdmin(true);
+            toast({
+              title: "Admin Role Granted",
+              description: "You now have administrator privileges",
+            });
+            setIsCheckingAdmin(false);
+            return;
           }
-          
-          setIsAdmin(true);
-          toast({
-            title: "Admin Role Granted",
-            description: "You now have administrator privileges",
-          });
-          setIsCheckingAdmin(false);
-          return;
         }
 
         // Check admin status for other users
         const { data, error } = await supabase
           .from('profiles')
-          .select('role, isAdmin')
+          .select('role')
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
-
-        setIsAdmin(data?.role === 'admin' || data?.isAdmin === true);
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(data?.role === 'admin');
+        }
       } catch (err) {
         console.error('Error checking admin status:', err);
       } finally {

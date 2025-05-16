@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -74,9 +73,8 @@ export const CreateArticleDialog = ({
         description,
         content,
         category,
-        user_id: user.id,
-        author_name: user.name || user.username
-      });
+        tags: []
+      }, user.id);
       
       if (error) throw new Error(error.toString());
       

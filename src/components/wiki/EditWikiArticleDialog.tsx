@@ -64,12 +64,17 @@ export const EditWikiArticleDialog = ({
     try {
       setIsSubmitting(true);
       
-      const { article: updatedArticle, error } = await updateWikiArticle(article.id, {
-        title,
-        description,
-        content,
-        category
-      });
+      const { article: updatedArticle, error } = await updateWikiArticle(
+        article.id, 
+        {
+          title,
+          description,
+          content,
+          category,
+          tags: article.tags
+        },
+        user.id
+      );
       
       if (error) throw new Error(error.toString());
       

@@ -40,23 +40,23 @@ export const fetchWikiArticles = async ({
       description: article.description || "",
       content: article.content || "",
       category: article.category || "general",
-      imageUrl: article.image_url,
+      imageUrl: article.image_url || undefined, 
       author: article.author_name || "Unknown",
       authorId: article.user_id,
       contributors: article.contributors || 1,
       views: article.views || 0,
-      lastUpdated: format(new Date(article.updated_at || article.created_at), 'MMM d, yyyy'),
+      lastUpdated: format(new Date(article.last_updated || article.created_at), 'MMM d, yyyy'),
       tags: article.tags || []
     })) as WikiArticle[];
     
     // Check if there are more articles to load
-    const { count, error: countError } = await supabase
+    const countQuery = await supabase
       .from('wiki_articles')
-      .count();
+      .select('id', { count: 'exact' });
     
-    if (countError) throw countError;
+    if (countQuery.error) throw countQuery.error;
     
-    const totalCount = count ? parseInt(count.toString()) : 0;
+    const totalCount = countQuery.count || 0;
     const hasMore = (page + 1) * pageSize < totalCount;
     
     return { articles: formattedArticles, hasMore, error: null };
@@ -88,12 +88,12 @@ export const fetchWikiArticleById = async (articleId: string) => {
       description: data.description || "",
       content: data.content || "",
       category: data.category || "general",
-      imageUrl: data.image_url,
+      imageUrl: data.image_url || undefined,
       author: data.author_name || "Unknown",
       authorId: data.user_id,
       contributors: data.contributors || 1,
       views: data.views || 0,
-      lastUpdated: format(new Date(data.updated_at || data.created_at), 'MMM d, yyyy'),
+      lastUpdated: format(new Date(data.last_updated || data.created_at), 'MMM d, yyyy'),
       tags: data.tags || []
     };
     
@@ -136,9 +136,7 @@ export const createWikiArticle = async (article: Partial<WikiArticle>, userId: s
         image_url: article.imageUrl,
         user_id: userId,
         author_name: userData?.name || 'Unknown',
-        tags: article.tags || [],
-        views: 0,
-        contributors: 1
+        tags: article.tags || []
       })
       .select()
       .single();
@@ -152,7 +150,7 @@ export const createWikiArticle = async (article: Partial<WikiArticle>, userId: s
       description: data.description || "",
       content: data.content || "",
       category: data.category || "general",
-      imageUrl: data.image_url,
+      imageUrl: data.image_url || undefined,
       author: data.author_name || "Unknown",
       authorId: data.user_id,
       contributors: data.contributors || 1,
@@ -199,7 +197,7 @@ export const updateWikiArticle = async (
         image_url: updates.imageUrl,
         tags: updates.tags,
         contributors,
-        updated_at: new Date().toISOString()
+        last_updated: new Date().toISOString()
       })
       .eq('id', articleId)
       .select()
@@ -214,12 +212,12 @@ export const updateWikiArticle = async (
       description: data.description || "",
       content: data.content || "",
       category: data.category || "general",
-      imageUrl: data.image_url,
+      imageUrl: data.image_url || undefined,
       author: data.author_name || "Unknown",
       authorId: data.user_id,
       contributors: data.contributors || 1,
       views: data.views || 0,
-      lastUpdated: format(new Date(data.updated_at), 'MMM d, yyyy'),
+      lastUpdated: format(new Date(data.last_updated), 'MMM d, yyyy'),
       tags: data.tags || []
     };
     
