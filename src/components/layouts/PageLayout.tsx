@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { PromoBar } from "../PromoBar";
 import { CollapsibleSidebar } from "../CollapsibleSidebar";
 import Header from "../Header";
-import { subscribeToChatSidebarToggle } from "@/lib/utils/event-utils";
+import { subscribeToChatSidebarToggle, subscribeToSidebarCollapse, initializeUIState } from "@/lib/utils/event-utils";
 import { useAuth } from "@/lib/auth-context";
 import { trackActivity } from "@/lib/activity-tracker";
 
@@ -39,6 +39,11 @@ export const PageLayout = ({
   const { user } = useAuth();
   const isAuthenticated = !!user;
   
+  // Initialize UI state when the component mounts
+  useEffect(() => {
+    initializeUIState();
+  }, []);
+  
   // Track section view if section name is provided
   useEffect(() => {
     if (sectionName && user) {
@@ -55,33 +60,26 @@ export const PageLayout = ({
 
   // Listen to chat sidebar toggle events
   useEffect(() => {
-    const unsubscribe = subscribeToChatSidebarToggle((isOpen) => {
-      setIsChatOpen(isOpen);
-      localStorage.setItem('chatSidebarOpen', String(isOpen));
+    const chatUnsubscribe = subscribeToChatSidebarToggle((isOpen) => {
+      if (typeof isOpen === 'boolean') {
+        setIsChatOpen(isOpen);
+      } else {
+        setIsChatOpen(prev => {
+          const nextState = isOpen(prev);
+          return nextState;
+        });
+      }
     });
 
-    // Listen for sidebar collapse changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'sidebar-collapsed') {
-        setSidebarCollapsed(e.newValue === 'true');
-      }
-    };
+    const sidebarUnsubscribe = subscribeToSidebarCollapse((isCollapsed) => {
+      setSidebarCollapsed(isCollapsed);
+    });
     
-    window.addEventListener('storage', handleStorageChange);
-
     return () => {
-      unsubscribe();
-      window.removeEventListener('storage', handleStorageChange);
+      chatUnsubscribe();
+      sidebarUnsubscribe();
     };
   }, []);
-  
-  // Set CSS variable for sidebar width
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      '--sidebar-width',
-      sidebarCollapsed ? '64px' : '256px'
-    );
-  }, [sidebarCollapsed]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

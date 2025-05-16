@@ -16,12 +16,10 @@ export const useChatSidebarToggle = () => {
       if (typeof newState === 'function') {
         setIsOpen(prev => {
           const nextState = newState(prev);
-          localStorage.setItem('chatSidebarOpen', String(nextState));
           return nextState;
         });
       } else {
         setIsOpen(newState);
-        localStorage.setItem('chatSidebarOpen', String(newState));
       }
     });
     
@@ -46,7 +44,6 @@ export const useChatSidebarToggle = () => {
     const newState = !isOpen;
     setIsOpen(newState);
     publishChatSidebarToggle(newState);
-    localStorage.setItem('chatSidebarOpen', String(newState));
   };
 
   return {
