@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, Users, Settings, FileText, Shield, Database, BookOpen, Lock, AlertCircle } from "lucide-react";
-import AdminDashboard from "@/components/admin/AdminDashboard";
+import AdminDashboard from "@/components/admin/AdminDashboard"; // Fixed import
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 import { AdminContentManagement } from "@/components/admin/AdminContentManagement";
 import { AdminReports } from "@/components/admin/AdminReports";

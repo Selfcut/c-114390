@@ -81,12 +81,12 @@ const Media = () => {
       const transformedData: MediaPost[] = (data || []).map(item => {
         let profileData = null;
         
-        // Handle the profiles relationship
-        if (item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles)) {
+        // Handle the profiles relationship with null checks
+        if (item.profiles && typeof item.profiles === 'object') {
           profileData = {
-            name: item.profiles.name || 'Unknown User',
-            username: item.profiles.username || 'unknown',
-            avatar_url: item.profiles.avatar_url
+            name: item.profiles?.name || 'Unknown User',
+            username: item.profiles?.username || 'unknown',
+            avatar_url: item.profiles?.avatar_url
           };
         }
         

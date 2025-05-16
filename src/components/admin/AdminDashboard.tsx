@@ -8,7 +8,12 @@ import { UserProfile } from '@/types/user';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 
-const AdminDashboard = () => {
+// Update the component to accept the isAdmin prop
+interface AdminDashboardProps {
+  isAdmin?: boolean;
+}
+
+const AdminDashboard = ({ isAdmin }: AdminDashboardProps = {}) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -36,7 +41,7 @@ const AdminDashboard = () => {
           id: user.id,
           name: user.name || '',
           username: user.username,
-          email: user.email || '',
+          email: '', // This is a required field in UserProfile but not in the table
           avatar: user.avatar_url || '',
           bio: user.bio || '',
           website: user.website || '',
