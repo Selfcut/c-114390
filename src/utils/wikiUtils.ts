@@ -50,13 +50,13 @@ export const fetchWikiArticles = async ({
     })) as WikiArticle[];
     
     // Check if there are more articles to load
-    const countQuery = await supabase
+    const { count, error: countError } = await supabase
       .from('wiki_articles')
-      .select('id', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
     
-    if (countQuery.error) throw countQuery.error;
+    if (countError) throw countError;
     
-    const totalCount = countQuery.count || 0;
+    const totalCount = count || 0;
     const hasMore = (page + 1) * pageSize < totalCount;
     
     return { articles: formattedArticles, hasMore, error: null };
