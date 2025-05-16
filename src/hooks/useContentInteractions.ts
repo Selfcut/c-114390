@@ -135,11 +135,11 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
             ? 'media_posts' 
             : 'quotes';
             
-        await supabase.rpc('decrement_counter', {
-          table_name: tableName,
-          column_name: 'likes',
-          row_id: id
-        });
+        // Update the likes count directly
+        await supabase
+          .from(tableName)
+          .update({ likes: supabase.sql`likes - 1` })
+          .eq('id', id);
       } else {
         // Like
         await supabase
@@ -159,11 +159,11 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
             ? 'media_posts' 
             : 'quotes';
             
-        await supabase.rpc('increment_counter', {
-          table_name: tableName,
-          column_name: 'likes',
-          row_id: id
-        });
+        // Update the likes count directly
+        await supabase
+          .from(tableName)
+          .update({ likes: supabase.sql`likes + 1` })
+          .eq('id', id);
       }
       
       return {
@@ -209,11 +209,10 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
         
         // Update counter if it's a quote
         if (contentTypeStr === 'quote') {
-          await supabase.rpc('decrement_counter', {
-            table_name: 'quotes',
-            column_name: 'bookmarks',
-            row_id: id
-          });
+          await supabase
+            .from('quotes')
+            .update({ bookmarks: supabase.sql`bookmarks - 1` })
+            .eq('id', id);
         }
       } else {
         // Add bookmark
@@ -229,11 +228,10 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
         
         // Update counter if it's a quote
         if (contentTypeStr === 'quote') {
-          await supabase.rpc('increment_counter', {
-            table_name: 'quotes',
-            column_name: 'bookmarks',
-            row_id: id
-          });
+          await supabase
+            .from('quotes')
+            .update({ bookmarks: supabase.sql`bookmarks + 1` })
+            .eq('id', id);
         }
       }
       

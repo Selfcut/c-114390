@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { WikiArticle } from "./types";
-import { supabase } from "@/integrations/supabase/client";
+import { createWikiArticle } from "@/utils/wikiUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 
@@ -80,63 +80,29 @@ export const CreateArticleDialog = ({
     try {
       setIsSubmitting(true);
       
-      const articleData = {
+      const { article, error } = await createWikiArticle({
         title,
         description,
         content,
         category,
-        user_id: user.id,
-        contributors: 1,
-        views: 0,
-        last_updated: new Date().toISOString()
-      };
-      
-      // Check if the table exists
-      const { error: tableCheckError } = await supabase
-        .from('wiki_articles')
-        .select('count')
-        .limit(1);
-      
-      if (tableCheckError) {
-        console.error("Table doesn't exist:", tableCheckError);
-        toast({
-          title: "Database Error",
-          description: "The wiki_articles table does not exist. Please set it up first.",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('wiki_articles')
-        .insert(articleData)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Article Created",
-        description: "Your wiki article has been published successfully!",
+        user_id: user.id
       });
       
-      if (onSuccess && data) {
-        const newArticle: WikiArticle = {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          category: data.category,
-          content: data.content,
-          lastUpdated: "Just now",
-          contributors: data.contributors || 1,
-          views: data.views || 0
-        };
-        onSuccess(newArticle);
-      }
+      if (error) throw new Error(error.toString());
       
-      resetForm();
-      onOpenChange(false);
+      if (article) {
+        toast({
+          title: "Article Created",
+          description: "Your wiki article has been published successfully!",
+        });
+        
+        if (onSuccess) {
+          onSuccess(article);
+        }
+        
+        resetForm();
+        onOpenChange(false);
+      }
     } catch (err: any) {
       console.error("Error creating article:", err);
       toast({

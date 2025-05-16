@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle, ArrowLeft, Clock, Eye, UserCircle, Calendar, MessagesSquare, Pencil, Heart } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, Heart, MessagesSquare, Pencil, UserCircle, Eye } from "lucide-react";
 import { getCategoryIcon } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchWikiArticleById } from "@/utils/wikiUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import ReactMarkdown from 'react-markdown';
@@ -32,38 +32,14 @@ const WikiArticlePage = () => {
       try {
         setIsLoading(true);
         
-        // Fetch the article
-        const { data, error } = await supabase
-          .from('wiki_articles')
-          .select(`
-            *,
-            profiles(name, avatar_url)
-          `)
-          .eq('id', articleId)
-          .single();
-          
-        if (error) throw error;
+        const { article, error } = await fetchWikiArticleById(articleId);
         
-        if (data) {
-          const formattedArticle: WikiArticle = {
-            id: data.id,
-            title: data.title,
-            description: data.description,
-            category: data.category,
-            content: data.content,
-            lastUpdated: formatLastUpdated(data.last_updated),
-            contributors: data.contributors || 1,
-            views: data.views || 0,
-            author: data.profiles?.name || 'Unknown'
-          };
-          
-          setArticle(formattedArticle);
-          
-          // Increment view count
-          await supabase
-            .from('wiki_articles')
-            .update({ views: (data.views || 0) + 1 })
-            .eq('id', articleId);
+        if (error) throw new Error(error.toString());
+        
+        if (article) {
+          setArticle(article);
+        } else {
+          setError("Article not found");
         }
       } catch (err: any) {
         console.error('Error fetching wiki article:', err);
@@ -80,20 +56,6 @@ const WikiArticlePage = () => {
     
     fetchArticle();
   }, [articleId, toast]);
-
-  // Format the last updated date
-  const formatLastUpdated = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 1) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString();
-  };
 
   const handleBack = () => {
     navigate(-1);

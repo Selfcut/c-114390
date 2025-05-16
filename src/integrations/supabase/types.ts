@@ -523,6 +523,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wiki_articles: {
+        Row: {
+          category: string
+          content: string | null
+          contributors: number | null
+          created_at: string | null
+          description: string
+          id: string
+          last_updated: string | null
+          title: string
+          user_id: string
+          views: number | null
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          contributors?: number | null
+          created_at?: string | null
+          description: string
+          id?: string
+          last_updated?: string | null
+          title: string
+          user_id: string
+          views?: number | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          contributors?: number | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          last_updated?: string | null
+          title?: string
+          user_id?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

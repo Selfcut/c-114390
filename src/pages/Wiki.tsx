@@ -9,7 +9,7 @@ import { ArticleList } from "@/components/wiki/ArticleList";
 import { CreateArticleDialog } from "@/components/wiki/CreateArticleDialog";
 import { getCategoryIcon, filterArticles } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchWikiArticles } from "@/utils/wikiUtils";
 import { PageLayout } from "@/components/layouts/PageLayout";
 
 const Wiki = () => {
@@ -23,56 +23,22 @@ const Wiki = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  // Fetch wiki articles from Supabase
+  // Fetch wiki articles
   useEffect(() => {
-    const fetchArticles = async () => {
+    const loadArticles = async () => {
+      setIsLoading(true);
+      
       try {
-        setIsLoading(true);
-        
-        let query = supabase
-          .from('wiki_articles')
-          .select(`
-            id,
-            title,
-            description,
-            category,
-            content,
-            contributors,
-            views,
-            last_updated,
-            profiles(name, avatar_url)
-          `)
-          .order('last_updated', { ascending: false });
-        
-        // Apply category filter if selected
-        if (selectedCategory) {
-          query = query.eq('category', selectedCategory);
-        }
-        
-        // Apply pagination
-        const pageSize = 9;
-        query = query.range(page * pageSize, (page + 1) * pageSize - 1);
-        
-        const { data, error } = await query;
+        const { articles: fetchedArticles, hasMore: moreAvailable, error } = await fetchWikiArticles({
+          category: selectedCategory || undefined,
+          page,
+          pageSize: 9
+        });
         
         if (error) throw error;
         
-        if (data) {
-          const formattedArticles: WikiArticle[] = data.map(item => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            category: item.category,
-            content: item.content,
-            lastUpdated: formatLastUpdated(item.last_updated),
-            contributors: item.contributors || 1,
-            views: item.views || 0,
-            author: item.profiles?.name || 'Unknown'
-          }));
-          
-          setArticles(prev => page === 0 ? formattedArticles : [...prev, ...formattedArticles]);
-          setHasMore(data.length === pageSize);
-        }
+        setArticles(prev => page === 0 ? fetchedArticles : [...prev, ...fetchedArticles]);
+        setHasMore(moreAvailable);
       } catch (err: any) {
         console.error('Error fetching wiki articles:', err);
         toast({
@@ -85,22 +51,8 @@ const Wiki = () => {
       }
     };
     
-    fetchArticles();
+    loadArticles();
   }, [selectedCategory, page, toast]);
-
-  // Format the last updated date
-  const formatLastUpdated = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 1) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString();
-  };
 
   // Filter articles based on search
   const filteredArticles = filterArticles(articles, searchQuery, selectedCategory);
