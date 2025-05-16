@@ -5,8 +5,6 @@ import {
   LayoutDashboard,
   MessageSquare,
   BookOpen,
-  Settings,
-  User,
   ShieldCheck,
   GraduationCap,
   ChevronLeft,
@@ -71,16 +69,6 @@ export const CollapsibleSidebar = () => {
       icon: <GraduationCap className="h-5 w-5" />,
       label: "Wiki",
       path: "/wiki",
-    },
-    {
-      icon: <User className="h-5 w-5" />,
-      label: "Profile",
-      path: "/profile",
-    },
-    {
-      icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
-      path: "/settings",
     },
   ];
 

@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { initializeSupabase } from '@/integrations/supabase/init';
 import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
 import { AppRoutes } from '@/components/routing/AppRoutes';
+import { FullHeightChatSidebar } from '@/components/chat/FullHeightChatSidebar';
 
 // Initialize Supabase
 initializeSupabase();
@@ -18,6 +19,7 @@ function App() {
       <AuthProvider>
         <Router>
           <AppRoutes />
+          <FullHeightChatSidebar />
         </Router>
         <Toaster />
       </AuthProvider>

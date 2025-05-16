@@ -1,6 +1,7 @@
 
 import React from "react";
-import { MessageSquare } from "lucide-react";
+import { Link } from "react-router-dom";
+import { MessageSquare, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatSidebarHeader } from "./ChatSidebarHeader";
 import { ConversationsList } from "./ConversationsList";
@@ -59,6 +60,21 @@ export const FullHeightChatSidebar = () => {
       >
         {/* Header */}
         <ChatSidebarHeader toggleSidebar={toggleSidebar} />
+
+        {/* Go to full chat page button */}
+        <div className="px-3 py-2 border-b border-border">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full flex items-center justify-center"
+            asChild
+          >
+            <Link to="/chat">
+              <span>Go to chat page</span>
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
 
         {/* Conversations list */}
         <ConversationsList 

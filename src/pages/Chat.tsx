@@ -65,10 +65,15 @@ const Chat = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full">
-      <ChatInterface 
-        initialConversations={conversations}
-        chatType="direct" 
-      />
+      <div className="container mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold mb-6">Chat</h1>
+        <div className="bg-card rounded-lg border shadow-sm">
+          <ChatInterface 
+            initialConversations={conversations}
+            chatType="direct" 
+          />
+        </div>
+      </div>
     </div>
   );
 };

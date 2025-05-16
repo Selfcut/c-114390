@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ModeToggle";
-import { HelpCircle, Crown, MessageSquare } from "lucide-react";
+import { HelpCircle, Crown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,15 +25,6 @@ export const HeaderActions = () => {
       
       {/* Notifications - Only show for logged in users */}
       {user && <NotificationsDropdown />}
-
-      {/* Chat - Only show for logged in users */}
-      {user && (
-        <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground" aria-label="Chat" asChild>
-          <Link to="/chat">
-            <MessageSquare size={20} />
-          </Link>
-        </Button>
-      )}
       
       {/* Premium */}
       <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-1 text-amber-500 border-amber-500/30 hover:bg-amber-500/10">
