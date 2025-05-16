@@ -32,7 +32,7 @@ export const usePresenceManagement = (user: UserProfile | null, setUser: React.D
     try {
       if (!user) throw new Error("User not authenticated");
       
-      const isDoNotDisturb = user.status === "dnd";
+      const isDoNotDisturb = user.status === "dnd" || user.status === "do-not-disturb";
       const newStatus: UserStatus = isDoNotDisturb ? "online" : "dnd";
       
       // Update local state

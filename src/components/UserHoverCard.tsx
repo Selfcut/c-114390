@@ -8,13 +8,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, UserPlus } from 'lucide-react';
+import { UserStatus } from '@/types/user';
 
 export interface UserHoverCardProps {
   username: string;
   displayName: string;
   avatar?: string;
   isOnline?: boolean;
-  status?: "online" | "offline" | "away" | "do-not-disturb" | "invisible";
+  status?: UserStatus;
   children: React.ReactNode;
 }
 
@@ -34,10 +35,23 @@ export function UserHoverCard({
     switch (status) {
       case "online": return "bg-green-500";
       case "away": return "bg-amber-500";
-      case "do-not-disturb": return "bg-red-500";
+      case "do-not-disturb":
+      case "dnd": return "bg-red-500";
       case "invisible":
       case "offline":
       default: return "bg-gray-500";
+    }
+  };
+  
+  // Get status display text
+  const getStatusText = () => {
+    switch (status) {
+      case "online": return "Online";
+      case "away": return "Away";
+      case "do-not-disturb":
+      case "dnd": return "Do not disturb";
+      case "invisible": return "Invisible";
+      default: return "Offline";
     }
   };
   
@@ -63,10 +77,7 @@ export function UserHoverCard({
             <div className="flex items-center pt-2">
               <span className={`flex h-2 w-2 rounded-full ${getStatusColor()} mr-2`}></span>
               <span className="text-xs text-muted-foreground">
-                {status === "online" ? "Online" : 
-                 status === "away" ? "Away" :
-                 status === "do-not-disturb" ? "Do not disturb" :
-                 status === "invisible" ? "Invisible" : "Offline"}
+                {getStatusText()}
               </span>
             </div>
           </div>
