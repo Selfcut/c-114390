@@ -223,5 +223,5 @@ export const getSortedDiscussions = (discussions: DiscussionTopic[], sortOption:
 
 // Filter discussions by tag
 export const filterDiscussionsByTag = (discussions: DiscussionTopic[], tag: string): DiscussionTopic[] => {
-  return discussions.filter(discussion => discussion.tags.includes(tag));
+  return discussions.filter(discussion => discussion.tags && discussion.tags.includes(tag));
 };

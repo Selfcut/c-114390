@@ -1,5 +1,5 @@
 
-import { MessageSquare, ThumbsUp, Tag, Clock } from "lucide-react";
+import { MessageSquare, ThumbsUp, Tag, Clock, Eye } from "lucide-react";
 import { formatTimeAgo, DiscussionTopic } from "../lib/discussions-utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +20,10 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     upvotes, 
     excerpt, 
     content,
-    views
+    views,
+    isPinned,
+    isNew,
+    isPopular
   } = discussion;
   
   // Generate avatar fallback from author name if no avatar URL provided
@@ -33,9 +36,25 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   
   return (
     <div 
-      className="bg-[#1A1A1A] rounded-lg p-5 hover:bg-[#222222] transition-colors cursor-pointer hover-lift"
+      className={`bg-[#1A1A1A] rounded-lg p-5 hover:bg-[#222222] transition-colors cursor-pointer hover-lift relative ${isPinned ? 'border-l-4 border-primary' : ''}`}
       onClick={onClick}
     >
+      {isPinned && (
+        <div className="absolute top-2 right-2 bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">
+          Pinned
+        </div>
+      )}
+      {isNew && !isPinned && (
+        <div className="absolute top-2 right-2 bg-green-500/20 text-green-500 text-xs px-2 py-1 rounded-full">
+          New
+        </div>
+      )}
+      {isPopular && !isPinned && !isNew && (
+        <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded-full">
+          Popular
+        </div>
+      )}
+      
       <div className="flex items-start gap-4">
         <div className="p-2 rounded-full bg-[#00361F] flex items-center justify-center">
           <MessageSquare size={18} className="text-[#00A67E]" />
@@ -49,7 +68,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
           )}
           
           <div className="flex flex-wrap gap-2 mt-2 mb-3">
-            {tags.map((tag, index) => (
+            {tags && tags.length > 0 ? tags.map((tag, index) => (
               <Badge 
                 key={index} 
                 variant="outline" 
@@ -58,7 +77,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
                 <Tag size={12} className="mr-1" />
                 {tag}
               </Badge>
-            ))}
+            )) : null}
           </div>
           
           <div className="flex items-center justify-between mt-3">
@@ -74,10 +93,13 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
             
             <div className="flex items-center gap-3 text-gray-400">
               <span className="text-xs flex items-center gap-1">
+                <Eye size={12} /> {views || 0}
+              </span>
+              <span className="text-xs flex items-center gap-1">
                 <MessageSquare size={12} /> {replies || 0}
               </span>
               <span className="text-xs flex items-center gap-1">
-                <ThumbsUp size={12} /> {upvotes}
+                <ThumbsUp size={12} /> {upvotes || 0}
               </span>
               <span className="text-xs flex items-center gap-1">
                 <Clock size={12} /> {formatTimeAgo(createdAt)}

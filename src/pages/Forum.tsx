@@ -42,7 +42,7 @@ const Forum = () => {
   
   // Extract unique tags from all discussions
   const allTags = Array.from(
-    new Set(discussions.flatMap(discussion => discussion.tags))
+    new Set(discussions.flatMap(discussion => discussion.tags || []))
   );
   
   // Simulate data loading
@@ -68,7 +68,7 @@ const Forum = () => {
       result = result.filter(discussion => 
         discussion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         discussion.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        discussion.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        (discussion.tags && discussion.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
       );
     }
     
@@ -129,10 +129,9 @@ const Forum = () => {
         createdAt: new Date(),
         tags: tagsArray,
         upvotes: 0,
-        comments: 0,
         views: 0,
-        isPopular: false,
-        isPinned: false
+        isPinned: false,
+        isPopular: false
       };
 
       setDiscussions(prevDiscussions => [newPost, ...prevDiscussions]);
