@@ -1,14 +1,22 @@
+
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { PageLayout } from "./layouts/PageLayout";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
   allowGuests?: boolean;
+  withLayout?: boolean;
 }
 
-export const ProtectedRoute = ({ children, requireAdmin = false, allowGuests = false }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ 
+  children, 
+  requireAdmin = false, 
+  allowGuests = false,
+  withLayout = true 
+}: ProtectedRouteProps) => {
   const { user, isLoading, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin" || user?.isAdmin;
 
@@ -25,7 +33,7 @@ export const ProtectedRoute = ({ children, requireAdmin = false, allowGuests = f
 
   // If guest access is allowed, render the content directly
   if (allowGuests && !isAuthenticated) {
-    return <>{children}</>;
+    return withLayout ? <PageLayout allowGuests>{children}</PageLayout> : <>{children}</>;
   }
 
   // If authentication is required but user is not authenticated
@@ -39,5 +47,5 @@ export const ProtectedRoute = ({ children, requireAdmin = false, allowGuests = f
   }
 
   // User is authenticated and has the required permissions
-  return <>{children}</>;
+  return withLayout ? <PageLayout>{children}</PageLayout> : <>{children}</>;
 };

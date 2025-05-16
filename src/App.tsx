@@ -11,10 +11,11 @@ import { ThemeProvider } from './components/providers/ThemeProvider';
 import Wiki from './pages/Wiki';
 import AdminPanel from './pages/AdminPanel';
 import Media from './pages/Media';
-import { PageLayout } from './components/layouts/PageLayout';
 import WikiArticlePage from './components/wiki/WikiArticlePage';
 import Auth from './pages/Auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 // Initialize React Query
 const queryClient = new QueryClient({
@@ -37,20 +38,65 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               
               {/* Protected routes with layout */}
-              <Route path="/" element={<PageLayout><Dashboard /></PageLayout>} />
-              <Route path="/dashboard" element={<PageLayout><Dashboard /></PageLayout>} />
-              <Route path="/profile" element={<PageLayout><Profile /></PageLayout>} />
-              <Route path="/profile/:userId" element={<PageLayout><Profile /></PageLayout>} />
-              <Route path="/media" element={<PageLayout><Media /></PageLayout>} />
-              <Route path="/settings" element={<PageLayout><Settings /></PageLayout>} />
+              <Route path="/" element={
+                <ProtectedRoute allowGuests={true}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile/:userId" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/media" element={
+                <ProtectedRoute allowGuests={true}>
+                  <Media />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
               
               {/* Public routes with layout */}
-              <Route path="/forum" element={<PageLayout allowGuests={true}><Forum /></PageLayout>} />
-              <Route path="/wiki" element={<PageLayout allowGuests={true}><Wiki /></PageLayout>} />
-              <Route path="/wiki/:articleId" element={<PageLayout allowGuests={true}><WikiArticlePage /></PageLayout>} />
+              <Route path="/forum" element={
+                <ProtectedRoute allowGuests={true}>
+                  <Forum />
+                </ProtectedRoute>
+              } />
+              <Route path="/wiki" element={
+                <ProtectedRoute allowGuests={true}>
+                  <Wiki />
+                </ProtectedRoute>
+              } />
+              <Route path="/wiki/:articleId" element={
+                <ProtectedRoute allowGuests={true}>
+                  <WikiArticlePage />
+                </ProtectedRoute>
+              } />
               
               {/* Admin routes */}
-              <Route path="/admin" element={<PageLayout><AdminPanel /></PageLayout>} />
+              <Route path="/admin" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminPanel />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/*" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminPanel />
+                </ProtectedRoute>
+              } />
               
               {/* 404 page */}
               <Route path="*" element={<NotFound />} />
@@ -58,6 +104,7 @@ function App() {
             <Toaster />
           </Router>
         </AuthProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ThemeProvider>
   );

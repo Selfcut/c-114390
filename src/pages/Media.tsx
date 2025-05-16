@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MediaFeed } from "@/components/media/MediaFeed";
 import { Plus, Image as ImageIcon, FileText, Loader2, Upload, Youtube } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserStatus } from "@/types/user";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface MediaPost {
   id: string;
@@ -35,9 +34,7 @@ export interface MediaPost {
 const Media = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [posts, setPosts] = useState<MediaPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [mediaType, setMediaType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("new");
@@ -49,84 +46,94 @@ const Media = () => {
   const [postContent, setPostContent] = useState("");
   const [postUrl, setPostUrl] = useState("");
   const [postType, setPostType] = useState<'image' | 'video' | 'document' | 'youtube' | 'text'>('text');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch media posts from Supabase
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      try {
-        let query = supabase
-          .from('media_posts')
-          .select(`
-            *,
-            profiles:user_id (name, avatar_url)
-          `)
-          .order('created_at', { ascending: false })
-          .range(page * 10, (page + 1) * 10 - 1);
-          
-        // Apply media type filter
-        if (mediaType !== "all") {
-          query = query.eq('type', mediaType);
-        }
+  const { data: postsData, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['mediaPosts', mediaType, sortBy, searchTerm, page],
+    queryFn: async () => {
+      let query = supabase
+        .from('media_posts')
+        .select(`
+          id,
+          title,
+          content,
+          url,
+          type,
+          created_at,
+          user_id,
+          likes,
+          comments,
+          profiles:profiles(name, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
+        .range(page * 10, (page + 1) * 10 - 1);
         
-        // Apply search filter if provided
-        if (searchTerm) {
-          query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
-        }
-        
-        // Apply sorting
-        if (sortBy === "popular") {
-          query = query.order('likes', { ascending: false });
-        } else if (sortBy === "new") {
-          query = query.order('created_at', { ascending: false });
-        }
-        
-        const { data, error } = await query;
-
-        if (error) throw error;
-        
-        // Handle the case where profiles might be an error object
-        const formattedData = data?.map(post => {
-          // If profiles is an error object or undefined, provide default values
-          if (!post.profiles || typeof post.profiles === 'string' || 'error' in post.profiles) {
-            return {
-              ...post,
-              profiles: { name: "Unknown", avatar_url: undefined }
-            } as MediaPost;
-          }
-          return post as MediaPost;
-        }) || [];
-        
-        if (page === 0) {
-          setPosts(formattedData);
-        } else {
-          setPosts(prev => [...prev, ...formattedData]);
-        }
-        
-        setHasMore(data && data.length === 10);
-
-      } catch (error: any) {
-        console.error('Error fetching media posts:', error);
-        toast({
-          title: "Error loading posts",
-          description: error.message || "Failed to load posts",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+      // Apply media type filter
+      if (mediaType !== "all") {
+        query = query.eq('type', mediaType);
       }
-    };
+      
+      // Apply search filter if provided
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+      }
+      
+      // Apply sorting
+      if (sortBy === "popular") {
+        query = query.order('likes', { ascending: false });
+      } else if (sortBy === "new") {
+        query = query.order('created_at', { ascending: false });
+      }
+      
+      const { data, error } = await query;
 
-    fetchPosts();
-  }, [page, mediaType, sortBy, searchTerm, toast]);
-
-  // Load more posts
-  const loadMore = () => {
-    if (!isLoading && hasMore) {
-      setPage(prev => prev + 1);
+      if (error) {
+        console.error('Error fetching media posts:', error);
+        throw error;
+      }
+      
+      return {
+        posts: data as MediaPost[],
+        hasMore: data && data.length === 10
+      };
     }
-  };
+  });
+
+  // Create post mutation
+  const createPostMutation = useMutation({
+    mutationFn: async (newPost: {
+      title: string;
+      content?: string;
+      url?: string;
+      type: string;
+      user_id: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('media_posts')
+        .insert(newPost)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mediaPosts'] });
+      toast({
+        title: "Post Created",
+        description: "Your post has been published successfully",
+      });
+      setIsCreateDialogOpen(false);
+      resetForm();
+      setPage(0);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error Creating Post",
+        description: error.message || "Failed to create post",
+        variant: "destructive",
+      });
+    }
+  });
 
   // Process YouTube URL to extract video ID
   const extractYoutubeId = (url: string) => {
@@ -166,8 +173,6 @@ const Media = () => {
     }
 
     try {
-      setIsSubmitting(true);
-      
       // Process YouTube URL if applicable
       let finalUrl = postUrl;
       if (postType === 'youtube') {
@@ -178,40 +183,19 @@ const Media = () => {
             description: "Please enter a valid YouTube video URL",
             variant: "destructive"
           });
-          setIsSubmitting(false);
           return;
         }
         finalUrl = `https://www.youtube.com/embed/${videoId}`;
       }
       
       // Create post in Supabase
-      const { data: post, error } = await supabase
-        .from('media_posts')
-        .insert({
-          title: postTitle,
-          content: postContent,
-          url: finalUrl,
-          type: postType,
-          user_id: user.id
-        })
-        .select();
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Post Created",
-        description: "Your post has been published successfully",
+      createPostMutation.mutate({
+        title: postTitle,
+        content: postContent,
+        url: finalUrl,
+        type: postType,
+        user_id: user.id
       });
-      
-      // Close dialog and reset form
-      setIsCreateDialogOpen(false);
-      setPostTitle("");
-      setPostContent("");
-      setPostUrl("");
-      setPostType("text");
-      
-      // Refresh posts
-      setPage(0);
     } catch (error: any) {
       console.error('Error creating post:', error);
       toast({
@@ -219,231 +203,264 @@ const Media = () => {
         description: error.message || "Failed to create post",
         variant: "destructive"
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  return (
-    <PageLayout>
-      <div className="container mx-auto py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <ImageIcon size={28} className="text-primary" />
-              Media Feed
-            </h1>
-            <p className="text-muted-foreground">Share and discover videos, images, and more</p>
-          </div>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus size={16} />
-            <span>Create Post</span>
-          </Button>
-        </div>
+  // Reset form after submission
+  const resetForm = () => {
+    setPostTitle("");
+    setPostContent("");
+    setPostUrl("");
+    setPostType("text");
+  };
 
-        <div className="mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Input
-                    type="search"
-                    placeholder="Search media..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                
-                <Select value={mediaType} onValueChange={setMediaType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="image">Images</SelectItem>
-                    <SelectItem value="document">Documents</SelectItem>
-                    <SelectItem value="text">Text Posts</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">Newest First</SelectItem>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <MediaFeed 
-          posts={posts}
-          isLoading={isLoading}
-          hasMore={hasMore}
-          loadMore={loadMore}
-          currentUser={user ? {
-            id: user.id,
-            username: user.username || '',
-            name: user.name || '',
-            email: user.email || '',
-            avatar: user.avatar || '',
-            bio: '',
-            website: '',
-            role: '',
-            isAdmin: false,
-            status: 'online' as UserStatus,
-            isGhostMode: false
-          } : null}
-        />
-        
-        {/* Create Post Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New Post</DialogTitle>
-              <DialogDescription>
-                Share videos, documents, images or text with your community
-              </DialogDescription>
-            </DialogHeader>
-            
-            <Tabs defaultValue="text" value={postType} onValueChange={(v) => setPostType(v as any)}>
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="text" className="flex items-center gap-1">
-                  <FileText size={14} />
-                  Text
-                </TabsTrigger>
-                <TabsTrigger value="youtube" className="flex items-center gap-1">
-                  <Youtube size={14} />
-                  YouTube
-                </TabsTrigger>
-                <TabsTrigger value="image" className="flex items-center gap-1">
-                  <ImageIcon size={14} />
-                  Image
-                </TabsTrigger>
-                <TabsTrigger value="document" className="flex items-center gap-1">
-                  <FileText size={14} />
-                  Document
-                </TabsTrigger>
-              </TabsList>
-              
-              <div className="space-y-4 mt-4">
-                <div>
-                  <label htmlFor="title" className="text-sm font-medium block mb-1">
-                    Title<span className="text-red-500">*</span>
-                  </label>
-                  <Input 
-                    id="title"
-                    placeholder="Enter post title" 
-                    value={postTitle}
-                    onChange={(e) => setPostTitle(e.target.value)}
-                  />
-                </div>
-                
-                <TabsContent value="text">
-                  <div>
-                    <label htmlFor="content" className="text-sm font-medium block mb-1">
-                      Content<span className="text-red-500">*</span>
-                    </label>
-                    <Textarea
-                      id="content"
-                      placeholder="Write your post..."
-                      rows={6}
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="youtube">
-                  <div>
-                    <label htmlFor="youtube-url" className="text-sm font-medium block mb-1">
-                      YouTube URL<span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      id="youtube-url"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      value={postUrl}
-                      onChange={(e) => setPostUrl(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Paste the full YouTube video URL
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <label htmlFor="youtube-description" className="text-sm font-medium block mb-1">
-                      Description (Optional)
-                    </label>
-                    <Textarea
-                      id="youtube-description"
-                      placeholder="Add a description for this video..."
-                      rows={3}
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="image">
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                    <ImageIcon size={32} className="mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">Image uploads coming soon</p>
-                    <p className="text-xs text-muted-foreground">For now, please use a URL for your image</p>
-                    <Input
-                      className="mt-4"
-                      placeholder="Image URL"
-                      value={postUrl}
-                      onChange={(e) => setPostUrl(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Textarea
-                      placeholder="Add an image description..."
-                      rows={3}
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="document">
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                    <Upload size={32} className="mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">Document uploads coming soon</p>
-                    <p className="text-xs text-muted-foreground">For now, please use a URL for your document</p>
-                    <Input
-                      className="mt-4"
-                      placeholder="Document URL"
-                      value={postUrl}
-                      onChange={(e) => setPostUrl(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-              </div>
-            </Tabs>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreatePost} disabled={isSubmitting} className="flex items-center gap-2">
-                {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isSubmitting ? "Creating..." : "Create Post"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+  // Load more posts
+  const loadMore = () => {
+    if (!isLoading) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
+
+  // Create empty state components for better UX
+  const EmptyState = () => (
+    <div className="text-center py-10">
+      <div className="mx-auto w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
+        <ImageIcon className="h-8 w-8 text-primary" />
       </div>
-    </PageLayout>
+      <h3 className="text-lg font-medium mb-2">No media posts yet</h3>
+      <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+        Be the first to share content with the community
+      </p>
+      <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" />
+        Create Post
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <ImageIcon size={28} className="text-primary" />
+            Media Feed
+          </h1>
+          <p className="text-muted-foreground">Share and discover videos, images, and more</p>
+        </div>
+        <Button 
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus size={16} />
+          <span>Create Post</span>
+        </Button>
+      </div>
+
+      <div className="mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative">
+                <Input
+                  type="search"
+                  placeholder="Search media..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <Select value={mediaType} onValueChange={setMediaType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="image">Images</SelectItem>
+                  <SelectItem value="document">Documents</SelectItem>
+                  <SelectItem value="text">Text Posts</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">Newest First</SelectItem>
+                  <SelectItem value="popular">Most Popular</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {isError ? (
+        <MediaFeed 
+          posts={[]}
+          isLoading={isLoading}
+          hasMore={false}
+          loadMore={loadMore}
+          currentUser={user}
+          error={error instanceof Error ? error.message : "An error occurred while fetching posts"}
+        />
+      ) : !postsData?.posts || postsData.posts.length === 0 && !isLoading ? (
+        <Card>
+          <CardContent className="p-6">
+            <EmptyState />
+          </CardContent>
+        </Card>
+      ) : (
+        <MediaFeed 
+          posts={postsData?.posts || []}
+          isLoading={isLoading}
+          hasMore={postsData?.hasMore || false}
+          loadMore={loadMore}
+          currentUser={user}
+        />
+      )}
+      
+      {/* Create Post Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create New Post</DialogTitle>
+            <DialogDescription>
+              Share videos, documents, images or text with your community
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="text" value={postType} onValueChange={(v) => setPostType(v as any)}>
+            <TabsList className="grid grid-cols-4">
+              <TabsTrigger value="text" className="flex items-center gap-1">
+                <FileText size={14} />
+                Text
+              </TabsTrigger>
+              <TabsTrigger value="youtube" className="flex items-center gap-1">
+                <Youtube size={14} />
+                YouTube
+              </TabsTrigger>
+              <TabsTrigger value="image" className="flex items-center gap-1">
+                <ImageIcon size={14} />
+                Image
+              </TabsTrigger>
+              <TabsTrigger value="document" className="flex items-center gap-1">
+                <FileText size={14} />
+                Document
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="space-y-4 mt-4">
+              <div>
+                <label htmlFor="title" className="text-sm font-medium block mb-1">
+                  Title<span className="text-red-500">*</span>
+                </label>
+                <Input 
+                  id="title"
+                  placeholder="Enter post title" 
+                  value={postTitle}
+                  onChange={(e) => setPostTitle(e.target.value)}
+                />
+              </div>
+              
+              <TabsContent value="text">
+                <div>
+                  <label htmlFor="content" className="text-sm font-medium block mb-1">
+                    Content<span className="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    id="content"
+                    placeholder="Write your post..."
+                    rows={6}
+                    value={postContent}
+                    onChange={(e) => setPostContent(e.target.value)}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="youtube">
+                <div>
+                  <label htmlFor="youtube-url" className="text-sm font-medium block mb-1">
+                    YouTube URL<span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="youtube-url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={postUrl}
+                    onChange={(e) => setPostUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Paste the full YouTube video URL
+                  </p>
+                </div>
+                
+                <div className="mt-4">
+                  <label htmlFor="youtube-description" className="text-sm font-medium block mb-1">
+                    Description (Optional)
+                  </label>
+                  <Textarea
+                    id="youtube-description"
+                    placeholder="Add a description for this video..."
+                    rows={3}
+                    value={postContent}
+                    onChange={(e) => setPostContent(e.target.value)}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="image">
+                <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                  <ImageIcon size={32} className="mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Image uploads coming soon</p>
+                  <p className="text-xs text-muted-foreground">For now, please use a URL for your image</p>
+                  <Input
+                    className="mt-4"
+                    placeholder="Image URL"
+                    value={postUrl}
+                    onChange={(e) => setPostUrl(e.target.value)}
+                  />
+                </div>
+                
+                <div className="mt-4">
+                  <Textarea
+                    placeholder="Add an image description..."
+                    rows={3}
+                    value={postContent}
+                    onChange={(e) => setPostContent(e.target.value)}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="document">
+                <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                  <Upload size={32} className="mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Document uploads coming soon</p>
+                  <p className="text-xs text-muted-foreground">For now, please use a URL for your document</p>
+                  <Input
+                    className="mt-4"
+                    placeholder="Document URL"
+                    value={postUrl}
+                    onChange={(e) => setPostUrl(e.target.value)}
+                  />
+                </div>
+              </TabsContent>
+            </div>
+          </Tabs>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={createPostMutation.isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreatePost} disabled={createPostMutation.isPending} className="flex items-center gap-2">
+              {createPostMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+              {createPostMutation.isPending ? "Creating..." : "Create Post"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

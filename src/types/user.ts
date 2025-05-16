@@ -1,29 +1,16 @@
 
-// User status type
-export type UserStatus = 'online' | 'away' | 'do-not-disturb' | 'offline' | 'invisible';
+export type UserStatus = 'online' | 'away' | 'offline' | 'dnd';
 
-// User roles
-export type UserRole = 'admin' | 'moderator' | 'user' | string;
-
-// User notification settings
-export interface NotificationSettings {
-  desktopNotifications: boolean;
-  soundNotifications: boolean;
-  emailNotifications: boolean;
-}
-
-// User profile
 export interface UserProfile {
   id: string;
-  name: string;
   username: string;
+  name: string;
   email: string;
-  avatar: string;
-  bio: string;
-  website: string;
-  status: UserStatus;
-  isGhostMode?: boolean; // Made optional to match the usage in auth-context.tsx
-  role: UserRole;
+  avatar?: string;
+  bio?: string;
+  website?: string;
+  role?: string;
   isAdmin?: boolean;
-  notificationSettings?: NotificationSettings;
+  status: UserStatus;
+  isGhostMode?: boolean;
 }

@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, ThumbsUp, Loader2 } from "lucide-react";
+import { MessageSquare, ThumbsUp, Loader2, AlertCircle } from "lucide-react";
 import { ImageCard } from "./media-cards/ImageCard";
 import { VideoCard } from "./media-cards/VideoCard";
 import { DocumentCard } from "./media-cards/DocumentCard";
@@ -12,6 +12,8 @@ import { YouTubeCard } from "./media-cards/YouTubeCard";
 import { MediaPost } from "@/pages/Media";
 import { UserProfile } from "@/types/user";
 import { useInView } from "react-intersection-observer";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface MediaFeedProps {
   posts: MediaPost[];
@@ -19,6 +21,7 @@ interface MediaFeedProps {
   hasMore: boolean;
   loadMore: () => void;
   currentUser: UserProfile | null;
+  error?: string | null;
 }
 
 export const MediaFeed = ({
@@ -26,7 +29,8 @@ export const MediaFeed = ({
   isLoading,
   hasMore,
   loadMore,
-  currentUser
+  currentUser,
+  error
 }: MediaFeedProps) => {
   const { ref, inView } = useInView();
 
@@ -54,29 +58,40 @@ export const MediaFeed = ({
     }
   };
 
+  // Show error if there's one
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   // Loading state
   if (isLoading && posts.length === 0) {
     return (
       <div className="space-y-6 my-6">
         {[1, 2, 3].map((_, index) => (
-          <Card key={index}>
+          <Card key={index} className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted"></div>
-                <div>
-                  <div className="h-5 w-32 mb-1 bg-muted"></div>
-                  <div className="h-4 w-24 bg-muted"></div>
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pb-2">
-              <div className="h-6 w-full mb-4 bg-muted"></div>
-              <div className="h-[200px] w-full rounded-lg bg-muted"></div>
+              <Skeleton className="h-4 w-full mb-4" />
+              <Skeleton className="h-[200px] w-full rounded-lg" />
             </CardContent>
             <CardFooter>
               <div className="flex justify-between w-full">
-                <div className="h-6 w-20 bg-muted"></div>
-                <div className="h-6 w-20 bg-muted"></div>
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
               </div>
             </CardFooter>
           </Card>
@@ -94,9 +109,10 @@ export const MediaFeed = ({
             <MessageSquare size={24} className="text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium">No posts found</h3>
-          <p className="text-muted-foreground mt-2">
-            There are no posts matching your criteria. Try adjusting your filters or create the first post.
+          <p className="text-muted-foreground mt-2 mb-6">
+            Be the first to create a post in the community
           </p>
+          <Button>Create a post</Button>
         </CardContent>
       </Card>
     );
@@ -105,59 +121,59 @@ export const MediaFeed = ({
   return (
     <div className="space-y-6 my-6">
       {posts.map((post) => (
-        <Card key={post.id}>
+        <Card key={post.id} className="overflow-hidden group">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarImage src={post.profiles?.avatar_url} />
+                <AvatarImage 
+                  src={post.profiles?.avatar_url || ""} 
+                  alt={post.profiles?.name || "User"} 
+                />
                 <AvatarFallback>
-                  {post.profiles?.name?.charAt(0) || "U"}
+                  {(post.profiles?.name?.charAt(0) || "U").toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">{post.profiles?.name || "User"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {post.created_at
-                    ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
-                    : "Recently"}
-                </p>
+                <div className="font-medium">{post.profiles?.name || "Unknown User"}</div>
+                <div className="text-sm text-muted-foreground">
+                  {post.created_at && formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </div>
               </div>
             </div>
           </CardHeader>
+          
           <CardContent className="pb-2">
             <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
             {renderMediaContent(post)}
           </CardContent>
-          <CardFooter>
+          
+          <CardFooter className="py-3">
             <div className="flex justify-between w-full">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                <ThumbsUp size={16} />
-                <span>{post.likes || 0}</span>
+              <Button variant="ghost" size="sm">
+                <ThumbsUp size={16} className="mr-2" />
+                {post.likes || 0}
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                <MessageSquare size={16} />
-                <span>{post.comments || 0}</span>
+              <Button variant="ghost" size="sm">
+                <MessageSquare size={16} className="mr-2" />
+                {post.comments || 0} Comments
               </Button>
             </div>
           </CardFooter>
         </Card>
       ))}
-
-      {/* Loading more indicator */}
+      
+      {/* Load more trigger element */}
       {hasMore && (
-        <div ref={ref} className="flex justify-center py-4">
-          <Button variant="ghost" disabled className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading more posts...</span>
-          </Button>
+        <div ref={ref} className="py-4 text-center">
+          {isLoading ? (
+            <div className="flex justify-center">
+              <Loader2 size={24} className="animate-spin" />
+            </div>
+          ) : (
+            <Button variant="outline" onClick={loadMore}>
+              Load More
+            </Button>
+          )}
         </div>
       )}
     </div>

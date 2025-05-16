@@ -1,34 +1,37 @@
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ImageCardProps {
   url: string;
   title: string;
-  className?: string;
 }
 
-export const ImageCard: React.FC<ImageCardProps> = ({ url, title, className }) => {
+export const ImageCard = ({ url, title }: ImageCardProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
   return (
-    <Card className={cn("overflow-hidden my-4", className)}>
-      {url ? (
-        <div className="aspect-video relative">
-          <img 
-            src={url} 
-            alt={title} 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to a placeholder if image fails to load
-              (e.target as HTMLImageElement).src = "https://placehold.co/600x400?text=Image+Not+Available";
-            }} 
-          />
-        </div>
+    <div className="relative rounded-md overflow-hidden bg-muted h-[300px]">
+      {isLoading && <Skeleton className="absolute inset-0" />}
+      
+      {!hasError ? (
+        <img
+          src={url}
+          alt={title}
+          className="w-full h-full object-contain"
+          onLoad={() => setIsLoading(false)}
+          onError={() => {
+            setIsLoading(false);
+            setHasError(true);
+          }}
+          style={{ display: isLoading ? 'none' : 'block' }}
+        />
       ) : (
-        <div className="aspect-video bg-muted flex items-center justify-center">
-          <p className="text-muted-foreground">Image not available</p>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-sm text-muted-foreground">Failed to load image</p>
         </div>
       )}
-    </Card>
+    </div>
   );
 };
