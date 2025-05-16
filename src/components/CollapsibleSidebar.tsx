@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -21,6 +21,7 @@ import { Button } from "./ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { CustomTooltip } from "./ui/CustomTooltip";
 import { publishSidebarCollapse, subscribeToSidebarCollapse } from "@/lib/utils/event-utils";
+import { HeaderLogo } from "./header/HeaderLogo";
 
 export const CollapsibleSidebar = () => {
   const { user, signOut } = useAuth();
@@ -116,8 +117,10 @@ export const CollapsibleSidebar = () => {
     }`}>
       <div className="flex items-center p-4 h-16 border-b border-border justify-between">
         <div className="flex items-center">
-          <img src="/logo.svg" alt="Logo" className="h-8 w-8 mr-2" />
-          {!collapsed && <span className="font-bold text-lg">Polymath</span>}
+          <Link to="/" className="flex items-center">
+            <HeaderLogo />
+            {!collapsed && <span className="font-medium text-lg ml-2">Polymath</span>}
+          </Link>
         </div>
         <CustomTooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Button 
@@ -140,7 +143,7 @@ export const CollapsibleSidebar = () => {
                   to={item.path}
                   className={({ isActive }) => `
                     flex items-center px-4 py-2 rounded-md text-sm
-                    ${isActive ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted"}
+                    ${isActive ? "bg-accent text-accent-foreground font-medium" : "text-foreground hover:bg-muted"}
                   `}
                 >
                   <span className="mr-3">{item.icon}</span>
@@ -158,7 +161,7 @@ export const CollapsibleSidebar = () => {
             <div className="flex items-center">
               {user && (
                 <>
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden mr-3">
+                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-accent-foreground overflow-hidden mr-3">
                     {user.avatar ? (
                       <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                     ) : (

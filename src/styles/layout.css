@@ -3,13 +3,16 @@
 .sidebar {
   background-color: hsl(var(--sidebar-background));
   border-right: 1px solid hsl(var(--sidebar-border));
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: width 0.3s ease-out, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header {
   background-color: hsl(var(--background));
-  padding: 1rem;
+  padding: 0;
   border-bottom: 1px solid hsl(var(--border));
+  height: 4rem;
+  display: flex;
+  align-items: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -27,6 +30,36 @@
   overflow-x: hidden;
 }
 
+/* Improved spacing and layout */
+.content-container {
+  padding: 1.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.section-container {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+/* Discord-like card layout */
+.card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.item-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebar {
@@ -34,9 +67,13 @@
     border-right: none;
     border-bottom: 1px solid hsl(var(--border));
   }
+  
+  .content-container {
+    padding: 1rem;
+  }
 }
 
-/* PromoBar styling */
+/* PromoBar styling - more subtle */
 .promo-bar {
   background-color: hsl(var(--promo));
   color: hsl(var(--promo-foreground));
@@ -44,13 +81,6 @@
   padding: 0.5rem 1rem;
   position: relative;
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Content Container */
-.content-container {
-  padding: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 /* Page layout */
@@ -67,4 +97,20 @@
   background-color: hsl(var(--background));
   border-top: 1px solid hsl(var(--border));
   transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Discord-like list styling */
+.list-item {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  transition: background-color 0.15s ease;
+}
+
+.list-item:hover {
+  background-color: hsl(var(--accent));
+}
+
+.list-item-active {
+  background-color: hsl(var(--accent));
+  font-weight: 500;
 }

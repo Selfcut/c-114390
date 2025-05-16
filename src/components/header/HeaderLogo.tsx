@@ -1,10 +1,9 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
 
 export const HeaderLogo = () => {
   return (
-    <Link to="/" className="flex items-center gap-2 mr-4">
+    <div className="flex items-center gap-2">
       <svg
         width="32"
         height="32"
@@ -76,7 +75,6 @@ export const HeaderLogo = () => {
           <circle className="center-dot" cx="50" cy="50" r="6" />
         </g>
       </svg>
-      <span className="font-bold text-xl hidden md:inline">Polymath</span>
-    </Link>
+    </div>
   );
 };

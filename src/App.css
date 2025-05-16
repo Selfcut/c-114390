@@ -1,10 +1,29 @@
 
 #root {
   margin: 0 auto;
-  text-align: center;
   width: 100%;
   max-width: 100%;
   padding: 0;
+  text-align: left;
+}
+
+/* Improved typography */
+body {
+  font-family: var(--font-sans);
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.3;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 1em;
+  line-height: 1.6;
 }
 
 .logo {
@@ -19,38 +38,31 @@
   transform: rotate(5deg) scale(1.05);
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em rgba(97, 218, 251, 0.6));
+/* Discord-like spacing and containers */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.section {
+  padding: var(--spacing-lg) 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
+/* Card improvements */
 .card {
-  padding: 2em;
+  padding: var(--spacing-lg);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: var(--radius);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
 }
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.read-the-docs {
-  color: #888;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* Remove blue outlines */
@@ -60,7 +72,7 @@
 
 button:focus, a:focus, input:focus, textarea:focus, select:focus {
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(var(--primary), 0.2) !important;
 }
 
 /* Add smooth scroll */
@@ -68,38 +80,41 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Discord style */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsla(var(--background), 0.5);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsla(var(--muted), 1);
+  background: hsla(var(--muted), 0.7);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--accent), 1);
+  background: hsla(var(--muted-foreground), 0.8);
 }
 
 /* Enhance text selection */
 ::selection {
-  background-color: hsla(var(--primary), 0.3);
+  background-color: hsla(var(--primary), 0.2);
   color: hsl(var(--foreground));
 }
 
 /* Enhance links */
 a {
   transition: all 0.2s ease;
+  color: hsl(var(--primary));
+  text-decoration: none;
 }
 
 a:hover {
   opacity: 0.9;
+  text-decoration: underline;
 }
 
 /* Enhance images */
@@ -107,35 +122,6 @@ img {
   max-width: 100%;
   height: auto;
   object-fit: cover;
-}
-
-/* Typography enhancements */
-h1, h2, h3, h4, h5, h6 {
-  line-height: 1.3;
-  margin-bottom: 0.5em;
-}
-
-p {
-  line-height: 1.6;
-}
-
-/* Card grid for responsive layouts */
-.card-grid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-/* Responsive adjustments */
-@media screen and (min-width: 640px) {
-  .card-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media screen and (min-width: 1024px) {
-  .card-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 /* Badge styles */
@@ -149,53 +135,40 @@ p {
   line-height: 1;
 }
 
-/* Paper effect */
+/* Discord-like spacing helpers */
+.space-y-1 > * + * {
+  margin-top: 0.25rem;
+}
+
+.space-y-2 > * + * {
+  margin-top: 0.5rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+.space-x-2 > * + * {
+  margin-left: 0.5rem;
+}
+
+.space-x-4 > * + * {
+  margin-left: 1rem;
+}
+
+/* Paper effect - subtle version */
 .paper-effect {
   position: relative;
   background-color: hsl(var(--card));
   border-radius: var(--radius);
   box-shadow: 
-    0 1px 3px rgba(0,0,0,0.12),
-    0 1px 2px rgba(0,0,0,0.24);
+    0 1px 3px rgba(0,0,0,0.06),
+    0 1px 2px rgba(0,0,0,0.12);
   transition: all 0.3s cubic-bezier(.25,.8,.25,1);
 }
 
 .paper-effect:hover {
   box-shadow: 
-    0 14px 28px rgba(0,0,0,0.25),
-    0 10px 10px rgba(0,0,0,0.22);
-}
-
-/* Glass effect */
-.glass-effect {
-  background: rgba(30, 30, 30, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Glow effect */
-.glow-effect {
-  position: relative;
-}
-
-.glow-effect::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, 
-    hsla(var(--primary), 0.6), 
-    hsla(var(--primary), 0) 60%,
-    hsla(var(--primary), 0) 100%);
-  border-radius: calc(var(--radius) + 2px);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.glow-effect:hover::before {
-  opacity: 1;
+    0 10px 20px rgba(0,0,0,0.12),
+    0 6px 6px rgba(0,0,0,0.1);
 }
