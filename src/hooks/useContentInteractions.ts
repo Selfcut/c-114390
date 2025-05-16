@@ -135,7 +135,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
             ? 'media_posts' 
             : 'quotes';
             
-        // Update the likes count directly
+        // Update the likes count directly using our RPC function
         await supabase.rpc('decrement_counter_fn', {
           row_id: id,
           column_name: 'likes',
@@ -160,7 +160,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
             ? 'media_posts' 
             : 'quotes';
             
-        // Update the likes count directly
+        // Update the likes count directly using our RPC function
         await supabase.rpc('increment_counter_fn', {
           row_id: id,
           column_name: 'likes',

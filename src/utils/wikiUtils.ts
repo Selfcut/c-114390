@@ -30,12 +30,10 @@ export const fetchWikiArticles = async (options?: {
   const page = options?.page || 0;
 
   try {
+    // Create a basic query that doesn't join with profiles
     let query = supabase
       .from('wiki_articles')
-      .select(`
-        *,
-        profiles:profiles(name, avatar_url)
-      `)
+      .select('*')
       .order('last_updated', { ascending: false })
       .limit(pageSize)
       .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -49,6 +47,28 @@ export const fetchWikiArticles = async (options?: {
 
     if (error) throw error;
 
+    // Now get user profiles in a separate query
+    const userIds = articles?.map(article => article.user_id) || [];
+    
+    // Get profiles if we have user IDs
+    let profiles: Record<string, { name?: string; avatar_url?: string }> = {};
+    
+    if (userIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', userIds);
+        
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profiles[profile.id] = {
+            name: profile.name,
+            avatar_url: profile.avatar_url
+          };
+        });
+      }
+    }
+
     // Format the returned data
     const formattedArticles: WikiArticle[] = (articles || []).map(item => ({
       id: item.id,
@@ -59,7 +79,7 @@ export const fetchWikiArticles = async (options?: {
       lastUpdated: formatLastUpdated(item.last_updated || ''),
       contributors: item.contributors || 1,
       views: item.views || 0,
-      author: item.profiles?.name || 'Unknown'
+      author: profiles[item.user_id]?.name || 'Unknown'
     }));
 
     return { 
@@ -77,10 +97,7 @@ export const fetchWikiArticleById = async (id: string) => {
   try {
     const { data, error } = await supabase
       .from('wiki_articles')
-      .select(`
-        *,
-        profiles:profiles(name, avatar_url)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -88,6 +105,21 @@ export const fetchWikiArticleById = async (id: string) => {
     
     if (!data) {
       return { article: null, error: "Article not found" };
+    }
+
+    // Get the author profile
+    let authorName = 'Unknown';
+    
+    if (data.user_id) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', data.user_id)
+        .single();
+        
+      if (profileData && profileData.name) {
+        authorName = profileData.name;
+      }
     }
 
     // Format the returned data
@@ -100,7 +132,7 @@ export const fetchWikiArticleById = async (id: string) => {
       lastUpdated: formatLastUpdated(data.last_updated || ''),
       contributors: data.contributors || 1,
       views: data.views || 0,
-      author: data.profiles?.name || 'Unknown'
+      author: authorName
     };
 
     // Update view count
@@ -149,7 +181,8 @@ export const createWikiArticle = async (articleData: {
       content: data.content,
       lastUpdated: "Just now",
       contributors: 1,
-      views: 0
+      views: 0,
+      author: 'You' // Assuming it's the current user
     };
 
     return { article };
@@ -162,12 +195,12 @@ export const createWikiArticle = async (articleData: {
 // Function to increment view count for an article
 export const incrementWikiViews = async (id: string) => {
   try {
-    const { error } = await supabase
-      .from('wiki_articles')
-      .update({ views: supabase.rpc('increment_counter_fn', { row_id: id, column_name: 'views' }) })
-      .eq('id', id);
-    
-    if (error) throw error;
+    // Use our RPC function to increment the view count
+    await supabase.rpc('increment_counter_fn', {
+      row_id: id,
+      column_name: 'views',
+      table_name: 'wiki_articles'
+    });
     
     return { success: true };
   } catch (err) {

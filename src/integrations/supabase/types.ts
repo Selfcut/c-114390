@@ -567,9 +567,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_counter_fn: {
+        Args: { row_id: string; column_name: string; table_name: string }
+        Returns: undefined
+      }
       has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
+      }
+      increment_counter_fn: {
+        Args: { row_id: string; column_name: string; table_name: string }
+        Returns: undefined
       }
     }
     Enums: {
