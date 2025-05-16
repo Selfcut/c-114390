@@ -5,18 +5,19 @@ export const HeaderLogo = () => {
   return (
     <div className="flex items-center gap-2">
       <svg
-        width="32"
-        height="32"
-        viewBox="0 0 100 100"
+        width="280"
+        height="100"
+        viewBox="0 0 280 100"
         xmlns="http://www.w3.org/2000/svg"
-        className="text-primary"
+        fill="currentColor"
+        className="h-8 w-auto text-primary"
         aria-label="Polymath Logo"
       >
-        <title>Interactive Polymath Icon</title>
+        <title>Polymath Platform Logo</title>
 
         <style>
           {`
-          /* Base styles for elements */
+          /* Base styles for icon elements */
           .polymath-icon-group .line {
             stroke: currentColor;
             stroke-width: 5;
@@ -35,7 +36,7 @@ export const HeaderLogo = () => {
             transition: transform 0.3s ease-out, fill 0.3s ease-out;
           }
 
-          /* Hover effects */
+          /* Hover effects for the icon part (triggered by hovering the whole SVG) */
           svg:hover .polymath-icon-group .node-1 {
             transform: scale(1.2);
           }
@@ -53,10 +54,20 @@ export const HeaderLogo = () => {
           svg:hover .polymath-icon-group .line {
             stroke-width: 6;
           }
+
+          /* Style for the brand text */
+          .polymath-brand-text {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; /* Common system font stack */
+            font-size: 32px; /* Adjust as needed for balance */
+            font-weight: 600; /* Semi-bold */
+            fill: currentColor; /* Inherits color from SVG */
+            dominant-baseline: middle; /* Helps with vertical alignment */
+          }
           `}
         </style>
 
-        <g className="polymath-icon-group">
+        {/* Icon Group - positioned on the left side of the new viewBox */}
+        <g className="polymath-icon-group" transform="translate(0, 0)">
           {/* Connecting lines */}
           <g className="lines">
             <line className="line line-top" x1="50" y1="50" x2="50" y2="25" />
@@ -74,6 +85,11 @@ export const HeaderLogo = () => {
           {/* Central point */}
           <circle className="center-dot" cx="50" cy="50" r="6" />
         </g>
+
+        {/* Brand Text */}
+        <text x="115" y="50" className="polymath-brand-text">
+          Polymath
+        </text>
       </svg>
     </div>
   );
