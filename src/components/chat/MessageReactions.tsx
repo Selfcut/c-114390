@@ -99,7 +99,7 @@ export const MessageReactions = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2">
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {quickReactions.map((emoji) => (
               <Button
                 key={emoji}

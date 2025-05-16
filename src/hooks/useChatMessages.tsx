@@ -1,287 +1,179 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { ChatMessage, Conversation } from "@/components/chat/types";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
+import { ChatMessage } from "@/components/chat/types";
+
+// Mock conversations - in a real app, this would come from a database
+const initialConversations = [
+  {
+    id: "1",
+    name: "General Chat",
+    lastMessage: "Welcome to the community!",
+    updatedAt: new Date().toISOString(),
+    isGlobal: true
+  },
+  {
+    id: "2",
+    name: "Book Club",
+    lastMessage: "What's everyone reading?",
+    updatedAt: new Date(Date.now() - 3600000).toISOString(),
+    isGroup: true
+  },
+  {
+    id: "3",
+    name: "Philosophy Discussion",
+    lastMessage: "Interesting perspective!",
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    isGroup: true
+  }
+];
+
+// Initial messages for the first conversation
+const initialMessages: ChatMessage[] = [
+  {
+    id: "1",
+    conversationId: "1",
+    content: "Welcome to the Philosophy community! Feel free to ask questions or share insights.",
+    senderName: "System",
+    userId: "system",
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: "2", 
+    conversationId: "1",
+    content: "Hello everyone! What major philosophical work has influenced you the most?",
+    senderName: "Maria",
+    userId: "user-1",
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "3",
+    conversationId: "1",
+    content: "I'd say Nietzsche's 'Beyond Good and Evil' changed my perspective significantly.",
+    senderName: "John",
+    userId: "user-2",
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+  },
+  {
+    id: "4",
+    conversationId: "1",
+    content: "@Maria I've been deeply influenced by Eastern philosophy, particularly the Tao Te Ching.",
+    senderName: "Alex",
+    userId: "user-3",
+    createdAt: new Date(Date.now() - 900000).toISOString(),
+  },
+  {
+    id: "5",
+    conversationId: "1",
+    content: "![meditation](https://media.tenor.com/YrJDHCj7JFAAAAAd/meditation-meditate.gif)",
+    senderName: "Zen",
+    userId: "user-4",
+    createdAt: new Date(Date.now() - 300000).toISOString(),
+  }
+];
 
 export const useChatMessages = () => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState("global"); // Default to Global Chat
+  const [conversations, setConversations] = useState(initialConversations);
+  const [selectedConversation, setSelectedConversation] = useState<string>(initialConversations[0].id);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const messagesSubscriptionRef = useRef<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Format time for chat messages
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat("en", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    }).format(date);
+  // Format time for display
+  const formatTime = (timestamp: string) => {
+    try {
+      return format(new Date(timestamp), "h:mm a");
+    } catch (error) {
+      return "Invalid time";
+    }
   };
 
-  // Fetch conversations
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('conversations')
-          .select('*')
-          .order('is_global', { ascending: false })
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          const formattedConversations = data.map(convo => ({
-            id: convo.id,
-            name: convo.name,
-            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${convo.name}`,
-            lastMessage: convo.last_message || "No messages yet",
-            unread: 0,
-            isGlobal: convo.is_global,
-            isGroup: convo.is_group
-          }));
-          setConversations(formattedConversations);
-        }
-      } catch (err) {
-        console.error("Error fetching conversations:", err);
-      }
-    };
-
-    fetchConversations();
-
-    // Subscribe to changes in conversations table
-    const conversationsSubscription = supabase
-      .channel('conversations_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'conversations' },
-        () => {
-          fetchConversations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(conversationsSubscription);
-    };
-  }, []);
-
-  // Fetch messages for the selected conversation
-  useEffect(() => {
-    const fetchMessages = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Fetch messages for the selected conversation
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select(`
-            id,
-            content,
-            created_at,
-            user_id,
-            sender_name,
-            conversation_id
-          `)
-          .eq("conversation_id", selectedConversation)
-          .order("created_at", { ascending: true })
-          .limit(50);
-
-        if (error) {
-          console.error("Error fetching messages:", error);
-          toast({
-            title: "Failed to load messages",
-            description: error.message,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Transform data into ChatMessage format
-        const messagesWithProfiles = await Promise.all(data.map(async (msg) => {
-          let userName = msg.sender_name || "Anonymous User";
-          let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${msg.user_id || msg.sender_name || "anonymous"}`;
-          
-          // If we have a user_id, try to fetch their profile
-          if (msg.user_id) {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('name, avatar_url')
-              .eq('id', msg.user_id)
-              .maybeSingle();
-              
-            if (profileData) {
-              userName = profileData.name || userName;
-              avatarUrl = profileData.avatar_url || avatarUrl;
-            }
-          }
-          
-          return {
-            id: msg.id,
-            sender: {
-              id: msg.user_id,
-              name: userName,
-              avatar: avatarUrl,
-            },
-            content: msg.content,
-            timestamp: new Date(msg.created_at)
-          } as ChatMessage;
-        }));
-
-        setMessages(messagesWithProfiles);
-      } catch (err) {
-        console.error("Error in messages fetch:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Only fetch messages if we have a selected conversation
-    if (selectedConversation) {
-      fetchMessages();
-      
-      // Set up real-time subscription for new messages
-      if (messagesSubscriptionRef.current) {
-        messagesSubscriptionRef.current.unsubscribe();
-      }
-      
-      messagesSubscriptionRef.current = supabase
-        .channel(`chat_${selectedConversation}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'chat_messages',
-            filter: `conversation_id=eq.${selectedConversation}`
-          },
-          async (payload) => {
-            // Fetch user profile for the new message
-            let userName = payload.new.sender_name || "Anonymous User";
-            let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${payload.new.user_id || payload.new.sender_name || "anonymous"}`;
-            
-            if (payload.new.user_id) {
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('name, avatar_url')
-                .eq('id', payload.new.user_id)
-                .maybeSingle();
-                
-              if (profileData) {
-                userName = profileData.name || userName;
-                avatarUrl = profileData.avatar_url || avatarUrl;
-              }
-            }
-            
-            // Add the new message to the state
-            const newMessage: ChatMessage = {
-              id: payload.new.id,
-              sender: {
-                id: payload.new.user_id,
-                name: userName,
-                avatar: avatarUrl,
-              },
-              content: payload.new.content,
-              timestamp: new Date(payload.new.created_at)
-            };
-            
-            setMessages(prev => [...prev, newMessage]);
-          }
-        )
-        .subscribe();
-    }
-    
-    // Cleanup subscription on unmount or when conversation changes
-    return () => {
-      if (messagesSubscriptionRef.current) {
-        messagesSubscriptionRef.current.unsubscribe();
-      }
-    };
-  }, [selectedConversation, toast]);
-
-  const handleSendMessage = async () => {
+  // Handle sending a message
+  const handleSendMessage = () => {
     if (!message.trim()) return;
 
-    try {
-      // For authenticated users, send with their ID
-      if (isAuthenticated && user) {
-        const { error } = await supabase
-          .from('chat_messages')
-          .insert({
-            conversation_id: selectedConversation,
-            user_id: user.id,
-            content: message
-          });
+    // Create a new message
+    const newMessage: ChatMessage = {
+      id: uuidv4(),
+      conversationId: selectedConversation,
+      content: message.trim(),
+      senderName: "You", // In a real app, this would be the current user's name
+      userId: "current-user", // In a real app, this would be the current user's ID
+      createdAt: new Date().toISOString(),
+    };
 
-        if (error) {
-          console.error("Error sending message:", error);
-          toast({
-            title: "Failed to send message",
-            description: error.message,
-            variant: "destructive",
-          });
-          return;
-        }
-      } else {
-        // For guests, send as anonymous
-        // First, generate a random guest name if one doesn't exist
-        const randomGuestId = localStorage.getItem('guestId') || 
-          `guest_${Math.random().toString(36).substring(2, 10)}`;
-        
-        const guestDisplayName = `Guest_${randomGuestId.substring(6, 10)}`;
-        
-        localStorage.setItem('guestId', randomGuestId);
-        localStorage.setItem('guestName', guestDisplayName);
-        
-        const { error } = await supabase
-          .from('chat_messages')
-          .insert({
-            conversation_id: selectedConversation,
-            sender_name: guestDisplayName,
-            content: message,
-          });
+    // Add the message to the messages array
+    setMessages(prev => [...prev, newMessage]);
 
-        if (error) {
-          console.error("Error sending message:", error);
-          toast({
-            title: "Failed to send message",
-            description: error.message,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+    // Update the conversation last message
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === selectedConversation 
+          ? { ...conv, lastMessage: message.trim(), updatedAt: new Date().toISOString() } 
+          : conv
+      )
+    );
 
-      // Update last message in conversation
-      await supabase
-        .from('conversations')
-        .update({ last_message: message })
-        .eq('id', selectedConversation);
+    // Clear the message input
+    setMessage("");
 
-      // Clear input after successful send
-      setMessage("");
-    } catch (err) {
-      console.error("Error sending message:", err);
-    }
+    // Simulate AI response after a short delay
+    setIsLoading(true);
+    setTimeout(() => {
+      const aiResponses = [
+        "That's an interesting perspective!",
+        "I hadn't thought of it that way before.",
+        "Thanks for sharing your thoughts on this topic.",
+        "What led you to that conclusion?",
+        "I'd love to hear more about your ideas on this.",
+        "![thinking](https://media.tenor.com/mGc0C4gOdTYAAAAi/thinking-hmm.gif)"
+      ];
+      
+      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+      
+      const aiMessage: ChatMessage = {
+        id: uuidv4(),
+        conversationId: selectedConversation,
+        content: randomResponse,
+        senderName: "AI Assistant",
+        userId: "ai-assistant",
+        createdAt: new Date().toISOString(),
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1500);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const handleSelectConversation = (id: string) => {
-    setSelectedConversation(id);
+  // Handle selecting a conversation
+  const handleSelectConversation = (conversationId: string) => {
+    setSelectedConversation(conversationId);
+    
+    // In a real app, this would fetch messages for the selected conversation from a database
+    // For now, we'll just show some mock messages for the first conversation and empty for others
+    if (conversationId === "1") {
+      setMessages(initialMessages);
+    } else {
+      setMessages([
+        {
+          id: uuidv4(),
+          conversationId: conversationId,
+          content: `Welcome to the ${conversations.find(c => c.id === conversationId)?.name || "conversation"}!`,
+          senderName: "System",
+          userId: "system",
+          createdAt: new Date().toISOString(),
+        }
+      ]);
+    }
   };
 
   return {

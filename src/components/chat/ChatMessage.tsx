@@ -1,142 +1,111 @@
 
 import React from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import { ChatMessage as ChatMessageType } from "./types";
+import { MessageReactions, Reaction } from "./MessageReactions";
 import { parseMarkdown } from "@/lib/utils/message-utils";
-import { MessageReactions } from "./MessageReactions";
+import { Button } from "@/components/ui/button";
+import { SmileIcon } from "lucide-react";
 
 interface ChatMessageProps {
   message: ChatMessageType;
-  formatTime: (date: Date) => string;
-  id?: string;
-  content?: string;
-  sender?: {
-    id?: string;
-    name: string;
-    avatar: string;
-    isSystem?: boolean;
-  };
-  isCurrentUser?: boolean;
-  timestamp?: Date;
-  isEdited?: boolean;
-  reactions?: Array<{emoji: string; count: number; users: string[]}>;
-  replyTo?: {
-    id: string;
-    content: string;
-    sender: { name: string };
-  };
-  mentions?: string[];
-  onEdit?: (messageId: string) => void;
-  onDelete?: (messageId: string) => void;
-  onReply?: (messageId: string) => void;
-  onReactionAdd?: (messageId: string, emoji: string) => void;
-  onReactionRemove?: (messageId: string, emoji: string) => void;
+  formatTime: (timestamp: string) => string;
 }
 
-export const ChatMessage = ({ 
-  message, 
-  formatTime,
-  id,
-  content,
-  sender,
-  isCurrentUser,
-  timestamp,
-  isEdited,
-  reactions,
-  replyTo,
-  mentions,
-  onEdit,
-  onDelete,
-  onReply,
-  onReactionAdd,
-  onReactionRemove
-}: ChatMessageProps) => {
-  // Use the appropriate source for each prop (from message object or direct prop)
-  const messageId = id || message.id;
-  const messageContent = content || message.content;
-  const messageSender = sender || message.sender;
-  const messageTimestamp = timestamp || message.timestamp;
+export const ChatMessage = ({ message, formatTime }: ChatMessageProps) => {
+  const [showReactions, setShowReactions] = React.useState(false);
+  const [reactions, setReactions] = React.useState<Reaction[]>([
+    { emoji: "👍", count: 0, users: [] },
+    { emoji: "❤️", count: 0, users: [] },
+    { emoji: "😂", count: 0, users: [] }
+  ]);
   
-  // Handle reaction click
-  const handleReact = (emoji: string) => {
-    if (onReactionAdd) {
-      onReactionAdd(messageId, emoji);
-    }
+  const currentUserId = "current-user"; // This would come from auth in a real app
+  const isCurrentUser = message.userId === currentUserId;
+  
+  const handleReactionAdd = (messageId: string, emoji: string) => {
+    setReactions(prev => 
+      prev.map(reaction => {
+        if (reaction.emoji === emoji) {
+          // Check if user already reacted with this emoji
+          if (reaction.users.includes(currentUserId)) {
+            return reaction;
+          }
+          
+          return {
+            ...reaction,
+            count: reaction.count + 1,
+            users: [...reaction.users, currentUserId]
+          };
+        }
+        return reaction;
+      })
+    );
   };
   
+  const handleReactionRemove = (messageId: string, emoji: string) => {
+    setReactions(prev => 
+      prev.map(reaction => {
+        if (reaction.emoji === emoji && reaction.users.includes(currentUserId)) {
+          return {
+            ...reaction,
+            count: Math.max(0, reaction.count - 1),
+            users: reaction.users.filter(id => id !== currentUserId)
+          };
+        }
+        return reaction;
+      })
+    );
+  };
+
+  // Parse and render message content with markdown, mentions and GIFs
+  const renderedContent = parseMarkdown(message.content);
+
   return (
-    <div className="flex gap-2 p-2 hover:bg-muted/20 rounded-md group">
-      <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage src={messageSender.avatar} />
-        <AvatarFallback>{messageSender.name?.[0]}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`font-medium text-sm ${messageSender.isSystem ? 'text-primary' : ''}`}>
-            {messageSender.name}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {formatTime(messageTimestamp)}
-          </span>
-          {isEdited && <span className="text-xs text-muted-foreground">(edited)</span>}
+    <div 
+      className={cn(
+        "group relative px-4 py-2",
+        isCurrentUser ? "bg-primary/10" : "hover:bg-accent/20"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+          {message.senderName?.charAt(0) || "U"}
         </div>
-        
-        {/* Display reply information if available */}
-        {replyTo && (
-          <div className="ml-2 pl-2 border-l-2 border-muted mt-1 mb-2 text-xs text-muted-foreground">
-            <span className="font-medium">{replyTo.sender.name}:</span> {replyTo.content.length > 50 ? `${replyTo.content.substring(0, 50)}...` : replyTo.content}
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{message.senderName}</span>
+            <span className="text-xs text-muted-foreground">
+              {formatTime(message.createdAt)}
+            </span>
           </div>
-        )}
-        
-        {/* Render message content with support for mentions and markdown */}
-        <div className="text-sm break-words">{parseMarkdown(messageContent)}</div>
-        
-        {/* Message reactions */}
-        {reactions && reactions.length > 0 && (
-          <MessageReactions 
-            reactions={reactions} 
-            messageId={messageId}
-            onReactionAdd={onReactionAdd || (() => {})}
-            onReactionRemove={onReactionRemove}
-            onReact={handleReact}
-          />
-        )}
-        
-        {/* Action buttons */}
-        <div className="flex gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onReply && (
-            <button 
-              onClick={() => onReply(messageId)} 
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              Reply
-            </button>
-          )}
-          {onReactionAdd && (
-            <button 
-              onClick={() => onReactionAdd(messageId, '👍')} 
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              React
-            </button>
-          )}
-          {isCurrentUser && onEdit && (
-            <button 
-              onClick={() => onEdit(messageId)} 
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              Edit
-            </button>
-          )}
-          {isCurrentUser && onDelete && (
-            <button 
-              onClick={() => onDelete(messageId)} 
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              Delete
-            </button>
+          <div className="mt-1 text-sm break-words">
+            {renderedContent}
+          </div>
+          
+          {/* Reactions */}
+          {reactions.some(r => r.count > 0) && (
+            <MessageReactions 
+              reactions={reactions}
+              messageId={message.id}
+              onReactionAdd={handleReactionAdd}
+              onReactionRemove={handleReactionRemove}
+            />
           )}
         </div>
+      </div>
+      
+      {/* Quick reaction button that appears on hover */}
+      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 rounded-full"
+          onClick={() => setShowReactions(!showReactions)}
+        >
+          <SmileIcon size={14} />
+          <span className="sr-only">Add reaction</span>
+        </Button>
       </div>
     </div>
   );

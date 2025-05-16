@@ -80,7 +80,11 @@ export const parseMarkdown = (content: string): React.ReactNode => {
             React.createElement("img", {
               src: url,
               alt: alt,
-              className: "max-w-full"
+              className: "max-w-full",
+              loading: "lazy",
+              onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                e.currentTarget.src = "https://placehold.co/600x400/png?text=Image+not+available";
+              }
             })
           )
         );
@@ -89,4 +93,43 @@ export const parseMarkdown = (content: string): React.ReactNode => {
   }
   
   return React.createElement(React.Fragment, null, ...formattedContent);
+};
+
+// Format URLs as clickable links
+export const formatLinks = (content: string): React.ReactNode => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
+  
+  if (parts.length <= 1) {
+    return content;
+  }
+  
+  const formattedContent: React.ReactNode[] = [];
+  
+  for (let i = 0; i < parts.length; i++) {
+    // Check if this part is a URL
+    if (i % 2 === 0) {
+      formattedContent.push(parts[i]);
+    } else {
+      // It's a URL, make it a link
+      formattedContent.push(
+        React.createElement("a", {
+          key: `url-${i}`,
+          href: parts[i],
+          target: "_blank",
+          rel: "noopener noreferrer",
+          className: "text-primary hover:underline"
+        }, parts[i])
+      );
+    }
+  }
+  
+  return React.createElement(React.Fragment, null, ...formattedContent);
+};
+
+// Process YouTube links and extract video IDs
+export const extractYouTubeID = (url: string): string | null => {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
 };
