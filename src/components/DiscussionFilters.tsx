@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface DiscussionFiltersProps {
   onSortChange: (sortOption: 'popular' | 'new' | 'upvotes') => void;
@@ -63,17 +64,19 @@ export const DiscussionFilters = ({
   };
   
   return (
-    <div className="bg-[#1A1A1A] rounded-lg p-4 mb-6 shadow-md">
+    <div className="bg-card rounded-lg p-4 mb-6 shadow-md border border-border">
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search discussions..."
-            className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white focus:ring-1 focus:ring-[#6E59A5] focus:border-[#6E59A5] transition-colors"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search discussions..."
+              className="w-full pl-10"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
         </div>
         
         <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
@@ -81,29 +84,29 @@ export const DiscussionFilters = ({
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+                className="flex items-center gap-2"
               >
                 {getSortIcon()}
                 <span>{sortOption.charAt(0).toUpperCase() + sortOption.slice(1)}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem 
-                className={`flex items-center gap-2 ${sortOption === 'popular' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                className="flex items-center gap-2"
                 onClick={() => handleSortChange('popular')}
               >
                 <TrendingUp size={16} />
                 <span>Popular</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className={`flex items-center gap-2 ${sortOption === 'new' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                className="flex items-center gap-2"
                 onClick={() => handleSortChange('new')}
               >
                 <Clock size={16} />
                 <span>New</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className={`flex items-center gap-2 ${sortOption === 'upvotes' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                className="flex items-center gap-2"
                 onClick={() => handleSortChange('upvotes')}
               >
                 <ThumbsUp size={16} />
@@ -116,18 +119,18 @@ export const DiscussionFilters = ({
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+                className="flex items-center gap-2"
               >
                 <Filter size={16} />
                 <span>Topics</span>
-                {activeTag && <Badge className="bg-[#6E59A5] ml-2 text-xs">{activeTag}</Badge>}
+                {activeTag && <Badge className="ml-2 text-xs">{activeTag}</Badge>}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
+            <DropdownMenuContent align="end">
               {availableTags.map((tag, index) => (
                 <DropdownMenuItem 
                   key={index}
-                  className={`flex items-center gap-2 ${activeTag === tag ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                  className="flex items-center gap-2"
                   onClick={() => handleTagClick(tag)}
                 >
                   <Bookmark size={16} />
@@ -136,7 +139,7 @@ export const DiscussionFilters = ({
               ))}
               {activeTag && (
                 <DropdownMenuItem 
-                  className="flex items-center gap-2 border-t border-gray-700 mt-1 pt-1 hover:bg-gray-700"
+                  className="flex items-center gap-2 border-t mt-1 pt-1"
                   onClick={() => handleTagClick(activeTag)}
                 >
                   <span>Clear filter</span>
@@ -149,7 +152,6 @@ export const DiscussionFilters = ({
             <Button 
               variant="ghost" 
               size="sm"
-              className="text-gray-400 hover:text-white"
               onClick={handleClearFilters}
             >
               Reset Filters
@@ -160,9 +162,9 @@ export const DiscussionFilters = ({
       
       {activeTag && (
         <div className="mt-3 flex items-center gap-2">
-          <span className="text-sm text-gray-400">Active filter:</span>
+          <span className="text-sm text-muted-foreground">Active filter:</span>
           <Badge 
-            className="bg-[#6E59A5] hover:bg-[#5E4995] cursor-pointer flex items-center gap-1"
+            className="cursor-pointer flex items-center gap-1"
             onClick={() => handleTagClick(activeTag)}
           >
             {activeTag}

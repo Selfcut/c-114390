@@ -148,13 +148,13 @@ const Forum = () => {
   
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
           <MessageSquare size={28} />
           Forum
         </h1>
         <Button 
-          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
+          className="flex items-center gap-2"
           onClick={handleCreateDiscussion}
         >
           <PenSquare size={18} />
@@ -172,11 +172,11 @@ const Forum = () => {
       {activeTag && (
         <div className="mb-4 flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Active Filter:</span>
-          <Badge className="flex items-center gap-1 px-2 py-1 bg-primary/20 text-primary hover:bg-primary/40">
+          <Badge className="flex items-center gap-1">
             <Tag size={14} />
             {activeTag}
             <button
-              className="ml-2 hover:text-white"
+              className="ml-2 hover:text-foreground"
               onClick={() => setActiveTag(null)}
             >
               ×
@@ -185,24 +185,24 @@ const Forum = () => {
         </div>
       )}
       
-      <div className="grid grid-cols-1 gap-4 stagger-fade animate-in">
+      <div className="grid grid-cols-1 gap-4">
         {isLoading ? (
           // Skeleton UI for loading state
           Array.from({ length: 5 }).map((_, index) => (
-            <Card key={index} className="bg-[#1A1A1A] rounded-lg p-5">
+            <Card key={index} className="bg-card rounded-lg p-5">
               <div className="flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-full bg-[#2A2A2A]" />
+                <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="flex-1">
-                  <Skeleton className="h-6 w-3/4 mb-2 bg-[#2A2A2A]" />
-                  <Skeleton className="h-4 w-full mb-2 bg-[#2A2A2A]" />
-                  <Skeleton className="h-4 w-5/6 mb-3 bg-[#2A2A2A]" />
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-5/6 mb-3" />
                   <div className="flex gap-2 mb-3">
-                    <Skeleton className="h-6 w-20 rounded-full bg-[#2A2A2A]" />
-                    <Skeleton className="h-6 w-24 rounded-full bg-[#2A2A2A]" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-24 bg-[#2A2A2A]" />
-                    <Skeleton className="h-5 w-32 bg-[#2A2A2A]" />
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-5 w-32" />
                   </div>
                 </div>
               </div>
@@ -220,13 +220,13 @@ const Forum = () => {
           <Card className="bg-card rounded-lg p-8 text-center">
             <CardContent className="pt-6">
               <div className="flex justify-center mb-4">
-                <div className="rounded-full bg-gray-800 p-4">
-                  <MessageSquare size={32} className="text-gray-400" />
+                <div className="rounded-full bg-muted p-4">
+                  <MessageSquare size={32} className="text-muted-foreground" />
                 </div>
               </div>
               <p className="text-muted-foreground mb-4">No discussions found matching your criteria.</p>
               <Button 
-                className="mt-4 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-colors hover-lift"
+                className="mt-4"
                 onClick={() => {
                   setSearchTerm('');
                   setActiveTag(null);

@@ -36,7 +36,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   
   return (
     <div 
-      className={`bg-[#1A1A1A] rounded-lg p-5 hover:bg-[#222222] transition-colors cursor-pointer hover-lift relative ${isPinned ? 'border-l-4 border-primary' : ''}`}
+      className={`bg-card rounded-lg p-5 hover:bg-accent/20 transition-colors cursor-pointer hover-lift relative ${isPinned ? 'border-l-4 border-primary' : ''}`}
       onClick={onClick}
     >
       {isPinned && (
@@ -61,10 +61,10 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
         </div>
         
         <div className="flex-1">
-          <h3 className="font-medium text-white text-lg mb-2">{title}</h3>
+          <h3 className="font-medium text-lg mb-2">{title}</h3>
           
           {displayText && (
-            <p className="text-gray-300 text-sm mb-3 line-clamp-2">{displayText}</p>
+            <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{displayText}</p>
           )}
           
           <div className="flex flex-wrap gap-2 mt-2 mb-3">
@@ -72,7 +72,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
               <Badge 
                 key={index} 
                 variant="outline" 
-                className="bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700"
+                className="flex items-center"
               >
                 <Tag size={12} className="mr-1" />
                 {tag}
@@ -86,12 +86,12 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
                 <AvatarImage src={authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author}`} alt={author} />
                 <AvatarFallback>{getAvatarFallback(author)}</AvatarFallback>
               </Avatar>
-              <span className="text-sm text-gray-400 flex items-center">
+              <span className="text-sm text-muted-foreground flex items-center">
                 {author}
               </span>
             </div>
             
-            <div className="flex items-center gap-3 text-gray-400">
+            <div className="flex items-center gap-3 text-muted-foreground">
               <span className="text-xs flex items-center gap-1">
                 <Eye size={12} /> {views || 0}
               </span>
