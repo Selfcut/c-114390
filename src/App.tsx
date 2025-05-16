@@ -9,13 +9,15 @@ import { Toaster } from './components/ui/toaster';
 import { AuthProvider } from './lib/auth';
 import { ThemeProvider } from './components/providers/ThemeProvider';
 import Wiki from './pages/Wiki';
-import AdminPanel from './pages/AdminPanel';
+import AdminPanel from './pages/admin/AdminPanel';
 import Media from './pages/Media';
 import WikiArticlePage from './components/wiki/WikiArticlePage';
 import Auth from './pages/Auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { PageLayout } from './components/layouts/PageLayout';
+import ForumPostDetail from './components/forum/ForumPostDetail';
 
 // Initialize React Query
 const queryClient = new QueryClient({
@@ -40,66 +42,99 @@ function App() {
               {/* Protected routes with layout */}
               <Route path="/" element={
                 <ProtectedRoute allowGuests={true}>
-                  <Dashboard />
+                  <PageLayout allowGuests={true}>
+                    <Dashboard />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <PageLayout>
+                    <Dashboard />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
                 <ProtectedRoute>
-                  <Profile />
+                  <PageLayout>
+                    <Profile />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/profile/:userId" element={
                 <ProtectedRoute>
-                  <Profile />
+                  <PageLayout>
+                    <Profile />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/media" element={
                 <ProtectedRoute allowGuests={true}>
-                  <Media />
+                  <PageLayout allowGuests={true}>
+                    <Media />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/settings" element={
                 <ProtectedRoute>
-                  <Settings />
+                  <PageLayout>
+                    <Settings />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               
               {/* Public routes with layout */}
               <Route path="/forum" element={
                 <ProtectedRoute allowGuests={true}>
-                  <Forum />
+                  <PageLayout allowGuests={true}>
+                    <Forum />
+                  </PageLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/forum/:postId" element={
+                <ProtectedRoute allowGuests={true}>
+                  <PageLayout allowGuests={true}>
+                    <ForumPostDetail />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/wiki" element={
                 <ProtectedRoute allowGuests={true}>
-                  <Wiki />
+                  <PageLayout allowGuests={true}>
+                    <Wiki />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/wiki/:articleId" element={
                 <ProtectedRoute allowGuests={true}>
-                  <WikiArticlePage />
+                  <PageLayout allowGuests={true}>
+                    <WikiArticlePage />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               
               {/* Admin routes */}
               <Route path="/admin" element={
                 <ProtectedRoute requireAdmin={true}>
-                  <AdminPanel />
+                  <PageLayout>
+                    <AdminPanel />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="/admin/*" element={
                 <ProtectedRoute requireAdmin={true}>
-                  <AdminPanel />
+                  <PageLayout>
+                    <AdminPanel />
+                  </PageLayout>
                 </ProtectedRoute>
               } />
               
               {/* 404 page */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={
+                <PageLayout allowGuests={true}>
+                  <NotFound />
+                </PageLayout>
+              } />
             </Routes>
             <Toaster />
           </Router>

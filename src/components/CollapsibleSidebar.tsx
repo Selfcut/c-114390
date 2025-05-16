@@ -8,7 +8,6 @@ import {
   Settings,
   User,
   ShieldCheck,
-  GraduationCap,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -121,12 +120,15 @@ export const CollapsibleSidebar = () => {
         <ul className="space-y-1 px-2">
           {navItems.map((item) => (
             <li key={item.path}>
-              <CustomTooltip content={item.label} side="right" delayDuration={100}>
+              <CustomTooltip content={item.label} side="right" delayDuration={100} disabled={!collapsed}>
                 <NavLink
                   to={item.path}
                   className={({ isActive }) => `
-                    flex items-center px-4 py-2 rounded-md text-sm
-                    ${isActive ? "bg-accent text-accent-foreground font-medium" : "text-foreground hover:bg-muted"}
+                    flex items-center px-4 py-2 rounded-md text-sm font-medium
+                    ${isActive 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-foreground hover:bg-secondary transition-colors no-underline"
+                    }
                   `}
                 >
                   <span className="mr-3">{item.icon}</span>
@@ -140,7 +142,7 @@ export const CollapsibleSidebar = () => {
 
       <div className="p-4 border-t border-border">
         <div className="flex items-center justify-between">
-          <CustomTooltip content={user ? `${user.name} (${user.email})` : "User profile"} side="right">
+          <CustomTooltip content={user ? `${user.name} (${user.email})` : "User profile"} side="right" disabled={!collapsed}>
             <div className="flex items-center">
               {user && (
                 <>
@@ -168,12 +170,12 @@ export const CollapsibleSidebar = () => {
           </div>
         </div>
         {user && (
-          <CustomTooltip content="Sign out" side="top">
+          <CustomTooltip content="Sign out" side="top" disabled={!collapsed}>
             <Button
               onClick={signOut}
               variant="outline"
               size="sm"
-              className={`mt-4 text-sm ${collapsed ? 'p-2 w-10 h-10' : 'w-full'}`}
+              className={`mt-4 text-sm ${collapsed ? 'p-2 w-10 h-10' : 'w-full'} no-underline`}
             >
               {collapsed ? <LogOut size={16} /> : "Sign out"}
             </Button>

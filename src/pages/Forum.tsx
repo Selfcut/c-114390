@@ -1,30 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { 
   Search, 
   Filter, 
-  ChevronDown, 
-  ChevronUp, 
   Plus, 
-  BookOpen,
-  RefreshCw,
-  ThumbsUp,
-  Calendar,
-  Tag,
+  MessageSquare,
   PenSquare,
   Send,
-  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { DiscussionTopicCard } from "../components/DiscussionTopicCard";
 import { DiscussionFilters } from "../components/DiscussionFilters";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  DiscussionTopic,
-  mockDiscussions, 
-  getSortedDiscussions,
-  filterDiscussionsByTag
-} from "../lib/discussions-utils";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,14 +23,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useNavigate, Routes, Route } from 'react-router-dom';
+import ForumPostDetail from '../components/forum/ForumPostDetail';
+
+interface DiscussionTopic {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  authorId: string;
+  authorAvatar?: string;
+  createdAt: Date;
+  tags?: string[];
+  upvotes: number;
+  views: number;
+  comments: number;
+  isPinned: boolean;
+  isPopular: boolean;
+}
 
 const Forum = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isAuthenticated = !!user;
   const { toast } = useToast();
   
-  const [discussions, setDiscussions] = useState<DiscussionTopic[]>(mockDiscussions);
-  const [filteredDiscussions, setFilteredDiscussions] = useState<DiscussionTopic[]>(mockDiscussions);
+  const [discussions, setDiscussions] = useState<DiscussionTopic[]>([]);
+  const [filteredDiscussions, setFilteredDiscussions] = useState<DiscussionTopic[]>([]);
   const [sortOption, setSortOption] = useState<'popular' | 'new' | 'upvotes'>('popular');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,28 +61,73 @@ const Forum = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [allTags, setAllTags] = useState<string[]>([]);
   
-  // Extract unique tags from all discussions
-  const allTags = Array.from(
-    new Set(discussions.flatMap(discussion => discussion.tags || []))
-  );
-  
-  // Simulate data loading
+  // Fetch discussions from Supabase
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    const fetchDiscussions = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase
+          .from('forum_posts')
+          .select(`
+            *,
+            profiles:user_id (username, name, avatar_url)
+          `)
+          .order('is_pinned', { ascending: false })
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        // Extract unique tags
+        const tags = Array.from(
+          new Set(data.flatMap(post => post.tags || []))
+        );
+        setAllTags(tags);
+        
+        // Transform data to match the DiscussionTopic interface
+        const formattedDiscussions: DiscussionTopic[] = data.map(post => ({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          author: post.profiles?.name || post.profiles?.username || 'Anonymous',
+          authorId: post.user_id,
+          authorAvatar: post.profiles?.avatar_url,
+          createdAt: new Date(post.created_at),
+          tags: post.tags || [],
+          upvotes: post.upvotes || 0,
+          views: post.views || 0,
+          comments: post.comments || 0,
+          isPinned: post.is_pinned || false,
+          isPopular: (post.views || 0) > 50 || (post.upvotes || 0) > 10
+        }));
+        
+        setDiscussions(formattedDiscussions);
+      } catch (err) {
+        console.error('Error fetching discussions:', err);
+        toast({
+          title: "Error",
+          description: "Failed to load forum discussions",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    fetchDiscussions();
+  }, [toast]);
   
-  // Apply sorting and filtering whenever dependencies change
+  // Filter and sort discussions
   useEffect(() => {
     let result = [...discussions];
     
     // Apply tag filtering
     if (activeTag) {
-      result = filterDiscussionsByTag(result, activeTag);
+      result = result.filter(discussion => 
+        discussion.tags && discussion.tags.includes(activeTag)
+      );
     }
     
     // Apply search filtering
@@ -87,19 +140,31 @@ const Forum = () => {
     }
     
     // Apply sorting
-    result = getSortedDiscussions(result, sortOption);
+    switch (sortOption) {
+      case 'new':
+        result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        break;
+      case 'upvotes':
+        result.sort((a, b) => b.upvotes - a.upvotes);
+        break;
+      case 'popular':
+      default:
+        // Sort by pinned first, then by a combination of comments, views and upvotes
+        result.sort((a, b) => {
+          if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+          const aPopularity = a.comments * 3 + a.views + a.upvotes * 2;
+          const bPopularity = b.comments * 3 + b.views + b.upvotes * 2;
+          return bPopularity - aPopularity;
+        });
+        break;
+    }
     
     setFilteredDiscussions(result);
   }, [discussions, sortOption, activeTag, searchTerm]);
   
   // Handle discussion click
   const handleDiscussionClick = (discussion: DiscussionTopic) => {
-    // In a real app, this would navigate to the discussion detail page
-    console.log('Discussion clicked:', discussion);
-    toast({
-      title: "Opening Discussion",
-      description: `Viewing "${discussion.title}"`,
-    });
+    navigate(`/forum/${discussion.id}`);
   };
   
   // Handle creating a new discussion
@@ -116,7 +181,7 @@ const Forum = () => {
     setIsCreateDialogOpen(true);
   };
 
-  const handleSubmitDiscussion = () => {
+  const handleSubmitDiscussion = async () => {
     if (!newDiscussion.title || !newDiscussion.content) {
       toast({
         title: "Required Fields Missing",
@@ -128,22 +193,37 @@ const Forum = () => {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
       const tagsArray = newDiscussion.tags 
-        ? newDiscussion.tags.split(',').map(tag => tag.trim()) 
-        : ['General'];
+        ? newDiscussion.tags.split(',').map(tag => tag.trim()).filter(Boolean) 
+        : [];
 
+      const { data, error } = await supabase
+        .from('forum_posts')
+        .insert({
+          title: newDiscussion.title,
+          content: newDiscussion.content,
+          user_id: user?.id,
+          tags: tagsArray.length > 0 ? tagsArray : null
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Add to local state
       const newPost: DiscussionTopic = {
-        id: `discussion-${Date.now()}`,
+        id: data.id,
         title: newDiscussion.title,
         content: newDiscussion.content,
-        author: user?.name || 'Anonymous',
-        authorAvatar: user?.avatar || '',
+        author: user?.name || user?.username || 'Anonymous',
+        authorId: user?.id || '',
+        authorAvatar: user?.avatar,
         createdAt: new Date(),
         tags: tagsArray,
         upvotes: 0,
         views: 0,
+        comments: 0,
         isPinned: false,
         isPopular: false
       };
@@ -151,13 +231,24 @@ const Forum = () => {
       setDiscussions(prevDiscussions => [newPost, ...prevDiscussions]);
       setIsCreateDialogOpen(false);
       setNewDiscussion({ title: '', content: '', tags: '' });
-      setIsSubmitting(false);
 
       toast({
         title: "Discussion Created",
         description: "Your new discussion has been posted successfully!",
       });
-    }, 1000);
+      
+      // Navigate to the new post
+      navigate(`/forum/${data.id}`);
+    } catch (err) {
+      console.error('Error creating discussion:', err);
+      toast({
+        title: "Error",
+        description: "Failed to create discussion",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -187,7 +278,6 @@ const Forum = () => {
         <div className="mb-4 flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Active Filter:</span>
           <Badge className="flex items-center gap-1">
-            <Tag size={14} />
             {activeTag}
             <button
               className="ml-2 hover:text-foreground"

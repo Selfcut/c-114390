@@ -2,252 +2,236 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
+import { set, get } from 'lodash';
 
-// Define default site settings
-export interface SiteSettings {
-  siteName: string;
-  siteDescription: string;
-  maintenanceMode: boolean;
-  contentModeration: boolean;
-  allowedMediaTypes: string[];
-  enableUserRegistration: boolean;
-  enableWikiCreation: boolean;
-  enableMediaUploads: boolean;
-  enableComments: boolean;
-  enableLikes: boolean;
-  maxUsernameLength: number;
-  requireEmailVerification: boolean;
-  maxUploadSizeMB: number;
-  maxTitleLength: number;
-  maxContentLength: number;
-  maxFileSize: number;
-  defaultUserRole: string;
-  autoApproveContent: boolean;
-  wikiEditorOptions: {
-    enablePublicEditing: boolean;
-    requireApproval: boolean;
-    maxArticleLength: number;
-    allowImages: boolean;
-    allowVideos: boolean;
-    allowLinks: boolean;
-    maxImageSize: number;
-  };
-  userLimitations: {
-    maxPostsPerDay: number;
-    maxUploadsPerDay: number;
-    maxCommentsPerDay: number;
-  };
-  forumSettings: {
-    enableThreads: boolean;
-    allowAnonymousPosts: boolean;
-    maxThreadLength: number;
-  };
-  chatSettings: {
-    enableGlobalChat: boolean;
-    enablePrivateMessages: boolean;
-    messageRetentionDays: number;
-  };
-}
-
-// Default settings used when initializing
-const defaultSettings: SiteSettings = {
-  siteName: 'Polymath',
-  siteDescription: 'Intellectual Science Community',
-  maintenanceMode: false,
-  contentModeration: true,
-  allowedMediaTypes: ['image/*', 'video/*', 'application/pdf'],
-  enableUserRegistration: true,
-  enableWikiCreation: true,
-  enableMediaUploads: true,
-  enableComments: true,
-  enableLikes: true,
-  maxUsernameLength: 20,
-  requireEmailVerification: false,
-  maxUploadSizeMB: 10,
-  maxTitleLength: 100,
-  maxContentLength: 10000,
-  maxFileSize: 5,
-  defaultUserRole: 'user',
-  autoApproveContent: false,
-  wikiEditorOptions: {
-    enablePublicEditing: false,
-    requireApproval: true,
-    maxArticleLength: 20000,
+const DEFAULT_SETTINGS = {
+  site: {
+    name: 'Polymath',
+    tagline: 'Knowledge Community Platform',
+    description: 'A platform for sharing and discussing knowledge',
+    logo: '/logo.svg',
+    favicon: '/favicon.ico',
+    language: 'en',
+  },
+  users: {
+    allowRegistration: true,
+    requireEmailVerification: false,
+    allowSocialLogin: true,
+    autoApproveUsers: true,
+    defaultUserRole: 'user',
+    allowAvatars: true,
+    allowBios: true,
+    allowWebsites: true,
+    allowStatusChanges: true,
+    maxBioLength: 500,
+    trackUserActivity: true,
+    allowGhostMode: true,
+    inactiveUserDays: 90,
+    accountDeletionPolicy: 'manual',
+  },
+  forum: {
+    allowGuestViewing: true,
+    requireApproval: false,
     allowImages: true,
-    allowVideos: true,
-    allowLinks: true,
-    maxImageSize: 5
+    allowFormatting: true,
+    maxPostLength: 5000,
+    minPostLength: 10,
+    postsPerPage: 20,
+    allowComments: true,
+    nestedComments: true,
+    commentModeration: false,
+    allowVoting: true,
+    maxCommentLength: 1000,
+    nestedCommentsLevel: 3,
   },
-  userLimitations: {
-    maxPostsPerDay: 10,
-    maxUploadsPerDay: 20,
-    maxCommentsPerDay: 50
+  wiki: {
+    allowGuestViewing: true,
+    allowAllUsersToEdit: false,
+    requireApproval: true,
+    showEditHistory: true,
+    defaultArticleStatus: 'draft',
+    editRoles: 'contributors',
+    enableMarkdown: true,
+    enableWikiLinks: true,
+    allowImages: true,
+    enableTableOfContents: true,
+    maxArticleLength: 50000,
+    allowedCategories: ['Philosophy', 'Science', 'History', 'Art', 'Literature', 'Technology'],
+    articlesPerPage: 12,
   },
-  forumSettings: {
-    enableThreads: true,
-    allowAnonymousPosts: false,
-    maxThreadLength: 10000
+  chat: {
+    enabled: true,
+    allowDirectMessages: true,
+    allowGroupChats: true,
+    maxMessageLength: 1000,
+    enableMentions: true,
+    enableEmojis: true,
+    enableFileSharing: true,
+    maxFileSize: 5,
+    allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
   },
-  chatSettings: {
-    enableGlobalChat: true,
-    enablePrivateMessages: true,
-    messageRetentionDays: 30
+  content: {
+    moderationEnabled: true,
+    allowedMediaTypes: ['image', 'video', 'audio', 'document'],
+    maxUploadSize: 10,
+    maxTitleLength: 100,
+    enableTags: true,
+    maxTagsPerItem: 10,
+    defaultSorting: 'newest',
+  },
+  appearance: {
+    defaultTheme: 'dark',
+    allowUserThemes: true,
+    accentColor: '#9b87f5',
+    buttonStyle: 'rounded',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    enableAnimations: true,
+  },
+  advanced: {
+    cacheTime: 3600,
+    debug: false,
+    analyticsEnabled: true,
+    enableApiAccess: false,
+    maintenanceMode: false,
   }
 };
 
-const SETTINGS_ID = 'global-settings';
-
 export const useSiteSettings = () => {
-  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [settings, setSettings] = useState<any>(DEFAULT_SETTINGS);
+  const [originalSettings, setOriginalSettings] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Function to load settings from database
-  const loadSettings = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
+  const fetchSettings = useCallback(async () => {
     try {
-      const { data, error: fetchError } = await supabase
+      setIsLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
         .from('site_settings')
         .select('settings')
-        .eq('id', SETTINGS_ID)
+        .eq('id', 'global')
         .single();
 
-      if (fetchError) {
-        // If not found, create with default settings
-        if (fetchError.code === 'PGRST116') {
-          await saveSettings(defaultSettings, true);
-          setSettings(defaultSettings);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Record not found, create it with default settings
+          const { error: insertError } = await supabase
+            .from('site_settings')
+            .insert([
+              {
+                id: 'global',
+                settings: DEFAULT_SETTINGS
+              }
+            ]);
+
+          if (insertError) throw insertError;
+          
+          setSettings(DEFAULT_SETTINGS);
+          setOriginalSettings(DEFAULT_SETTINGS);
         } else {
-          console.error('Error fetching settings:', fetchError);
-          setError(fetchError.message || 'Failed to load settings');
+          throw error;
         }
-      } else if (data) {
-        // Handle the data as a JSON object and cast to SiteSettings
-        const loadedSettings = data.settings as unknown as SiteSettings;
-        
-        // Ensure all fields exist by merging with defaults
-        const mergedSettings = {
-          ...defaultSettings,
-          ...loadedSettings,
-          wikiEditorOptions: {
-            ...defaultSettings.wikiEditorOptions,
-            ...(loadedSettings.wikiEditorOptions || {})
-          },
-          userLimitations: {
-            ...defaultSettings.userLimitations,
-            ...(loadedSettings.userLimitations || {})
-          },
-          forumSettings: {
-            ...defaultSettings.forumSettings,
-            ...(loadedSettings.forumSettings || {})
-          },
-          chatSettings: {
-            ...defaultSettings.chatSettings,
-            ...(loadedSettings.chatSettings || {})
-          }
+      } else {
+        const loadedSettings = {
+          ...DEFAULT_SETTINGS,
+          ...data.settings
         };
         
-        setSettings(mergedSettings);
+        setSettings(loadedSettings);
+        setOriginalSettings(loadedSettings);
       }
     } catch (err: any) {
-      console.error('Unexpected error loading settings:', err);
-      setError(err.message || 'Unexpected error loading settings');
+      console.error('Error fetching site settings:', err);
+      setError(`Failed to load settings: ${err.message}`);
+      toast({
+        title: "Error loading settings",
+        description: err.message,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
-  // Function to save settings to database
-  const saveSettings = async (settingsToSave = settings, isInitial = false) => {
-    if (isSaving) return;
-    
-    setIsSaving(true);
-    setError(null);
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
+  const saveSettings = async () => {
     try {
-      const { error: upsertError } = await supabase
-        .from('site_settings')
-        .upsert({
-          id: SETTINGS_ID,
-          settings: settingsToSave as any // Force type to match Supabase's JSON type
-        });
+      setIsSaving(true);
+      setError(null);
 
-      if (upsertError) {
-        console.error('Error saving settings:', upsertError);
-        setError(upsertError.message || 'Failed to save settings');
-        return { success: false, error: upsertError };
-      }
+      const { error } = await supabase
+        .from('site_settings')
+        .update({
+          settings: settings,
+          updated_at: new Date()
+        })
+        .eq('id', 'global');
+
+      if (error) throw error;
+
+      setOriginalSettings(settings);
       
-      setSettings(settingsToSave);
-      
-      if (!isInitial) {
-        toast({
-          title: "Settings Saved",
-          description: "Your settings have been updated successfully.",
-        });
-      }
-      
-      return { success: true, error: null };
+      toast({
+        title: "Settings saved",
+        description: "Your changes have been applied successfully",
+      });
     } catch (err: any) {
-      console.error('Unexpected error saving settings:', err);
-      setError(err.message || 'Unexpected error saving settings');
-      return { success: false, error: err };
+      console.error('Error saving site settings:', err);
+      setError(`Failed to save settings: ${err.message}`);
+      toast({
+        title: "Error saving settings",
+        description: err.message,
+        variant: "destructive"
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Function to update a single setting
-  const updateSetting = (key: keyof SiteSettings, value: any) => {
-    setSettings(prev => ({
+  const resetSettings = () => {
+    if (originalSettings) {
+      setSettings(originalSettings);
+      toast({
+        description: "Settings reset to last saved state",
+      });
+    } else {
+      setSettings(DEFAULT_SETTINGS);
+      toast({
+        description: "Settings reset to defaults",
+      });
+    }
+  };
+
+  const updateSetting = (path: string, value: any) => {
+    setSettings((prev: any) => ({
       ...prev,
-      [key]: value
+      [path]: value
     }));
   };
 
-  // Function to update a nested setting
-  const updateNestedSetting = (category: keyof SiteSettings, key: string, value: any) => {
-    setSettings(prev => {
-      if (typeof prev[category] === 'object' && prev[category] !== null) {
-        return {
-          ...prev,
-          [category]: {
-            ...prev[category] as object,
-            [key]: value
-          }
-        };
-      }
-      return prev;
+  const updateNestedSetting = (parentPath: string, key: string, value: any) => {
+    setSettings((prev: any) => {
+      const newSettings = { ...prev };
+      const path = parentPath ? `${parentPath}.${key}` : key;
+      set(newSettings, path, value);
+      return newSettings;
     });
   };
-
-  // Reset settings to default
-  const resetSettings = () => {
-    setSettings(defaultSettings);
-    toast({
-      title: "Settings Reset",
-      description: "All settings have been reset to defaults. Save to apply changes.",
-    });
-  };
-
-  // Load settings on mount
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
 
   return {
     settings,
     isLoading,
     isSaving,
     error,
-    saveSettings: () => saveSettings(),
+    saveSettings,
     resetSettings,
     updateSetting,
-    updateNestedSetting,
-    loadSettings
+    updateNestedSetting
   };
 };

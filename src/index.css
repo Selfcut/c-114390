@@ -62,3 +62,21 @@
 .dark .footer {
   border-color: hsl(var(--border)) !important;
 }
+
+/* Remove hover underlines from buttons and nav items */
+button, .button, [role="button"], .no-underline,
+.nav-link, nav a, .sidebar a, .navigation a {
+  text-decoration: none !important;
+}
+
+button:hover, .button:hover, [role="button"]:hover,
+.nav-link:hover, nav a:hover, .sidebar a:hover, .navigation a:hover {
+  text-decoration: none !important;
+}
+
+/* Only apply underline hover effect to specific text links */
+article a:not(.button):not([role="button"]):hover,
+p a:not(.button):not([role="button"]):hover,
+.text-link:hover {
+  text-decoration: underline;
+}
