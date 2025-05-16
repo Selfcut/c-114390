@@ -45,3 +45,15 @@ export const subscribeToChatSidebarToggle = (callback: (isOpen: boolean | ((prev
   document.addEventListener(CHAT_SIDEBAR_TOGGLE_EVENT, handler);
   return () => document.removeEventListener(CHAT_SIDEBAR_TOGGLE_EVENT, handler);
 };
+
+// Initialize UI state from localStorage
+export const initializeUIState = (): void => {
+  // Initialize sidebar width based on collapsed state
+  const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+  document.documentElement.style.setProperty(
+    '--sidebar-width', 
+    sidebarCollapsed ? '64px' : '256px'
+  );
+  
+  // Other UI state initializations can be added here
+};

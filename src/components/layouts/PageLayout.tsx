@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PromoBar } from "../PromoBar";
 import { CollapsibleSidebar } from "../CollapsibleSidebar";
