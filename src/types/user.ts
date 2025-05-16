@@ -1,5 +1,5 @@
 
-export type UserStatus = 'online' | 'away' | 'offline' | 'dnd' | 'invisible' | 'do-not-disturb';
+export type UserStatus = 'online' | 'away' | 'offline' | 'invisible' | 'do-not-disturb';
 
 export interface UserProfile {
   id: string;

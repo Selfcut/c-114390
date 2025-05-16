@@ -35,8 +35,7 @@ export function UserHoverCard({
     switch (status) {
       case "online": return "bg-green-500";
       case "away": return "bg-amber-500";
-      case "do-not-disturb":
-      case "dnd": return "bg-red-500";
+      case "do-not-disturb": return "bg-red-500";
       case "invisible":
       case "offline":
       default: return "bg-gray-500";
@@ -48,8 +47,7 @@ export function UserHoverCard({
     switch (status) {
       case "online": return "Online";
       case "away": return "Away";
-      case "do-not-disturb":
-      case "dnd": return "Do not disturb";
+      case "do-not-disturb": return "Do not disturb";
       case "invisible": return "Invisible";
       default: return "Offline";
     }
