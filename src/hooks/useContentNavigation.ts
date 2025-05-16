@@ -1,29 +1,33 @@
 
 import { useNavigate } from 'react-router-dom';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export const useContentNavigation = () => {
   const navigate = useNavigate();
-  
-  // Handle content item click
-  const handleContentClick = (id: string, itemType: ContentItemType) => {
-    // Different behavior based on content type
-    if (itemType === 'knowledge') {
-      navigate(`/library/entry/${id}`);
-    } else if (itemType === 'media') {
-      navigate(`/library/media/${id}`);
-    } else if (itemType === 'quote') {
-      navigate(`/library/quote/${id}`);
-    }
+
+  // Navigate to knowledge entry detail page
+  const handleKnowledgeClick = (id: string) => {
+    navigate(`/knowledge/${id}`);
   };
-  
-  // New method to handle wiki article navigation
+
+  // Navigate to wiki article detail page
   const handleWikiClick = (id: string) => {
     navigate(`/wiki/${id}`);
   };
 
+  // Navigate to quote detail page
+  const handleQuoteClick = (id: string) => {
+    navigate(`/quotes/${id}`);
+  };
+
+  // Navigate to media detail page
+  const handleMediaClick = (id: string) => {
+    navigate(`/media/${id}`);
+  };
+
   return {
-    handleContentClick,
-    handleWikiClick
+    handleKnowledgeClick,
+    handleWikiClick,
+    handleQuoteClick,
+    handleMediaClick,
   };
 };
