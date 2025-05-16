@@ -3,13 +3,13 @@ import { useState, useEffect } from "react";
 import { ChatInterface } from "../components/chat/ChatInterface";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { ConversationItem } from "../components/chat/types";
 
 const Chat = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [conversations, setConversations] = useState([]);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
 
   // Fetch conversations from Supabase
   useEffect(() => {
@@ -47,7 +47,10 @@ const Chat = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      <ChatInterface initialConversations={conversations} />
+      <ChatInterface 
+        initialConversations={conversations}
+        chatType="direct" 
+      />
     </div>
   );
 };

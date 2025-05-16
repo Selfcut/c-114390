@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,7 +37,7 @@ import {
   Users,
 } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
-import { ChatMessage as ChatMessageType } from "./types";
+import { ChatMessage as ChatMessageType, ConversationItem } from "./types";
 import { UserStatus } from "@/types/user";
 import { format } from "date-fns";
 
@@ -183,7 +183,7 @@ const generateMockMessages = (): ChatMessageType[] => {
 };
 
 // Props for the ChatInterface component
-interface ChatInterfaceProps {
+export interface ChatInterfaceProps {
   // For direct chats
   recipientId?: string;
   recipientName?: string;
@@ -202,7 +202,10 @@ interface ChatInterfaceProps {
   }>;
   
   // Type of chat
-  chatType: 'direct' | 'group' | 'global';
+  chatType?: 'direct' | 'group' | 'global';
+  
+  // Initial conversations
+  initialConversations?: ConversationItem[];
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -214,7 +217,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   groupName,
   groupAvatar,
   groupMembers,
-  chatType
+  chatType = 'direct',
+  initialConversations = []
 }) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessageType[]>(generateMockMessages());

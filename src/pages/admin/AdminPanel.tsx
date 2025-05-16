@@ -36,11 +36,13 @@ const AdminPanel = () => {
     return "dashboard";
   };
   
-  // Simulate data loading
-  const simulateLoading = (setter) => {
+  // Simulate data loading - using proper return value for ReactNode
+  const simulateLoading = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {
     setTimeout(() => {
       setter(false);
     }, 1500);
+    
+    return null; // Return null to satisfy ReactNode type
   };
   
   return (
@@ -151,7 +153,8 @@ const AdminPanel = () => {
                 <div className="mt-6">
                   <Skeleton className="h-10 w-full" />
                 </div>
-                {simulateLoading(setIsLoadingUsers)}
+                {/* Use null for ReactNode */}
+                {setTimeout(() => setIsLoadingUsers(false), 1500) && null}
               </CardContent>
             </Card>
           ) : (
@@ -186,7 +189,8 @@ const AdminPanel = () => {
                     </div>
                   ))}
                 </div>
-                {simulateLoading(setIsLoadingContent)}
+                {/* Use null for ReactNode */}
+                {setTimeout(() => setIsLoadingContent(false), 1500) && null}
               </CardContent>
             </Card>
           ) : (

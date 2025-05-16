@@ -1,4 +1,3 @@
-
 export interface ChatMessage {
   id: string;
   content: string;
@@ -38,4 +37,15 @@ export interface Conversation {
   isGlobal?: boolean;
   isGroup?: boolean;
   members?: Array<{id: string; name: string; avatar: string;}>;
+}
+
+// Add this interface to the existing types
+export interface ConversationItem {
+  id: string;
+  name: string;
+  lastMessage?: string;
+  updated_at?: string;
+  created_at?: string;
+  is_group?: boolean;
+  is_global?: boolean;
 }
