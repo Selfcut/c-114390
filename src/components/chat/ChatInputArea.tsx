@@ -22,14 +22,14 @@ export const ChatInputArea = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleEmojiSelect = (emoji: string) => {
-    setMessage(prev => prev + emoji);
+    setMessage(message + emoji);
     textareaRef.current?.focus();
   };
 
   const handleGifSelect = (gif: { url: string; alt: string }) => {
     // Insert markdown image format for GIF
     const gifMarkdown = `![${gif.alt}](${gif.url})`;
-    setMessage(prev => `${prev} ${gifMarkdown}`);
+    setMessage(message + " " + gifMarkdown);
     textareaRef.current?.focus();
   };
 

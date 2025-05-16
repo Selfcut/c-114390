@@ -8,6 +8,7 @@ import { ChatMessageList } from "./ChatMessageList";
 import { ChatInputArea } from "./ChatInputArea";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
+import { Conversation } from "./types";
 
 export const FullHeightChatSidebar = () => {
   const { 
@@ -24,6 +25,13 @@ export const FullHeightChatSidebar = () => {
   } = useChatMessages();
   
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
+
+  // Cast the conversations to the expected Conversation type
+  const conversationsWithAvatars = conversations.map(conv => ({
+    ...conv,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.name}`, // Generate avatar from name
+    unread: 0 // Add unread count
+  })) as Conversation[];
 
   return (
     <>
@@ -49,7 +57,7 @@ export const FullHeightChatSidebar = () => {
 
         {/* Conversations list */}
         <ConversationsList 
-          conversations={conversations}
+          conversations={conversationsWithAvatars}
           selectedConversation={selectedConversation}
           handleSelectConversation={handleSelectConversation}
         />

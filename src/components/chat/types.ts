@@ -1,14 +1,31 @@
 
 export interface ChatMessage {
   id: string;
-  sender: {
-    id?: string;
-    name: string;
-    avatar: string;
-    isSystem?: boolean;
-  };
   content: string;
-  timestamp: Date;
+  senderName: string;
+  userId: string;
+  createdAt: string;
+  conversationId: string;
+  reactions?: Array<{
+    emoji: string;
+    count: number;
+    users: string[];
+  }>;
+  isEdited?: boolean;
+  replyTo?: {
+    id: string;
+    content: string;
+    sender: { name: string };
+  } | null;
+  mentions?: string[];
+  attachments?: Array<{
+    id: string;
+    type: "image" | "file" | "audio" | "video" | "gif";
+    url: string;
+    name: string;
+    size?: number;
+    dimensions?: { width: number; height: number };
+  }>;
 }
 
 export interface Conversation {
@@ -17,6 +34,7 @@ export interface Conversation {
   avatar: string;
   lastMessage: string;
   unread: number;
+  updatedAt?: string;
   isGlobal?: boolean;
   isGroup?: boolean;
   members?: Array<{id: string; name: string; avatar: string;}>;

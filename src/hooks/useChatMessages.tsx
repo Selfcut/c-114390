@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
-import { ChatMessage } from "@/components/chat/types";
+import { ChatMessage, Conversation } from "@/components/chat/types";
 
 // Mock conversations - in a real app, this would come from a database
 const initialConversations = [

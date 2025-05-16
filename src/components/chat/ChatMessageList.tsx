@@ -8,7 +8,7 @@ import { ChatMessage as ChatMessageType } from "./types";
 interface ChatMessageListProps {
   messages: ChatMessageType[];
   isLoading: boolean;
-  formatTime: (date: Date) => string;
+  formatTime: (timestamp: string) => string;
 }
 
 export const ChatMessageList = ({ 
