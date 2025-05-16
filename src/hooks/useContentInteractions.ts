@@ -136,10 +136,11 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
             : 'quotes';
             
         // Update the likes count directly
-        await supabase
-          .from(tableName)
-          .update({ likes: supabase.sql`likes - 1` })
-          .eq('id', id);
+        await supabase.rpc('decrement_counter_fn', {
+          row_id: id,
+          column_name: 'likes',
+          table_name: tableName
+        });
       } else {
         // Like
         await supabase
@@ -160,10 +161,11 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
             : 'quotes';
             
         // Update the likes count directly
-        await supabase
-          .from(tableName)
-          .update({ likes: supabase.sql`likes + 1` })
-          .eq('id', id);
+        await supabase.rpc('increment_counter_fn', {
+          row_id: id,
+          column_name: 'likes',
+          table_name: tableName
+        });
       }
       
       return {
@@ -209,10 +211,11 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
         
         // Update counter if it's a quote
         if (contentTypeStr === 'quote') {
-          await supabase
-            .from('quotes')
-            .update({ bookmarks: supabase.sql`bookmarks - 1` })
-            .eq('id', id);
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: id,
+            column_name: 'bookmarks',
+            table_name: 'quotes'
+          });
         }
       } else {
         // Add bookmark
@@ -228,10 +231,11 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
         
         // Update counter if it's a quote
         if (contentTypeStr === 'quote') {
-          await supabase
-            .from('quotes')
-            .update({ bookmarks: supabase.sql`bookmarks + 1` })
-            .eq('id', id);
+          await supabase.rpc('increment_counter_fn', {
+            row_id: id,
+            column_name: 'bookmarks', 
+            table_name: 'quotes'
+          });
         }
       }
       

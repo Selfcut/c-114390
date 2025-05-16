@@ -30,39 +30,27 @@ export const fetchWikiArticles = async (options?: {
   const page = options?.page || 0;
 
   try {
-    // Use raw SQL query to fetch wiki articles
-    let query = `
-      SELECT 
-        wa.*,
-        p.name,
-        p.avatar_url
-      FROM 
-        wiki_articles wa
-      LEFT JOIN
-        profiles p ON wa.user_id = p.id
-      ORDER BY 
-        wa.last_updated DESC
-    `;
+    let query = supabase
+      .from('wiki_articles')
+      .select(`
+        *,
+        profiles:profiles(name, avatar_url)
+      `)
+      .order('last_updated', { ascending: false })
+      .limit(pageSize)
+      .range(page * pageSize, (page + 1) * pageSize - 1);
 
     // Add category filter if specified
-    const params: any[] = [];
     if (options?.category) {
-      query += ` WHERE wa.category = $1`;
-      params.push(options.category);
+      query = query.eq('category', options.category);
     }
 
-    // Add pagination
-    query += ` LIMIT ${pageSize} OFFSET ${page * pageSize}`;
-
-    const { data, error } = await supabase.rpc('execute_sql', { 
-      query_text: query,
-      params: params
-    });
+    const { data: articles, error } = await query;
 
     if (error) throw error;
 
     // Format the returned data
-    const formattedArticles: WikiArticle[] = (data as WikiArticleRaw[]).map(item => ({
+    const formattedArticles: WikiArticle[] = (articles || []).map(item => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -74,7 +62,10 @@ export const fetchWikiArticles = async (options?: {
       author: item.profiles?.name || 'Unknown'
     }));
 
-    return { articles: formattedArticles, hasMore: formattedArticles.length === pageSize };
+    return { 
+      articles: formattedArticles, 
+      hasMore: formattedArticles.length === pageSize
+    };
   } catch (err) {
     console.error('Error fetching wiki articles:', err);
     return { articles: [], hasMore: false, error: err };
@@ -84,44 +75,32 @@ export const fetchWikiArticles = async (options?: {
 // Function to get a single wiki article by ID
 export const fetchWikiArticleById = async (id: string) => {
   try {
-    // Use raw SQL query to fetch wiki article by ID
-    const query = `
-      SELECT 
-        wa.*,
-        p.name,
-        p.avatar_url
-      FROM 
-        wiki_articles wa
-      LEFT JOIN
-        profiles p ON wa.user_id = p.id
-      WHERE 
-        wa.id = $1
-    `;
-
-    const { data, error } = await supabase.rpc('execute_sql', { 
-      query_text: query,
-      params: [id]
-    });
+    const { data, error } = await supabase
+      .from('wiki_articles')
+      .select(`
+        *,
+        profiles:profiles(name, avatar_url)
+      `)
+      .eq('id', id)
+      .single();
 
     if (error) throw error;
     
-    if (!data || !data[0]) {
+    if (!data) {
       return { article: null, error: "Article not found" };
     }
 
-    const item = data[0] as WikiArticleRaw;
-
     // Format the returned data
     const article: WikiArticle = {
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      category: item.category,
-      content: item.content,
-      lastUpdated: formatLastUpdated(item.last_updated || ''),
-      contributors: item.contributors || 1,
-      views: item.views || 0,
-      author: item.profiles?.name || 'Unknown'
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      content: data.content,
+      lastUpdated: formatLastUpdated(data.last_updated || ''),
+      contributors: data.contributors || 1,
+      views: data.views || 0,
+      author: data.profiles?.name || 'Unknown'
     };
 
     // Update view count
@@ -143,44 +122,31 @@ export const createWikiArticle = async (articleData: {
   user_id: string;
 }) => {
   try {
-    const query = `
-      INSERT INTO wiki_articles (
-        title, 
-        description, 
-        content, 
-        category, 
-        user_id
-      ) 
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `;
-
-    const { data, error } = await supabase.rpc('execute_sql', { 
-      query_text: query,
-      params: [
-        articleData.title,
-        articleData.description,
-        articleData.content,
-        articleData.category,
-        articleData.user_id
-      ]
-    });
+    const { data, error } = await supabase
+      .from('wiki_articles')
+      .insert({
+        title: articleData.title,
+        description: articleData.description,
+        content: articleData.content,
+        category: articleData.category,
+        user_id: articleData.user_id
+      })
+      .select()
+      .single();
 
     if (error) throw error;
 
-    if (!data || !data[0]) {
+    if (!data) {
       return { article: null, error: "Failed to create article" };
     }
 
-    const item = data[0] as WikiArticleRaw;
-
     // Format the returned data
     const article: WikiArticle = {
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      category: item.category,
-      content: item.content,
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      content: data.content,
       lastUpdated: "Just now",
       contributors: 1,
       views: 0
@@ -196,16 +162,12 @@ export const createWikiArticle = async (articleData: {
 // Function to increment view count for an article
 export const incrementWikiViews = async (id: string) => {
   try {
-    const query = `
-      UPDATE wiki_articles 
-      SET views = COALESCE(views, 0) + 1 
-      WHERE id = $1
-    `;
-
-    await supabase.rpc('execute_sql', { 
-      query_text: query,
-      params: [id]
-    });
+    const { error } = await supabase
+      .from('wiki_articles')
+      .update({ views: supabase.rpc('increment_counter_fn', { row_id: id, column_name: 'views' }) })
+      .eq('id', id);
+    
+    if (error) throw error;
     
     return { success: true };
   } catch (err) {

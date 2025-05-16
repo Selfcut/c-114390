@@ -1,4 +1,3 @@
-
 /**
  * Type definitions for Supabase tables to improve type safety in our application
  */
@@ -84,3 +83,40 @@ export interface ContentComment {
   created_at: string;
   updated_at: string;
 }
+
+// Add these functions to supabase.rpc
+export const incrementCounterFn = async (
+  rowId: string,
+  columnName: string,
+  tableName: string
+) => {
+  try {
+    await supabase.rpc('increment_counter_fn', {
+      row_id: rowId,
+      column_name: columnName,
+      table_name: tableName
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error incrementing ${columnName}:`, error);
+    return false;
+  }
+};
+
+export const decrementCounterFn = async (
+  rowId: string,
+  columnName: string,
+  tableName: string
+) => {
+  try {
+    await supabase.rpc('decrement_counter_fn', {
+      row_id: rowId,
+      column_name: columnName,
+      table_name: tableName
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error decrementing ${columnName}:`, error);
+    return false;
+  }
+};
