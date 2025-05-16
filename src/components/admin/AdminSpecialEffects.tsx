@@ -8,9 +8,12 @@ import {
   triggerFireEffect, 
   adminFlourish, 
   triggerStarfall,
-  digitalRain
+  digitalRain,
+  triggerSnowfall,
+  glitchScreen,
+  sparkleElement
 } from "@/lib/utils/admin-effects";
-import { Sparkles, Flame, CloudRain, Wand2, Stars, Sigma } from "lucide-react";
+import { Sparkles, Flame, CloudRain, Wand2, Stars, Sigma, Snowflake, Zap, CircuitBoard } from "lucide-react";
 import { CustomTooltip } from "@/components/ui/CustomTooltip";
 
 export const AdminSpecialEffects = () => {
@@ -90,6 +93,43 @@ export const AdminSpecialEffects = () => {
             >
               <Sigma className="h-5 w-5" />
               <span>Digital Rain</span>
+            </Button>
+          </CustomTooltip>
+          
+          <CustomTooltip content="Create a snow effect on screen" side="top">
+            <Button 
+              onClick={() => triggerSnowfall()} 
+              variant="outline" 
+              className="flex flex-col items-center justify-center h-24 gap-2"
+            >
+              <Snowflake className="h-5 w-5" />
+              <span>Snowfall</span>
+            </Button>
+          </CustomTooltip>
+          
+          <CustomTooltip content="Create a screen glitch effect" side="top">
+            <Button 
+              onClick={() => glitchScreen()} 
+              variant="outline" 
+              className="flex flex-col items-center justify-center h-24 gap-2"
+            >
+              <Zap className="h-5 w-5" />
+              <span>Glitch Screen</span>
+            </Button>
+          </CustomTooltip>
+          
+          <CustomTooltip content="Add sparkles to a random element" side="top">
+            <Button 
+              onClick={() => {
+                const elements = document.querySelectorAll('button, h1, h2, h3');
+                const randomIndex = Math.floor(Math.random() * elements.length);
+                sparkleElement(elements[randomIndex] as HTMLElement);
+              }} 
+              variant="outline" 
+              className="flex flex-col items-center justify-center h-24 gap-2"
+            >
+              <CircuitBoard className="h-5 w-5" />
+              <span>Random Sparkles</span>
             </Button>
           </CustomTooltip>
         </div>
