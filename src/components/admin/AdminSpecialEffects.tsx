@@ -11,9 +11,10 @@ import {
   digitalRain,
   triggerSnowfall,
   glitchScreen,
-  sparkleElement
+  sparkleElement,
+  rainbowText
 } from "@/lib/utils/admin-effects";
-import { Sparkles, Flame, CloudRain, Wand2, Stars, Sigma, Snowflake, Zap, CircuitBoard } from "lucide-react";
+import { Sparkles, Flame, CloudRain, Wand2, Stars, Sigma, Snowflake, Zap, CircuitBoard, PaintBucket } from "lucide-react";
 import { CustomTooltip } from "@/components/ui/CustomTooltip";
 
 export const AdminSpecialEffects = () => {
@@ -130,6 +131,21 @@ export const AdminSpecialEffects = () => {
             >
               <CircuitBoard className="h-5 w-5" />
               <span>Random Sparkles</span>
+            </Button>
+          </CustomTooltip>
+          
+          <CustomTooltip content="Create rainbow text effect on headings" side="top">
+            <Button 
+              onClick={() => {
+                const headings = document.querySelectorAll('h1, h2, h3');
+                const randomIndex = Math.floor(Math.random() * headings.length);
+                rainbowText(headings[randomIndex] as HTMLElement);
+              }} 
+              variant="outline" 
+              className="flex flex-col items-center justify-center h-24 gap-2"
+            >
+              <PaintBucket className="h-5 w-5" />
+              <span>Rainbow Text</span>
             </Button>
           </CustomTooltip>
         </div>
