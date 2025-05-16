@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { MediaHeader } from "../components/media/MediaHeader";
@@ -7,7 +6,7 @@ import { MediaFeed } from "../components/media/MediaFeed";
 import { CreatePostDialog } from "../components/media/CreatePostDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,7 +82,8 @@ const Media = () => {
         user_id: item.user_id,
         title: item.title,
         content: item.content,
-        type: item.type,
+        // Ensure type is properly cast to one of the allowed types
+        type: (item.type as 'image' | 'video' | 'document' | 'youtube' | 'text') || 'text',
         url: item.url,
         likes: item.likes || 0,
         comments: item.comments || 0,
@@ -173,7 +173,8 @@ const Media = () => {
           user_id: user.id,
           title: postData.title,
           content: postData.content,
-          type: postData.type,
+          // Ensure we're using a valid type
+          type: (postData.type as 'image' | 'video' | 'document' | 'youtube' | 'text'),
           url: postData.type === 'youtube' ? postData.youtubeUrl : fileUrl,
           likes: 0,
           comments: 0
@@ -186,6 +187,7 @@ const Media = () => {
       if (data && data.length > 0) {
         const newPost: MediaPost = {
           ...data[0],
+          type: (data[0].type as 'image' | 'video' | 'document' | 'youtube' | 'text'),
           profiles: {
             name: user.name,
             username: user.username,
@@ -224,7 +226,7 @@ const Media = () => {
           filterType={filterType}
           setFilterType={setFilterType}
           sortBy={sortBy}
-          setSortBy={setSortBy}
+          setSortBy={(value) => setSortBy(value as "newest" | "oldest" | "popular")}
         />
         
         {error ? (

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile, UserStatus } from "@/types/user";
+import { UserProfile, UserStatus, UserRole } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
 
 // Fetch user profile from Supabase
@@ -27,7 +27,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       avatar: profile.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: profile.bio || "",
       website: profile.website || "",
-      role: profile.role || "user",
+      role: (profile.role as UserRole) || "user",
       isAdmin: profile.role === "admin",
       status: profile.status || "online",
       isGhostMode: profile.is_ghost_mode || false,

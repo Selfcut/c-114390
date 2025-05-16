@@ -3,7 +3,12 @@ import React from "react";
 import Header from "../Header";
 import { Sidebar } from "./Sidebar";
 
-export const PageLayout = ({ children }: { children: React.ReactNode }) => {
+interface PageLayoutProps {
+  children: React.ReactNode;
+  allowGuests?: boolean;
+}
+
+export const PageLayout = ({ children, allowGuests = false }: PageLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

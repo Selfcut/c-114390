@@ -1,5 +1,6 @@
-
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, ShieldAlert, Globe, Upload, Mail, Bell, Key, Lock, Database, FileText, MessageSquare } from "lucide-react";
 
 export const AdminSettings = () => {
@@ -605,3 +606,5 @@ export const AdminSettings = () => {
     </div>
   );
 };
+
+export default AdminSettings;

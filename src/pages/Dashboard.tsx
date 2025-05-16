@@ -1,9 +1,7 @@
-
-import { useState, useEffect } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
-import { UserWelcome } from "../components/UserWelcome";
-import { TabNav } from "../components/TabNav";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { PageLayout } from '@/components/layouts/PageLayout'; 
+import { useToast } from '@/hooks/use-toast';
 import { Calendar, BarChart3, BookOpen, Users, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth/auth-context";
