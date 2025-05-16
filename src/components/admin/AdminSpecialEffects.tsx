@@ -96,4 +96,3 @@ export const AdminSpecialEffects = () => {
       </CardContent>
     </Card>
   );
-};
