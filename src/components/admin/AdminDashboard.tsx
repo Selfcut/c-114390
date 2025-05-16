@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,7 +31,22 @@ const AdminDashboard = () => {
           return;
         }
 
-        setUsers(data as UserProfile[]);
+        // Transform the data to match the UserProfile type
+        const transformedUsers: UserProfile[] = (data || []).map(user => ({
+          id: user.id,
+          name: user.name || '',
+          username: user.username,
+          email: user.email || '',
+          avatar: user.avatar_url || '',
+          bio: user.bio || '',
+          website: user.website || '',
+          role: user.role as any,
+          isAdmin: user.role === 'admin',
+          status: user.status as any,
+          isGhostMode: user.is_ghost_mode || false
+        }));
+
+        setUsers(transformedUsers);
       } catch (error) {
         console.error("Unexpected error:", error);
         toast({

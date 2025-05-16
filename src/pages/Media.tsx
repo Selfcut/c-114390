@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { MediaHeader } from "../components/media/MediaHeader";
@@ -28,7 +29,7 @@ export interface MediaPost {
     name: string;
     username: string;
     avatar_url?: string;
-  };
+  } | null;
 }
 
 const Media = () => {
@@ -77,20 +78,33 @@ const Media = () => {
       if (fetchError) throw fetchError;
       
       // Transform data to match our interface
-      const transformedData: MediaPost[] = (data || []).map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        title: item.title,
-        content: item.content,
-        // Ensure type is properly cast to one of the allowed types
-        type: (item.type as 'image' | 'video' | 'document' | 'youtube' | 'text') || 'text',
-        url: item.url,
-        likes: item.likes || 0,
-        comments: item.comments || 0,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        profiles: item.profiles
-      }));
+      const transformedData: MediaPost[] = (data || []).map(item => {
+        let profileData = null;
+        
+        // Handle the profiles relationship
+        if (item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles)) {
+          profileData = {
+            name: item.profiles.name || 'Unknown User',
+            username: item.profiles.username || 'unknown',
+            avatar_url: item.profiles.avatar_url
+          };
+        }
+        
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          title: item.title,
+          content: item.content,
+          // Ensure type is properly cast to one of the allowed types
+          type: (item.type as 'image' | 'video' | 'document' | 'youtube' | 'text'),
+          url: item.url,
+          likes: item.likes || 0,
+          comments: item.comments || 0,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          profiles: profileData
+        };
+      });
 
       setPosts(prev => (append ? [...prev, ...transformedData] : transformedData));
       setHasMore(transformedData.length === pageSize);
@@ -226,7 +240,7 @@ const Media = () => {
           filterType={filterType}
           setFilterType={setFilterType}
           sortBy={sortBy}
-          setSortBy={(value) => setSortBy(value as "newest" | "oldest" | "popular")}
+          setSortBy={setSortBy}
         />
         
         {error ? (

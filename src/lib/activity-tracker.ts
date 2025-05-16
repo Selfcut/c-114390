@@ -1,5 +1,5 @@
 
-export type ActivityType = 'view' | 'create' | 'update' | 'delete' | 'like' | 'bookmark' | 'comment' | 'share';
+export type ActivityType = 'view' | 'create' | 'update' | 'delete' | 'like' | 'bookmark' | 'comment' | 'share' | 'learned' | 'completed' | 'interaction';
 
 export const trackActivity = async (
   userId: string, 

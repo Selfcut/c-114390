@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
 import { PageLayout } from '@/components/layouts/PageLayout'; 
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, BarChart3, BookOpen, Users, Lightbulb } from "lucide-react";
@@ -15,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getUserActivityStats } from "@/lib/utils/supabase-utils";
 import { trackActivity } from "@/lib/activity-tracker";
 import { fetchLearningProgress, extractTopicsFromActivities, createProgressDataFromTopics, addDefaultTopics } from "@/lib/utils/data-utils";
+import { UserWelcome } from "@/components/UserWelcome";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Define interfaces for our data
 interface ProgressData {
@@ -35,6 +36,39 @@ interface ProfileData {
   totalBadges?: number;
   activityStreak?: number;
 }
+
+// TabNav component for dashboard sections
+const TabNav = ({ tabs, defaultTab, className = "" }: { 
+  tabs: { id: string; label: string; icon: React.ReactNode; content: React.ReactNode }[];
+  defaultTab: string;
+  className?: string;
+}) => {
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  return (
+    <div className={`space-y-4 ${className}`}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="flex overflow-x-auto bg-transparent space-x-2">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="flex items-center"
+            >
+              {tab.icon}
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {tabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id}>
+            {tab.content}
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const { toast } = useToast();
