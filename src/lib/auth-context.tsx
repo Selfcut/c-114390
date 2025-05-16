@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { UserProfile, UserStatus } from "./auth/auth-types";
+import { UserStatus } from "./auth/auth-types";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuthContextValue {
@@ -13,6 +13,21 @@ interface AuthContextValue {
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any }>;
+}
+
+// Define the UserProfile interface locally to match the database schema
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+  avatar: string;
+  bio?: string;
+  website?: string;
+  role: string;
+  isAdmin: boolean;
+  status: "online" | "away" | "do-not-disturb" | "invisible" | "offline";
+  isGhostMode?: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -93,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           website: profile.website || "",
           role: profile.role || "user",
           isAdmin: profile.role === "admin",
-          status: profile.status as UserStatus || "online",
+          status: profile.status || "online",
           isGhostMode: profile.is_ghost_mode || false,
         };
         setUser(fullProfile);

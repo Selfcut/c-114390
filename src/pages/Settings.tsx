@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Settings as SettingsIcon,
   User,
@@ -26,7 +26,7 @@ const Settings = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState<any>(null);
   
   // Profile settings
   const [profileSettings, setProfileSettings] = useState({
@@ -119,7 +119,7 @@ const Settings = () => {
   }, [user]);
 
   // Handle profile form submit
-  const handleProfileSubmit = async (e) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) return;
@@ -144,7 +144,7 @@ const Settings = () => {
         description: "Your profile settings have been saved."
       });
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating profile:", err);
       toast({
         title: "Update failed",

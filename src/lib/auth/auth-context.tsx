@@ -2,12 +2,25 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { UserProfile } from "@/types/user";
-import { AuthContextType } from "./auth-types";
+import { UserProfile, UserStatus } from "@/types/user";
 import { fetchUserProfile, updateUserProfile, updateUserStatus, clearUserData } from "./auth-utils";
 import { useAuthenticationMethods } from "./auth-authentication";
 import { usePresenceManagement } from "./auth-presence";
 import { toast } from "@/components/ui/use-toast";
+
+interface AuthContextType {
+  user: UserProfile | null;
+  session: Session | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  updateUserStatus: (status: UserProfile['status']) => Promise<void>;
+  toggleGhostMode: () => Promise<void>;
+  toggleDoNotDisturb: () => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
