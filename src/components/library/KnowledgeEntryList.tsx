@@ -3,7 +3,7 @@ import { Book } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KnowledgeEntryCard } from "../KnowledgeEntryCard";
 
-interface KnowledgeEntry {
+export interface KnowledgeEntry {
   id: string;
   title: string;
   author: string;
@@ -55,6 +55,7 @@ export const KnowledgeEntryList = ({
           categories={entry.categories}
           coverImage={entry.coverImage}
           onClick={() => onEntryClick(entry.id)}
+          variant={viewMode === 'list' ? 'default' : 'compact'}
         />
       ))}
     </div>
