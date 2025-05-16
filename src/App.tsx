@@ -81,7 +81,7 @@ const Root = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
-        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <PageLayout allowGuests={true}><Landing /></PageLayout>} />
+        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
         <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
@@ -172,7 +172,7 @@ const Root = () => {
         } />
         
         {/* Fallback route - 404 page */}
-        <Route path="*" element={<PageLayout><NotFound /></PageLayout>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       
       {/* Show chat sidebar for all users (including guests) */}

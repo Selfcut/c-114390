@@ -1,7 +1,4 @@
 import { useState, useEffect } from "react";
-import { PromoBar } from "../components/PromoBar";
-import { Sidebar } from "../components/Sidebar";
-import Header from "../components/Header";
 import { KnowledgeEntryCard } from "../components/KnowledgeEntryCard";
 import { polymathToast } from "../components/ui/use-toast";
 import { Library as LibraryIcon, PenSquare, Book, Search, Filter, LayoutGrid, List } from "lucide-react";
@@ -126,205 +123,194 @@ const Library = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <PromoBar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <div className="flex-1 overflow-auto">
-            <main className="py-8 px-12">
-              <div className="flex justify-between items-center mb-8 stagger-fade">
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                  <LibraryIcon size={28} />
-                  Knowledge Library
-                </h1>
-                <button 
-                  className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
-                  onClick={handleCreateEntry}
+    <main className="py-8 px-12">
+      <div className="flex justify-between items-center mb-8 stagger-fade">
+        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+          <LibraryIcon size={28} />
+          Knowledge Library
+        </h1>
+        <button 
+          className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
+          onClick={handleCreateEntry}
+        >
+          <PenSquare size={18} />
+          <span>Contribute Knowledge</span>
+        </button>
+      </div>
+      
+      <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 shadow-md border border-gray-800">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search the library..."
+              className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white focus:ring-1 focus:ring-[#6E59A5] focus:border-[#6E59A5] transition-colors"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
                 >
-                  <PenSquare size={18} />
-                  <span>Contribute Knowledge</span>
-                </button>
-              </div>
-              
-              <div className="bg-[#1A1A1A] rounded-lg p-4 mb-8 shadow-md border border-gray-800">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search the library..."
-                      className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-white focus:ring-1 focus:ring-[#6E59A5] focus:border-[#6E59A5] transition-colors"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
-                        >
-                          <Filter size={16} />
-                          <span>Category</span>
-                          {activeCategory && <Badge className="bg-[#6E59A5] ml-2 text-xs">{activeCategory}</Badge>}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 w-56">
-                        {allCategories.map((category, index) => (
-                          <DropdownMenuItem 
-                            key={index}
-                            className={`flex items-center gap-2 ${activeCategory === category ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
-                            onClick={() => setActiveCategory(activeCategory === category ? null : category)}
-                          >
-                            <Book size={16} />
-                            <span>{category}</span>
-                          </DropdownMenuItem>
-                        ))}
-                        {activeCategory && (
-                          <DropdownMenuItem 
-                            className="flex items-center gap-2 border-t border-gray-700 mt-1 pt-1 hover:bg-gray-700"
-                            onClick={() => setActiveCategory(null)}
-                          >
-                            <span>Clear category filter</span>
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
-                        >
-                          <span>Difficulty: {difficultySetting.charAt(0).toUpperCase() + difficultySetting.slice(1)}</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
-                        <DropdownMenuItem 
-                          className={`${difficultySetting === 'all' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
-                          onClick={() => setDifficultySetting('all')}
-                        >
-                          All
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className={`${difficultySetting === 'beginner' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
-                          onClick={() => setDifficultySetting('beginner')}
-                        >
-                          Beginner
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className={`${difficultySetting === 'intermediate' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
-                          onClick={() => setDifficultySetting('intermediate')}
-                        >
-                          Intermediate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className={`${difficultySetting === 'advanced' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
-                          onClick={() => setDifficultySetting('advanced')}
-                        >
-                          Advanced
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <div className="flex rounded-md overflow-hidden border border-gray-700">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className={`rounded-none ${viewMode === 'grid' ? 'bg-[#6E59A5] text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
-                        onClick={() => setViewMode('grid')}
-                      >
-                        <LayoutGrid size={18} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className={`rounded-none ${viewMode === 'list' ? 'bg-[#6E59A5] text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
-                        onClick={() => setViewMode('list')}
-                      >
-                        <List size={18} />
-                      </Button>
-                    </div>
-                    
-                    {(activeCategory || searchTerm || difficultySetting !== 'all') && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-gray-400 hover:text-white"
-                        onClick={handleResetFilters}
-                      >
-                        Reset Filters
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4 stagger-fade`}>
-                {filteredEntries.length > 0 ? (
-                  filteredEntries.map(entry => (
-                    <KnowledgeEntryCard
-                      key={entry.id}
-                      title={entry.title}
-                      author={entry.author}
-                      readTime={entry.readTime}
-                      createdAt={entry.createdAt}
-                      summary={entry.summary}
-                      categories={entry.categories}
-                      coverImage={entry.coverImage}
-                      onClick={() => handleEntryClick(entry.id)}
-                    />
-                  ))
-                ) : (
-                  <div className="bg-[#1A1A1A] rounded-lg p-8 text-center col-span-full border border-gray-800">
-                    <Book size={48} className="text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">No knowledge entries found matching your search criteria.</p>
-                    <button 
-                      className="mt-4 bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md transition-colors hover-lift"
-                      onClick={handleResetFilters}
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
+                  <Filter size={16} />
+                  <span>Category</span>
+                  {activeCategory && <Badge className="bg-[#6E59A5] ml-2 text-xs">{activeCategory}</Badge>}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 w-56">
+                {allCategories.map((category, index) => (
+                  <DropdownMenuItem 
+                    key={index}
+                    className={`flex items-center gap-2 ${activeCategory === category ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                    onClick={() => setActiveCategory(activeCategory === category ? null : category)}
+                  >
+                    <Book size={16} />
+                    <span>{category}</span>
+                  </DropdownMenuItem>
+                ))}
+                {activeCategory && (
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 border-t border-gray-700 mt-1 pt-1 hover:bg-gray-700"
+                    onClick={() => setActiveCategory(null)}
+                  >
+                    <span>Clear category filter</span>
+                  </DropdownMenuItem>
                 )}
-              </div>
-              
-              <div className="mt-8 bg-[#1A1A1A] rounded-lg p-6 border border-gray-800">
-                <h2 className="text-lg font-semibold text-white mb-4">Recommended Learning Paths</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-fade">
-                  <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
-                    <h3 className="text-white font-medium">Foundations of Systems Thinking</h3>
-                    <p className="text-sm text-gray-400 mt-1">5 modules • 3 hours total</p>
-                    <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
-                      Begin Path
-                    </button>
-                  </div>
-                  <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
-                    <h3 className="text-white font-medium">Philosophy of Science</h3>
-                    <p className="text-sm text-gray-400 mt-1">8 modules • 6 hours total</p>
-                    <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
-                      Begin Path
-                    </button>
-                  </div>
-                  <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
-                    <h3 className="text-white font-medium">Mathematical Thinking</h3>
-                    <p className="text-sm text-gray-400 mt-1">6 modules • 4 hours total</p>
-                    <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
-                      Begin Path
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </main>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+                >
+                  <span>Difficulty: {difficultySetting.charAt(0).toUpperCase() + difficultySetting.slice(1)}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
+                <DropdownMenuItem 
+                  className={`${difficultySetting === 'all' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                  onClick={() => setDifficultySetting('all')}
+                >
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className={`${difficultySetting === 'beginner' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                  onClick={() => setDifficultySetting('beginner')}
+                >
+                  Beginner
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className={`${difficultySetting === 'intermediate' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                  onClick={() => setDifficultySetting('intermediate')}
+                >
+                  Intermediate
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className={`${difficultySetting === 'advanced' ? 'bg-[#6E59A5] text-white' : 'hover:bg-gray-700'}`}
+                  onClick={() => setDifficultySetting('advanced')}
+                >
+                  Advanced
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <div className="flex rounded-md overflow-hidden border border-gray-700">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className={`rounded-none ${viewMode === 'grid' ? 'bg-[#6E59A5] text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid size={18} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className={`rounded-none ${viewMode === 'list' ? 'bg-[#6E59A5] text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                onClick={() => setViewMode('list')}
+              >
+                <List size={18} />
+              </Button>
+            </div>
+            
+            {(activeCategory || searchTerm || difficultySetting !== 'all') && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="text-gray-400 hover:text-white"
+                onClick={handleResetFilters}
+              >
+                Reset Filters
+              </Button>
+            )}
           </div>
         </div>
       </div>
-    </div>
+      
+      <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4 stagger-fade`}>
+        {filteredEntries.length > 0 ? (
+          filteredEntries.map(entry => (
+            <KnowledgeEntryCard
+              key={entry.id}
+              title={entry.title}
+              author={entry.author}
+              readTime={entry.readTime}
+              createdAt={entry.createdAt}
+              summary={entry.summary}
+              categories={entry.categories}
+              coverImage={entry.coverImage}
+              onClick={() => handleEntryClick(entry.id)}
+            />
+          ))
+        ) : (
+          <div className="bg-[#1A1A1A] rounded-lg p-8 text-center col-span-full border border-gray-800">
+            <Book size={48} className="text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400">No knowledge entries found matching your search criteria.</p>
+            <button 
+              className="mt-4 bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md transition-colors hover-lift"
+              onClick={handleResetFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
+        )}
+      </div>
+      
+      <div className="mt-8 bg-[#1A1A1A] rounded-lg p-6 border border-gray-800">
+        <h2 className="text-lg font-semibold text-white mb-4">Recommended Learning Paths</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-fade">
+          <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
+            <h3 className="text-white font-medium">Foundations of Systems Thinking</h3>
+            <p className="text-sm text-gray-400 mt-1">5 modules • 3 hours total</p>
+            <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
+              Begin Path
+            </button>
+          </div>
+          <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
+            <h3 className="text-white font-medium">Philosophy of Science</h3>
+            <p className="text-sm text-gray-400 mt-1">8 modules • 6 hours total</p>
+            <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
+              Begin Path
+            </button>
+          </div>
+          <div className="bg-[#222222] p-4 rounded-lg hover-lift cursor-pointer">
+            <h3 className="text-white font-medium">Mathematical Thinking</h3>
+            <p className="text-sm text-gray-400 mt-1">6 modules • 4 hours total</p>
+            <button className="mt-3 w-full bg-[#6E59A5] hover:bg-[#7E69B5] text-white text-sm py-1.5 rounded transition-colors">
+              Begin Path
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 };
 
