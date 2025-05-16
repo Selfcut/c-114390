@@ -1,15 +1,18 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { BookOpen, Image, Quote, Brain } from 'lucide-react';
+
+// Import form components
+import { KnowledgeEntryForm } from './forms/KnowledgeEntryForm';
+import { MediaForm } from './forms/MediaForm';
+import { QuoteForm } from './forms/QuoteForm';
+import { AIGeneratorForm } from './forms/AIGeneratorForm';
 
 interface ContentSubmissionModalProps {
   isOpen: boolean;
@@ -61,18 +64,25 @@ export const ContentSubmissionModal = ({
     generatedContent: '',
     title: ''
   });
-  
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'knowledge' | 'media') => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    const file = e.target.files[0];
-    
-    if (formType === 'knowledge') {
-      setKnowledgeForm(prev => ({ ...prev, coverImage: file }));
-    } else {
-      setMediaForm(prev => ({ ...prev, file }));
-    }
+
+  // Update knowledge form state
+  const updateKnowledgeForm = (updates: Partial<typeof knowledgeForm>) => {
+    setKnowledgeForm(prev => ({ ...prev, ...updates }));
+  };
+
+  // Update media form state
+  const updateMediaForm = (updates: Partial<typeof mediaForm>) => {
+    setMediaForm(prev => ({ ...prev, ...updates }));
+  };
+
+  // Update quote form state
+  const updateQuoteForm = (updates: Partial<typeof quoteForm>) => {
+    setQuoteForm(prev => ({ ...prev, ...updates }));
+  };
+
+  // Update AI form state
+  const updateAIForm = (updates: Partial<typeof aiForm>) => {
+    setAiForm(prev => ({ ...prev, ...updates }));
   };
   
   // Handle form submission
@@ -109,35 +119,12 @@ export const ContentSubmissionModal = ({
       onSubmitSuccess?.();
       
       // Reset form states
-      setKnowledgeForm({
-        title: '',
-        summary: '',
-        content: '',
-        categories: '',
-        coverImage: null
-      });
+      resetForms();
       
-      setMediaForm({
-        title: '',
-        content: '',
-        type: 'image',
-        file: null,
-        youtubeUrl: ''
+      toast({
+        title: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} content submitted`,
+        description: "Your content has been published successfully!"
       });
-      
-      setQuoteForm({
-        text: '',
-        author: '',
-        source: '',
-        tags: ''
-      });
-      
-      setAiForm({
-        prompt: '',
-        generatedContent: '',
-        title: ''
-      });
-      
     } catch (error: any) {
       console.error(`Error submitting ${activeTab} content:`, error);
       toast({
@@ -148,6 +135,37 @@ export const ContentSubmissionModal = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForms = () => {
+    setKnowledgeForm({
+      title: '',
+      summary: '',
+      content: '',
+      categories: '',
+      coverImage: null
+    });
+    
+    setMediaForm({
+      title: '',
+      content: '',
+      type: 'image',
+      file: null,
+      youtubeUrl: ''
+    });
+    
+    setQuoteForm({
+      text: '',
+      author: '',
+      source: '',
+      tags: ''
+    });
+    
+    setAiForm({
+      prompt: '',
+      generatedContent: '',
+      title: ''
+    });
   };
   
   // Submit knowledge entry
@@ -165,7 +183,7 @@ export const ContentSubmissionModal = ({
       const fileName = `${Date.now()}-${coverImage.name}`;
       const filePath = `knowledge/${user.id}/${fileName}`;
       
-      const { error: uploadError, data } = await supabase
+      const { error: uploadError } = await supabase
         .storage
         .from('content')
         .upload(filePath, coverImage);
@@ -181,7 +199,7 @@ export const ContentSubmissionModal = ({
       coverImageUrl = publicUrl;
     }
     
-    // Insert knowledge entry with typed query
+    // Insert knowledge entry
     const { error } = await supabase
       .from('knowledge_entries')
       .insert({
@@ -195,11 +213,6 @@ export const ContentSubmissionModal = ({
       } as any);
       
     if (error) throw error;
-    
-    toast({
-      title: "Knowledge entry created",
-      description: "Your knowledge entry has been published successfully!"
-    });
   };
   
   // Submit media
@@ -225,7 +238,7 @@ export const ContentSubmissionModal = ({
       const fileName = `${Date.now()}-${file.name}`;
       const filePath = `media/${user.id}/${fileName}`;
       
-      const { error: uploadError, data } = await supabase
+      const { error: uploadError } = await supabase
         .storage
         .from('content')
         .upload(filePath, file);
@@ -253,11 +266,6 @@ export const ContentSubmissionModal = ({
       });
       
     if (error) throw error;
-    
-    toast({
-      title: "Media post created",
-      description: "Your media post has been published successfully!"
-    });
   };
   
   // Submit quote
@@ -281,11 +289,6 @@ export const ContentSubmissionModal = ({
       });
       
     if (error) throw error;
-    
-    toast({
-      title: "Quote submitted",
-      description: "Your quote has been published successfully!"
-    });
   };
   
   // Generate and submit AI content
@@ -296,7 +299,7 @@ export const ContentSubmissionModal = ({
       throw new Error("Prompt, generated content, and title are required");
     }
     
-    // Insert AI-generated content as a knowledge entry with typed query
+    // Insert AI-generated content as a knowledge entry
     const { error } = await supabase
       .from('knowledge_entries')
       .insert({
@@ -309,11 +312,6 @@ export const ContentSubmissionModal = ({
       } as any);
       
     if (error) throw error;
-    
-    toast({
-      title: "AI content created",
-      description: "Your AI-generated content has been published successfully!"
-    });
   };
   
   // Generate content with AI
@@ -346,11 +344,10 @@ export const ContentSubmissionModal = ({
       
       const data = await response.json();
       
-      setAiForm(prev => ({
-        ...prev,
+      updateAIForm({
         generatedContent: data.generatedText,
-        title: prev.title || `AI Content: ${prompt.slice(0, 30)}...`
-      }));
+        title: aiForm.title || `AI Content: ${prompt.slice(0, 30)}...`
+      });
       
     } catch (error: any) {
       console.error('Error generating AI content:', error);
@@ -392,222 +389,37 @@ export const ContentSubmissionModal = ({
           </TabsList>
           
           <div className="mt-4">
-            {/* Knowledge Entry Form */}
-            <TabsContent value="knowledge" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-title">Title</Label>
-                <Input 
-                  id="knowledge-title" 
-                  placeholder="Knowledge entry title" 
-                  value={knowledgeForm.title}
-                  onChange={(e) => setKnowledgeForm(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-summary">Summary</Label>
-                <Textarea 
-                  id="knowledge-summary" 
-                  placeholder="A brief summary of this knowledge entry"
-                  value={knowledgeForm.summary}
-                  onChange={(e) => setKnowledgeForm(prev => ({ ...prev, summary: e.target.value }))}
-                  className="min-h-[80px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-content">Content</Label>
-                <Textarea 
-                  id="knowledge-content" 
-                  placeholder="The full content of your knowledge entry"
-                  value={knowledgeForm.content}
-                  onChange={(e) => setKnowledgeForm(prev => ({ ...prev, content: e.target.value }))}
-                  className="min-h-[150px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-categories">Categories</Label>
-                <Input 
-                  id="knowledge-categories" 
-                  placeholder="Comma-separated categories (e.g. Philosophy, Science)" 
-                  value={knowledgeForm.categories}
-                  onChange={(e) => setKnowledgeForm(prev => ({ ...prev, categories: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-cover">Cover Image</Label>
-                <Input 
-                  id="knowledge-cover" 
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, 'knowledge')}
-                />
-              </div>
+            <TabsContent value="knowledge">
+              <KnowledgeEntryForm 
+                formState={knowledgeForm}
+                onChange={updateKnowledgeForm}
+                isSubmitting={isSubmitting}
+              />
             </TabsContent>
             
-            {/* Media Form */}
-            <TabsContent value="media" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="media-title">Title</Label>
-                <Input 
-                  id="media-title" 
-                  placeholder="Media post title" 
-                  value={mediaForm.title}
-                  onChange={(e) => setMediaForm(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="media-content">Description</Label>
-                <Textarea 
-                  id="media-content" 
-                  placeholder="Description of your media post"
-                  value={mediaForm.content}
-                  onChange={(e) => setMediaForm(prev => ({ ...prev, content: e.target.value }))}
-                  className="min-h-[80px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="media-type">Media Type</Label>
-                <select 
-                  id="media-type"
-                  value={mediaForm.type}
-                  onChange={(e) => setMediaForm(prev => ({ ...prev, type: e.target.value as any }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="image">Image</option>
-                  <option value="video">Video</option>
-                  <option value="document">Document</option>
-                  <option value="youtube">YouTube</option>
-                  <option value="text">Text Only</option>
-                </select>
-              </div>
-              
-              {mediaForm.type === 'youtube' ? (
-                <div className="space-y-2">
-                  <Label htmlFor="media-youtube">YouTube URL</Label>
-                  <Input 
-                    id="media-youtube" 
-                    placeholder="https://www.youtube.com/watch?v=..." 
-                    value={mediaForm.youtubeUrl}
-                    onChange={(e) => setMediaForm(prev => ({ ...prev, youtubeUrl: e.target.value }))}
-                  />
-                </div>
-              ) : mediaForm.type !== 'text' && (
-                <div className="space-y-2">
-                  <Label htmlFor="media-file">File</Label>
-                  <Input 
-                    id="media-file" 
-                    type="file"
-                    accept={
-                      mediaForm.type === 'image' 
-                        ? 'image/*' 
-                        : mediaForm.type === 'video' 
-                        ? 'video/*' 
-                        : mediaForm.type === 'document' 
-                        ? '.pdf,.doc,.docx' 
-                        : '*'
-                    }
-                    onChange={(e) => handleFileChange(e, 'media')}
-                  />
-                </div>
-              )}
+            <TabsContent value="media">
+              <MediaForm 
+                formState={mediaForm}
+                onChange={updateMediaForm}
+                isSubmitting={isSubmitting}
+              />
             </TabsContent>
             
-            {/* Quote Form */}
-            <TabsContent value="quote" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="quote-text">Quote</Label>
-                <Textarea 
-                  id="quote-text" 
-                  placeholder="Enter the quote text"
-                  value={quoteForm.text}
-                  onChange={(e) => setQuoteForm(prev => ({ ...prev, text: e.target.value }))}
-                  className="min-h-[100px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="quote-author">Author</Label>
-                <Input 
-                  id="quote-author" 
-                  placeholder="Quote author" 
-                  value={quoteForm.author}
-                  onChange={(e) => setQuoteForm(prev => ({ ...prev, author: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="quote-source">Source (Optional)</Label>
-                <Input 
-                  id="quote-source" 
-                  placeholder="Book, speech, etc." 
-                  value={quoteForm.source}
-                  onChange={(e) => setQuoteForm(prev => ({ ...prev, source: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="quote-tags">Tags</Label>
-                <Input 
-                  id="quote-tags" 
-                  placeholder="Comma-separated tags (e.g. Inspiration, Philosophy)" 
-                  value={quoteForm.tags}
-                  onChange={(e) => setQuoteForm(prev => ({ ...prev, tags: e.target.value }))}
-                />
-              </div>
+            <TabsContent value="quote">
+              <QuoteForm 
+                formState={quoteForm}
+                onChange={updateQuoteForm}
+                isSubmitting={isSubmitting}
+              />
             </TabsContent>
             
-            {/* AI Content Form */}
-            <TabsContent value="ai" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="ai-prompt">Prompt</Label>
-                <Textarea 
-                  id="ai-prompt" 
-                  placeholder="Enter a prompt for AI to generate content"
-                  value={aiForm.prompt}
-                  onChange={(e) => setAiForm(prev => ({ ...prev, prompt: e.target.value }))}
-                  className="min-h-[80px]"
-                />
-                <Button 
-                  type="button" 
-                  onClick={generateWithAI}
-                  disabled={isSubmitting || !aiForm.prompt}
-                  className="w-full"
-                >
-                  {isSubmitting ? "Generating..." : "Generate Content"}
-                </Button>
-              </div>
-              
-              {aiForm.generatedContent && (
-                <>
-                  <Separator />
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-title">Title</Label>
-                    <Input 
-                      id="ai-title" 
-                      placeholder="Title for the generated content" 
-                      value={aiForm.title}
-                      onChange={(e) => setAiForm(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-content">Generated Content</Label>
-                    <Textarea 
-                      id="ai-content" 
-                      placeholder="AI-generated content will appear here"
-                      value={aiForm.generatedContent}
-                      onChange={(e) => setAiForm(prev => ({ ...prev, generatedContent: e.target.value }))}
-                      className="min-h-[200px]"
-                    />
-                  </div>
-                </>
-              )}
+            <TabsContent value="ai">
+              <AIGeneratorForm 
+                formState={aiForm}
+                onChange={updateAIForm}
+                onGenerateContent={generateWithAI}
+                isSubmitting={isSubmitting}
+              />
             </TabsContent>
           </div>
         </Tabs>
@@ -616,6 +428,7 @@ export const ContentSubmissionModal = ({
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
