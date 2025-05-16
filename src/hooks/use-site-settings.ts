@@ -96,6 +96,27 @@ export interface SiteSettings {
     enableApiAccess: boolean;
     maintenanceMode: boolean;
   };
+  
+  // Add these as top-level properties for backward compatibility
+  siteName: string;
+  siteDescription: string;
+  contentModeration: boolean;
+  maintenanceMode: boolean;
+  maxFileSize: number;
+  maxTitleLength: number;
+  maxContentLength: number;
+  allowedMediaTypes: string[];
+  enableWikiCreation: boolean;
+  enableMediaUploads: boolean;
+  enableComments: boolean;
+  autoApproveContent: boolean;
+  
+  // Add chatSettings as a property
+  chatSettings: {
+    enableGlobalChat: boolean;
+    enablePrivateMessages: boolean;
+    messageRetentionDays: number;
+  };
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -187,6 +208,27 @@ const DEFAULT_SETTINGS: SiteSettings = {
     analyticsEnabled: true,
     enableApiAccess: false,
     maintenanceMode: false,
+  },
+  
+  // Add top-level properties with default values
+  siteName: 'Polymath',
+  siteDescription: 'A platform for sharing and discussing knowledge',
+  contentModeration: true,
+  maintenanceMode: false,
+  maxFileSize: 10,
+  maxTitleLength: 100,
+  maxContentLength: 10000,
+  allowedMediaTypes: ['image', 'video', 'audio', 'document'],
+  enableWikiCreation: true,
+  enableMediaUploads: true,
+  enableComments: true,
+  autoApproveContent: false,
+  
+  // Add chatSettings
+  chatSettings: {
+    enableGlobalChat: true,
+    enablePrivateMessages: true,
+    messageRetentionDays: 30,
   }
 };
 
@@ -217,7 +259,7 @@ export const useSiteSettings = () => {
             .insert([
               {
                 id: 'global',
-                settings: DEFAULT_SETTINGS as Json
+                settings: DEFAULT_SETTINGS as unknown as Json
               }
             ]);
 
