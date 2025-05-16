@@ -1,14 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   MessageSquare,
-  MessageCircle,
   BookOpen,
   Settings,
   User,
-  Quote,
-  Brain,
   ShieldCheck,
   GraduationCap,
   ChevronLeft,
@@ -65,29 +63,14 @@ export const CollapsibleSidebar = () => {
       path: "/forum",
     },
     {
-      icon: <MessageCircle className="h-5 w-5" />,
-      label: "Chat",
-      path: "/chat",
-    },
-    {
       icon: <BookOpen className="h-5 w-5" />,
-      label: "Library",
+      label: "Knowledge Hub",
       path: "/library",
     },
     {
       icon: <GraduationCap className="h-5 w-5" />,
       label: "Wiki",
       path: "/wiki",
-    },
-    {
-      icon: <Quote className="h-5 w-5" />,
-      label: "Quotes",
-      path: "/quotes",
-    },
-    {
-      icon: <Brain className="h-5 w-5" />,
-      label: "AI Tools",
-      path: "/ai",
     },
     {
       icon: <User className="h-5 w-5" />,

@@ -1,158 +1,167 @@
 
 import { useState, useEffect } from "react";
-import { polymathToast } from "../components/ui/use-toast";
-import { LibraryHeader } from "../components/library/LibraryHeader";
-import { LibrarySearchBar } from "../components/library/LibrarySearchBar";
-import { LibraryFilters } from "../components/library/LibraryFilters";
-import { KnowledgeEntryList } from "../components/library/KnowledgeEntryList";
-import { LearningPathRecommendations } from "../components/library/LearningPathRecommendations";
-
-// Mock knowledge entries
-const knowledgeEntries = [
-  {
-    id: "1",
-    title: "Introduction to Systems Thinking",
-    author: "ComplexityScholar",
-    readTime: "15 min read",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    summary: "A comprehensive overview of systems thinking principles and how they can be applied across various disciplines to solve complex problems.",
-    categories: ["Systems Theory", "Complexity", "Methodology"],
-    coverImage: "/lovable-uploads/a3dc041f-fb55-4108-807b-ca52164461d8.png"
-  },
-  {
-    id: "2",
-    title: "The Mathematics of Music: Harmony and Frequency",
-    author: "HarmonicsExpert",
-    readTime: "12 min read",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-    summary: "An exploration of the mathematical principles underlying musical harmony, frequency relationships, and how they relate to human perception of sound.",
-    categories: ["Mathematics", "Music", "Physics"],
-    coverImage: "/lovable-uploads/92333427-5a32-4cf8-b110-afc5b57c9f27.png"
-  },
-  {
-    id: "3",
-    title: "Neural Networks: From Biology to Computation",
-    author: "BioComputation",
-    readTime: "20 min read",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-    summary: "A deep dive into how biological neural networks inspired artificial neural networks, with comparisons between brain function and modern deep learning architectures.",
-    categories: ["Neuroscience", "Computer Science", "AI"],
-    coverImage: "/lovable-uploads/d8b5e246-d962-466e-ad7d-61985e448fb9.png"
-  },
-  {
-    id: "4",
-    title: "Epistemology in the Age of Information",
-    author: "KnowledgePhilosopher",
-    readTime: "18 min read",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-    summary: "How our understanding of knowledge and truth has evolved in the digital age, and the philosophical challenges posed by information abundance.",
-    categories: ["Philosophy", "Information Theory", "Epistemology"],
-    coverImage: "/lovable-uploads/739ab3ed-442e-42fb-9219-25ee697b73ba.png"
-  }
-];
-
-// Extract all unique categories from entries
-const allCategories = [...new Set(knowledgeEntries.flatMap(entry => entry.categories))];
+import { useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { PenSquare, BookOpen } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { ContentTypeFilter, ContentType } from "@/components/library/ContentTypeFilter";
+import { ViewSwitcher, ViewMode } from "@/components/library/ViewSwitcher";
+import { UnifiedContentFeed } from "@/components/library/UnifiedContentFeed";
+import { ContentSubmissionModal } from "@/components/library/ContentSubmissionModal";
 
 const Library = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [difficultySetting, setDifficultySetting] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [filteredEntries, setFilteredEntries] = useState(knowledgeEntries);
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   
-  // Filter entries based on search, difficulty, and categories
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [activeContentType, setActiveContentType] = useState<ContentType>('all');
+  const [activeViewMode, setActiveViewMode] = useState<ViewMode>('list');
+  const [activeTab, setActiveTab] = useState<'knowledge' | 'media' | 'quote' | 'ai'>('knowledge');
+  
+  // Parse URL parameters to set initial state
   useEffect(() => {
-    let results = knowledgeEntries;
+    const params = new URLSearchParams(location.search);
+    const viewParam = params.get('view');
+    const modeParam = params.get('mode') as ViewMode | null;
     
-    // Apply search filtering
-    if (searchTerm) {
-      results = results.filter(entry => 
-        entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        entry.author.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Apply category filtering
-    if (activeCategory) {
-      results = results.filter(entry =>
-        entry.categories.includes(activeCategory)
-      );
-    }
-    
-    // Apply difficulty filtering (placeholder logic)
-    if (difficultySetting !== 'all') {
-      // In a real app, entries would have difficulty ratings
-      // This is just a placeholder filter that keeps some entries based on difficulty
-      switch(difficultySetting) {
-        case 'beginner':
-          results = results.filter(entry => entry.id !== '3');
+    // Set content type based on URL parameter
+    if (viewParam) {
+      switch (viewParam) {
+        case 'media':
+          setActiveContentType('media');
+          setActiveTab('media');
           break;
-        case 'intermediate':
-          results = results.filter(entry => entry.id !== '1' && entry.id !== '4');
+        case 'quotes':
+          setActiveContentType('quotes');
+          setActiveTab('quote');
           break;
-        case 'advanced':
-          results = results.filter(entry => entry.id === '3');
+        case 'ai':
+          setActiveContentType('ai');
+          setActiveTab('ai');
           break;
+        case 'knowledge':
+          setActiveContentType('knowledge');
+          setActiveTab('knowledge');
+          break;
+        default:
+          setActiveContentType('all');
       }
     }
     
-    setFilteredEntries(results);
-  }, [searchTerm, difficultySetting, activeCategory]);
+    // Set view mode based on URL parameter
+    if (modeParam && ['grid', 'list', 'feed'].includes(modeParam)) {
+      setActiveViewMode(modeParam as ViewMode);
+    }
+  }, [location]);
   
-  const handleEntryClick = (id: string) => {
-    // In a real app, this would navigate to the entry detail page
-    console.log('Entry clicked:', id);
-    polymathToast.resourceBookmarked();
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (activeContentType !== 'all') {
+      params.set('view', activeContentType);
+    }
+    
+    if (activeViewMode !== 'list') {
+      params.set('mode', activeViewMode);
+    }
+    
+    const search = params.toString();
+    const newUrl = search ? `${location.pathname}?${search}` : location.pathname;
+    
+    navigate(newUrl, { replace: true });
+  }, [activeContentType, activeViewMode, location.pathname, navigate]);
+  
+  // Handle content type change
+  const handleContentTypeChange = (type: ContentType) => {
+    setActiveContentType(type);
+    
+    // Set appropriate tab for content submission
+    switch (type) {
+      case 'media':
+        setActiveTab('media');
+        break;
+      case 'quotes':
+        setActiveTab('quote');
+        break;
+      case 'ai':
+        setActiveTab('ai');
+        break;
+      case 'knowledge':
+        setActiveTab('knowledge');
+        break;
+      default:
+        setActiveTab('knowledge');
+    }
   };
   
-  const handleCreateEntry = () => {
-    polymathToast.contributionSaved();
+  // Handle view mode change
+  const handleViewModeChange = (mode: ViewMode) => {
+    setActiveViewMode(mode);
   };
   
-  const handleResetFilters = () => {
-    setSearchTerm('');
-    setDifficultySetting('all');
-    setActiveCategory(null);
+  // Handle content creation button click
+  const handleCreateContent = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to contribute content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitModalOpen(true);
+  };
+  
+  // Handle successful content submission
+  const handleSubmitSuccess = () => {
+    toast({
+      title: "Content published",
+      description: "Your contribution has been published successfully!",
+    });
+    
+    // Refresh the content feed
+    // This will happen automatically when the component is unmounted and remounted
   };
   
   return (
-    <main className="container mx-auto py-8 w-full">
-      <LibraryHeader onCreateEntry={handleCreateEntry} />
-      
-      <div className="bg-card rounded-lg p-4 mb-8 shadow-md border border-border w-full">
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <LibrarySearchBar 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
-          />
-          
-          <LibraryFilters 
-            difficultySetting={difficultySetting}
-            setDifficultySetting={setDifficultySetting}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            allCategories={allCategories}
-            onResetFilters={handleResetFilters}
-          />
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <BookOpen className="h-8 w-8" />
+            Knowledge Hub
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Discover, learn and contribute to our growing library of knowledge
+          </p>
         </div>
+        
+        <Button 
+          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
+          onClick={handleCreateContent}
+        >
+          <PenSquare size={18} />
+          <span>Contribute</span>
+        </Button>
       </div>
       
-      <div className="w-full" style={{ display: "block", width: "100%" }}>
-        <KnowledgeEntryList 
-          entries={filteredEntries} 
-          viewMode={viewMode} 
-          onEntryClick={handleEntryClick}
-          onResetFilters={handleResetFilters}
-        />
-      </div>
+      <UnifiedContentFeed 
+        defaultContentType={activeContentType} 
+        defaultViewMode={activeViewMode}
+      />
       
-      <LearningPathRecommendations />
-    </main>
+      <ContentSubmissionModal
+        isOpen={isSubmitModalOpen}
+        onOpenChange={setIsSubmitModalOpen}
+        defaultTab={activeTab}
+        onSubmitSuccess={handleSubmitSuccess}
+      />
+    </div>
   );
 };
 

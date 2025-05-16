@@ -11,10 +11,8 @@ import Chat from '@/pages/Chat';
 import Forum from '@/pages/Forum';
 import Library from '@/pages/Library';
 import Wiki from '@/pages/Wiki';
-import Media from '@/pages/Media';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
-import Quotes from '@/components/Quotes';
 import AI from '@/pages/AI';
 import Admin from '@/pages/Admin';
 import AdminPanel from '@/pages/admin/AdminPanel';
@@ -85,13 +83,12 @@ export const AppRoutes = () => {
             </PageLayout>
           </ProtectedRoute>
         } />
-        <Route path="/media" element={
-          <ProtectedRoute allowGuests={true}>
-            <PageLayout allowGuests={true}>
-              <Media />
-            </PageLayout>
-          </ProtectedRoute>
-        } />
+        
+        {/* Redirects for consolidated pages */}
+        <Route path="/media" element={<Navigate to="/library?view=media" replace />} />
+        <Route path="/quotes" element={<Navigate to="/library?view=quotes" replace />} />
+        <Route path="/ai" element={<Navigate to="/library?view=ai" replace />} />
+        
         <Route path="/profile" element={
           <ProtectedRoute>
             <PageLayout>
@@ -110,20 +107,6 @@ export const AppRoutes = () => {
           <ProtectedRoute>
             <PageLayout>
               <Settings />
-            </PageLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/quotes" element={
-          <ProtectedRoute allowGuests={true}>
-            <PageLayout allowGuests={true}>
-              <Quotes />
-            </PageLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/ai" element={
-          <ProtectedRoute>
-            <PageLayout>
-              <AI />
             </PageLayout>
           </ProtectedRoute>
         } />
