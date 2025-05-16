@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserStatus } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
@@ -60,7 +59,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       website: "",
       role: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc" ? "admin" : "user",
       isAdmin: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc",
-      status: "online" as UserStatus,
+      status: "online",
       isGhostMode: false,
     };
   }
