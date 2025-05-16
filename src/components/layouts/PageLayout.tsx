@@ -63,9 +63,11 @@ export const PageLayout = ({
     const chatUnsubscribe = subscribeToChatSidebarToggle((isOpen) => {
       if (typeof isOpen === 'boolean') {
         setIsChatOpen(isOpen);
-      } else {
+        localStorage.setItem('chatSidebarOpen', String(isOpen));
+      } else if (typeof isOpen === 'function') {
         setIsChatOpen(prev => {
           const nextState = isOpen(prev);
+          localStorage.setItem('chatSidebarOpen', String(nextState));
           return nextState;
         });
       }
@@ -73,6 +75,7 @@ export const PageLayout = ({
 
     const sidebarUnsubscribe = subscribeToSidebarCollapse((isCollapsed) => {
       setSidebarCollapsed(isCollapsed);
+      localStorage.setItem('sidebar-collapsed', String(isCollapsed));
     });
     
     return () => {

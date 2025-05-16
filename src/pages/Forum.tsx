@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { DiscussionTopicCard } from "../components/DiscussionTopicCard";
 import { DiscussionFilters } from "../components/DiscussionFilters";
-import { polymathToast } from "../components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { 
   DiscussionTopic, 
   mockDiscussions, 
@@ -12,8 +12,14 @@ import {
 } from "../lib/discussions-utils";
 import { MessageSquare, PenSquare, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
 
 const Forum = () => {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+  const { toast } = useToast();
+  
   const [discussions, setDiscussions] = useState<DiscussionTopic[]>(mockDiscussions);
   const [filteredDiscussions, setFilteredDiscussions] = useState<DiscussionTopic[]>(mockDiscussions);
   const [sortOption, setSortOption] = useState<'popular' | 'new' | 'upvotes'>('popular');
@@ -53,29 +59,44 @@ const Forum = () => {
   const handleDiscussionClick = (discussion: DiscussionTopic) => {
     // In a real app, this would navigate to the discussion detail page
     console.log('Discussion clicked:', discussion);
-    polymathToast.discussionCreated();
+    toast({
+      title: "Opening Discussion",
+      description: `Viewing "${discussion.title}"`,
+    });
   };
   
   // Handle creating a new discussion
   const handleCreateDiscussion = () => {
-    polymathToast.discussionCreated();
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create a new discussion",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    toast({
+      title: "Create Discussion",
+      description: "Opening discussion creation form...",
+    });
   };
   
   return (
-    <PageLayout>
+    <PageLayout allowGuests={true}>
       <main className="py-8 px-12">
         <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <MessageSquare size={28} />
             Forum
           </h1>
-          <button 
+          <Button 
             className="bg-[#6E59A5] hover:bg-[#7E69B5] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
             onClick={handleCreateDiscussion}
           >
             <PenSquare size={18} />
             <span>New Discussion</span>
-          </button>
+          </Button>
         </div>
         
         <DiscussionFilters 
@@ -125,6 +146,16 @@ const Forum = () => {
             </div>
           )}
         </div>
+        
+        {!isAuthenticated && (
+          <div className="mt-8 border border-primary/20 bg-primary/5 rounded-lg p-6 text-center">
+            <h3 className="text-lg font-medium mb-2">Join the conversation</h3>
+            <p className="mb-4 text-muted-foreground">Sign in to create discussions and participate in the community.</p>
+            <Button asChild>
+              <a href="/auth">Sign In</a>
+            </Button>
+          </div>
+        )}
       </main>
     </PageLayout>
   );

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-context';
@@ -149,7 +150,7 @@ const Root = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {/* Show chat sidebar for all users (including guests) but with limited functionality for guests */}
+      {/* Show chat sidebar for all users (including guests) */}
       <FullHeightChatSidebar />
     </div>
   );

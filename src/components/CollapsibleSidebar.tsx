@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth-context";
 import { CustomTooltip } from "./ui/CustomTooltip";
 import { publishSidebarCollapse, subscribeToSidebarCollapse } from "@/lib/utils/event-utils";
@@ -35,9 +34,24 @@ export const CollapsibleSidebar = () => {
   
   // Update localStorage and CSS variables when collapsed state changes
   useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', String(collapsed));
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      collapsed ? '64px' : '256px'
+    );
+    
     // Publish the state change so other components can react
     publishSidebarCollapse(collapsed);
   }, [collapsed]);
+
+  // Listen for sidebar collapse events from other components
+  useEffect(() => {
+    const unsubscribe = subscribeToSidebarCollapse((isCollapsed) => {
+      setCollapsed(isCollapsed);
+    });
+    
+    return () => unsubscribe();
+  }, []);
   
   const navItems = [
     {

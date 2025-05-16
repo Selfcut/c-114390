@@ -13,13 +13,15 @@ export const useChatSidebarToggle = () => {
   useEffect(() => {
     // Subscribe to chat sidebar toggle events
     const unsubscribe = subscribeToChatSidebarToggle((newState) => {
-      if (typeof newState === 'function') {
+      if (typeof newState === 'boolean') {
+        setIsOpen(newState);
+        localStorage.setItem('chatSidebarOpen', String(newState));
+      } else if (typeof newState === 'function') {
         setIsOpen(prev => {
           const nextState = newState(prev);
+          localStorage.setItem('chatSidebarOpen', String(nextState));
           return nextState;
         });
-      } else {
-        setIsOpen(newState);
       }
     });
     
