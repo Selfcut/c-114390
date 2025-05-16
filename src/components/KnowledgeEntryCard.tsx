@@ -27,7 +27,7 @@ export const KnowledgeEntryCard = ({
 }: KnowledgeEntryCardProps) => {
   return (
     <Card 
-      className="h-full flex flex-col hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden hover:border-primary/50"
+      className="h-full flex flex-col hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden hover:border-primary/50 w-full"
       onClick={onClick}
     >
       {coverImage && (
@@ -41,7 +41,7 @@ export const KnowledgeEntryCard = ({
       )}
       
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start w-full">
           <div className="space-y-1">
             <h3 className="font-semibold text-lg line-clamp-2">{title}</h3>
           </div>

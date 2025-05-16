@@ -219,7 +219,7 @@ const Wiki = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
         {/* Sidebar with categories */}
         <div className="lg:col-span-1 w-full">
           <Card className="w-full sticky top-20">
@@ -253,7 +253,7 @@ const Wiki = () => {
         {/* Main content */}
         <div className="lg:col-span-3 w-full">
           {/* Search */}
-          <div className="mb-6">
+          <div className="mb-6 w-full">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
@@ -276,7 +276,7 @@ const Wiki = () => {
                         {getCategoryIcon(article.category)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center gap-4 mb-1">
+                        <div className="flex flex-wrap justify-between items-center gap-4 mb-1">
                           <h3 className="font-medium text-lg truncate">{article.title}</h3>
                           <div className="flex-shrink-0">
                             <Button variant="ghost" size="sm" className="h-8">
