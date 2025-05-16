@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -48,7 +47,10 @@ export const UnifiedContentFeed = ({
         if (contentType === 'all' || contentType === 'knowledge') {
           const { data: knowledgeData, error: knowledgeError } = await supabase
             .from('knowledge_entries')
-            .select('*, profiles:user_id(name, username, avatar_url)')
+            .select(`
+              *,
+              profiles:user_id(name, username, avatar_url)
+            `)
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
@@ -84,7 +86,10 @@ export const UnifiedContentFeed = ({
         if (contentType === 'all' || contentType === 'media') {
           const { data: mediaData, error: mediaError } = await supabase
             .from('media_posts')
-            .select('*, profiles(name, username, avatar_url)')
+            .select(`
+              *,
+              profiles:user_id(name, username, avatar_url)
+            `)
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
@@ -119,7 +124,10 @@ export const UnifiedContentFeed = ({
         if (contentType === 'all' || contentType === 'quotes') {
           const { data: quotesData, error: quotesError } = await supabase
             .from('quotes')
-            .select('*, user:user_id(name, username, avatar_url)')
+            .select(`
+              *,
+              profiles:user_id(name, username, avatar_url)
+            `)
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
@@ -133,9 +141,9 @@ export const UnifiedContentFeed = ({
               content: item.text,
               summary: item.source,
               author: {
-                name: item.user?.name || 'Unknown User',
-                avatar: item.user?.avatar_url,
-                username: item.user?.username,
+                name: item.profiles?.name || 'Unknown Author',
+                avatar: item.profiles?.avatar_url,
+                username: item.profiles?.username,
               },
               createdAt: formatDate(item.created_at),
               metrics: {

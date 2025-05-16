@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -182,7 +181,7 @@ export const ContentSubmissionModal = ({
       coverImageUrl = publicUrl;
     }
     
-    // Insert knowledge entry
+    // Insert knowledge entry - fixed to use typed query
     const { error } = await supabase
       .from('knowledge_entries')
       .insert({
@@ -191,7 +190,8 @@ export const ContentSubmissionModal = ({
         content,
         categories: categories.split(',').map(tag => tag.trim()),
         cover_image: coverImageUrl,
-        user_id: user.id
+        user_id: user.id,
+        is_ai_generated: false
       });
       
     if (error) throw error;
@@ -296,7 +296,7 @@ export const ContentSubmissionModal = ({
       throw new Error("Prompt, generated content, and title are required");
     }
     
-    // Insert AI-generated content as a knowledge entry
+    // Insert AI-generated content as a knowledge entry - fixed to use typed query
     const { error } = await supabase
       .from('knowledge_entries')
       .insert({

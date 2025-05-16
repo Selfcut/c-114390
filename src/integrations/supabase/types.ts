@@ -39,6 +39,84 @@ export type Database = {
         }
         Relationships: []
       }
+      content_bookmarks: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_comments: {
+        Row: {
+          comment: string
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_likes: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -66,6 +144,54 @@ export type Database = {
           last_message?: string | null
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      knowledge_entries: {
+        Row: {
+          categories: string[] | null
+          comments: number | null
+          content: string | null
+          cover_image: string | null
+          created_at: string | null
+          id: string
+          is_ai_generated: boolean | null
+          likes: number | null
+          summary: string
+          title: string
+          updated_at: string | null
+          user_id: string
+          views: number | null
+        }
+        Insert: {
+          categories?: string[] | null
+          comments?: number | null
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          likes?: number | null
+          summary: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+          views?: number | null
+        }
+        Update: {
+          categories?: string[] | null
+          comments?: number | null
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          likes?: number | null
+          summary?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          views?: number | null
         }
         Relationships: []
       }
