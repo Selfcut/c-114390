@@ -1,63 +1,77 @@
 
 import React from 'react';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface FormFieldProps {
   id: string;
   label: string;
+  placeholder?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  placeholder?: string;
-  multiline?: boolean;
   type?: string;
-  className?: string;
-  required?: boolean;
+  multiline?: boolean;
   rows?: number;
+  required?: boolean;
   disabled?: boolean;
   accept?: string;
+  className?: string;
+  helperText?: string;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
   id,
   label,
+  placeholder,
   value,
   onChange,
-  placeholder,
+  type = "text",
   multiline = false,
-  type = 'text',
-  className = '',
-  required = false,
   rows = 3,
+  required = false,
   disabled = false,
-  accept
+  accept,
+  className,
+  helperText
 }) => {
   return (
-    <div className={`space-y-2 ${className}`}>
-      <Label htmlFor={id}>{label}</Label>
+    <div className="space-y-2">
+      <Label 
+        htmlFor={id}
+        className="text-sm font-medium"
+      >
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </Label>
+      
       {multiline ? (
         <Textarea
           id={id}
+          placeholder={placeholder}
           value={value}
           onChange={onChange}
-          placeholder={placeholder}
-          className={`min-h-[${rows * 24}px]`}
           rows={rows}
-          disabled={disabled}
           required={required}
+          disabled={disabled}
+          className={className}
         />
       ) : (
         <Input
           id={id}
           type={type}
-          value={type === 'file' ? undefined : value}
-          onChange={onChange}
           placeholder={placeholder}
-          disabled={disabled}
+          value={value}
+          onChange={onChange}
           required={required}
+          disabled={disabled}
           accept={accept}
+          className={className}
         />
+      )}
+      
+      {helperText && (
+        <p className="text-xs text-muted-foreground">{helperText}</p>
       )}
     </div>
   );

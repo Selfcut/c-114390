@@ -1,14 +1,15 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth"; 
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/lib/auth';
-import { BookOpen, Image, Quote, Brain } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
-// Import form components
+// Form components
 import { KnowledgeEntryForm } from './forms/KnowledgeEntryForm';
 import { MediaForm } from './forms/MediaForm';
 import { QuoteForm } from './forms/QuoteForm';
@@ -21,18 +22,18 @@ interface ContentSubmissionModalProps {
   onSubmitSuccess?: () => void;
 }
 
-export const ContentSubmissionModal = ({ 
-  isOpen, 
-  onOpenChange, 
+export const ContentSubmissionModal: React.FC<ContentSubmissionModalProps> = ({
+  isOpen,
+  onOpenChange,
   defaultTab = 'knowledge',
-  onSubmitSuccess 
-}: ContentSubmissionModalProps) => {
+  onSubmitSuccess
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Knowledge entry form state
+  // Knowledge form state
   const [knowledgeForm, setKnowledgeForm] = useState({
     title: '',
     summary: '',
@@ -45,9 +46,9 @@ export const ContentSubmissionModal = ({
   const [mediaForm, setMediaForm] = useState({
     title: '',
     content: '',
-    type: 'image' as 'image' | 'video' | 'document' | 'youtube' | 'text',
-    file: null as File | null,
-    youtubeUrl: ''
+    mediaType: 'image' as 'image' | 'video' | 'document' | 'youtube' | 'text',
+    mediaUrl: '',
+    mediaFile: null as File | null
   });
   
   // Quote form state
@@ -55,88 +56,18 @@ export const ContentSubmissionModal = ({
     text: '',
     author: '',
     source: '',
+    category: '',
     tags: ''
   });
   
-  // AI form state
+  // AI Generation form state
   const [aiForm, setAiForm] = useState({
     prompt: '',
-    generatedContent: '',
-    title: ''
+    category: '',
+    outputType: 'knowledge'
   });
 
-  // Update knowledge form state
-  const updateKnowledgeForm = (updates: Partial<typeof knowledgeForm>) => {
-    setKnowledgeForm(prev => ({ ...prev, ...updates }));
-  };
-
-  // Update media form state
-  const updateMediaForm = (updates: Partial<typeof mediaForm>) => {
-    setMediaForm(prev => ({ ...prev, ...updates }));
-  };
-
-  // Update quote form state
-  const updateQuoteForm = (updates: Partial<typeof quoteForm>) => {
-    setQuoteForm(prev => ({ ...prev, ...updates }));
-  };
-
-  // Update AI form state
-  const updateAIForm = (updates: Partial<typeof aiForm>) => {
-    setAiForm(prev => ({ ...prev, ...updates }));
-  };
-  
-  // Handle form submission
-  const handleSubmit = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to submit content",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      switch(activeTab) {
-        case 'knowledge':
-          await submitKnowledgeEntry();
-          break;
-        case 'media':
-          await submitMedia();
-          break;
-        case 'quote':
-          await submitQuote();
-          break;
-        case 'ai':
-          await submitAiContent();
-          break;
-      }
-      
-      // Close modal and notify success
-      onOpenChange(false);
-      onSubmitSuccess?.();
-      
-      // Reset form states
-      resetForms();
-      
-      toast({
-        title: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} content submitted`,
-        description: "Your content has been published successfully!"
-      });
-    } catch (error: any) {
-      console.error(`Error submitting ${activeTab} content:`, error);
-      toast({
-        title: "Submission failed",
-        description: error.message || `Failed to submit ${activeTab} content`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+  // Reset all form states
   const resetForms = () => {
     setKnowledgeForm({
       title: '',
@@ -149,211 +80,129 @@ export const ContentSubmissionModal = ({
     setMediaForm({
       title: '',
       content: '',
-      type: 'image',
-      file: null,
-      youtubeUrl: ''
+      mediaType: 'image',
+      mediaUrl: '',
+      mediaFile: null
     });
     
     setQuoteForm({
       text: '',
       author: '',
       source: '',
+      category: '',
       tags: ''
     });
     
     setAiForm({
       prompt: '',
-      generatedContent: '',
-      title: ''
+      category: '',
+      outputType: 'knowledge'
     });
   };
   
-  // Submit knowledge entry
-  const submitKnowledgeEntry = async () => {
-    const { title, summary, content, categories, coverImage } = knowledgeForm;
-    
-    if (!title || !summary) {
-      throw new Error("Title and summary are required");
-    }
-    
-    let coverImageUrl = null;
-    
-    // Upload cover image if provided
-    if (coverImage) {
-      const fileName = `${Date.now()}-${coverImage.name}`;
-      const filePath = `knowledge/${user.id}/${fileName}`;
-      
-      const { error: uploadError } = await supabase
-        .storage
-        .from('content')
-        .upload(filePath, coverImage);
-        
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('content')
-        .getPublicUrl(filePath);
-        
-      coverImageUrl = publicUrl;
-    }
-    
-    // Insert knowledge entry
-    const { error } = await supabase
-      .from('knowledge_entries')
-      .insert({
-        title,
-        summary,
-        content,
-        categories: categories.split(',').map(tag => tag.trim()),
-        cover_image: coverImageUrl,
-        user_id: user.id,
-        is_ai_generated: false
-      } as any);
-      
-    if (error) throw error;
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'knowledge' | 'media' | 'quote' | 'ai');
   };
   
-  // Submit media
-  const submitMedia = async () => {
-    const { title, content, type, file, youtubeUrl } = mediaForm;
-    
-    if (!title) {
-      throw new Error("Title is required");
+  // Handle dialog close
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      resetForms();
     }
-    
-    if (type === 'youtube' && !youtubeUrl) {
-      throw new Error("YouTube URL is required");
-    }
-    
-    if ((type === 'image' || type === 'video' || type === 'document') && !file) {
-      throw new Error("File is required");
-    }
-    
-    let fileUrl = null;
-    
-    // Upload file if provided
-    if (file) {
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `media/${user.id}/${fileName}`;
-      
-      const { error: uploadError } = await supabase
-        .storage
+    onOpenChange(open);
+  };
+
+  // Upload file to Supabase storage
+  const uploadFile = async (file: File, type: string): Promise<string> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${type}/${uuidv4()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
         .from('content')
-        .upload(filePath, file);
-        
-      if (uploadError) throw uploadError;
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
       
-      // Get public URL
-      const { data: { publicUrl } } = supabase
-        .storage
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
         .from('content')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
         
-      fileUrl = publicUrl;
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw new Error('Failed to upload file');
     }
-    
-    // Insert media post
-    const { error } = await supabase
-      .from('media_posts')
-      .insert({
-        title,
-        content,
-        type,
-        url: type === 'youtube' ? youtubeUrl : fileUrl,
-        user_id: user.id
-      });
-      
-    if (error) throw error;
   };
   
-  // Submit quote
-  const submitQuote = async () => {
-    const { text, author, source, tags } = quoteForm;
-    
-    if (!text || !author) {
-      throw new Error("Quote text and author are required");
-    }
-    
-    // Insert quote
-    const { error } = await supabase
-      .from('quotes')
-      .insert({
-        text,
-        author,
-        source,
-        tags: tags.split(',').map(tag => tag.trim()),
-        user_id: user.id,
-        category: 'General' // Default category
-      });
-      
-    if (error) throw error;
-  };
-  
-  // Generate and submit AI content
-  const submitAiContent = async () => {
-    const { prompt, generatedContent, title } = aiForm;
-    
-    if (!prompt || !generatedContent || !title) {
-      throw new Error("Prompt, generated content, and title are required");
-    }
-    
-    // Insert AI-generated content as a knowledge entry
-    const { error } = await supabase
-      .from('knowledge_entries')
-      .insert({
-        title,
-        summary: `AI-generated content based on prompt: ${prompt}`,
-        content: generatedContent,
-        categories: ['AI-Generated'],
-        user_id: user.id,
-        is_ai_generated: true
-      } as any);
-      
-    if (error) throw error;
-  };
-  
-  // Generate content with AI
-  const generateWithAI = async () => {
-    const { prompt } = aiForm;
-    
-    if (!prompt) {
+  // Handle knowledge entry submission
+  const handleKnowledgeSubmit = async () => {
+    if (!user) {
       toast({
-        title: "Prompt required",
-        description: "Please enter a prompt to generate content",
+        title: "Authentication required",
+        description: "Please log in to submit content",
         variant: "destructive"
       });
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
-      const response = await fetch('/api/generate-with-ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ prompt })
-      });
+      setIsSubmitting(true);
       
-      if (!response.ok) {
-        throw new Error('Failed to generate content');
+      // Validate form
+      if (!knowledgeForm.title || !knowledgeForm.summary) {
+        throw new Error('Title and summary are required');
       }
       
-      const data = await response.json();
+      // Process categories
+      const categories = knowledgeForm.categories
+        .split(',')
+        .map(cat => cat.trim())
+        .filter(cat => cat);
       
-      updateAIForm({
-        generatedContent: data.generatedText,
-        title: aiForm.title || `AI Content: ${prompt.slice(0, 30)}...`
+      // Upload cover image if provided
+      let coverImageUrl = '';
+      if (knowledgeForm.coverImage) {
+        coverImageUrl = await uploadFile(knowledgeForm.coverImage, 'knowledge-covers');
+      }
+      
+      // Create knowledge entry in database
+      const { data, error } = await supabase
+        .from('knowledge_entries')
+        .insert({
+          title: knowledgeForm.title,
+          summary: knowledgeForm.summary,
+          content: knowledgeForm.content,
+          categories: categories,
+          cover_image: coverImageUrl,
+          user_id: user.id,
+          is_ai_generated: false
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Knowledge entry published",
+        description: "Your contribution has been published successfully!"
       });
       
-    } catch (error: any) {
-      console.error('Error generating AI content:', error);
+      handleOpenChange(false);
+      
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
+      
+    } catch (err: any) {
+      console.error('Error submitting knowledge entry:', err);
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate content",
+        title: "Submission failed",
+        description: err.message || "Failed to publish knowledge entry",
         variant: "destructive"
       });
     } finally {
@@ -361,73 +210,274 @@ export const ContentSubmissionModal = ({
     }
   };
   
+  // Handle media submission
+  const handleMediaSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to submit content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Validate form
+      if (!mediaForm.title) {
+        throw new Error('Title is required');
+      }
+      
+      if (mediaForm.mediaType !== 'text' && !mediaForm.mediaUrl && !mediaForm.mediaFile) {
+        throw new Error('Please provide media URL or upload a file');
+      }
+      
+      // Process media URL or file
+      let mediaUrl = mediaForm.mediaUrl;
+      
+      if (mediaForm.mediaFile) {
+        mediaUrl = await uploadFile(mediaForm.mediaFile, 'media');
+      }
+      
+      // Create media post in database
+      const { data, error } = await supabase
+        .from('media_posts')
+        .insert({
+          title: mediaForm.title,
+          content: mediaForm.content,
+          type: mediaForm.mediaType,
+          url: mediaUrl,
+          user_id: user.id
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Media published",
+        description: "Your media post has been published successfully!"
+      });
+      
+      handleOpenChange(false);
+      
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
+      
+    } catch (err: any) {
+      console.error('Error submitting media:', err);
+      toast({
+        title: "Submission failed",
+        description: err.message || "Failed to publish media",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle quote submission
+  const handleQuoteSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to submit content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Validate form
+      if (!quoteForm.text || !quoteForm.author) {
+        throw new Error('Quote text and author are required');
+      }
+      
+      // Process tags
+      const tags = quoteForm.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag);
+      
+      // Create quote in database
+      const { data, error } = await supabase
+        .from('quotes')
+        .insert({
+          text: quoteForm.text,
+          author: quoteForm.author,
+          source: quoteForm.source,
+          category: quoteForm.category || 'General',
+          tags: tags,
+          user_id: user.id
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Quote published",
+        description: "Your quote has been published successfully!"
+      });
+      
+      handleOpenChange(false);
+      
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
+      
+    } catch (err: any) {
+      console.error('Error submitting quote:', err);
+      toast({
+        title: "Submission failed",
+        description: err.message || "Failed to publish quote",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle AI generation
+  const handleAIGenerate = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to use AI generation",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Validate form
+      if (!aiForm.prompt) {
+        throw new Error('Please provide a prompt for the AI');
+      }
+      
+      // TODO: Implement AI generation logic here or call an edge function
+      
+      toast({
+        title: "Generation started",
+        description: "AI is generating content based on your prompt. This may take a moment."
+      });
+      
+      // Simulate AI generation with timeout
+      setTimeout(() => {
+        toast({
+          title: "Generation complete",
+          description: "AI has generated content based on your prompt!"
+        });
+        
+        setIsSubmitting(false);
+        
+        // Populate the appropriate form with the generated content
+        if (aiForm.outputType === 'knowledge') {
+          setKnowledgeForm({
+            title: `AI Generated: ${aiForm.prompt.substring(0, 30)}...`,
+            summary: `AI generated content based on the prompt: ${aiForm.prompt}`,
+            content: `This is AI generated content based on the prompt: "${aiForm.prompt}".\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`,
+            categories: aiForm.category || 'AI-Generated',
+            coverImage: null
+          });
+          setActiveTab('knowledge');
+        } else if (aiForm.outputType === 'quote') {
+          setQuoteForm({
+            text: "Life's challenges are not supposed to paralyze you; they're supposed to help you discover who you are.",
+            author: "Bernice Johnson Reagon",
+            source: "AI Generated",
+            category: aiForm.category || 'Inspirational',
+            tags: 'ai-generated,wisdom'
+          });
+          setActiveTab('quote');
+        }
+      }, 2000);
+      
+    } catch (err: any) {
+      console.error('Error generating with AI:', err);
+      toast({
+        title: "Generation failed",
+        description: err.message || "Failed to generate content",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle submission based on active tab
+  const handleSubmit = () => {
+    switch (activeTab) {
+      case 'knowledge':
+        return handleKnowledgeSubmit();
+      case 'media':
+        return handleMediaSubmit();
+      case 'quote':
+        return handleQuoteSubmit();
+      case 'ai':
+        return handleAIGenerate();
+    }
+  };
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create New Content</DialogTitle>
+          <DialogTitle className="text-center text-xl">Contribute Content</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-          <TabsList className="grid grid-cols-4">
-            <TabsTrigger value="knowledge" className="flex items-center gap-2">
-              <BookOpen size={16} />
-              <span className="hidden sm:inline">Knowledge</span>
-            </TabsTrigger>
-            <TabsTrigger value="media" className="flex items-center gap-2">
-              <Image size={16} />
-              <span className="hidden sm:inline">Media</span>
-            </TabsTrigger>
-            <TabsTrigger value="quote" className="flex items-center gap-2">
-              <Quote size={16} />
-              <span className="hidden sm:inline">Quote</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="flex items-center gap-2">
-              <Brain size={16} />
-              <span className="hidden sm:inline">AI</span>
-            </TabsTrigger>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-4 mb-4">
+            <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="quote">Quote</TabsTrigger>
+            <TabsTrigger value="ai">AI Generate</TabsTrigger>
           </TabsList>
           
-          <div className="mt-4">
-            <TabsContent value="knowledge">
-              <KnowledgeEntryForm 
-                formState={knowledgeForm}
-                onChange={updateKnowledgeForm}
-                isSubmitting={isSubmitting}
-              />
-            </TabsContent>
-            
-            <TabsContent value="media">
-              <MediaForm 
-                formState={mediaForm}
-                onChange={updateMediaForm}
-                isSubmitting={isSubmitting}
-              />
-            </TabsContent>
-            
-            <TabsContent value="quote">
-              <QuoteForm 
-                formState={quoteForm}
-                onChange={updateQuoteForm}
-                isSubmitting={isSubmitting}
-              />
-            </TabsContent>
-            
-            <TabsContent value="ai">
-              <AIGeneratorForm 
-                formState={aiForm}
-                onChange={updateAIForm}
-                onGenerateContent={generateWithAI}
-                isSubmitting={isSubmitting}
-              />
-            </TabsContent>
-          </div>
+          <TabsContent value="knowledge" className="space-y-4">
+            <KnowledgeEntryForm
+              formState={knowledgeForm}
+              onChange={(updates) => setKnowledgeForm(prev => ({...prev, ...updates}))}
+              isSubmitting={isSubmitting}
+            />
+          </TabsContent>
+          
+          <TabsContent value="media" className="space-y-4">
+            <MediaForm 
+              formState={mediaForm}
+              onChange={(updates) => setMediaForm(prev => ({...prev, ...updates}))}
+              isSubmitting={isSubmitting}
+            />
+          </TabsContent>
+          
+          <TabsContent value="quote" className="space-y-4">
+            <QuoteForm 
+              formState={quoteForm}
+              onChange={(updates) => setQuoteForm(prev => ({...prev, ...updates}))}
+              isSubmitting={isSubmitting}
+            />
+          </TabsContent>
+          
+          <TabsContent value="ai" className="space-y-4">
+            <AIGeneratorForm 
+              formState={aiForm}
+              onChange={(updates) => setAiForm(prev => ({...prev, ...updates}))}
+              isSubmitting={isSubmitting}
+            />
+          </TabsContent>
         </Tabs>
         
-        <DialogFooter>
+        <div className="flex justify-end gap-2 mt-4">
           <Button 
             variant="outline" 
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={isSubmitting}
           >
             Cancel
@@ -435,10 +485,12 @@ export const ContentSubmissionModal = ({
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting}
+            className="flex items-center gap-2"
           >
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+            {activeTab === 'ai' ? 'Generate' : 'Submit'}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

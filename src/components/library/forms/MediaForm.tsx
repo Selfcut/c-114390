@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { FormField } from './FormField';
-import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MediaFormState {
   title: string;
   content: string;
-  type: 'image' | 'video' | 'document' | 'youtube' | 'text';
-  file: File | null;
-  youtubeUrl: string;
+  mediaType: 'image' | 'video' | 'document' | 'youtube' | 'text';
+  mediaUrl: string;
+  mediaFile: File | null;
 }
 
 interface MediaFormProps {
@@ -25,16 +25,16 @@ export const MediaForm: React.FC<MediaFormProps> = ({
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    onChange({ file: e.target.files[0] });
+    onChange({ mediaFile: e.target.files[0] });
   };
-
-  const getAcceptString = () => {
-    switch (formState.type) {
-      case 'image': return 'image/*';
-      case 'video': return 'video/*';
-      case 'document': return '.pdf,.doc,.docx';
-      default: return '*';
-    }
+  
+  // Handle media type change
+  const handleMediaTypeChange = (value: string) => {
+    onChange({ 
+      mediaType: value as 'image' | 'video' | 'document' | 'youtube' | 'text',
+      // Clear URL and file when changing types
+      ...(value === 'text' ? { mediaUrl: '', mediaFile: null } : {})
+    });
   };
 
   return (
@@ -42,7 +42,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({
       <FormField
         id="media-title"
         label="Title"
-        placeholder="Media post title"
+        placeholder="Media title"
         value={formState.title}
         onChange={(e) => onChange({ title: e.target.value })}
         required
@@ -52,7 +52,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({
       <FormField
         id="media-content"
         label="Description"
-        placeholder="Description of your media post"
+        placeholder="A brief description of this media"
         value={formState.content}
         onChange={(e) => onChange({ content: e.target.value })}
         multiline
@@ -60,41 +60,75 @@ export const MediaForm: React.FC<MediaFormProps> = ({
       />
       
       <div className="space-y-2">
-        <Label htmlFor="media-type">Media Type</Label>
-        <select 
-          id="media-type"
-          value={formState.type}
-          onChange={(e) => onChange({ type: e.target.value as any })}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        <label className="text-sm font-medium">Media Type</label>
+        <Select
+          value={formState.mediaType}
+          onValueChange={handleMediaTypeChange}
           disabled={isSubmitting}
         >
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-          <option value="document">Document</option>
-          <option value="youtube">YouTube</option>
-          <option value="text">Text Only</option>
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select media type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="image">Image</SelectItem>
+            <SelectItem value="video">Video</SelectItem>
+            <SelectItem value="document">Document</SelectItem>
+            <SelectItem value="youtube">YouTube</SelectItem>
+            <SelectItem value="text">Text Only</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
-      {formState.type === 'youtube' ? (
-        <FormField
-          id="media-youtube"
-          label="YouTube URL"
-          placeholder="https://www.youtube.com/watch?v=..."
-          value={formState.youtubeUrl}
-          onChange={(e) => onChange({ youtubeUrl: e.target.value })}
-          disabled={isSubmitting}
-        />
-      ) : formState.type !== 'text' && (
-        <FormField
-          id="media-file"
-          label="File"
-          type="file"
-          value=""
-          accept={getAcceptString()}
-          onChange={handleFileChange}
-          disabled={isSubmitting}
-        />
+      {formState.mediaType !== 'text' && (
+        <>
+          {formState.mediaType === 'youtube' ? (
+            <FormField
+              id="media-url"
+              label="YouTube URL"
+              placeholder="e.g. https://www.youtube.com/watch?v=example"
+              value={formState.mediaUrl}
+              onChange={(e) => onChange({ mediaUrl: e.target.value })}
+              disabled={isSubmitting}
+              helperText="Enter the full YouTube video URL"
+            />
+          ) : (
+            <>
+              <FormField
+                id="media-url"
+                label="Media URL (Optional)"
+                placeholder="URL to external media"
+                value={formState.mediaUrl}
+                onChange={(e) => onChange({ mediaUrl: e.target.value })}
+                disabled={isSubmitting}
+                helperText="You can provide a URL or upload a file"
+              />
+              
+              <div className="space-y-2">
+                <label htmlFor="media-file" className="text-sm font-medium">
+                  Upload Media
+                </label>
+                <input
+                  id="media-file"
+                  type="file"
+                  accept={
+                    formState.mediaType === 'image' ? 'image/*' :
+                    formState.mediaType === 'video' ? 'video/*' :
+                    formState.mediaType === 'document' ? '.pdf,.doc,.docx,.txt' :
+                    '*/*'
+                  }
+                  onChange={handleFileChange}
+                  disabled={isSubmitting}
+                  className="w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
+                />
+                {formState.mediaFile && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {formState.mediaFile.name}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );

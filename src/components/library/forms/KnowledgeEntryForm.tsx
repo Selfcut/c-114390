@@ -68,17 +68,27 @@ export const KnowledgeEntryForm: React.FC<KnowledgeEntryFormProps> = ({
         value={formState.categories}
         onChange={(e) => onChange({ categories: e.target.value })}
         disabled={isSubmitting}
+        helperText="Enter categories separated by commas"
       />
       
-      <FormField
-        id="knowledge-cover"
-        label="Cover Image"
-        type="file"
-        value=""
-        accept="image/*"
-        onChange={handleFileChange}
-        disabled={isSubmitting}
-      />
+      <div className="space-y-2">
+        <label htmlFor="knowledge-cover" className="text-sm font-medium">
+          Cover Image
+        </label>
+        <input
+          id="knowledge-cover"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          disabled={isSubmitting}
+          className="w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
+        />
+        {formState.coverImage && (
+          <p className="text-xs text-muted-foreground">
+            Selected: {formState.coverImage.name}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

@@ -43,7 +43,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
         if (contentType === 'all' || contentType === 'knowledge') {
           const { data: knowledgeData, error: knowledgeError } = await supabase
             .from('knowledge_entries')
-            .select('*, profiles:user_id(*)')
+            .select('*, profiles(*)')
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
@@ -79,7 +79,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
         if (contentType === 'all' || contentType === 'media') {
           const { data: mediaData, error: mediaError } = await supabase
             .from('media_posts')
-            .select('*, profiles:user_id(*)')
+            .select('*, profiles(*)')
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
@@ -114,7 +114,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
         if (contentType === 'all' || contentType === 'quotes') {
           const { data: quotesData, error: quotesError } = await supabase
             .from('quotes')
-            .select('*, profiles:user_id(*)')
+            .select('*, profiles(*)')
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
