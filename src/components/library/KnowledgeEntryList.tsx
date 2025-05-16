@@ -43,7 +43,14 @@ export const KnowledgeEntryList = ({
   }
 
   return (
-    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4 stagger-fade w-full`}>
+    <div 
+      className={`grid gap-4 w-full ${
+        viewMode === 'grid' 
+          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+          : 'grid-cols-1'
+      }`}
+      style={{ minWidth: "100%" }}
+    >
       {entries.map(entry => (
         <KnowledgeEntryCard
           key={entry.id}

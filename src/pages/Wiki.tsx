@@ -269,13 +269,13 @@ const Wiki = () => {
           {filteredArticles.length > 0 ? (
             <div className="space-y-4 stagger-fade animate-in w-full">
               {filteredArticles.map(article => (
-                <Card key={article.id} className="hover:shadow-md transition-shadow w-full">
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-3">
+                <Card key={article.id} className="hover:shadow-md transition-shadow w-full flex flex-col">
+                  <CardContent className="p-5 flex flex-col">
+                    <div className="flex items-start gap-3 w-full">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         {getCategoryIcon(article.category)}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex-grow">
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-1">
                           <h3 className="font-medium text-lg truncate">{article.title}</h3>
                           <div className="flex-shrink-0">

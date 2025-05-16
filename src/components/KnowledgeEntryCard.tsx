@@ -41,11 +41,12 @@ export const KnowledgeEntryCard = ({
   return (
     <Card 
       className={cn(
-        "h-full flex flex-col hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden hover:border-primary/50 w-full",
-        variant === "compact" && "max-w-sm",
+        "flex flex-col hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden hover:border-primary/50 h-full w-full",
+        variant === "compact" && "max-w-full",
         className
       )}
       onClick={onClick}
+      style={{ display: "flex", flexDirection: "column" }}
     >
       {coverImage && !imageError && (
         <div className={cn("w-full overflow-hidden", variant === "default" ? "h-40" : "h-32")}>
@@ -82,7 +83,7 @@ export const KnowledgeEntryCard = ({
           {summary}
         </p>
         
-        {categories.length > 0 && (
+        {categories && categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {categories.map((category, i) => (
               <Badge key={i} variant="outline" className="text-xs">
@@ -95,7 +96,7 @@ export const KnowledgeEntryCard = ({
       </CardContent>
       
       <CardFooter className={cn(
-        "pt-2 text-xs text-muted-foreground border-t",
+        "pt-2 text-xs text-muted-foreground border-t mt-auto",
         variant === "compact" && "p-4 pt-2"
       )}>
         <div className="flex items-center justify-between w-full">
