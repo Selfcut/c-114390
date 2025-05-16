@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { LoadingScreen } from './LoadingScreen';
 import Auth from '@/pages/Auth';
@@ -148,6 +148,3 @@ export const AppRoutes = () => {
     </div>
   );
 };
-
-// Add missing Navigate component import
-import { Navigate } from 'react-router-dom';

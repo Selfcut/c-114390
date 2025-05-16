@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background py-24">
       <div className="container mx-auto text-center">
         <h1 className="text-4xl font-bold mb-8">
-          Welcome to Polymath AI
+          Welcome to Polymath
         </h1>
         <p className="text-lg text-muted-foreground mb-12">
           Unlock your potential with AI-powered learning tools.
@@ -86,7 +87,7 @@ const Landing = () => {
 
       <div className="container mx-auto mt-20">
         <h2 className="text-2xl font-bold mb-8 text-center">
-          Why Choose Polymath AI?
+          Why Choose Polymath?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="flex flex-col items-center">
