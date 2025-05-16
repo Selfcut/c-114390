@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -354,33 +355,34 @@ const Quotes = () => {
                   <div>
                     <div className="h-4 w-24 bg-muted rounded"></div>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : filteredQuotes.length > 0 ? (
-            filteredQuotes.map(quote => (
-              <QuoteCard
-                key={quote.id}
-                quote={quote}
-                isLiked={!!userLikes[quote.id]}
-                isBookmarked={!!userBookmarks[quote.id]}
-                onLike={() => handleLike(quote.id)}
-                onBookmark={() => handleBookmark(quote.id)}
-                onTagClick={(tag) => setFilterTag(tag)}
-              />
-            ))
-          ) : (
-            <div className="col-span-1 md:col-span-2 lg:col-span-3">
-              <div className="bg-muted/30 rounded-lg p-8 text-center">
-                <Quote size={48} className="text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">No quotes found matching your criteria.</p>
-                <Button onClick={() => { setSearchQuery(""); setFilterTag(null); }}>
-                  Clear Filters
-                </Button>
-              </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredQuotes.length > 0 ? (
+          filteredQuotes.map(quote => (
+            <QuoteCard
+              key={quote.id}
+              quote={quote}
+              isLiked={!!userLikes[quote.id]}
+              isBookmarked={!!userBookmarks[quote.id]}
+              onLike={() => handleLike(quote.id)}
+              onBookmark={() => handleBookmark(quote.id)}
+              onTagClick={(tag) => setFilterTag(tag)}
+            />
+          ))
+        ) : (
+          <div className="col-span-1 md:col-span-2 lg:col-span-3">
+            <div className="bg-muted/30 rounded-lg p-8 text-center">
+              <Quote size={48} className="text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">No quotes found matching your criteria.</p>
+              <Button onClick={() => { setSearchQuery(""); setFilterTag(null); }}>
+                Clear Filters
+              </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
       
       {/* Quote submission modal */}
       {isModalOpen && (
