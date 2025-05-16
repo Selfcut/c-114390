@@ -181,7 +181,7 @@ export const ContentSubmissionModal = ({
       coverImageUrl = publicUrl;
     }
     
-    // Insert knowledge entry - fixed to use typed query
+    // Insert knowledge entry with typed query
     const { error } = await supabase
       .from('knowledge_entries')
       .insert({
@@ -192,7 +192,7 @@ export const ContentSubmissionModal = ({
         cover_image: coverImageUrl,
         user_id: user.id,
         is_ai_generated: false
-      });
+      } as any);
       
     if (error) throw error;
     
@@ -296,7 +296,7 @@ export const ContentSubmissionModal = ({
       throw new Error("Prompt, generated content, and title are required");
     }
     
-    // Insert AI-generated content as a knowledge entry - fixed to use typed query
+    // Insert AI-generated content as a knowledge entry with typed query
     const { error } = await supabase
       .from('knowledge_entries')
       .insert({
@@ -306,7 +306,7 @@ export const ContentSubmissionModal = ({
         categories: ['AI-Generated'],
         user_id: user.id,
         is_ai_generated: true
-      });
+      } as any);
       
     if (error) throw error;
     

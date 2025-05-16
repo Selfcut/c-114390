@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +11,7 @@ import { ContentTypeFilter, type ContentType } from './ContentTypeFilter';
 import { ViewSwitcher, type ViewMode } from './ViewSwitcher';
 import { UnifiedContentItem, type ContentItemProps, type ContentItemType } from './UnifiedContentItem';
 import { useAuth } from '@/lib/auth';
+import { KnowledgeEntry, MediaPost, Quote, UserProfile } from '@/lib/supabase-types';
 
 interface UnifiedContentFeedProps {
   defaultContentType?: ContentType;
@@ -47,17 +49,14 @@ export const UnifiedContentFeed = ({
         if (contentType === 'all' || contentType === 'knowledge') {
           const { data: knowledgeData, error: knowledgeError } = await supabase
             .from('knowledge_entries')
-            .select(`
-              *,
-              profiles:user_id(name, username, avatar_url)
-            `)
+            .select('*, profiles:user_id(*)')
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
           if (knowledgeError) throw knowledgeError;
           
           if (knowledgeData) {
-            const knowledgeItems: ContentItemProps[] = knowledgeData.map(item => ({
+            const knowledgeItems: ContentItemProps[] = knowledgeData.map((item: any) => ({
               id: item.id,
               type: 'knowledge',
               title: item.title,
@@ -86,17 +85,14 @@ export const UnifiedContentFeed = ({
         if (contentType === 'all' || contentType === 'media') {
           const { data: mediaData, error: mediaError } = await supabase
             .from('media_posts')
-            .select(`
-              *,
-              profiles:user_id(name, username, avatar_url)
-            `)
+            .select('*, profiles:user_id(*)')
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
           if (mediaError) throw mediaError;
           
           if (mediaData) {
-            const mediaItems: ContentItemProps[] = mediaData.map(item => ({
+            const mediaItems: ContentItemProps[] = mediaData.map((item: any) => ({
               id: item.id,
               type: 'media',
               title: item.title,
@@ -124,17 +120,14 @@ export const UnifiedContentFeed = ({
         if (contentType === 'all' || contentType === 'quotes') {
           const { data: quotesData, error: quotesError } = await supabase
             .from('quotes')
-            .select(`
-              *,
-              profiles:user_id(name, username, avatar_url)
-            `)
+            .select('*, profiles:user_id(*)')
             .order('created_at', { ascending: false })
             .range(page * 10, (page + 1) * 10 - 1);
             
           if (quotesError) throw quotesError;
           
           if (quotesData) {
-            const quoteItems: ContentItemProps[] = quotesData.map(item => ({
+            const quoteItems: ContentItemProps[] = quotesData.map((item: any) => ({
               id: item.id,
               type: 'quote',
               title: item.author,
@@ -222,8 +215,22 @@ export const UnifiedContentFeed = ({
     }
   };
   
+  // Determine content type for an item
+  const getContentTypeString = (itemType: ContentItemType): string => {
+    switch(itemType) {
+      case 'knowledge':
+        return 'knowledge';
+      case 'media':
+        return 'media';
+      case 'quote':
+        return 'quote';
+      default:
+        return 'knowledge';
+    }
+  };
+  
   // Handle like interaction
-  const handleLike = async (id: string) => {
+  const handleLike = async (id: string, itemType: ContentItemType) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -234,6 +241,7 @@ export const UnifiedContentFeed = ({
     }
     
     const isLiked = userLikes[id];
+    const contentTypeStr = getContentTypeString(itemType);
     
     try {
       if (isLiked) {
@@ -252,6 +260,7 @@ export const UnifiedContentFeed = ({
           .insert({
             user_id: user.id,
             content_id: id,
+            content_type: contentTypeStr
           });
           
         setUserLikes(prev => ({...prev, [id]: true}));
@@ -283,7 +292,7 @@ export const UnifiedContentFeed = ({
   };
   
   // Handle bookmark interaction
-  const handleBookmark = async (id: string) => {
+  const handleBookmark = async (id: string, itemType: ContentItemType) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -294,6 +303,7 @@ export const UnifiedContentFeed = ({
     }
     
     const isBookmarked = userBookmarks[id];
+    const contentTypeStr = getContentTypeString(itemType);
     
     try {
       if (isBookmarked) {
@@ -312,6 +322,7 @@ export const UnifiedContentFeed = ({
           .insert({
             user_id: user.id,
             content_id: id,
+            content_type: contentTypeStr
           });
           
         setUserBookmarks(prev => ({...prev, [id]: true}));
@@ -348,16 +359,13 @@ export const UnifiedContentFeed = ({
   };
   
   // Handle content item click
-  const handleContentClick = (id: string) => {
-    const item = content.find(c => c.id === id);
-    if (!item) return;
-    
+  const handleContentClick = (id: string, itemType: ContentItemType) => {
     // Different behavior based on content type
-    if (item.type === 'knowledge') {
+    if (itemType === 'knowledge') {
       window.location.href = `/library/entry/${id}`;
-    } else if (item.type === 'media') {
+    } else if (itemType === 'media') {
       window.location.href = `/library/media/${id}`;
-    } else if (item.type === 'quote') {
+    } else if (itemType === 'quote') {
       // Open quote detail modal or page
       console.log('Open quote detail', id);
     }
@@ -412,9 +420,9 @@ export const UnifiedContentFeed = ({
                   viewMode={viewMode}
                   isLiked={!!userLikes[item.id]}
                   isBookmarked={!!userBookmarks[item.id]}
-                  onLike={handleLike}
-                  onBookmark={handleBookmark}
-                  onClick={handleContentClick}
+                  onLike={(id) => handleLike(id, item.type)}
+                  onBookmark={(id) => handleBookmark(id, item.type)}
+                  onClick={(id) => handleContentClick(id, item.type)}
                 />
               ))
             ) : (
