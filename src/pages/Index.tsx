@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
 import { polymathToast } from "../components/ui/use-toast";
 import { formatDaysAgo } from "../lib/utils";
 import { WelcomeMessage } from "../components/WelcomeMessage";
@@ -65,36 +64,34 @@ const Index = () => {
   };
 
   return (
-    <PageLayout sectionName="Dashboard" allowGuests={true}>
-      <main className="py-8 px-8 lg:px-12">
-        {/* Enhanced Welcome Message */}
-        <WelcomeMessage />
-        
-        {/* Explore Section with Creation Cards */}
-        <ExploreSection />
-        
-        {/* Enhanced Quotes Carousel */}
-        <QuoteSection />
+    <main className="py-8 px-8 lg:px-12">
+      {/* Enhanced Welcome Message */}
+      <WelcomeMessage />
+      
+      {/* Explore Section with Creation Cards */}
+      <ExploreSection />
+      
+      {/* Enhanced Quotes Carousel */}
+      <QuoteSection />
 
-        {/* Main Content Grid */}
-        <MainContentGrid />
-        
-        {/* Secondary Content */}
-        <SecondaryContent />
-        
-        {/* Membership Benefits */}
-        <MembershipSection />
-        
-        {/* Learning Progress & Pathways */}
-        <LearningSection />
+      {/* Main Content Grid */}
+      <MainContentGrid />
+      
+      {/* Secondary Content */}
+      <SecondaryContent />
+      
+      {/* Membership Benefits */}
+      <MembershipSection />
+      
+      {/* Learning Progress & Pathways */}
+      <LearningSection />
 
-        {/* Disciplines, Methodologies, and Wisdom */}
-        <DisciplinesSection />
-        
-        {/* Footer Content - Events & Search */}
-        <FooterSection />
-      </main>
-    </PageLayout>
+      {/* Disciplines, Methodologies, and Wisdom */}
+      <DisciplinesSection />
+      
+      {/* Footer Content - Events & Search */}
+      <FooterSection />
+    </main>
   );
 };
 

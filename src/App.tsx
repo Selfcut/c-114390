@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initializeSupabase } from '@/integrations/supabase/init';
 import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
+import { PageLayout } from '@/components/layouts/PageLayout';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -80,74 +81,98 @@ const Root = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
-        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <PageLayout allowGuests={true}><Landing /></PageLayout>} />
         <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <Dashboard />
+            <PageLayout>
+              <Dashboard />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/chat" element={
           <ProtectedRoute>
-            <Chat />
+            <PageLayout>
+              <Chat />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/forum" element={
           <ProtectedRoute allowGuests={true}>
-            <Forum />
+            <PageLayout allowGuests={true} sectionName="Forum">
+              <Forum />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/library" element={
           <ProtectedRoute allowGuests={true}>
-            <Library />
+            <PageLayout allowGuests={true} sectionName="Library">
+              <Library />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/wiki" element={
           <ProtectedRoute allowGuests={true}>
-            <Wiki />
+            <PageLayout allowGuests={true} sectionName="Wiki">
+              <Wiki />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
           <ProtectedRoute>
-            <Profile />
+            <PageLayout>
+              <Profile />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/profile/:username" element={
           <ProtectedRoute>
-            <Profile />
+            <PageLayout>
+              <Profile />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/settings" element={
           <ProtectedRoute>
-            <Settings />
+            <PageLayout>
+              <Settings />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/quotes" element={
           <ProtectedRoute allowGuests={true}>
-            <Quotes />
+            <PageLayout allowGuests={true} sectionName="Quotes">
+              <Quotes />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/ai" element={
           <ProtectedRoute>
-            <AI />
+            <PageLayout>
+              <AI />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/admin" element={
           <ProtectedRoute requireAdmin>
-            <Admin />
+            <PageLayout>
+              <Admin />
+            </PageLayout>
           </ProtectedRoute>
         } />
         <Route path="/admin/*" element={
           <ProtectedRoute requireAdmin>
-            <AdminPanel />
+            <PageLayout>
+              <AdminPanel />
+            </PageLayout>
           </ProtectedRoute>
         } />
         
         {/* Fallback route - 404 page */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<PageLayout><NotFound /></PageLayout>} />
       </Routes>
       
       {/* Show chat sidebar for all users (including guests) */}

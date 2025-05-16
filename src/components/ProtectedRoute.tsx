@@ -2,7 +2,6 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
-import { PageLayout } from "@/components/layouts/PageLayout";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,9 +24,9 @@ export const ProtectedRoute = ({ children, requireAdmin = false, allowGuests = f
     );
   }
 
-  // If guest access is allowed, render the content with PageLayout
+  // If guest access is allowed, render the content directly
   if (allowGuests && !isAuthenticated) {
-    return <PageLayout allowGuests={true}>{children}</PageLayout>;
+    return <>{children}</>;
   }
 
   // If authentication is required but user is not authenticated
@@ -41,5 +40,5 @@ export const ProtectedRoute = ({ children, requireAdmin = false, allowGuests = f
   }
 
   // User is authenticated and has the required permissions
-  return <PageLayout>{children}</PageLayout>;
+  return <>{children}</>;
 };
