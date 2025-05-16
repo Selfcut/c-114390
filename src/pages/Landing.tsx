@@ -12,6 +12,7 @@ import {
   Shield 
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { WelcomeExploration } from '@/components/WelcomeExploration';
 
 const Landing = () => {
   const { isAuthenticated } = useAuth();
@@ -38,6 +39,8 @@ const Landing = () => {
           </Button>
         </div>
       </div>
+
+      <WelcomeExploration />
 
       <div className="container mx-auto mt-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

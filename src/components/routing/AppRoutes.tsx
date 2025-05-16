@@ -44,7 +44,7 @@ export const AppRoutes = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
-        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/index" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />} />
         <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
