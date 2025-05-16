@@ -1,632 +1,949 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, RefreshCcw, Info, AlertTriangle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Save, 
+  RefreshCcw, 
+  Settings, 
+  Layers, 
+  FileText, 
+  Image,
+  Upload,
+  Link,
+  Palette,
+  Sparkles,
+  Loader2
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AdminSettings = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   
+  // Site Settings
   const [siteSettings, setSiteSettings] = useState({
-    siteName: "Polymath Community",
-    siteDescription: "A platform for interdisciplinary thinking and intellectual exchange",
-    siteLogo: "/logo.svg",
-    contactEmail: "admin@polymathcommunity.org",
-    registrationOpen: true,
+    siteName: "Polymath Platform",
+    siteDescription: "A knowledge-sharing and learning community for interdisciplinary thinkers",
+    siteUrl: "https://polymath-platform.com",
+    supportEmail: "support@polymath-platform.com",
+    maintenanceMode: false,
+    inviteOnly: false
+  });
+  
+  // Content Settings
+  const [contentSettings, setSiteContentSettings] = useState({
+    maxPostTitleLength: 100,
+    maxPostContentLength: 5000,
+    maxCommentLength: 1000,
+    allowedFileSizeInMB: 10,
+    allowImages: true,
+    allowVideos: true,
+    allowDocuments: true,
+    allowExternalLinks: true,
+    requireApproval: false
+  });
+  
+  // User Settings
+  const [userSettings, setUserSettings] = useState({
+    allowRegistration: true,
     requireEmailVerification: true,
-    allowUserUploads: true,
-    maxUploadSizeMB: 10,
-    enableAIFeatures: true,
-    enableChatbot: true,
-    enableForumFeatures: true,
-    enableWikiFeatures: true,
-    enableLibraryFeatures: true,
-    enableGameification: true,
-    enableRealTimeUpdates: true,
-    maintenanceMode: false
+    maxSessionLengthDays: 30,
+    defaultUserRole: "user",
+    allowMultipleLogins: true,
+    lockoutAttempts: 5
   });
   
-  const [contentSettings, setContentSettings] = useState({
-    maxDiscussionTitleLength: 100,
-    maxDiscussionContentLength: 10000,
-    maxCommentsPerPage: 20,
-    allowRichTextInComments: true,
-    allowImagesInComments: true,
-    allowLinks: true,
-    requireApprovalForNewTopics: false,
-    autoModerateContent: true,
-    moderationSeverity: "medium",
-    bannedWords: "spam, offensive, inappropriate"
+  // Integration Settings
+  const [integrationSettings, setIntegrationSettings] = useState({
+    googleAnalyticsId: "",
+    recaptchaSiteKey: "",
+    mailchimpApiKey: "",
+    enableSocialLogins: false,
+    enableGoogleLogin: false,
+    enableGithubLogin: false,
+    enableTwitterLogin: false
   });
   
-  const [analyticsSettings, setAnalyticsSettings] = useState({
-    enableTracking: true,
-    anonymizeIPs: true,
-    trackUserSession: true,
-    saveSearchQueries: true,
-    retentionPeriodDays: 90,
-    generateWeeklyReports: true,
-    sendAnalyticsEmails: true,
-    trackFeatureUsage: true
+  // Appearance Settings
+  const [appearanceSettings, setAppearanceSettings] = useState({
+    defaultTheme: "dark",
+    primaryColor: "#9b87f5",
+    secondaryColor: "#7E69AB",
+    accentColor: "#6E59A5",
+    customCss: "",
+    customHeader: "",
+    customFooter: ""
+  });
+  
+  // Media Settings
+  const [mediaSettings, setMediaSettings] = useState({
+    maxImageSizeMB: 5,
+    maxVideoSizeMB: 50,
+    maxDocumentSizeMB: 20,
+    allowedImageFormats: "jpg,jpeg,png,gif,webp",
+    allowedVideoFormats: "mp4,webm,ogg",
+    allowedDocumentFormats: "pdf,doc,docx,xls,xlsx,ppt,pptx,txt",
+    storageProvider: "supabase"
   });
 
-  const handleSiteSettingChange = (key, value) => {
-    setSiteSettings(prev => ({ ...prev, [key]: value }));
+  // Handle site settings submit
+  const handleSiteSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      
+      // In a real app, store these settings in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Settings saved",
+        description: "Site settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Something went wrong while saving the settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleContentSettingChange = (key, value) => {
-    setContentSettings(prev => ({ ...prev, [key]: value }));
-  };
-  
-  const handleAnalyticsSettingChange = (key, value) => {
-    setAnalyticsSettings(prev => ({ ...prev, [key]: value }));
+  // Handle content settings submit
+  const handleContentSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      
+      // In a real app, store these settings in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Settings saved",
+        description: "Content settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Something went wrong while saving the settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSaveSiteSettings = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Site settings saved",
-      description: "Your changes have been applied successfully."
-    });
-    setIsSaving(false);
+  // Handle user settings submit
+  const handleUserSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      
+      // In a real app, store these settings in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Settings saved",
+        description: "User settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Something went wrong while saving the settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
-  
-  const handleSaveContentSettings = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Content settings saved",
-      description: "Your changes have been applied successfully."
-    });
-    setIsSaving(false);
+
+  // Handle integration settings submit
+  const handleIntegrationSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      
+      // In a real app, store these settings in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Settings saved",
+        description: "Integration settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Something went wrong while saving the settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
-  
-  const handleSaveAnalyticsSettings = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Analytics settings saved",
-      description: "Your changes have been applied successfully."
-    });
-    setIsSaving(false);
+
+  // Handle appearance settings submit
+  const handleAppearanceSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      
+      // In a real app, store these settings in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Settings saved",
+        description: "Appearance settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Something went wrong while saving the settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
-  
-  const handleClearCache = () => {
-    toast({
-      title: "Cache cleared",
-      description: "System cache has been successfully cleared."
-    });
+
+  // Handle media settings submit
+  const handleMediaSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      
+      // In a real app, store these settings in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Settings saved",
+        description: "Media settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Something went wrong while saving the settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
-  
-  const handleRebuildIndices = () => {
-    toast({
-      title: "Rebuilding indices",
-      description: "Search indices are being rebuilt. This may take a few minutes."
-    });
+
+  // Make user an admin
+  const makeUserAdmin = async () => {
+    try {
+      setIsSaving(true);
+      
+      const userId = "dc7bedf3-14c3-4376-adfb-de5ac8207adc";
+      
+      // Update user role in profiles table
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', userId);
+        
+      if (updateError) throw updateError;
+      
+      // Add user to admin roles table if it exists
+      try {
+        await supabase
+          .from('user_roles')
+          .upsert(
+            { user_id: userId, role: 'admin' },
+            { onConflict: 'user_id,role' }
+          );
+      } catch (roleError) {
+        console.log("No user_roles table exists:", roleError);
+      }
+      
+      toast({
+        title: "Admin access granted",
+        description: "User has been granted admin privileges",
+      });
+    } catch (error) {
+      console.error("Error granting admin access:", error);
+      toast({
+        title: "Error granting admin access",
+        description: "Something went wrong while granting admin privileges",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">System Settings</h2>
-      
-      <Tabs defaultValue="site" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="site">Site Settings</TabsTrigger>
-          <TabsTrigger value="content">Content & Moderation</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-        </TabsList>
-        
-        {/* Site Settings */}
-        <TabsContent value="site">
-          <Card>
-            <CardHeader>
-              <CardTitle>General Site Settings</CardTitle>
-              <CardDescription>Configure core platform settings</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Platform Settings</CardTitle>
+        <CardDescription>
+          Configure and customize the Polymath platform
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="site">
+          <TabsList className="w-full grid grid-cols-3 md:grid-cols-6">
+            <TabsTrigger value="site">Site</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+          </TabsList>
+          
+          {/* Site Settings */}
+          <TabsContent value="site" className="py-4">
+            <form onSubmit={handleSiteSettingsSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="siteName">Site Name</Label>
-                  <Input
-                    id="siteName"
-                    value={siteSettings.siteName}
-                    onChange={(e) => handleSiteSettingChange("siteName", e.target.value)}
+                  <Input 
+                    id="siteName" 
+                    value={siteSettings.siteName} 
+                    onChange={(e) => setSiteSettings({...siteSettings, siteName: e.target.value})}
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="contactEmail">Contact Email</Label>
-                  <Input
-                    id="contactEmail"
+                  <Label htmlFor="siteUrl">Site URL</Label>
+                  <Input 
+                    id="siteUrl" 
+                    value={siteSettings.siteUrl} 
+                    onChange={(e) => setSiteSettings({...siteSettings, siteUrl: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="siteDescription">Site Description</Label>
+                  <Textarea 
+                    id="siteDescription" 
+                    value={siteSettings.siteDescription} 
+                    onChange={(e) => setSiteSettings({...siteSettings, siteDescription: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="supportEmail">Support Email</Label>
+                  <Input 
+                    id="supportEmail" 
                     type="email"
-                    value={siteSettings.contactEmail}
-                    onChange={(e) => handleSiteSettingChange("contactEmail", e.target.value)}
+                    value={siteSettings.supportEmail} 
+                    onChange={(e) => setSiteSettings({...siteSettings, supportEmail: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="block mb-2">Special Actions</Label>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={makeUserAdmin}
+                      disabled={isSaving}
+                    >
+                      Make User Admin
+                    </Button>
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => {
+                        toast({
+                          title: "Cache cleared",
+                          description: "System cache has been cleared",
+                        });
+                      }}
+                    >
+                      <RefreshCcw className="w-4 h-4 mr-2" />
+                      Clear Cache
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between py-2">
+                <div className="flex flex-col">
+                  <Label htmlFor="maintenanceMode" className="mb-1">Maintenance Mode</Label>
+                  <span className="text-xs text-muted-foreground">Make the site unavailable for regular users</span>
+                </div>
+                <Switch 
+                  id="maintenanceMode" 
+                  checked={siteSettings.maintenanceMode}
+                  onCheckedChange={(checked) => setSiteSettings({...siteSettings, maintenanceMode: checked})}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between py-2">
+                <div className="flex flex-col">
+                  <Label htmlFor="inviteOnly" className="mb-1">Invite Only</Label>
+                  <span className="text-xs text-muted-foreground">Restrict registrations to invited users only</span>
+                </div>
+                <Switch 
+                  id="inviteOnly" 
+                  checked={siteSettings.inviteOnly}
+                  onCheckedChange={(checked) => setSiteSettings({...siteSettings, inviteOnly: checked})}
+                />
+              </div>
+              
+              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Settings
+                  </>
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+          
+          {/* Content Settings */}
+          <TabsContent value="content" className="py-4">
+            <form onSubmit={handleContentSettingsSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maxPostTitleLength">Maximum Post Title Length</Label>
+                  <Input 
+                    id="maxPostTitleLength" 
+                    type="number"
+                    value={contentSettings.maxPostTitleLength} 
+                    onChange={(e) => setSiteContentSettings({...contentSettings, maxPostTitleLength: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxPostContentLength">Maximum Post Content Length</Label>
+                  <Input 
+                    id="maxPostContentLength" 
+                    type="number"
+                    value={contentSettings.maxPostContentLength} 
+                    onChange={(e) => setSiteContentSettings({...contentSettings, maxPostContentLength: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxCommentLength">Maximum Comment Length</Label>
+                  <Input 
+                    id="maxCommentLength" 
+                    type="number"
+                    value={contentSettings.maxCommentLength} 
+                    onChange={(e) => setSiteContentSettings({...contentSettings, maxCommentLength: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="allowedFileSizeInMB">Maximum File Size (MB)</Label>
+                  <Input 
+                    id="allowedFileSizeInMB" 
+                    type="number"
+                    value={contentSettings.allowedFileSizeInMB} 
+                    onChange={(e) => setSiteContentSettings({...contentSettings, allowedFileSizeInMB: parseInt(e.target.value)})}
                   />
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="siteDescription">Site Description</Label>
-                <Textarea
-                  id="siteDescription"
-                  value={siteSettings.siteDescription}
-                  onChange={(e) => handleSiteSettingChange("siteDescription", e.target.value)}
-                  rows={3}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="siteLogo">Logo URL</Label>
-                <Input
-                  id="siteLogo"
-                  value={siteSettings.siteLogo}
-                  onChange={(e) => handleSiteSettingChange("siteLogo", e.target.value)}
-                />
-                <p className="text-sm text-muted-foreground">Current logo: <img src={siteSettings.siteLogo} alt="Site Logo" className="inline-block h-5 align-middle ml-2" /></p>
-              </div>
-              
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium mb-4">Feature Settings</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="registrationOpen"
-                      checked={siteSettings.registrationOpen}
-                      onCheckedChange={(checked) => handleSiteSettingChange("registrationOpen", checked)}
-                    />
-                    <Label htmlFor="registrationOpen">Allow New Registrations</Label>
+              <div className="space-y-4 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="allowImages" className="mb-1">Allow Images</Label>
+                    <span className="text-xs text-muted-foreground">Enable uploading and embedding of images</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="requireEmailVerification"
-                      checked={siteSettings.requireEmailVerification}
-                      onCheckedChange={(checked) => handleSiteSettingChange("requireEmailVerification", checked)}
-                    />
-                    <Label htmlFor="requireEmailVerification">Require Email Verification</Label>
+                  <Switch 
+                    id="allowImages" 
+                    checked={contentSettings.allowImages}
+                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowImages: checked})}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="allowVideos" className="mb-1">Allow Videos</Label>
+                    <span className="text-xs text-muted-foreground">Enable uploading and embedding of videos</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="allowUserUploads"
-                      checked={siteSettings.allowUserUploads}
-                      onCheckedChange={(checked) => handleSiteSettingChange("allowUserUploads", checked)}
-                    />
-                    <Label htmlFor="allowUserUploads">Allow User Uploads</Label>
+                  <Switch 
+                    id="allowVideos" 
+                    checked={contentSettings.allowVideos}
+                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowVideos: checked})}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="allowDocuments" className="mb-1">Allow Documents</Label>
+                    <span className="text-xs text-muted-foreground">Enable uploading and sharing of documents</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableAIFeatures"
-                      checked={siteSettings.enableAIFeatures}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableAIFeatures", checked)}
-                    />
-                    <Label htmlFor="enableAIFeatures">Enable AI Features</Label>
+                  <Switch 
+                    id="allowDocuments" 
+                    checked={contentSettings.allowDocuments}
+                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowDocuments: checked})}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="allowExternalLinks" className="mb-1">Allow External Links</Label>
+                    <span className="text-xs text-muted-foreground">Enable embedding of external links</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableChatbot"
-                      checked={siteSettings.enableChatbot}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableChatbot", checked)}
-                    />
-                    <Label htmlFor="enableChatbot">Enable Chatbot</Label>
+                  <Switch 
+                    id="allowExternalLinks" 
+                    checked={contentSettings.allowExternalLinks}
+                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, allowExternalLinks: checked})}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="requireApproval" className="mb-1">Require Content Approval</Label>
+                    <span className="text-xs text-muted-foreground">Require admin approval before content is published</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableForumFeatures"
-                      checked={siteSettings.enableForumFeatures}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableForumFeatures", checked)}
-                    />
-                    <Label htmlFor="enableForumFeatures">Enable Forum</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableWikiFeatures"
-                      checked={siteSettings.enableWikiFeatures}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableWikiFeatures", checked)}
-                    />
-                    <Label htmlFor="enableWikiFeatures">Enable Wiki</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableLibraryFeatures"
-                      checked={siteSettings.enableLibraryFeatures}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableLibraryFeatures", checked)}
-                    />
-                    <Label htmlFor="enableLibraryFeatures">Enable Knowledge Library</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableGameification"
-                      checked={siteSettings.enableGameification}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableGameification", checked)}
-                    />
-                    <Label htmlFor="enableGameification">Enable Gamification</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="enableRealTimeUpdates"
-                      checked={siteSettings.enableRealTimeUpdates}
-                      onCheckedChange={(checked) => handleSiteSettingChange("enableRealTimeUpdates", checked)}
-                    />
-                    <Label htmlFor="enableRealTimeUpdates">Enable Realtime Updates</Label>
-                  </div>
+                  <Switch 
+                    id="requireApproval" 
+                    checked={contentSettings.requireApproval}
+                    onCheckedChange={(checked) => setSiteContentSettings({...contentSettings, requireApproval: checked})}
+                  />
                 </div>
               </div>
               
-              <div className="border-t pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="maxUploadSize">Max Upload Size (MB)</Label>
-                    <Input
-                      id="maxUploadSize"
-                      type="number"
-                      value={siteSettings.maxUploadSizeMB}
-                      onChange={(e) => handleSiteSettingChange("maxUploadSizeMB", parseInt(e.target.value))}
-                    />
-                  </div>
+              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Settings
+                  </>
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+          
+          {/* User Settings */}
+          <TabsContent value="users" className="py-4">
+            <form onSubmit={handleUserSettingsSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maxSessionLengthDays">Session Length (Days)</Label>
+                  <Input 
+                    id="maxSessionLengthDays" 
+                    type="number"
+                    value={userSettings.maxSessionLengthDays} 
+                    onChange={(e) => setUserSettings({...userSettings, maxSessionLengthDays: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="lockoutAttempts">Failed Login Attempts Before Lockout</Label>
+                  <Input 
+                    id="lockoutAttempts" 
+                    type="number"
+                    value={userSettings.lockoutAttempts} 
+                    onChange={(e) => setUserSettings({...userSettings, lockoutAttempts: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="defaultUserRole">Default User Role</Label>
+                  <select
+                    id="defaultUserRole"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={userSettings.defaultUserRole}
+                    onChange={(e) => setUserSettings({...userSettings, defaultUserRole: e.target.value})}
+                  >
+                    <option value="user">User</option>
+                    <option value="contributor">Contributor</option>
+                    <option value="moderator">Moderator</option>
+                  </select>
                 </div>
               </div>
               
-              <div className="mt-6 border border-yellow-500/20 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
-                <div className="flex gap-2">
-                  <AlertTriangle className="text-yellow-500 h-5 w-5 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-yellow-700 dark:text-yellow-400">Maintenance Mode</h4>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-500 mb-2">
-                      When enabled, only administrators can access the site.
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="maintenanceMode"
-                        checked={siteSettings.maintenanceMode}
-                        onCheckedChange={(checked) => handleSiteSettingChange("maintenanceMode", checked)}
+              <div className="space-y-4 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="allowRegistration" className="mb-1">Allow Registration</Label>
+                    <span className="text-xs text-muted-foreground">Enable new user registrations</span>
+                  </div>
+                  <Switch 
+                    id="allowRegistration" 
+                    checked={userSettings.allowRegistration}
+                    onCheckedChange={(checked) => setUserSettings({...userSettings, allowRegistration: checked})}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="requireEmailVerification" className="mb-1">Require Email Verification</Label>
+                    <span className="text-xs text-muted-foreground">Users must verify email before they can log in</span>
+                  </div>
+                  <Switch 
+                    id="requireEmailVerification" 
+                    checked={userSettings.requireEmailVerification}
+                    onCheckedChange={(checked) => setUserSettings({...userSettings, requireEmailVerification: checked})}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="allowMultipleLogins" className="mb-1">Allow Multiple Sessions</Label>
+                    <span className="text-xs text-muted-foreground">Allow users to be logged in on multiple devices</span>
+                  </div>
+                  <Switch 
+                    id="allowMultipleLogins" 
+                    checked={userSettings.allowMultipleLogins}
+                    onCheckedChange={(checked) => setUserSettings({...userSettings, allowMultipleLogins: checked})}
+                  />
+                </div>
+              </div>
+              
+              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Settings
+                  </>
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+          
+          {/* Integration Settings */}
+          <TabsContent value="integrations" className="py-4">
+            <form onSubmit={handleIntegrationSettingsSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="googleAnalyticsId">Google Analytics ID</Label>
+                  <Input 
+                    id="googleAnalyticsId" 
+                    value={integrationSettings.googleAnalyticsId} 
+                    onChange={(e) => setIntegrationSettings({...integrationSettings, googleAnalyticsId: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="recaptchaSiteKey">Google reCAPTCHA Site Key</Label>
+                  <Input 
+                    id="recaptchaSiteKey" 
+                    value={integrationSettings.recaptchaSiteKey} 
+                    onChange={(e) => setIntegrationSettings({...integrationSettings, recaptchaSiteKey: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="mailchimpApiKey">Mailchimp API Key</Label>
+                  <Input 
+                    id="mailchimpApiKey" 
+                    value={integrationSettings.mailchimpApiKey} 
+                    onChange={(e) => setIntegrationSettings({...integrationSettings, mailchimpApiKey: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-4 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <Label htmlFor="enableSocialLogins" className="mb-1">Enable Social Logins</Label>
+                    <span className="text-xs text-muted-foreground">Enable authentication with social media accounts</span>
+                  </div>
+                  <Switch 
+                    id="enableSocialLogins" 
+                    checked={integrationSettings.enableSocialLogins}
+                    onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableSocialLogins: checked})}
+                  />
+                </div>
+                
+                {integrationSettings.enableSocialLogins && (
+                  <div className="pl-6 space-y-4 border-l-2 border-muted">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="enableGoogleLogin">Google Login</Label>
+                      <Switch 
+                        id="enableGoogleLogin" 
+                        checked={integrationSettings.enableGoogleLogin}
+                        onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableGoogleLogin: checked})}
                       />
-                      <Label htmlFor="maintenanceMode">Enable Maintenance Mode</Label>
-                      {siteSettings.maintenanceMode && (
-                        <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-700 border-yellow-200">
-                          Active
-                        </Badge>
-                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="enableGithubLogin">GitHub Login</Label>
+                      <Switch 
+                        id="enableGithubLogin" 
+                        checked={integrationSettings.enableGithubLogin}
+                        onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableGithubLogin: checked})}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="enableTwitterLogin">Twitter Login</Label>
+                      <Switch 
+                        id="enableTwitterLogin" 
+                        checked={integrationSettings.enableTwitterLogin}
+                        onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, enableTwitterLogin: checked})}
+                      />
                     </div>
                   </div>
-                </div>
+                )}
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleSaveSiteSettings}
-                disabled={isSaving}
-              >
+              
+              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Saving...</span>
+                    Saving...
                   </>
-                ) : "Save Site Settings"}
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Settings
+                  </>
+                )}
               </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        {/* Content Settings */}
-        <TabsContent value="content">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content & Moderation Settings</CardTitle>
-              <CardDescription>Configure content rules and moderation settings</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            </form>
+          </TabsContent>
+          
+          {/* Appearance Settings */}
+          <TabsContent value="appearance" className="py-4">
+            <form onSubmit={handleAppearanceSettingsSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="maxDiscussionTitleLength">Max Discussion Title Length</Label>
-                  <Input
-                    id="maxDiscussionTitleLength"
-                    type="number"
-                    value={contentSettings.maxDiscussionTitleLength}
-                    onChange={(e) => handleContentSettingChange("maxDiscussionTitleLength", parseInt(e.target.value))}
+                  <Label htmlFor="defaultTheme">Default Theme</Label>
+                  <select
+                    id="defaultTheme"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={appearanceSettings.defaultTheme}
+                    onChange={(e) => setAppearanceSettings({...appearanceSettings, defaultTheme: e.target.value})}
+                  >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="system">System</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">Primary Color</Label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="color" 
+                      id="primaryColor"
+                      value={appearanceSettings.primaryColor}
+                      onChange={(e) => setAppearanceSettings({...appearanceSettings, primaryColor: e.target.value})}
+                      className="w-10 h-10 rounded"
+                    />
+                    <Input 
+                      value={appearanceSettings.primaryColor} 
+                      onChange={(e) => setAppearanceSettings({...appearanceSettings, primaryColor: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="secondaryColor">Secondary Color</Label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="color" 
+                      id="secondaryColor"
+                      value={appearanceSettings.secondaryColor}
+                      onChange={(e) => setAppearanceSettings({...appearanceSettings, secondaryColor: e.target.value})}
+                      className="w-10 h-10 rounded"
+                    />
+                    <Input 
+                      value={appearanceSettings.secondaryColor} 
+                      onChange={(e) => setAppearanceSettings({...appearanceSettings, secondaryColor: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="accentColor">Accent Color</Label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="color" 
+                      id="accentColor"
+                      value={appearanceSettings.accentColor}
+                      onChange={(e) => setAppearanceSettings({...appearanceSettings, accentColor: e.target.value})}
+                      className="w-10 h-10 rounded"
+                    />
+                    <Input 
+                      value={appearanceSettings.accentColor} 
+                      onChange={(e) => setAppearanceSettings({...appearanceSettings, accentColor: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="customCss">Custom CSS</Label>
+                  <Textarea 
+                    id="customCss" 
+                    value={appearanceSettings.customCss} 
+                    onChange={(e) => setAppearanceSettings({...appearanceSettings, customCss: e.target.value})}
+                    placeholder="/* Add your custom CSS here */"
+                    className="font-mono h-32"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxDiscussionContentLength">Max Discussion Content Length</Label>
-                  <Input
-                    id="maxDiscussionContentLength"
-                    type="number"
-                    value={contentSettings.maxDiscussionContentLength}
-                    onChange={(e) => handleContentSettingChange("maxDiscussionContentLength", parseInt(e.target.value))}
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="customHeader">Custom Header HTML</Label>
+                  <Textarea 
+                    id="customHeader" 
+                    value={appearanceSettings.customHeader} 
+                    onChange={(e) => setAppearanceSettings({...appearanceSettings, customHeader: e.target.value})}
+                    placeholder="<!-- Add custom HTML for the header -->"
+                    className="font-mono h-32"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxCommentsPerPage">Max Comments Per Page</Label>
-                  <Input
-                    id="maxCommentsPerPage"
-                    type="number"
-                    value={contentSettings.maxCommentsPerPage}
-                    onChange={(e) => handleContentSettingChange("maxCommentsPerPage", parseInt(e.target.value))}
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="customFooter">Custom Footer HTML</Label>
+                  <Textarea 
+                    id="customFooter" 
+                    value={appearanceSettings.customFooter} 
+                    onChange={(e) => setAppearanceSettings({...appearanceSettings, customFooter: e.target.value})}
+                    placeholder="<!-- Add custom HTML for the footer -->"
+                    className="font-mono h-32"
                   />
                 </div>
               </div>
               
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium mb-4">Content Permissions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="allowRichTextInComments"
-                      checked={contentSettings.allowRichTextInComments}
-                      onCheckedChange={(checked) => handleContentSettingChange("allowRichTextInComments", checked)}
-                    />
-                    <Label htmlFor="allowRichTextInComments">Allow Rich Text in Comments</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="allowImagesInComments"
-                      checked={contentSettings.allowImagesInComments}
-                      onCheckedChange={(checked) => handleContentSettingChange("allowImagesInComments", checked)}
-                    />
-                    <Label htmlFor="allowImagesInComments">Allow Images in Comments</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="allowLinks"
-                      checked={contentSettings.allowLinks}
-                      onCheckedChange={(checked) => handleContentSettingChange("allowLinks", checked)}
-                    />
-                    <Label htmlFor="allowLinks">Allow External Links</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="requireApprovalForNewTopics"
-                      checked={contentSettings.requireApprovalForNewTopics}
-                      onCheckedChange={(checked) => handleContentSettingChange("requireApprovalForNewTopics", checked)}
-                    />
-                    <Label htmlFor="requireApprovalForNewTopics">Require Approval for New Topics</Label>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium mb-4">Moderation Settings</h3>
-                <div className="grid gap-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="autoModerateContent"
-                      checked={contentSettings.autoModerateContent}
-                      onCheckedChange={(checked) => handleContentSettingChange("autoModerateContent", checked)}
-                    />
-                    <Label htmlFor="autoModerateContent">Auto-Moderate Content</Label>
-                  </div>
-                  
-                  {contentSettings.autoModerateContent && (
-                    <div className="space-y-2">
-                      <Label htmlFor="moderationSeverity">Moderation Severity</Label>
-                      <Select
-                        value={contentSettings.moderationSeverity}
-                        onValueChange={(value) => handleContentSettingChange("moderationSeverity", value)}
-                      >
-                        <SelectTrigger id="moderationSeverity">
-                          <SelectValue placeholder="Select moderation severity" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border border-border">
-                          <SelectItem value="low">Low - Flag only extreme content</SelectItem>
-                          <SelectItem value="medium">Medium - Balanced approach</SelectItem>
-                          <SelectItem value="high">High - Strict moderation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              <div className="pt-4">
+                <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Palette className="mr-2 h-4 w-4" />
+                      Save Appearance
+                    </>
                   )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="bannedWords">Banned Words/Phrases</Label>
-                    <Textarea
-                      id="bannedWords"
-                      value={contentSettings.bannedWords}
-                      onChange={(e) => handleContentSettingChange("bannedWords", e.target.value)}
-                      rows={3}
-                      placeholder="Enter comma-separated list of banned words"
-                    />
-                    <p className="text-sm text-muted-foreground">Separate words or phrases with commas</p>
-                  </div>
-                </div>
+                </Button>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleSaveContentSettings}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : "Save Content Settings"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        {/* Analytics Settings */}
-        <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Settings</CardTitle>
-              <CardDescription>Configure how user data is tracked and analyzed</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enableTracking"
-                    checked={analyticsSettings.enableTracking}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("enableTracking", checked)}
-                  />
-                  <Label htmlFor="enableTracking">Enable Analytics Tracking</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="anonymizeIPs"
-                    checked={analyticsSettings.anonymizeIPs}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("anonymizeIPs", checked)}
-                  />
-                  <Label htmlFor="anonymizeIPs">Anonymize IP Addresses</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="trackUserSession"
-                    checked={analyticsSettings.trackUserSession}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("trackUserSession", checked)}
-                  />
-                  <Label htmlFor="trackUserSession">Track User Sessions</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="saveSearchQueries"
-                    checked={analyticsSettings.saveSearchQueries}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("saveSearchQueries", checked)}
-                  />
-                  <Label htmlFor="saveSearchQueries">Save User Search Queries</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="generateWeeklyReports"
-                    checked={analyticsSettings.generateWeeklyReports}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("generateWeeklyReports", checked)}
-                  />
-                  <Label htmlFor="generateWeeklyReports">Generate Weekly Reports</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="sendAnalyticsEmails"
-                    checked={analyticsSettings.sendAnalyticsEmails}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("sendAnalyticsEmails", checked)}
-                  />
-                  <Label htmlFor="sendAnalyticsEmails">Send Analytics Emails</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="trackFeatureUsage"
-                    checked={analyticsSettings.trackFeatureUsage}
-                    onCheckedChange={(checked) => handleAnalyticsSettingChange("trackFeatureUsage", checked)}
-                  />
-                  <Label htmlFor="trackFeatureUsage">Track Feature Usage</Label>
-                </div>
-              </div>
-              
-              <div className="border-t pt-6">
+            </form>
+          </TabsContent>
+          
+          {/* Media Settings */}
+          <TabsContent value="media" className="py-4">
+            <form onSubmit={handleMediaSettingsSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="retentionPeriodDays">Data Retention Period (Days)</Label>
-                  <Input
-                    id="retentionPeriodDays"
+                  <Label htmlFor="maxImageSizeMB">Max Image Size (MB)</Label>
+                  <Input 
+                    id="maxImageSizeMB" 
                     type="number"
-                    value={analyticsSettings.retentionPeriodDays}
-                    onChange={(e) => handleAnalyticsSettingChange("retentionPeriodDays", parseInt(e.target.value))}
+                    value={mediaSettings.maxImageSizeMB} 
+                    onChange={(e) => setMediaSettings({...mediaSettings, maxImageSizeMB: parseInt(e.target.value)})}
                   />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxVideoSizeMB">Max Video Size (MB)</Label>
+                  <Input 
+                    id="maxVideoSizeMB" 
+                    type="number"
+                    value={mediaSettings.maxVideoSizeMB} 
+                    onChange={(e) => setMediaSettings({...mediaSettings, maxVideoSizeMB: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxDocumentSizeMB">Max Document Size (MB)</Label>
+                  <Input 
+                    id="maxDocumentSizeMB" 
+                    type="number"
+                    value={mediaSettings.maxDocumentSizeMB} 
+                    onChange={(e) => setMediaSettings({...mediaSettings, maxDocumentSizeMB: parseInt(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="storageProvider">Storage Provider</Label>
+                  <select
+                    id="storageProvider"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={mediaSettings.storageProvider}
+                    onChange={(e) => setMediaSettings({...mediaSettings, storageProvider: e.target.value})}
+                  >
+                    <option value="supabase">Supabase Storage</option>
+                    <option value="s3">Amazon S3</option>
+                    <option value="local">Local Storage</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="allowedImageFormats">Allowed Image Formats</Label>
+                  <Input 
+                    id="allowedImageFormats" 
+                    value={mediaSettings.allowedImageFormats} 
+                    onChange={(e) => setMediaSettings({...mediaSettings, allowedImageFormats: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">Comma separated list of extensions</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="allowedVideoFormats">Allowed Video Formats</Label>
+                  <Input 
+                    id="allowedVideoFormats" 
+                    value={mediaSettings.allowedVideoFormats} 
+                    onChange={(e) => setMediaSettings({...mediaSettings, allowedVideoFormats: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">Comma separated list of extensions</p>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="allowedDocumentFormats">Allowed Document Formats</Label>
+                  <Input 
+                    id="allowedDocumentFormats" 
+                    value={mediaSettings.allowedDocumentFormats} 
+                    onChange={(e) => setMediaSettings({...mediaSettings, allowedDocumentFormats: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">Comma separated list of extensions</p>
                 </div>
               </div>
               
-              <div className="border-t pt-6 flex items-start gap-2">
-                <Info size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-muted-foreground">
-                  <p className="mb-2">Analytics data helps improve the platform experience but must comply with privacy regulations.</p>
-                  <p>Ensure your analytics settings comply with applicable laws like GDPR and CCPA.</p>
-                </div>
+              <div className="pt-4">
+                <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Image className="mr-2 h-4 w-4" />
+                      Save Media Settings
+                    </>
+                  )}
+                </Button>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleSaveAnalyticsSettings}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : "Save Analytics Settings"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        {/* Maintenance */}
-        <TabsContent value="maintenance">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Maintenance</CardTitle>
-              <CardDescription>Perform system maintenance operations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-6">
-                <div className="p-4 border rounded-lg bg-muted/30">
-                  <h3 className="text-lg font-medium mb-2">Cache Management</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Clear system cache to resolve performance issues or update stale content.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2"
-                    onClick={handleClearCache}
-                  >
-                    <RefreshCcw size={16} />
-                    <span>Clear System Cache</span>
-                  </Button>
-                </div>
-                
-                <div className="p-4 border rounded-lg bg-muted/30">
-                  <h3 className="text-lg font-medium mb-2">Search Index Management</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Rebuild search indices to ensure all content is properly searchable.
-                  </p>
-                  <Button 
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    onClick={handleRebuildIndices}
-                  >
-                    <RefreshCcw size={16} />
-                    <span>Rebuild Search Indices</span>
-                  </Button>
-                </div>
-                
-                <div className="p-4 border rounded-lg bg-muted/30">
-                  <h3 className="text-lg font-medium mb-2">Database Operations</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Perform database optimization operations.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button variant="outline">Optimize Database</Button>
-                    <Button variant="outline">Rebuild Database Views</Button>
-                  </div>
-                </div>
-                
-                <div className="p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
-                  <p className="text-sm text-red-600 dark:text-red-400 mb-4">
-                    These actions can potentially cause data loss or service disruption.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button variant="destructive">Reset All Settings</Button>
-                    <Button variant="destructive">Clear All Analytics Data</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };

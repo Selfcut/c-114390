@@ -25,6 +25,7 @@ import Admin from './pages/Admin';
 import AI from './pages/AI';
 import NotFound from './pages/NotFound';
 import Wiki from './pages/Wiki';
+import Media from './pages/Media';
 import Landing from './pages/Landing';
 
 // Initialize Supabase
@@ -118,6 +119,13 @@ const Root = () => {
           <ProtectedRoute allowGuests={true}>
             <PageLayout allowGuests={true}>
               <Wiki />
+            </PageLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/media" element={
+          <ProtectedRoute allowGuests={true}>
+            <PageLayout allowGuests={true}>
+              <Media />
             </PageLayout>
           </ProtectedRoute>
         } />
