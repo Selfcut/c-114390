@@ -16,8 +16,8 @@ interface MessageReactionsProps {
   reactions: Reaction[];
   messageId: string;
   onReactionAdd: (messageId: string, emoji: string) => void;
-  onReact?: (emoji: string) => void; // Add this prop
-  onReactionRemove?: (messageId: string, emoji: string) => void;
+  onReactionRemove: (messageId: string, emoji: string) => void;
+  onReact?: (emoji: string) => void;
 }
 
 // Common quick reactions
@@ -41,7 +41,7 @@ export const MessageReactions = ({
     const existingReaction = validReactions.find(r => r.emoji === emoji);
     const hasReacted = existingReaction?.users.includes(currentUserId);
     
-    if (hasReacted && onReactionRemove) {
+    if (hasReacted) {
       onReactionRemove(messageId, emoji);
     } else {
       onReactionAdd(messageId, emoji);
@@ -51,6 +51,8 @@ export const MessageReactions = ({
     if (onReact) {
       onReact(emoji);
     }
+
+    setShowReactionPicker(false);
   };
 
   return (
@@ -106,10 +108,7 @@ export const MessageReactions = ({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 hover:bg-accent"
-                onClick={() => {
-                  onReactionAdd(messageId, emoji);
-                  setShowReactionPicker(false);
-                }}
+                onClick={() => handleReactionToggle(emoji)}
               >
                 {emoji}
               </Button>

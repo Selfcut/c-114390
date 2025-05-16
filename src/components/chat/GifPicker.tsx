@@ -1,191 +1,201 @@
 
-import React, { useState, useEffect } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
+import { Gift, Search, Loader2 } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, FileImage } from "lucide-react";
-import { CustomTooltip } from "@/components/ui/CustomTooltip";
-import { useToast } from "@/hooks/use-toast";
-
-// API constants - in a real app, this would be in an env file
-const TENOR_API_KEY = "LIVDSRZULELA"; // Demo API key for Tenor
-const TENOR_API_URL = "https://g.tenor.com/v1";
-
-interface GifResult {
-  id: string;
-  url: string;
-  alt: string;
-  preview: string;
-}
-
-// Fallback mock GIFs in case the API is not available
-const fallbackGifs = [
-  { id: '1', url: 'https://media.tenor.com/YGm1ZvZ-T8QAAAAC/waving-hello.gif', alt: 'Waving hello', preview: 'https://media.tenor.com/YGm1ZvZ-T8QAAAAC/waving-hello.gif' },
-  { id: '2', url: 'https://media.tenor.com/9SYoex7TMd8AAAAC/hello-cute.gif', alt: 'Hello cute', preview: 'https://media.tenor.com/9SYoex7TMd8AAAAC/hello-cute.gif' },
-  { id: '3', url: 'https://media.tenor.com/B5qmLu7dpXcAAAAd/good-morning-hello.gif', alt: 'Good morning hello', preview: 'https://media.tenor.com/B5qmLu7dpXcAAAAd/good-morning-hello.gif' },
-  { id: '4', url: 'https://media.tenor.com/S_PadIIOchAAAAAC/yoda-hello.gif', alt: 'Yoda hello', preview: 'https://media.tenor.com/S_PadIIOchAAAAAC/yoda-hello.gif' },
-  { id: '5', url: 'https://media.tenor.com/HNUmdm5Qs0EAAAAC/hello-cat.gif', alt: 'Hello cat', preview: 'https://media.tenor.com/HNUmdm5Qs0EAAAAC/hello-cat.gif' },
-  { id: '6', url: 'https://media.tenor.com/iMdvUZ4fYGUAAAAC/bear-hello.gif', alt: 'Bear hello', preview: 'https://media.tenor.com/iMdvUZ4fYGUAAAAC/bear-hello.gif' },
-];
-
-// Popular GIF categories for quick access
-const popularCategories = ["hello", "laugh", "love", "sad", "thanks", "wow"];
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface GifPickerProps {
   onGifSelect: (gif: { url: string; alt: string }) => void;
 }
 
-export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [gifs, setGifs] = useState<GifResult[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string | null>("hello");
-  const { toast } = useToast();
+// Mock GIF categories for demo purposes
+const gifCategories = [
+  { 
+    id: "trending",
+    name: "Trending",
+    gifs: [
+      { id: "1", url: "https://media.tenor.com/xB-hoU_E5xcAAAAC/good-morning-sunshine.gif", alt: "Good morning" },
+      { id: "2", url: "https://media.tenor.com/6ItGp9UIvzwAAAAd/cute-cat-cute.gif", alt: "Cute cat" },
+      { id: "3", url: "https://media.tenor.com/11XjzFMCnPMAAAAM/kevin-hart-mind-blown.gif", alt: "Mind blown" },
+      { id: "4", url: "https://media.tenor.com/ivN41U9L3MoAAAAC/nod-nodding.gif", alt: "Nodding" }
+    ]
+  },
+  { 
+    id: "reactions",
+    name: "Reactions",
+    gifs: [
+      { id: "5", url: "https://media.tenor.com/8sVJzgOiDaIAAAAM/hmm-thinking.gif", alt: "Thinking" },
+      { id: "6", url: "https://media.tenor.com/3Vn_9t3-29gAAAAM/shocked-speechless.gif", alt: "Shocked" },
+      { id: "7", url: "https://media.tenor.com/DHJkAedtyM4AAAAC/clapping-clapping-hands.gif", alt: "Clapping" },
+      { id: "8", url: "https://media.tenor.com/0Vvs4O0WhRYAAAAM/thumbs-up-approve.gif", alt: "Thumbs up" }
+    ]
+  },
+  { 
+    id: "animals",
+    name: "Animals",
+    gifs: [
+      { id: "9", url: "https://media.tenor.com/5zCM3cj-lPcAAAAM/cute-cat-paw-kitty-paw.gif", alt: "Cat paw" },
+      { id: "10", url: "https://media.tenor.com/xrDvINQ5XbsAAAAM/dog-happy.gif", alt: "Happy dog" },
+      { id: "11", url: "https://media.tenor.com/m3Vt6zNF0k0AAAAd/fox-yawning.gif", alt: "Yawning fox" },
+      { id: "12", url: "https://media.tenor.com/MjOpIvHiR_sAAAAM/sloth-slow.gif", alt: "Slow sloth" }
+    ]
+  }
+];
 
-  // Fetch GIFs from Tenor API or use fallbacks if API fails
-  const fetchGifs = async (query: string = "hello") => {
-    setIsLoading(true);
+export const GifPicker: React.FC<GifPickerProps> = ({ onGifSelect }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ id: string, url: string, alt: string }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Simulated search function - in a real app, this would call a GIF API
+  const searchGifs = (query: string) => {
+    setIsSearching(true);
     
-    try {
-      // Try to fetch from Tenor API
-      const response = await fetch(
-        `${TENOR_API_URL}/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&limit=12`
-      );
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch GIFs");
+    // Simulate API delay
+    setTimeout(() => {
+      if (query.trim() === "") {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
       }
       
-      const data = await response.json();
+      // Combine all GIFs and filter by query
+      const allGifs = gifCategories.flatMap(category => category.gifs);
+      const filtered = allGifs.filter(gif => 
+        gif.alt.toLowerCase().includes(query.toLowerCase())
+      );
       
-      // Map API results to our format
-      const results: GifResult[] = data.results.map((item: any) => ({
-        id: item.id,
-        url: item.media[0].gif.url,
-        alt: item.title,
-        preview: item.media[0].nanogif.url // Use smaller preview for faster loading
-      }));
-      
-      setGifs(results);
-    } catch (error) {
-      console.error("Error fetching GIFs:", error);
-      toast({
-        title: "Couldn't load GIFs",
-        description: "Using fallback GIF collection",
-        variant: "destructive",
-      });
-      
-      // Use fallback GIFs if API fails
-      setGifs(fallbackGifs);
-    } finally {
-      setIsLoading(false);
-    }
+      setSearchResults(filtered);
+      setIsSearching(false);
+    }, 500);
   };
-
-  // Load initial GIFs when component mounts or category changes
+  
+  // Debounced search
   useEffect(() => {
-    if (open && activeCategory) {
-      fetchGifs(activeCategory);
-    }
-  }, [open, activeCategory]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        searchGifs(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
     
-    setActiveCategory(null);
-    fetchGifs(searchQuery);
-  };
-
-  const handleCategoryClick = (category: string) => {
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  
+  const handleGifSelect = (gif: { id: string, url: string, alt: string }) => {
+    onGifSelect({ url: gif.url, alt: gif.alt });
+    setIsOpen(false);
     setSearchQuery("");
-    setActiveCategory(category);
-    fetchGifs(category);
-  };
-
-  const handleGifClick = (gif: GifResult) => {
-    onGifSelect({
-      url: gif.url,
-      alt: gif.alt
-    });
-    setOpen(false);
+    setSearchResults([]);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <CustomTooltip content="GIF picker">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground"
-          >
-            <FileImage size={18} />
-            <span className="sr-only">GIF picker</span>
-          </Button>
-        </CustomTooltip>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-muted">
+          <Gift size={18} />
+          <span className="sr-only">Pick GIF</span>
+        </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-2">
-        <form onSubmit={handleSearch} className="mb-2">
+      <PopoverContent side="top" align="end" className="w-72 p-0" sideOffset={10}>
+        <div className="p-2 border-b">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search GIFs..."
-              className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-7 text-xs pr-7"
             />
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              {isSearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+            </div>
           </div>
-        </form>
-        
-        {/* Categories */}
-        <div className="flex flex-wrap gap-2 mb-2">
-          {popularCategories.map((category) => (
-            <Button
-              key={category}
-              size="sm"
-              variant={activeCategory === category ? "default" : "outline"}
-              onClick={() => handleCategoryClick(category)}
-              className="text-xs h-7"
-            >
-              {category}
-            </Button>
-          ))}
         </div>
         
-        <div className="h-60 overflow-y-auto">
-          {isLoading ? (
-            <div className="h-full flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : gifs.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2">
-              {gifs.map((gif) => (
-                <button
-                  key={gif.id}
-                  className="overflow-hidden rounded-md hover:opacity-80 transition-opacity bg-muted/50"
-                  onClick={() => handleGifClick(gif)}
+        {searchQuery.trim() !== "" ? (
+          <div className="p-2 h-[300px]">
+            <ScrollArea className="h-full">
+              {isSearching ? (
+                <div className="flex justify-center items-center h-full">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : searchResults.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {searchResults.map(gif => (
+                    <button
+                      key={gif.id}
+                      className="h-[100px] bg-muted rounded overflow-hidden hover:opacity-80 transition-opacity"
+                      onClick={() => handleGifSelect(gif)}
+                    >
+                      <img 
+                        src={gif.url} 
+                        alt={gif.alt} 
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://placehold.co/400x300?text=Failed+to+load";
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex justify-center items-center h-full text-muted-foreground text-sm">
+                  No GIFs found
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        ) : (
+          <Tabs defaultValue="trending" className="w-full">
+            <TabsList className="grid grid-cols-3 p-1">
+              {gifCategories.map(category => (
+                <TabsTrigger 
+                  key={category.id}
+                  value={category.id}
+                  className="px-2 py-1 h-7 text-xs data-[state=active]:bg-muted"
                 >
-                  <img 
-                    src={gif.preview || gif.url} 
-                    alt={gif.alt} 
-                    className="w-full h-24 object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      // Fallback on error
-                      e.currentTarget.src = fallbackGifs[0].url;
-                    }}
-                  />
-                </button>
+                  {category.name}
+                </TabsTrigger>
               ))}
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center">
-              <p className="text-muted-foreground text-sm">No GIFs found</p>
-            </div>
-          )}
-        </div>
+            </TabsList>
+            
+            {gifCategories.map(category => (
+              <TabsContent key={category.id} value={category.id} className="h-[300px] p-0">
+                <ScrollArea className="h-full">
+                  <div className="grid grid-cols-2 gap-2 p-2">
+                    {category.gifs.map(gif => (
+                      <button
+                        key={gif.id}
+                        className="h-[100px] bg-muted rounded overflow-hidden hover:opacity-80 transition-opacity"
+                        onClick={() => handleGifSelect(gif)}
+                      >
+                        <img 
+                          src={gif.url} 
+                          alt={gif.alt} 
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/400x300?text=Failed+to+load";
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
       </PopoverContent>
     </Popover>
   );

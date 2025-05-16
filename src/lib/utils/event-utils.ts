@@ -1,68 +1,97 @@
 
-// This file handles custom events for communication between components
+/**
+ * Event utils for inter-component communications
+ */
 
-// Type for the chat sidebar toggle callback function
-type ChatSidebarToggleCallback = (isOpen: boolean | ((prev: boolean) => boolean)) => void;
-type SidebarCollapseCallback = (isCollapsed: boolean) => void;
+type EventCallback<T> = (data: T) => void;
+type EventType = 'sidebar-collapse' | 'chat-sidebar-toggle' | 'theme-change';
 
-// Store for the callbacks
-const chatSidebarToggleListeners: ChatSidebarToggleCallback[] = [];
-const sidebarCollapseListeners: SidebarCollapseCallback[] = [];
+interface EventHandlers {
+  [key: string]: EventCallback<any>[];
+}
 
-// Subscribe to chat sidebar toggle events
-export const subscribeToChatSidebarToggle = (callback: ChatSidebarToggleCallback): (() => void) => {
-  chatSidebarToggleListeners.push(callback);
-  
-  // Return unsubscribe function
-  return () => {
-    const index = chatSidebarToggleListeners.indexOf(callback);
-    if (index !== -1) {
-      chatSidebarToggleListeners.splice(index, 1);
-    }
-  };
-};
+// Event handlers storage
+const handlers: EventHandlers = {};
 
-// Publish chat sidebar toggle event
-export const publishChatSidebarToggle = (isOpen: boolean | ((prev: boolean) => boolean)) => {
-  chatSidebarToggleListeners.forEach(callback => callback(isOpen));
-  
-  // Only persist the state to localStorage if it's a boolean
-  if (typeof isOpen === 'boolean') {
-    localStorage.setItem('chatSidebarOpen', String(isOpen));
-  }
-};
-
-// Subscribe to sidebar collapse events
-export const subscribeToSidebarCollapse = (callback: SidebarCollapseCallback): (() => void) => {
-  sidebarCollapseListeners.push(callback);
-  
-  // Return unsubscribe function
-  return () => {
-    const index = sidebarCollapseListeners.indexOf(callback);
-    if (index !== -1) {
-      sidebarCollapseListeners.splice(index, 1);
-    }
-  };
-};
-
-// Publish sidebar collapse event
-export const publishSidebarCollapse = (isCollapsed: boolean) => {
-  sidebarCollapseListeners.forEach(callback => callback(isCollapsed));
-  // Persist the state to localStorage
-  localStorage.setItem('sidebar-collapsed', String(isCollapsed));
-  // Update CSS variable
+// Initialize UI state from localStorage
+export const initializeUIState = () => {
+  // Get sidebar collapsed state from localStorage
+  const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+  // Update CSS variable based on sidebar state
   document.documentElement.style.setProperty(
     '--sidebar-width', 
-    isCollapsed ? '64px' : '256px'
+    sidebarCollapsed ? '64px' : '256px'
   );
+  
+  // Get chat sidebar state from localStorage
+  const chatSidebarOpen = localStorage.getItem('chatSidebarOpen') === 'true';
+  
+  // If we had any other UI state to initialize, we'd do it here
 };
 
-// Initialize the state from localStorage on page load
-export const initializeUIState = () => {
-  const chatSidebarOpen = localStorage.getItem('chatSidebarOpen') === 'true';
-  const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+// Generic subscribe function
+function subscribe<T>(eventType: EventType, callback: EventCallback<T>) {
+  if (!handlers[eventType]) {
+    handlers[eventType] = [];
+  }
+  handlers[eventType].push(callback as EventCallback<any>);
+
+  // Return unsubscribe function
+  return () => {
+    handlers[eventType] = handlers[eventType].filter(handler => handler !== callback);
+  };
+}
+
+// Generic publish function
+function publish<T>(eventType: EventType, data: T) {
+  if (!handlers[eventType]) return;
   
-  // Publish initial states
-  publishChatSidebarToggle(chatSidebarOpen);
-  publishSidebarCollapse(sidebarCollapsed);
+  handlers[eventType].forEach(callback => {
+    try {
+      callback(data);
+    } catch (error) {
+      console.error(`Error in ${eventType} event handler:`, error);
+    }
+  });
+}
+
+// Sidebar specific events
+export const subscribeToSidebarCollapse = (callback: EventCallback<boolean>) => {
+  return subscribe<boolean>('sidebar-collapse', callback);
 };
+
+export const publishSidebarCollapse = (isCollapsed: boolean) => {
+  publish<boolean>('sidebar-collapse', isCollapsed);
+};
+
+// Chat sidebar specific events
+export const subscribeToChatSidebarToggle = (callback: EventCallback<boolean | ((prev: boolean) => boolean)>) => {
+  return subscribe<boolean | ((prev: boolean) => boolean)>('chat-sidebar-toggle', callback);
+};
+
+export const publishChatSidebarToggle = (isOpen: boolean | ((prev: boolean) => boolean)) => {
+  publish<boolean | ((prev: boolean) => boolean)>('chat-sidebar-toggle', isOpen);
+};
+
+// Theme change specific events
+export const subscribeToThemeChange = (callback: EventCallback<string>) => {
+  return subscribe<string>('theme-change', callback);
+};
+
+export const publishThemeChange = (theme: string) => {
+  publish<string>('theme-change', theme);
+};
+
+// Storage event listener to sync state across tabs
+window.addEventListener('storage', (event) => {
+  if (event.key === 'sidebar-collapsed') {
+    const isCollapsed = event.newValue === 'true';
+    publishSidebarCollapse(isCollapsed);
+  } else if (event.key === 'chatSidebarOpen') {
+    const isOpen = event.newValue === 'true';
+    publishChatSidebarToggle(isOpen);
+  } else if (event.key === 'theme') {
+    const theme = event.newValue || 'system';
+    publishThemeChange(theme);
+  }
+});

@@ -2,6 +2,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
+import { PageLayout } from "@/components/layouts/PageLayout";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,40 +10,36 @@ interface ProtectedRouteProps {
   allowGuests?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requireAdmin = false,
-  allowGuests = false
-}) => {
-  const { user, isLoading } = useAuth();
-  
-  // Show loading state while checking authentication
+export const ProtectedRoute = ({ children, requireAdmin = false, allowGuests = false }: ProtectedRouteProps) => {
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.isAdmin;
+
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 bg-primary/20 rounded-full mb-4"></div>
+          <div className="h-4 w-24 bg-primary/20 rounded"></div>
         </div>
       </div>
     );
   }
 
-  // If guests are allowed, render the page regardless of authentication
-  if (allowGuests) {
-    return <>{children}</>;
+  // If guest access is allowed, render the content with PageLayout
+  if (allowGuests && !isAuthenticated) {
+    return <PageLayout allowGuests={true}>{children}</PageLayout>;
   }
-  
-  // If not authenticated, redirect to login
-  if (!user) {
+
+  // If authentication is required but user is not authenticated
+  if (!isAuthenticated && !allowGuests) {
     return <Navigate to="/auth" replace />;
   }
-  
-  // If admin access is required but user is not an admin, redirect to dashboard
-  if (requireAdmin && !(user.role === 'admin' || user.isAdmin)) {
+
+  // If admin access is required but user is not an admin
+  if (requireAdmin && !isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
-  
-  // Render the protected content
-  return <>{children}</>;
+
+  // User is authenticated and has the required permissions
+  return <PageLayout>{children}</PageLayout>;
 };

@@ -21,7 +21,12 @@ export const FullHeightChatSidebar = () => {
     formatTime,
     handleSendMessage,
     handleKeyDown,
-    handleSelectConversation
+    handleSelectConversation,
+    handleMessageEdit,
+    handleMessageDelete,
+    handleMessageReply,
+    handleReactionAdd,
+    handleReactionRemove
   } = useChatMessages();
   
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
@@ -67,6 +72,11 @@ export const FullHeightChatSidebar = () => {
           messages={messages}
           isLoading={isLoading}
           formatTime={formatTime}
+          onMessageEdit={handleMessageEdit}
+          onMessageDelete={handleMessageDelete}
+          onMessageReply={handleMessageReply}
+          onReactionAdd={handleReactionAdd}
+          onReactionRemove={handleReactionRemove}
         />
 
         {/* Input area */}

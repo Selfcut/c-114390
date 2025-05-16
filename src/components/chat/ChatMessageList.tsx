@@ -4,6 +4,7 @@ import { MessageSquare } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "./ChatMessage";
 import { ChatMessage as ChatMessageType } from "./types";
+import { Reaction } from "./MessageReactions";
 
 interface ChatMessageListProps {
   messages: ChatMessageType[];
