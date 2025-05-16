@@ -2,7 +2,6 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContentItemAuthor } from './ContentItemTypes';
-import { formatDate } from './ContentItemTypes';
 
 interface ContentItemMetaProps {
   author: ContentItemAuthor;
@@ -13,6 +12,13 @@ export const ContentItemMeta: React.FC<ContentItemMetaProps> = ({
   author,
   createdAt
 }) => {
+  // Format date consistently
+  const formatDate = (date: Date | string): string => {
+    return typeof date === 'string' 
+      ? new Date(date).toLocaleDateString() 
+      : date.toLocaleDateString();
+  };
+  
   return (
     <div className="flex items-center mt-2">
       <Avatar className="h-6 w-6 mr-2">
