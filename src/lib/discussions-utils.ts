@@ -5,16 +5,18 @@ export interface DiscussionTopic {
   title: string;
   author: string;
   authorAvatar?: string;
-  date: string;
+  date?: string;
   tags: string[];
   upvotes: number;
-  replies: number;
+  replies?: number;
+  comments?: number;
   views: number;
   isPinned?: boolean;
   isPopular?: boolean;
   isNew?: boolean;
   excerpt?: string;
   createdAt: Date;
+  content?: string;  // Added content property
 }
 
 export const mockDiscussions: DiscussionTopic[] = [

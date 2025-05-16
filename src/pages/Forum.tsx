@@ -115,7 +115,7 @@ const Forum = () => {
         content: newDiscussion.content,
         author: user?.name || 'Anonymous',
         authorAvatar: user?.avatar || '',
-        createdAt: new Date(), // Fixed: Using new Date() instead of a string
+        createdAt: new Date(),
         tags: tagsArray,
         upvotes: 0,
         comments: 0,
