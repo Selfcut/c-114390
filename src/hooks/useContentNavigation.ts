@@ -1,5 +1,5 @@
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'react-router-dom';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export const useContentNavigation = () => {
@@ -16,8 +16,14 @@ export const useContentNavigation = () => {
       router.push(`/library/quote/${id}`);
     }
   };
+  
+  // New method to handle wiki article navigation
+  const handleWikiClick = (id: string) => {
+    router.push(`/wiki/${id}`);
+  };
 
   return {
-    handleContentClick
+    handleContentClick,
+    handleWikiClick
   };
 };

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import remarkGfm from 'remark-gfm';
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [article, setArticle] = useState<WikiArticle | null>(null);
@@ -94,12 +95,16 @@ const WikiArticlePage = () => {
     return date.toLocaleDateString();
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   // Loading state
   if (isLoading) {
     return (
       <PageLayout>
         <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
-          <Button variant="ghost" className="mb-6">
+          <Button variant="ghost" className="mb-6" onClick={handleBack}>
             <ArrowLeft size={16} className="mr-2" /> Back to Wiki
           </Button>
           
@@ -130,7 +135,7 @@ const WikiArticlePage = () => {
     return (
       <PageLayout>
         <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
-          <Button variant="ghost" className="mb-6" onClick={() => window.history.back()}>
+          <Button variant="ghost" className="mb-6" onClick={handleBack}>
             <ArrowLeft size={16} className="mr-2" /> Back to Wiki
           </Button>
           
@@ -141,7 +146,7 @@ const WikiArticlePage = () => {
               <p className="text-muted-foreground mb-6">
                 The article you're looking for doesn't exist or has been removed.
               </p>
-              <Button onClick={() => window.history.back()}>
+              <Button onClick={handleBack}>
                 Return to Wiki
               </Button>
             </CardContent>
@@ -154,7 +159,7 @@ const WikiArticlePage = () => {
   return (
     <PageLayout>
       <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
-        <Button variant="ghost" className="mb-6" onClick={() => window.history.back()}>
+        <Button variant="ghost" className="mb-6" onClick={handleBack}>
           <ArrowLeft size={16} className="mr-2" /> Back to Wiki
         </Button>
         

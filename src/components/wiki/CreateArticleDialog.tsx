@@ -80,18 +80,37 @@ export const CreateArticleDialog = ({
     try {
       setIsSubmitting(true);
       
+      const articleData = {
+        title,
+        description,
+        content,
+        category,
+        user_id: user.id,
+        contributors: 1,
+        views: 0,
+        last_updated: new Date().toISOString()
+      };
+      
+      // Check if the table exists
+      const { error: tableCheckError } = await supabase
+        .from('wiki_articles')
+        .select('count')
+        .limit(1);
+      
+      if (tableCheckError) {
+        console.error("Table doesn't exist:", tableCheckError);
+        toast({
+          title: "Database Error",
+          description: "The wiki_articles table does not exist. Please set it up first.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('wiki_articles')
-        .insert({
-          title,
-          description,
-          content,
-          category,
-          user_id: user.id,
-          contributors: 1,
-          views: 0,
-          last_updated: new Date().toISOString()
-        })
+        .insert(articleData)
         .select()
         .single();
       

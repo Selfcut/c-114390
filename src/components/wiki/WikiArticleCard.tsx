@@ -3,8 +3,8 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import { useContentNavigation } from "@/hooks/useContentNavigation";
 import { WikiArticle } from "./types";
-import { useRouter } from "next/navigation";
 
 interface WikiArticleCardProps {
   article: WikiArticle;
@@ -12,10 +12,10 @@ interface WikiArticleCardProps {
 }
 
 export const WikiArticleCard = ({ article, getCategoryIcon }: WikiArticleCardProps) => {
-  const router = useRouter();
+  const { handleWikiClick } = useContentNavigation();
 
   const handleClick = () => {
-    router.push(`/wiki/${article.id}`);
+    handleWikiClick(article.id);
   };
 
   return (
