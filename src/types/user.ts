@@ -3,7 +3,7 @@
 export type UserStatus = 'online' | 'away' | 'do-not-disturb' | 'offline' | 'invisible';
 
 // User roles
-export type UserRole = 'admin' | 'moderator' | 'user';
+export type UserRole = 'admin' | 'moderator' | 'user' | string;
 
 // User notification settings
 export interface NotificationSettings {
