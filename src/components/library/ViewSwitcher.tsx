@@ -2,7 +2,6 @@
 import React from 'react';
 import { LayoutGrid, LayoutList, ListFilter } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export type ViewMode = 'grid' | 'list' | 'feed';
