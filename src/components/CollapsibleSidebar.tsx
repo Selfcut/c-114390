@@ -138,7 +138,7 @@ export const CollapsibleSidebar = () => {
         <ul className="space-y-1 px-2">
           {navItems.map((item) => (
             <li key={item.path}>
-              <CustomTooltip content={item.label} position="right" delay={100}>
+              <CustomTooltip content={item.label} side="right" delayDuration={100}>
                 <NavLink
                   to={item.path}
                   className={({ isActive }) => `
@@ -157,7 +157,7 @@ export const CollapsibleSidebar = () => {
 
       <div className="p-4 border-t border-border">
         <div className="flex items-center justify-between">
-          <CustomTooltip content={user ? `${user.name} (${user.email})` : "User profile"} position="right">
+          <CustomTooltip content={user ? `${user.name} (${user.email})` : "User profile"} side="right">
             <div className="flex items-center">
               {user && (
                 <>
@@ -185,7 +185,7 @@ export const CollapsibleSidebar = () => {
           </div>
         </div>
         {user && (
-          <CustomTooltip content="Sign out" position="top">
+          <CustomTooltip content="Sign out" side="top">
             <Button
               onClick={signOut}
               variant="outline"
