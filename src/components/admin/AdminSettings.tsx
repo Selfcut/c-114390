@@ -12,7 +12,6 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface SiteSettings {
   enableUserRegistration: boolean;
@@ -107,10 +106,11 @@ export const AdminSettings = () => {
         // Try to load from Supabase if available
         const { data, error } = await supabase
           .from('site_settings')
-          .select('settings')
+          .select('*')
+          .eq('id', 'global')
           .single();
 
-        if (error && error.code !== 'PGRST116') { // Not found is ok
+        if (error) {
           console.error('Error loading settings from database:', error);
           // Fall back to localStorage
           const savedSettings = localStorage.getItem('adminSettings');
