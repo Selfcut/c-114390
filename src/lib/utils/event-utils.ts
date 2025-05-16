@@ -2,7 +2,7 @@
 // This file handles custom events for communication between components
 
 // Type for the chat sidebar toggle callback function
-type ChatSidebarToggleCallback = (isOpen: boolean) => void;
+type ChatSidebarToggleCallback = (isOpen: boolean | ((prev: boolean) => boolean)) => void;
 type SidebarCollapseCallback = (isCollapsed: boolean) => void;
 
 // Store for the callbacks
@@ -23,10 +23,13 @@ export const subscribeToChatSidebarToggle = (callback: ChatSidebarToggleCallback
 };
 
 // Publish chat sidebar toggle event
-export const publishChatSidebarToggle = (isOpen: boolean) => {
+export const publishChatSidebarToggle = (isOpen: boolean | ((prev: boolean) => boolean)) => {
   chatSidebarToggleListeners.forEach(callback => callback(isOpen));
-  // Persist the state to localStorage
-  localStorage.setItem('chatSidebarOpen', String(isOpen));
+  
+  // Only persist the state to localStorage if it's a boolean
+  if (typeof isOpen === 'boolean') {
+    localStorage.setItem('chatSidebarOpen', String(isOpen));
+  }
 };
 
 // Subscribe to sidebar collapse events
