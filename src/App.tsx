@@ -11,31 +11,54 @@ import { ThemeProvider } from './components/providers/ThemeProvider';
 import Wiki from './pages/Wiki';
 import AdminPanel from './pages/AdminPanel';
 import Media from './pages/Media';
-import { FullHeightChatSidebar } from './components/chat/FullHeightChatSidebar';
+import { PageLayout } from './components/layouts/PageLayout';
 import WikiArticlePage from './components/wiki/WikiArticlePage';
+import Auth from './pages/Auth';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Initialize React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60000, // 1 minute
+      refetchOnWindowFocus: true,
+    },
+  },
+});
 
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="/media" element={<Media />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/forum" element={<Forum />} />
-            <Route path="/wiki" element={<Wiki />} />
-            <Route path="/wiki/:articleId" element={<WikiArticlePage />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-          <FullHeightChatSidebar />
-        </Router>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              {/* Auth routes (no layout) */}
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Protected routes with layout */}
+              <Route path="/" element={<PageLayout><Dashboard /></PageLayout>} />
+              <Route path="/dashboard" element={<PageLayout><Dashboard /></PageLayout>} />
+              <Route path="/profile" element={<PageLayout><Profile /></PageLayout>} />
+              <Route path="/profile/:userId" element={<PageLayout><Profile /></PageLayout>} />
+              <Route path="/media" element={<PageLayout><Media /></PageLayout>} />
+              <Route path="/settings" element={<PageLayout><Settings /></PageLayout>} />
+              
+              {/* Public routes with layout */}
+              <Route path="/forum" element={<PageLayout allowGuests={true}><Forum /></PageLayout>} />
+              <Route path="/wiki" element={<PageLayout allowGuests={true}><Wiki /></PageLayout>} />
+              <Route path="/wiki/:articleId" element={<PageLayout allowGuests={true}><WikiArticlePage /></PageLayout>} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<PageLayout><AdminPanel /></PageLayout>} />
+              
+              {/* 404 page */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

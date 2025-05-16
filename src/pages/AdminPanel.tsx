@@ -30,7 +30,7 @@ const AdminPanel = () => {
       try {
         // Make specific user an admin (as requested)
         if (user.id === 'dc7bedf3-14c3-4376-adfb-de5ac8207adc') {
-          // First check if the role column exists
+          // Update the role to admin
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ role: 'admin' })
@@ -49,7 +49,7 @@ const AdminPanel = () => {
           }
         }
 
-        // Check admin status for other users
+        // Check admin status for all users
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
@@ -101,6 +101,7 @@ const AdminPanel = () => {
     },
   ];
 
+  // Admin panel loading state
   if (isCheckingAdmin) {
     return (
       <PageLayout>
@@ -124,6 +125,7 @@ const AdminPanel = () => {
     );
   }
 
+  // Access denied state
   if (!isAdmin) {
     return (
       <PageLayout>
@@ -144,66 +146,64 @@ const AdminPanel = () => {
   }
 
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Shield className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-in fade-in slide-in-from-bottom duration-300">
-          <Card>
-            <CardContent className="p-4 flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">1,245</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <Bell size={20} className="text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Users</p>
-                <p className="text-2xl font-bold">364</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                <Bell size={20} className="text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Content Items</p>
-                <p className="text-2xl font-bold">842</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                <Bell size={20} className="text-amber-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">System Alerts</p>
-                <p className="text-2xl font-bold">2</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
-                <Bell size={20} className="text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <TabNav tabs={adminTabs} defaultTab="dashboard" />
+    <div className="container mx-auto py-8">
+      <div className="flex items-center gap-2 mb-6">
+        <Shield className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold">Admin Panel</h1>
       </div>
-    </PageLayout>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-in fade-in slide-in-from-bottom duration-300">
+        <Card>
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+              <p className="text-2xl font-bold">1,245</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <Bell size={20} className="text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Active Users</p>
+              <p className="text-2xl font-bold">364</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+              <Bell size={20} className="text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Content Items</p>
+              <p className="text-2xl font-bold">842</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <Bell size={20} className="text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">System Alerts</p>
+              <p className="text-2xl font-bold">2</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
+              <Bell size={20} className="text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <TabNav tabs={adminTabs} defaultTab="dashboard" />
+    </div>
   );
 };
 
