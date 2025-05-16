@@ -4,11 +4,41 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Search, BookOpen, Plus, ChevronRight, Globe, Brain, Atom, Database, Lightbulb } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Search, BookOpen, Plus, ChevronRight, Globe, Brain, Atom, Database, Lightbulb, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
+
+interface WikiArticle {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  content?: string;
+  lastUpdated: string;
+  contributors: number;
+  views: number;
+}
 
 const Wiki = () => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [newArticle, setNewArticle] = useState({
+    title: "",
+    description: "",
+    category: "",
+    content: ""
+  });
 
   // Mock wiki categories
   const categories = [
@@ -19,8 +49,8 @@ const Wiki = () => {
     { id: "systems", name: "Systems Theory", icon: <Globe size={18} /> }
   ];
 
-  // Mock wiki articles
-  const articles = [
+  // Initial mock wiki articles
+  const [articles, setArticles] = useState<WikiArticle[]>([
     {
       id: "1",
       title: "Quantum Mechanics: An Introduction",
@@ -66,7 +96,7 @@ const Wiki = () => {
       contributors: 7,
       views: 312
     }
-  ];
+  ]);
 
   // Filter articles based on search and category
   const filteredArticles = articles.filter(article => {
@@ -88,6 +118,91 @@ const Wiki = () => {
     return category ? category.icon : <FileText size={18} />;
   };
 
+  const handleCreateArticle = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create new wiki articles",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleArticleSubmit = () => {
+    if (!newArticle.title || !newArticle.description || !newArticle.category || !newArticle.content) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      const newWikiArticle: WikiArticle = {
+        id: `article-${Date.now()}`,
+        title: newArticle.title,
+        description: newArticle.description,
+        category: newArticle.category,
+        content: newArticle.content,
+        lastUpdated: "Just now",
+        contributors: 1,
+        views: 0
+      };
+
+      setArticles(prevArticles => [newWikiArticle, ...prevArticles]);
+      setIsCreateDialogOpen(false);
+      setNewArticle({
+        title: "",
+        description: "",
+        category: "",
+        content: ""
+      });
+      setIsSubmitting(false);
+
+      toast({
+        title: "Article Created",
+        description: "Your new wiki article has been published successfully!",
+      });
+    }, 1000);
+  };
+
+  const loadMoreArticles = () => {
+    setIsLoading(true);
+    
+    // Simulate loading more articles
+    setTimeout(() => {
+      const additionalArticles: WikiArticle[] = [
+        {
+          id: `article-${Date.now()}-1`,
+          title: "Emergence in Complex Systems",
+          description: "How complex behaviors emerge from simple rules and interactions.",
+          category: "systems",
+          lastUpdated: "1 day ago",
+          contributors: 3,
+          views: 142
+        },
+        {
+          id: `article-${Date.now()}-2`,
+          title: "Quantum Entanglement",
+          description: "Understanding the phenomenon of quantum entanglement and its implications.",
+          category: "physics",
+          lastUpdated: "3 days ago",
+          contributors: 4,
+          views: 215
+        }
+      ];
+
+      setArticles(prevArticles => [...prevArticles, ...additionalArticles]);
+      setIsLoading(false);
+    }, 1000);
+  };
+
   return (
     <main className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
@@ -95,7 +210,10 @@ const Wiki = () => {
           <BookOpen size={28} className="text-primary" />
           Knowledge Wiki
         </h1>
-        <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90">
+        <Button 
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+          onClick={handleCreateArticle}
+        >
           <Plus size={18} />
           <span>New Article</span>
         </Button>
@@ -179,6 +297,25 @@ const Wiki = () => {
                   </CardContent>
                 </Card>
               ))}
+              
+              {/* Load More Button */}
+              <div className="flex justify-center mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={loadMoreArticles} 
+                  disabled={isLoading}
+                  className="flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <span>Load More Articles</span>
+                  )}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="bg-muted/30 rounded-lg p-8 text-center">
@@ -191,6 +328,99 @@ const Wiki = () => {
           )}
         </div>
       </div>
+
+      {/* Create Article Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Create New Wiki Article</DialogTitle>
+            <DialogDescription>
+              Contribute to the community's knowledge base. Add a comprehensive, well-researched article.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh]">
+            <div className="space-y-4 p-1">
+              <div className="space-y-2">
+                <Label htmlFor="article-title">Title</Label>
+                <Input
+                  id="article-title"
+                  placeholder="Enter a descriptive title"
+                  value={newArticle.title}
+                  onChange={(e) => setNewArticle({...newArticle, title: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="article-description">Brief Description</Label>
+                <Input
+                  id="article-description"
+                  placeholder="A short summary of this article (1-2 sentences)"
+                  value={newArticle.description}
+                  onChange={(e) => setNewArticle({...newArticle, description: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="article-category">Category</Label>
+                <Select 
+                  value={newArticle.category} 
+                  onValueChange={(value) => setNewArticle({...newArticle, category: value})}
+                >
+                  <SelectTrigger id="article-category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                          {category.icon}
+                          <span>{category.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="article-content">Content</Label>
+                <Textarea
+                  id="article-content"
+                  placeholder="Write your article content here..."
+                  className="min-h-[300px]"
+                  value={newArticle.content}
+                  onChange={(e) => setNewArticle({...newArticle, content: e.target.value})}
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can use Markdown syntax for formatting. *italic* for italic text, **bold** for bold text, etc.
+                </p>
+              </div>
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleArticleSubmit}
+              disabled={isSubmitting || !newArticle.title || !newArticle.description || !newArticle.category || !newArticle.content}
+              className="flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Publishing...</span>
+                </>
+              ) : (
+                <>
+                  <BookOpen size={16} />
+                  <span>Publish Article</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };

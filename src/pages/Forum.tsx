@@ -4,15 +4,21 @@ import { DiscussionTopicCard } from "../components/DiscussionTopicCard";
 import { DiscussionFilters } from "../components/DiscussionFilters";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  DiscussionTopic, 
+  DiscussionTopic,
   mockDiscussions, 
   getSortedDiscussions,
   filterDiscussionsByTag
 } from "../lib/discussions-utils";
-import { MessageSquare, PenSquare, Tag } from "lucide-react";
+import { MessageSquare, PenSquare, Tag, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
 
 const Forum = () => {
   const { user } = useAuth();
@@ -24,10 +30,17 @@ const Forum = () => {
   const [sortOption, setSortOption] = useState<'popular' | 'new' | 'upvotes'>('popular');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newDiscussion, setNewDiscussion] = useState({
+    title: '',
+    content: '',
+    tags: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Extract unique tags from all discussions
   const allTags = Array.from(
-    new Set(mockDiscussions.flatMap(discussion => discussion.tags))
+    new Set(discussions.flatMap(discussion => discussion.tags))
   );
   
   // Apply sorting and filtering whenever dependencies change
@@ -75,10 +88,52 @@ const Forum = () => {
       return;
     }
     
-    toast({
-      title: "Create Discussion",
-      description: "Opening discussion creation form...",
-    });
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleSubmitDiscussion = () => {
+    if (!newDiscussion.title || !newDiscussion.content) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please provide a title and content for your discussion",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      const tagsArray = newDiscussion.tags 
+        ? newDiscussion.tags.split(',').map(tag => tag.trim()) 
+        : ['General'];
+
+      const newPost: DiscussionTopic = {
+        id: `discussion-${Date.now()}`,
+        title: newDiscussion.title,
+        content: newDiscussion.content,
+        author: user?.name || 'Anonymous',
+        authorAvatar: user?.avatar || '',
+        createdAt: new Date().toISOString(),
+        tags: tagsArray,
+        upvotes: 0,
+        comments: 0,
+        views: 0,
+        isPopular: false,
+        isPinned: false
+      };
+
+      setDiscussions(prevDiscussions => [newPost, ...prevDiscussions]);
+      setIsCreateDialogOpen(false);
+      setNewDiscussion({ title: '', content: '', tags: '' });
+      setIsSubmitting(false);
+
+      toast({
+        title: "Discussion Created",
+        description: "Your new discussion has been posted successfully!",
+      });
+    }, 1000);
   };
   
   return (
@@ -130,9 +185,9 @@ const Forum = () => {
             />
           ))
         ) : (
-          <div className="bg-card rounded-lg p-8 text-center">
+          <Card className="bg-card rounded-lg p-8 text-center">
             <p className="text-muted-foreground">No discussions found matching your criteria.</p>
-            <button 
+            <Button 
               className="mt-4 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-colors hover-lift"
               onClick={() => {
                 setSearchTerm('');
@@ -140,8 +195,8 @@ const Forum = () => {
               }}
             >
               Reset Filters
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
       </div>
       
@@ -154,6 +209,65 @@ const Forum = () => {
           </Button>
         </div>
       )}
+
+      {/* Create Discussion Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create New Discussion</DialogTitle>
+            <DialogDescription>
+              Share your thoughts with the community. Be respectful and follow our community guidelines.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh]">
+            <div className="space-y-4 p-1">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input 
+                  id="title" 
+                  placeholder="Add a descriptive title" 
+                  value={newDiscussion.title}
+                  onChange={(e) => setNewDiscussion({...newDiscussion, title: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="content">Content</Label>
+                <Textarea 
+                  id="content" 
+                  placeholder="Share your thoughts, questions, or ideas..."
+                  className="min-h-[200px]"
+                  value={newDiscussion.content}
+                  onChange={(e) => setNewDiscussion({...newDiscussion, content: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags (comma separated)</Label>
+                <Input 
+                  id="tags" 
+                  placeholder="philosophy, consciousness, etc."
+                  value={newDiscussion.tags}
+                  onChange={(e) => setNewDiscussion({...newDiscussion, tags: e.target.value})}
+                />
+              </div>
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleSubmitDiscussion}
+              disabled={isSubmitting || !newDiscussion.title || !newDiscussion.content}
+              className="flex items-center gap-2"
+            >
+              {isSubmitting ? "Posting..." : (
+                <>
+                  <Send size={16} />
+                  <span>Post Discussion</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
