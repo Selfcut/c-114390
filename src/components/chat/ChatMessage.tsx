@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChatMessage as ChatMessageType } from "./types";
@@ -17,6 +16,28 @@ interface ChatMessageProps {
   onReactionAdd?: (messageId: string, emoji: string) => void;
   onReactionRemove?: (messageId: string, emoji: string) => void;
   isCurrentUser?: boolean;
+  id?: string; // Add this line to fix the error
+  content?: string;
+  timestamp?: string;
+  sender?: {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string;
+    status: string;
+  };
+  isEdited?: boolean;
+  reactions?: Array<{
+    emoji: string;
+    count: number;
+    users: string[];
+  }>;
+  replyTo?: {
+    id: string;
+    content: string;
+    sender: { name: string };
+  } | null;
+  mentions?: string[];
 }
 
 export const ChatMessage = ({ 
@@ -27,8 +48,10 @@ export const ChatMessage = ({
   onReply,
   onReactionAdd,
   onReactionRemove,
-  isCurrentUser
-}: ChatMessageProps) => {
+  isCurrentUser,
+  // We're ignoring the other props since they're already in the message object
+  // and we don't need to use them separately
+} : ChatMessageProps) => {
   const [showReactions, setShowReactions] = useState(false);
   const [reactions, setReactions] = useState<Reaction[]>([
     { emoji: "👍", count: 0, users: [] },

@@ -599,20 +599,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               onReactionAdd={handleAddReaction}
               onReactionRemove={handleRemoveReaction}
               isCurrentUser={message.userId === currentUserId}
-              id={message.id}
-              content={message.content}
-              timestamp={message.createdAt}
-              sender={{
-                id: message.userId,
-                name: message.senderName,
-                username: message.userId.replace("user", ""),
-                avatar: `https://api.dicebear.com/7.x/personas/svg?seed=${message.senderName}`,
-                status: "online" as UserStatus
-              }}
-              isEdited={message.isEdited || false}
-              reactions={message.reactions || []}
-              replyTo={message.replyTo}
-              mentions={message.mentions || []}
             />
           ))}
           <div ref={messagesEndRef} />
