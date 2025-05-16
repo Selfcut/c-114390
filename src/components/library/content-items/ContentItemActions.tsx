@@ -11,10 +11,10 @@ interface ContentItemActionsProps {
     likes?: number;
     comments?: number;
   };
-  onLike?: (id: string) => void;
-  onBookmark?: (id: string) => void;
-  onComment?: (id: string) => void;
-  onShare?: (id: string) => void;
+  onLike?: () => void;
+  onBookmark?: () => void;
+  onComment?: () => void;
+  onShare?: () => void;
 }
 
 export const ContentItemActions: React.FC<ContentItemActionsProps> = ({
@@ -35,7 +35,7 @@ export const ContentItemActions: React.FC<ContentItemActionsProps> = ({
         className={isLiked ? "text-red-500" : ""}
         onClick={(e) => {
           e.stopPropagation();
-          onLike?.(id);
+          onLike?.();
         }}
       >
         <Heart size={16} className={isLiked ? "mr-1 fill-red-500" : "mr-1"} />
@@ -48,7 +48,7 @@ export const ContentItemActions: React.FC<ContentItemActionsProps> = ({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            onComment(id);
+            onComment();
           }}
         >
           <MessageSquare size={16} className="mr-1" />
@@ -62,7 +62,7 @@ export const ContentItemActions: React.FC<ContentItemActionsProps> = ({
         className={isBookmarked ? "text-yellow-500" : ""}
         onClick={(e) => {
           e.stopPropagation();
-          onBookmark?.(id);
+          onBookmark?.();
         }}
       >
         <Bookmark size={16} className={isBookmarked ? "fill-yellow-500" : ""} />
@@ -74,7 +74,7 @@ export const ContentItemActions: React.FC<ContentItemActionsProps> = ({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            onShare(id);
+            onShare();
           }}
         >
           <Share size={16} />

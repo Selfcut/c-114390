@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Image, Quote as QuoteIcon, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContentItemProps } from './ContentItemTypes';
+import { ContentItemProps, ContentItemType } from './ContentItemTypes';
 import { ContentItemMedia } from './ContentItemMedia';
 import { ContentItemMeta } from './ContentItemMeta';
 import { ContentItemTags } from './ContentItemTags';
@@ -41,6 +41,31 @@ export const ContentItemFeed: React.FC<ContentItemProps> = ({
       case 'quote': return <QuoteIcon size={16} className="text-purple-500" />;
       case 'ai': return <Brain size={16} className="text-amber-500" />;
       default: return <BookOpen size={16} className="text-blue-500" />;
+    }
+  };
+
+  // Create wrapper functions to handle the type parameter
+  const handleLike = () => {
+    if (onLike) {
+      onLike(id, type);
+    }
+  };
+
+  const handleBookmark = () => {
+    if (onBookmark) {
+      onBookmark(id, type);
+    }
+  };
+
+  const handleComment = () => {
+    if (onComment) {
+      onComment(id);
+    }
+  };
+
+  const handleShare = () => {
+    if (onShare) {
+      onShare(id);
     }
   };
 
@@ -94,10 +119,10 @@ export const ContentItemFeed: React.FC<ContentItemProps> = ({
           isLiked={isLiked}
           isBookmarked={isBookmarked}
           metrics={metrics}
-          onLike={onLike}
-          onBookmark={onBookmark}
-          onComment={onComment}
-          onShare={onShare}
+          onLike={handleLike}
+          onBookmark={handleBookmark}
+          onComment={handleComment}
+          onShare={handleShare}
         />
       </CardFooter>
     </Card>
