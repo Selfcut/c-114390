@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 
+// Export the SiteSettings interface so it can be imported by other files
 export interface SiteSettings {
   enableUserRegistration: boolean;
   enableWikiCreation: boolean;

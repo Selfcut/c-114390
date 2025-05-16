@@ -54,57 +54,52 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Fetch the post
-        const { data: postData, error: postError } = await supabase
-          .from('forum_posts')
-          .select(`
-            *,
-            profiles:user_id (username, name, avatar_url)
-          `)
-          .eq('id', postId)
-          .single();
-          
-        if (postError) throw postError;
+        // Since forum_posts table doesn't exist in the database yet, we'll simulate post data
+        // In a real application, this would fetch from the actual table
+        // This is a temporary solution until the DB schema is updated
         
-        // Fetch comments
-        const { data: commentsData, error: commentsError } = await supabase
-          .from('forum_comments')
-          .select(`
-            *,
-            profiles:user_id (username, name, avatar_url)
-          `)
-          .eq('post_id', postId)
-          .order('created_at', { ascending: true });
-          
-        if (commentsError) throw commentsError;
-          
-        // Update post view count
-        const { error: updateError } = await supabase
-          .rpc('increment_counter_fn', { 
-            row_id: postId, 
-            column_name: 'views', 
-            table_name: 'forum_posts' 
-          });
-          
-        if (updateError) console.error('Error updating view count:', updateError);
-          
-        // Format comments
-        const formattedComments = (commentsData || []).map(comment => ({
-          id: comment.id,
-          authorId: comment.user_id,
-          authorName: comment.profiles?.name || 'Anonymous',
-          authorAvatar: comment.profiles?.avatar_url || '',
-          content: comment.content,
-          createdAt: new Date(comment.created_at),
-          upvotes: comment.upvotes || 0
-        }));
+        // Simulate a post object
+        const simulatedPost = {
+          id: postId,
+          title: "Discussion Topic",
+          content: "This is a placeholder for forum post content. The forum_posts table needs to be created in the database.",
+          authorName: "User",
+          authorId: "user-id",
+          authorAvatar: "",
+          created_at: new Date().toISOString(),
+          tags: ["philosophy", "discussion"],
+          upvotes: 5,
+          views: 10,
+          comments: 2
+        };
         
-        setPost({
-          ...postData,
-          authorName: postData.profiles?.name || 'Anonymous',
-          authorAvatar: postData.profiles?.avatar_url || ''
+        // Simulate comments
+        const simulatedComments = [
+          {
+            id: "comment-1",
+            authorId: "user-id-1",
+            authorName: "Commenter 1",
+            content: "This is a placeholder comment. The forum_comments table needs to be created in the database.",
+            createdAt: new Date(Date.now() - 3600000),
+            upvotes: 2
+          },
+          {
+            id: "comment-2",
+            authorId: "user-id-2",
+            authorName: "Commenter 2",
+            content: "Another placeholder comment.",
+            createdAt: new Date(Date.now() - 7200000),
+            upvotes: 1
+          }
+        ];
+        
+        setPost(simulatedPost);
+        setComments(simulatedComments);
+        
+        toast({
+          description: "Note: Using placeholder data until forum database tables are created",
+          variant: "default"
         });
-        setComments(formattedComments);
       } catch (error) {
         console.error('Error fetching post:', error);
         toast({
@@ -145,32 +140,11 @@ export const ForumPostDetail = () => {
     setIsSubmittingComment(true);
     
     try {
-      // Insert comment
-      const { data: commentData, error: commentError } = await supabase
-        .from('forum_comments')
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-          content: newComment.trim()
-        })
-        .select()
-        .single();
-        
-      if (commentError) throw commentError;
+      // In a real application, this would insert into the forum_comments table
+      // For now, we'll simulate adding a comment
       
-      // Increment comment count
-      const { error: counterError } = await supabase
-        .rpc('increment_counter_fn', { 
-          row_id: postId, 
-          column_name: 'comments', 
-          table_name: 'forum_posts' 
-        });
-        
-      if (counterError) console.error('Error updating comment count:', counterError);
-      
-      // Add new comment to state
       const newCommentObj: DiscussionComment = {
-        id: commentData.id,
+        id: `comment-${Date.now()}`,
         authorId: user.id,
         authorName: user.name || user.username,
         authorAvatar: user.avatar,

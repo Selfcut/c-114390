@@ -13,6 +13,7 @@ interface CustomTooltipProps {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   delayDuration?: number;
+  disabled?: boolean;  // Added disabled prop
 }
 
 export const CustomTooltip = ({
@@ -21,7 +22,12 @@ export const CustomTooltip = ({
   side = "top",
   align = "center",
   delayDuration = 300,
+  disabled = false,  // Added with default value
 }: CustomTooltipProps) => {
+  if (disabled) {
+    return <>{children}</>;
+  }
+
   return (
     <TooltipProvider>
       <Tooltip delayDuration={delayDuration}>
