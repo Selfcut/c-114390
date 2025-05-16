@@ -73,12 +73,12 @@ const Wiki = () => {
 
   return (
     <PageLayout>
-      <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
+      <div className="container mx-auto py-8 px-4">
         <WikiHeader onCreateArticle={() => setIsCreateDialogOpen(true)} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
           {/* Sidebar with categories */}
-          <div className="lg:col-span-1 w-full">
+          <div className="lg:col-span-1">
             <CategorySidebar 
               selectedCategory={selectedCategory} 
               setSelectedCategory={setSelectedCategory} 
@@ -86,7 +86,7 @@ const Wiki = () => {
           </div>
 
           {/* Main content */}
-          <div className="lg:col-span-3 w-full">
+          <div className="lg:col-span-3">
             <WikiSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
             <ArticleList 

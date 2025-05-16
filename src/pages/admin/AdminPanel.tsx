@@ -6,13 +6,13 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 import { AdminContentManagement } from "@/components/admin/AdminContentManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
-import { AdminSpecialEffects } from "@/components/admin/AdminSpecialEffects";
-import AdminSettings from "@/components/admin/AdminSettings";
+import { AdminSettings } from "@/components/admin/AdminSettings"; 
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Shield } from "lucide-react";
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -99,11 +99,6 @@ const AdminPanel = () => {
       content: <AdminReports />,
     },
     {
-      id: "specialEffects",
-      label: "Special Effects",
-      content: <AdminSpecialEffects />,
-    },
-    {
       id: "settings",
       label: "Settings",
       content: <AdminSettings />,
@@ -149,7 +144,11 @@ const AdminPanel = () => {
   return (
     <PageLayout>
       <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-4">Admin Panel</h1>
+        <div className="flex items-center gap-2 mb-6">
+          <Shield className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold">Admin Panel</h1>
+        </div>
+        
         <TabNav tabs={adminTabs} defaultTab="dashboard" />
       </div>
     </PageLayout>

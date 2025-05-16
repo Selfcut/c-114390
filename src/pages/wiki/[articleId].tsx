@@ -5,7 +5,7 @@ import { PageLayout } from "@/components/layouts/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertTriangle, ArrowLeft, Calendar, Heart, MessagesSquare, Pencil, UserCircle, Eye } from "lucide-react";
 import { getCategoryIcon } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { EditWikiArticleDialog } from "@/components/wiki/EditWikiArticleDialog";
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
@@ -23,6 +24,7 @@ const WikiArticlePage = () => {
   const [article, setArticle] = useState<WikiArticle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Fetch article data
   useEffect(() => {
@@ -61,11 +63,20 @@ const WikiArticlePage = () => {
     navigate(-1);
   };
 
+  const handleUpdateArticle = (updatedArticle: WikiArticle) => {
+    setArticle(updatedArticle);
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Article Updated",
+      description: "The article has been updated successfully",
+    });
+  };
+
   // Loading state
   if (isLoading) {
     return (
       <PageLayout>
-        <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
+        <div className="container mx-auto py-8 px-4">
           <Button variant="ghost" className="mb-6" onClick={handleBack}>
             <ArrowLeft size={16} className="mr-2" /> Back to Wiki
           </Button>
@@ -96,7 +107,7 @@ const WikiArticlePage = () => {
   if (error || !article) {
     return (
       <PageLayout>
-        <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
+        <div className="container mx-auto py-8 px-4">
           <Button variant="ghost" className="mb-6" onClick={handleBack}>
             <ArrowLeft size={16} className="mr-2" /> Back to Wiki
           </Button>
@@ -120,7 +131,7 @@ const WikiArticlePage = () => {
 
   return (
     <PageLayout>
-      <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
+      <div className="container mx-auto py-8 px-4">
         <Button variant="ghost" className="mb-6" onClick={handleBack}>
           <ArrowLeft size={16} className="mr-2" /> Back to Wiki
         </Button>
@@ -140,7 +151,12 @@ const WikiArticlePage = () => {
               </div>
               
               {user && (
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={() => setIsEditDialogOpen(true)}
+                >
                   <Pencil size={14} />
                   <span>Edit Article</span>
                 </Button>
@@ -152,7 +168,7 @@ const WikiArticlePage = () => {
             <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <UserCircle size={16} />
-                <span>Author: {article.author}</span>
+                <span>Author: {article.author || 'Unknown'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
@@ -198,6 +214,16 @@ const WikiArticlePage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Edit Article Dialog */}
+        {article && (
+          <EditWikiArticleDialog
+            isOpen={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            article={article}
+            onSuccess={handleUpdateArticle}
+          />
+        )}
       </div>
     </PageLayout>
   );

@@ -37,6 +37,9 @@ export const useContentNavigation = () => {
       case 'quote':
         handleQuoteClick(id);
         break;
+      case 'wiki':
+        handleWikiClick(id);
+        break;
       case 'ai':
         handleKnowledgeClick(id); // AI content typically routes to knowledge
         break;

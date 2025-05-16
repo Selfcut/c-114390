@@ -10,11 +10,11 @@ export interface WikiArticleRaw {
   content?: string;
   category: string;
   user_id: string;
+  author_name?: string;
   contributors?: number;
   views?: number;
   last_updated?: string;
   created_at?: string;
-  author_name?: string; // Store author name directly instead of through profiles
 }
 
 // Function to get all wiki articles
@@ -27,7 +27,7 @@ export const fetchWikiArticles = async (options?: {
   const page = options?.page || 0;
 
   try {
-    // Create a basic query without trying to join with profiles
+    // Create a basic query
     let query = supabase
       .from('wiki_articles')
       .select('*')
@@ -151,6 +151,78 @@ export const createWikiArticle = async (articleData: {
   } catch (err) {
     console.error('Error creating wiki article:', err);
     return { article: null, error: err };
+  }
+};
+
+// Function to update an existing wiki article
+export const updateWikiArticle = async (
+  id: string,
+  updates: {
+    title?: string;
+    description?: string;
+    content?: string;
+    category?: string;
+  }
+) => {
+  try {
+    // Increment contributors count
+    await supabase.rpc('increment_counter_fn', {
+      row_id: id,
+      column_name: 'contributors',
+      table_name: 'wiki_articles'
+    });
+    
+    // Update the article
+    const { data, error } = await supabase
+      .from('wiki_articles')
+      .update({
+        ...updates,
+        last_updated: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (!data) {
+      return { article: null, error: "Failed to update article" };
+    }
+
+    // Format the returned data
+    const article: WikiArticle = {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      content: data.content,
+      lastUpdated: "Just now",
+      contributors: data.contributors || 1,
+      views: data.views || 0,
+      author: data.author_name || 'Unknown'
+    };
+
+    return { article };
+  } catch (err) {
+    console.error('Error updating wiki article:', err);
+    return { article: null, error: err };
+  }
+};
+
+// Function to delete a wiki article
+export const deleteWikiArticle = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('wiki_articles')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error deleting wiki article:', err);
+    return { success: false, error: err };
   }
 };
 
