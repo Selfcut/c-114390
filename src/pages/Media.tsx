@@ -6,7 +6,7 @@ import { MediaFilters } from "../components/media/MediaFilters";
 import { MediaFeed } from "../components/media/MediaFeed";
 import { CreatePostDialog } from "../components/media/CreatePostDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth/auth-context";
+import { useAuth } from "@/lib/auth-context"; // Changed from @/lib/auth/auth-context
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
