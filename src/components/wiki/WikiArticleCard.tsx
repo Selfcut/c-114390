@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { WikiArticle } from "./types";
+import { useRouter } from "next/navigation";
 
 interface WikiArticleCardProps {
   article: WikiArticle;
@@ -11,8 +12,17 @@ interface WikiArticleCardProps {
 }
 
 export const WikiArticleCard = ({ article, getCategoryIcon }: WikiArticleCardProps) => {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/wiki/${article.id}`);
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow w-full flex flex-col">
+    <Card 
+      className="hover:shadow-md transition-shadow w-full flex flex-col cursor-pointer" 
+      onClick={handleClick}
+    >
       <CardContent className="p-5 flex flex-col">
         <div className="flex items-start gap-3 w-full">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">

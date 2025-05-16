@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
-import { ContentItemProps, ContentItemType } from '@/components/library/UnifiedContentItem';
+import { ContentItemProps, ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentType } from '@/components/library/ContentTypeFilter';
 import { ViewMode } from '@/components/library/ViewSwitcher';
 import { useFetchKnowledgeEntries } from './useFetchKnowledgeEntries';
@@ -9,6 +9,7 @@ import { useFetchMediaPosts } from './useFetchMediaPosts';
 import { useFetchQuotes } from './useFetchQuotes';
 import { useContentInteractions } from './useContentInteractions';
 import { useContentNavigation } from './useContentNavigation';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseContentFeedProps {
   contentType: ContentType;
@@ -30,6 +31,7 @@ interface UseContentFeedReturn {
 
 export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps): UseContentFeedReturn => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [content, setContent] = useState<ContentItemProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +100,15 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps): 
   
   // Handle like interaction wrapper
   const handleLike = async (id: string, itemType: ContentItemType) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to like content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const result = await interactionHandleLike(id, itemType);
     if (result) {
       // Update content metrics
@@ -119,6 +130,15 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps): 
   
   // Handle bookmark interaction wrapper
   const handleBookmark = async (id: string, itemType: ContentItemType) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to bookmark content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const result = await interactionHandleBookmark(id, itemType);
     if (result) {
       // Update content metrics if applicable

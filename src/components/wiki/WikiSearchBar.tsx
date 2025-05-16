@@ -1,7 +1,7 @@
 
 import React from "react";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface WikiSearchBarProps {
   searchQuery: string;
@@ -10,16 +10,14 @@ interface WikiSearchBarProps {
 
 export const WikiSearchBar = ({ searchQuery, setSearchQuery }: WikiSearchBarProps) => {
   return (
-    <div className="mb-6 w-full">
-      <div className="relative w-full">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-        <Input
-          placeholder="Search wiki articles..."
-          className="pl-10 w-full"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+    <div className="relative mb-6">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Input
+        className="pl-10"
+        placeholder="Search wiki articles..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
     </div>
   );
 };

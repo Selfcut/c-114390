@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { WikiHeader } from "@/components/wiki/WikiHeader";
@@ -9,6 +9,8 @@ import { ArticleList } from "@/components/wiki/ArticleList";
 import { CreateArticleDialog } from "@/components/wiki/CreateArticleDialog";
 import { getCategoryIcon, filterArticles } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
+import { supabase } from "@/integrations/supabase/client";
+import { PageLayout } from "@/components/layouts/PageLayout";
 
 const Wiki = () => {
   const { toast } = useToast();
@@ -16,126 +18,100 @@ const Wiki = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [articles, setArticles] = useState<WikiArticle[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Initial mock wiki articles
-  const [articles, setArticles] = useState<WikiArticle[]>([
-    {
-      id: "1",
-      title: "Quantum Mechanics: An Introduction",
-      description: "A comprehensive introduction to the fundamental principles of quantum mechanics.",
-      category: "physics",
-      lastUpdated: "2 days ago",
-      contributors: 5,
-      views: 423
-    },
-    {
-      id: "2",
-      title: "The Hard Problem of Consciousness",
-      description: "An exploration of the philosophical challenges in explaining subjective experience.",
-      category: "consciousness",
-      lastUpdated: "1 week ago",
-      contributors: 3,
-      views: 287
-    },
-    {
-      id: "3",
-      title: "Gödel's Incompleteness Theorems",
-      description: "Understanding the limits of formal mathematical systems and their philosophical implications.",
-      category: "mathematics",
-      lastUpdated: "3 days ago",
-      contributors: 2,
-      views: 156
-    },
-    {
-      id: "4",
-      title: "Feedback Loops in Complex Systems",
-      description: "Analyzing positive and negative feedback mechanisms in systems theory.",
-      category: "systems",
-      lastUpdated: "5 days ago",
-      contributors: 4,
-      views: 198
-    },
-    {
-      id: "5",
-      title: "Mind-Body Problem",
-      description: "Historical perspectives and modern approaches to the relationship between mind and matter.",
-      category: "philosophy",
-      lastUpdated: "2 weeks ago",
-      contributors: 7,
-      views: 312
-    }
-  ]);
+  // Fetch wiki articles from Supabase
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setIsLoading(true);
+        
+        let query = supabase
+          .from('wiki_articles')
+          .select(`
+            id,
+            title,
+            description,
+            category,
+            content,
+            contributors,
+            views,
+            last_updated,
+            profiles(name, avatar_url)
+          `)
+          .order('last_updated', { ascending: false });
+        
+        // Apply category filter if selected
+        if (selectedCategory) {
+          query = query.eq('category', selectedCategory);
+        }
+        
+        // Apply pagination
+        const pageSize = 9;
+        query = query.range(page * pageSize, (page + 1) * pageSize - 1);
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        if (data) {
+          const formattedArticles: WikiArticle[] = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            category: item.category,
+            content: item.content,
+            lastUpdated: formatLastUpdated(item.last_updated),
+            contributors: item.contributors || 1,
+            views: item.views || 0,
+            author: item.profiles?.name || 'Unknown'
+          }));
+          
+          setArticles(prev => page === 0 ? formattedArticles : [...prev, ...formattedArticles]);
+          setHasMore(data.length === pageSize);
+        }
+      } catch (err: any) {
+        console.error('Error fetching wiki articles:', err);
+        toast({
+          title: "Error",
+          description: "Failed to load wiki articles",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchArticles();
+  }, [selectedCategory, page, toast]);
 
-  // Filter articles based on search and category
+  // Format the last updated date
+  const formatLastUpdated = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 1) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Filter articles based on search
   const filteredArticles = filterArticles(articles, searchQuery, selectedCategory);
 
-  const handleArticleSubmit = (newArticleData: Omit<WikiArticle, "id" | "lastUpdated" | "contributors" | "views">) => {
-    if (!newArticleData.title || !newArticleData.description || !newArticleData.category || !newArticleData.content) {
-      toast({
-        title: "Required Fields Missing",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      const newWikiArticle: WikiArticle = {
-        id: `article-${Date.now()}`,
-        title: newArticleData.title,
-        description: newArticleData.description,
-        category: newArticleData.category,
-        content: newArticleData.content,
-        lastUpdated: "Just now",
-        contributors: 1,
-        views: 0
-      };
-
-      setArticles(prevArticles => [newWikiArticle, ...prevArticles]);
-      setIsCreateDialogOpen(false);
-      setIsSubmitting(false);
-
-      toast({
-        title: "Article Created",
-        description: "Your new wiki article has been published successfully!",
-      });
-    }, 1000);
+  // Handle article submission
+  const handleArticleSubmit = (newArticle: WikiArticle) => {
+    setArticles(prev => [newArticle, ...prev]);
   };
 
   const loadMoreArticles = () => {
-    setIsLoading(true);
-    
-    // Simulate loading more articles
-    setTimeout(() => {
-      const additionalArticles: WikiArticle[] = [
-        {
-          id: `article-${Date.now()}-1`,
-          title: "Emergence in Complex Systems",
-          description: "How complex behaviors emerge from simple rules and interactions.",
-          category: "systems",
-          lastUpdated: "1 day ago",
-          contributors: 3,
-          views: 142
-        },
-        {
-          id: `article-${Date.now()}-2`,
-          title: "Quantum Entanglement",
-          description: "Understanding the phenomenon of quantum entanglement and its implications.",
-          category: "physics",
-          lastUpdated: "3 days ago",
-          contributors: 4,
-          views: 215
-        }
-      ];
-
-      setArticles(prevArticles => [...prevArticles, ...additionalArticles]);
-      setIsLoading(false);
-    }, 1000);
+    setPage(prev => prev + 1);
   };
 
   const resetFilters = () => {
@@ -144,40 +120,41 @@ const Wiki = () => {
   };
 
   return (
-    <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
-      <WikiHeader onCreateArticle={() => setIsCreateDialogOpen(true)} />
+    <PageLayout>
+      <div className="container px-4 lg:px-8 mx-auto py-8 max-w-7xl">
+        <WikiHeader onCreateArticle={() => setIsCreateDialogOpen(true)} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
-        {/* Sidebar with categories */}
-        <div className="lg:col-span-1 w-full">
-          <CategorySidebar 
-            selectedCategory={selectedCategory} 
-            setSelectedCategory={setSelectedCategory} 
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
+          {/* Sidebar with categories */}
+          <div className="lg:col-span-1 w-full">
+            <CategorySidebar 
+              selectedCategory={selectedCategory} 
+              setSelectedCategory={setSelectedCategory} 
+            />
+          </div>
+
+          {/* Main content */}
+          <div className="lg:col-span-3 w-full">
+            <WikiSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+
+            <ArticleList 
+              filteredArticles={filteredArticles}
+              getCategoryIcon={getCategoryIcon}
+              isLoading={isLoading}
+              loadMoreArticles={loadMoreArticles}
+              resetFilters={resetFilters}
+            />
+          </div>
         </div>
 
-        {/* Main content */}
-        <div className="lg:col-span-3 w-full">
-          <WikiSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-
-          <ArticleList 
-            filteredArticles={filteredArticles}
-            getCategoryIcon={getCategoryIcon}
-            isLoading={isLoading}
-            loadMoreArticles={loadMoreArticles}
-            resetFilters={resetFilters}
-          />
-        </div>
+        {/* Create Article Dialog */}
+        <CreateArticleDialog 
+          isOpen={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSuccess={handleArticleSubmit}
+        />
       </div>
-
-      {/* Create Article Dialog */}
-      <CreateArticleDialog 
-        isOpen={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleArticleSubmit}
-        isSubmitting={isSubmitting}
-      />
-    </div>
+    </PageLayout>
   );
 };
 

@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ContentItemType } from '@/components/library/UnifiedContentItem';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export interface UseContentInteractionsProps {
   userId?: string | null;
@@ -12,6 +12,43 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
   const { toast } = useToast();
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
   const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
+  
+  // Subscribe to realtime updates for content interactions
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('content-interactions')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'content_likes', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const { content_id } = payload.new;
+            setUserLikes(prev => ({ ...prev, [content_id]: true }));
+          } else if (payload.eventType === 'DELETE') {
+            const { content_id } = payload.old;
+            setUserLikes(prev => ({ ...prev, [content_id]: false }));
+          }
+        }
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'content_bookmarks', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const { content_id } = payload.new;
+            setUserBookmarks(prev => ({ ...prev, [content_id]: true }));
+          } else if (payload.eventType === 'DELETE') {
+            const { content_id } = payload.old;
+            setUserBookmarks(prev => ({ ...prev, [content_id]: false }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
   
   // Determine content type for an item
   const getContentTypeString = (itemType: ContentItemType): string => {
@@ -29,7 +66,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
   
   // Check if user has liked or bookmarked items
   const checkUserInteractions = async (itemIds: string[]) => {
-    if (!userId) return;
+    if (!userId || itemIds.length === 0) return;
     
     try {
       // Check likes
@@ -74,7 +111,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
         description: "Please log in to like content",
         variant: "destructive"
       });
-      return;
+      return null;
     }
     
     const isLiked = userLikes[id];
@@ -90,6 +127,19 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
           .eq('content_id', id);
           
         setUserLikes(prev => ({...prev, [id]: false}));
+        
+        // Update counter in the appropriate table
+        const tableName = contentTypeStr === 'knowledge' 
+          ? 'knowledge_entries' 
+          : contentTypeStr === 'media' 
+            ? 'media_posts' 
+            : 'quotes';
+            
+        await supabase.rpc('decrement_counter', {
+          table_name: tableName,
+          column_name: 'likes',
+          row_id: id
+        });
       } else {
         // Like
         await supabase
@@ -101,6 +151,19 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
           });
           
         setUserLikes(prev => ({...prev, [id]: true}));
+        
+        // Update counter in the appropriate table
+        const tableName = contentTypeStr === 'knowledge' 
+          ? 'knowledge_entries' 
+          : contentTypeStr === 'media' 
+            ? 'media_posts' 
+            : 'quotes';
+            
+        await supabase.rpc('increment_counter', {
+          table_name: tableName,
+          column_name: 'likes',
+          row_id: id
+        });
       }
       
       return {
@@ -127,7 +190,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
         description: "Please log in to bookmark content",
         variant: "destructive"
       });
-      return;
+      return null;
     }
     
     const isBookmarked = userBookmarks[id];
@@ -143,6 +206,15 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
           .eq('content_id', id);
           
         setUserBookmarks(prev => ({...prev, [id]: false}));
+        
+        // Update counter if it's a quote
+        if (contentTypeStr === 'quote') {
+          await supabase.rpc('decrement_counter', {
+            table_name: 'quotes',
+            column_name: 'bookmarks',
+            row_id: id
+          });
+        }
       } else {
         // Add bookmark
         await supabase
@@ -154,6 +226,15 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps) 
           });
           
         setUserBookmarks(prev => ({...prev, [id]: true}));
+        
+        // Update counter if it's a quote
+        if (contentTypeStr === 'quote') {
+          await supabase.rpc('increment_counter', {
+            table_name: 'quotes',
+            column_name: 'bookmarks',
+            row_id: id
+          });
+        }
       }
       
       return {

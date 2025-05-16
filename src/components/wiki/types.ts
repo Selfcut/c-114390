@@ -8,4 +8,5 @@ export interface WikiArticle {
   lastUpdated: string;
   contributors: number;
   views: number;
+  author?: string;
 }
