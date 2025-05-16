@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Json } from '@/integrations/supabase/types';
 
 interface SiteSettings {
   enableUserRegistration: boolean;
@@ -117,8 +118,17 @@ export const AdminSettings = () => {
           if (savedSettings) {
             setSettings(JSON.parse(savedSettings));
           }
-        } else if (data) {
-          setSettings(data.settings as SiteSettings);
+        } else if (data && data.settings) {
+          // Type assertion to safely convert Json to SiteSettings
+          const loadedSettings = data.settings as Record<string, any>;
+          
+          // Create a new settings object with defaults + loaded values
+          const mergedSettings: SiteSettings = {
+            ...DEFAULT_SETTINGS,
+            ...loadedSettings
+          };
+          
+          setSettings(mergedSettings);
         }
       } catch (err) {
         console.error('Error loading settings:', err);
@@ -138,11 +148,14 @@ export const AdminSettings = () => {
 
       // Try to save to Supabase
       try {
+        // Convert the settings object to a JSON compatible object
+        const settingsJson = JSON.parse(JSON.stringify(settings)) as Json;
+        
         const { error } = await supabase
           .from('site_settings')
           .upsert({ 
             id: 'global', 
-            settings: settings,
+            settings: settingsJson,
             updated_at: new Date().toISOString() 
           });
 
