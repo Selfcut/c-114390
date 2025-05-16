@@ -1,3 +1,4 @@
+
 // Event utils for pub/sub pattern
 
 // Sidebar collapse event channel
@@ -5,8 +6,18 @@ const SIDEBAR_COLLAPSE_EVENT = "sidebar-collapse";
 
 // Publish sidebar collapse event
 export const publishSidebarCollapse = (isCollapsed: boolean): void => {
+  // Store in localStorage for persistence across page navigation
+  localStorage.setItem('sidebar-collapsed', String(isCollapsed));
+  
+  // Dispatch event for real-time updates
   const event = new CustomEvent(SIDEBAR_COLLAPSE_EVENT, { detail: isCollapsed });
   document.dispatchEvent(event);
+  
+  // Update CSS variable for sidebar width
+  document.documentElement.style.setProperty(
+    '--sidebar-width', 
+    isCollapsed ? '64px' : '256px'
+  );
 };
 
 // Subscribe to sidebar collapse events

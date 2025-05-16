@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -8,23 +8,25 @@ import {
 } from "@/components/ui/tooltip";
 
 interface CustomTooltipProps {
-  children: React.ReactNode;
   content: React.ReactNode;
-  position?: "top" | "right" | "bottom" | "left";
-  delay?: number;
+  children: React.ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  delayDuration?: number;
 }
 
 export const CustomTooltip = ({
-  children,
   content,
-  position = "top",
-  delay = 300,
+  children,
+  side = "top",
+  align = "center",
+  delayDuration = 300,
 }: CustomTooltipProps) => {
   return (
-    <TooltipProvider delayDuration={delay}>
-      <Tooltip>
+    <TooltipProvider>
+      <Tooltip delayDuration={delayDuration}>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent side={position} className="max-w-sm">
+        <TooltipContent side={side} align={align} className="bg-popover text-popover-foreground border border-border shadow-md">
           {content}
         </TooltipContent>
       </Tooltip>
