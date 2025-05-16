@@ -72,7 +72,7 @@ const Media = () => {
   };
 
   // Handle post creation
-  const handleCreatePost = async (postData) => {
+  const handleCreatePost = async (postData: any) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -132,7 +132,7 @@ const Media = () => {
         description: "Your post has been published successfully!"
       });
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating post:", err);
       toast({
         title: "Post creation failed",

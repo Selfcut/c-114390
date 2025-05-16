@@ -46,7 +46,7 @@ export const MediaFeed = ({ posts, isLoading, hasMore, loadMore, currentUser }: 
 
     try {
       // Check if the user has already liked this post
-      // Using any type to bypass TypeScript errors since we know the tables exist in Supabase
+      // Using type assertion to bypass TypeScript errors since we know the tables exist in Supabase
       const { data: existingLike, error: likeCheckError } = await (supabase as any)
         .from('media_likes')
         .select('*')

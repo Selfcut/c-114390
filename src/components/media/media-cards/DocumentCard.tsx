@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, FileSpreadsheet, FilePresentationBox, FileQuestion } from 'lucide-react';
+import { FileText, FileSpreadsheet, PresentationIcon, FileQuestion } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DocumentCardProps {
@@ -23,7 +23,7 @@ export const DocumentCard = ({ url, title }: DocumentCardProps) => {
         return <FileSpreadsheet size={48} className="text-green-500" />;
       case 'ppt':
       case 'pptx':
-        return <FilePresentationBox size={48} className="text-amber-500" />;
+        return <PresentationIcon size={48} className="text-amber-500" />;
       default:
         return <FileQuestion size={48} className="text-muted-foreground" />;
     }

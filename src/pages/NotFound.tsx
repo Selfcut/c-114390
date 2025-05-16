@@ -7,7 +7,7 @@ import { PageLayout } from "@/components/layouts/PageLayout";
 
 const NotFound = () => {
   return (
-    <PageLayout showSidebar={false} showPromo={false} showHeader={false}>
+    <PageLayout allowGuests={true}>
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-foreground px-4">
         <div className="text-center max-w-md animate-fade-in">
           <div className="mb-6 flex justify-center">
