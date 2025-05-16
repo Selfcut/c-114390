@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect } from 'react';
+import { PageLayout } from '@/components/layouts/PageLayout';
 import { 
-  MessageSquare, 
-  TrendingUp, 
-  Clock, 
   Search, 
   Filter, 
+  ChevronDown, 
+  ChevronUp, 
   Plus, 
-  MoreVertical,
-  Bookmark,
-  BookmarkCheck
+  BookOpen,
+  RefreshCw,
+  ThumbsUp,
+  Calendar,
+  Tag,
+  PenSquare,
+  Send
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { DiscussionTopicCard } from "../components/DiscussionTopicCard";

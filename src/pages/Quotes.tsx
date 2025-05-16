@@ -8,17 +8,20 @@ import {
   Plus, 
   BookOpen,
   RefreshCw,
-  Quote as QuoteIcon,
   ThumbsUp,
   Calendar,
-  Tag
+  Tag,
+  Quote as QuoteIcon,
+  Heart,
+  Bookmark,
+  Share
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { QuoteCard } from '@/components/QuoteCard';
+import { QuoteCard as QuoteCardComponent } from '@/components/QuoteCard';
 import { QuoteSubmissionModal } from '@/components/QuoteSubmissionModal';
 import { useAuth } from '@/lib/auth';
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +48,7 @@ interface QuoteCardProps {
   onTagClick: (tag: string) => void;
 }
 
-const QuoteCard: React.FC<QuoteCardProps> = ({ 
+const QuoteCardInline: React.FC<QuoteCardProps> = ({ 
   quote, 
   isLiked, 
   isBookmarked, 
@@ -57,7 +60,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
     <Card key={quote.id} className="overflow-hidden hover:shadow-md transition-shadow">
       <CardContent className="p-0">
         <div className="p-6">
-          <Quote size={18} className="text-primary mb-2" />
+          <QuoteIcon size={18} className="text-primary mb-2" />
           <p className="text-lg mb-4">{quote.text}</p>
           
           <div className="flex items-center mb-4">
@@ -377,7 +380,7 @@ const Quotes = () => {
           ))
         ) : filteredQuotes.length > 0 ? (
           filteredQuotes.map(quote => (
-            <QuoteCard
+            <QuoteCardInline
               key={quote.id}
               quote={quote}
               isLiked={!!userLikes[quote.id]}

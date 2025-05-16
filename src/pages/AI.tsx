@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AIChat } from "@/components/ai/AIChat";
+import AIChat from "@/components/ai/AIChat";
 import { AIContentGenerator } from "@/components/ai/AIContentGenerator";
 import { AISmartSearch } from "@/components/ai/AISmartSearch";
 import { AIRecommendations } from "@/components/ai/AIRecommendations";
