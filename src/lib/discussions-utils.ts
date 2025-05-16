@@ -16,7 +16,7 @@ export interface DiscussionTopic {
   isNew?: boolean;
   excerpt?: string;
   createdAt: Date;
-  content?: string;  // Added content property
+  content?: string;  // Content property for discussion
 }
 
 export const mockDiscussions: DiscussionTopic[] = [

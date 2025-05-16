@@ -18,7 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Forum = () => {
   const { user } = useAuth();
@@ -37,11 +38,21 @@ const Forum = () => {
     tags: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Extract unique tags from all discussions
   const allTags = Array.from(
     new Set(discussions.flatMap(discussion => discussion.tags))
   );
+  
+  // Simulate data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Apply sorting and filtering whenever dependencies change
   useEffect(() => {
@@ -137,7 +148,7 @@ const Forum = () => {
   };
   
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
           <MessageSquare size={28} />
@@ -176,7 +187,29 @@ const Forum = () => {
       )}
       
       <div className="grid grid-cols-1 gap-4 stagger-fade animate-in">
-        {filteredDiscussions.length > 0 ? (
+        {isLoading ? (
+          // Skeleton UI for loading state
+          Array.from({ length: 5 }).map((_, index) => (
+            <Card key={index} className="bg-[#1A1A1A] rounded-lg p-5">
+              <div className="flex items-start gap-4">
+                <Skeleton className="h-12 w-12 rounded-full bg-[#2A2A2A]" />
+                <div className="flex-1">
+                  <Skeleton className="h-6 w-3/4 mb-2 bg-[#2A2A2A]" />
+                  <Skeleton className="h-4 w-full mb-2 bg-[#2A2A2A]" />
+                  <Skeleton className="h-4 w-5/6 mb-3 bg-[#2A2A2A]" />
+                  <div className="flex gap-2 mb-3">
+                    <Skeleton className="h-6 w-20 rounded-full bg-[#2A2A2A]" />
+                    <Skeleton className="h-6 w-24 rounded-full bg-[#2A2A2A]" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-24 bg-[#2A2A2A]" />
+                    <Skeleton className="h-5 w-32 bg-[#2A2A2A]" />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : filteredDiscussions.length > 0 ? (
           filteredDiscussions.map((discussion) => (
             <DiscussionTopicCard 
               key={discussion.id} 
@@ -186,16 +219,23 @@ const Forum = () => {
           ))
         ) : (
           <Card className="bg-card rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">No discussions found matching your criteria.</p>
-            <Button 
-              className="mt-4 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-colors hover-lift"
-              onClick={() => {
-                setSearchTerm('');
-                setActiveTag(null);
-              }}
-            >
-              Reset Filters
-            </Button>
+            <CardContent className="pt-6">
+              <div className="flex justify-center mb-4">
+                <div className="rounded-full bg-gray-800 p-4">
+                  <MessageSquare size={32} className="text-gray-400" />
+                </div>
+              </div>
+              <p className="text-muted-foreground mb-4">No discussions found matching your criteria.</p>
+              <Button 
+                className="mt-4 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-colors hover-lift"
+                onClick={() => {
+                  setSearchTerm('');
+                  setActiveTag(null);
+                }}
+              >
+                Reset Filters
+              </Button>
+            </CardContent>
           </Card>
         )}
       </div>

@@ -10,17 +10,26 @@ interface DiscussionTopicCardProps {
 }
 
 export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCardProps) => {
-  const { title, author, replies, createdAt, tags, upvotes, excerpt } = discussion;
+  const { 
+    title, 
+    author, 
+    authorAvatar, 
+    replies, 
+    createdAt, 
+    tags, 
+    upvotes, 
+    excerpt, 
+    content,
+    views
+  } = discussion;
   
-  // Generate avatar from author name if no avatar URL provided
+  // Generate avatar fallback from author name if no avatar URL provided
   const getAvatarFallback = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
   
-  // Generate deterministic avatar URL based on author name
-  const getAvatarUrl = (name: string) => {
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-  };
+  // Display excerpt or content
+  const displayText = excerpt || (content ? content.slice(0, 120) + (content.length > 120 ? '...' : '') : '');
   
   return (
     <div 
@@ -35,8 +44,8 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
         <div className="flex-1">
           <h3 className="font-medium text-white text-lg mb-2">{title}</h3>
           
-          {excerpt && (
-            <p className="text-gray-300 text-sm mb-3 line-clamp-2">{excerpt}</p>
+          {displayText && (
+            <p className="text-gray-300 text-sm mb-3 line-clamp-2">{displayText}</p>
           )}
           
           <div className="flex flex-wrap gap-2 mt-2 mb-3">
@@ -55,7 +64,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={getAvatarUrl(author)} alt={author} />
+                <AvatarImage src={authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author}`} alt={author} />
                 <AvatarFallback>{getAvatarFallback(author)}</AvatarFallback>
               </Avatar>
               <span className="text-sm text-gray-400 flex items-center">
@@ -65,7 +74,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
             
             <div className="flex items-center gap-3 text-gray-400">
               <span className="text-xs flex items-center gap-1">
-                <MessageSquare size={12} /> {replies}
+                <MessageSquare size={12} /> {replies || 0}
               </span>
               <span className="text-xs flex items-center gap-1">
                 <ThumbsUp size={12} /> {upvotes}
