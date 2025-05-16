@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Database, Shield, Bell, Globe, FileCode } from "lucide-react";
+import { Settings, Database, Shield, Bell, Globe, FileCode, Wand2 } from "lucide-react";
+import { AdminSpecialEffects } from "./AdminSpecialEffects";
 
 export const AdminSettings = () => {
   return (
@@ -41,6 +42,10 @@ export const AdminSettings = () => {
           <TabsTrigger value="integrations" className="flex items-center gap-2">
             <Globe size={16} />
             <span>Integrations</span>
+          </TabsTrigger>
+          <TabsTrigger value="special" className="flex items-center gap-2">
+            <Wand2 size={16} />
+            <span>Special Effects</span>
           </TabsTrigger>
         </TabsList>
 
@@ -239,6 +244,10 @@ export const AdminSettings = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="special" className="mt-6">
+          <AdminSpecialEffects />
         </TabsContent>
       </Tabs>
     </div>
