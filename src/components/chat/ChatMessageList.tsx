@@ -9,12 +9,24 @@ interface ChatMessageListProps {
   messages: ChatMessageType[];
   isLoading: boolean;
   formatTime: (timestamp: string) => string;
+  onMessageEdit?: (messageId: string) => void;
+  onMessageDelete?: (messageId: string) => void;
+  onMessageReply?: (messageId: string) => void;
+  onReactionAdd?: (messageId: string, emoji: string) => void;
+  onReactionRemove?: (messageId: string, emoji: string) => void;
+  currentUserId?: string;
 }
 
 export const ChatMessageList = ({ 
   messages, 
   isLoading,
-  formatTime
+  formatTime,
+  onMessageEdit,
+  onMessageDelete,
+  onMessageReply,
+  onReactionAdd,
+  onReactionRemove,
+  currentUserId = "current-user"
 }: ChatMessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -52,7 +64,13 @@ export const ChatMessageList = ({
             <ChatMessage 
               key={msg.id} 
               message={msg} 
-              formatTime={formatTime} 
+              formatTime={formatTime}
+              onEdit={onMessageEdit}
+              onDelete={onMessageDelete}
+              onReply={onMessageReply}
+              onReactionAdd={onReactionAdd}
+              onReactionRemove={onReactionRemove}
+              isCurrentUser={msg.userId === currentUserId}
             />
           ))}
           <div ref={messagesEndRef} />
