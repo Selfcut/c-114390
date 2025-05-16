@@ -525,6 +525,7 @@ export type Database = {
       }
       wiki_articles: {
         Row: {
+          author_name: string | null
           category: string
           content: string | null
           contributors: number | null
@@ -537,6 +538,7 @@ export type Database = {
           views: number | null
         }
         Insert: {
+          author_name?: string | null
           category: string
           content?: string | null
           contributors?: number | null
@@ -549,6 +551,7 @@ export type Database = {
           views?: number | null
         }
         Update: {
+          author_name?: string | null
           category?: string
           content?: string | null
           contributors?: number | null
