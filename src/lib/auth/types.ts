@@ -14,5 +14,5 @@ export interface AuthContextType {
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any }>;
 }
 
-// Re-export types from the main user.ts
-export { UserProfile, UserStatus, UserRole };
+// Re-export types from the main user.ts using export type
+export type { UserProfile, UserStatus, UserRole };
