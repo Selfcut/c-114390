@@ -22,7 +22,7 @@ export interface UseMediaPostsReturn {
   error: Error | null;
   refetch: () => Promise<any>;
   loadMore: () => void;
-  resetPage: () => void; // Added resetPage function to the interface
+  resetPage: () => void; // Ensuring resetPage is properly defined in the interface
   page: number;
   createPostMutation: any;
   handleCreatePost: (data: any) => Promise<any>;

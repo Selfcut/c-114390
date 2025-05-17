@@ -12,6 +12,7 @@ import { YoutubeEmbed } from './YoutubeEmbed';
 import { ImagePost } from './ImagePost';
 import { DocumentPost } from './DocumentPost';
 import { TextPost } from './TextPost';
+import { useToast } from '@/hooks/use-toast';
 
 interface MediaFeedProps {
   posts: MediaPost[];
@@ -31,10 +32,28 @@ export const MediaFeed = ({
   error 
 }: MediaFeedProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Navigate to media detail page
   const handleViewPost = (post: MediaPost) => {
     navigate(`/media/${post.id}`);
+  };
+  
+  // Handle like action (would typically connect to backend)
+  const handleLike = (postId: string) => {
+    if (!currentUser) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to like posts",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // This would normally send the like to the server
+    toast({
+      description: "Like functionality will be implemented soon",
+    });
   };
   
   // Render loading skeletons
@@ -140,7 +159,15 @@ export const MediaFeed = ({
             
             <CardFooter className="p-4 flex justify-between items-center border-t">
               <div className="flex space-x-4 text-muted-foreground">
-                <Button variant="ghost" size="sm" className="flex items-center space-x-1 px-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center space-x-1 px-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike(post.id);
+                  }}
+                >
                   <ThumbsUp className="h-4 w-4" />
                   <span>{post.likes || 0}</span>
                 </Button>
@@ -148,11 +175,18 @@ export const MediaFeed = ({
                   <MessageSquare className="h-4 w-4" />
                   <span>{post.comments || 0}</span>
                 </Button>
+                <div className="flex items-center space-x-1 px-2 text-xs">
+                  <Eye className="h-4 w-4" />
+                  <span>{post.views || 0}</span>
+                </div>
               </div>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => handleViewPost(post)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewPost(post);
+                }}
                 className="text-xs"
               >
                 View Details

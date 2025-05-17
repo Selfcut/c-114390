@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -54,16 +53,22 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Fetch the post directly without trying to join with profiles
+        // Using maybeSingle instead of single to handle cases where post might not exist
         const { data: postData, error: postError } = await supabase
           .from('forum_posts')
           .select('*')
           .eq('id', postId)
-          .single();
+          .maybeSingle();
         
         if (postError) {
           console.error('Error fetching post:', postError);
           throw postError;
+        }
+        
+        if (!postData) {
+          // Post not found, set loading to false and return early
+          setIsLoading(false);
+          return;
         }
         
         // After getting the post, fetch the author's profile separately
@@ -112,9 +117,33 @@ export const ForumPostDetail = () => {
           console.error('Error incrementing view count:', err);
         }
         
-        // TODO: In a real implementation, we would fetch comments here
-        // For now just set empty comments array
-        setComments([]);
+        // Fetch comments
+        const { data: commentsData, error: commentsError } = await supabase
+          .from('content_comments')
+          .select(`
+            *,
+            profiles:user_id(name, username, avatar_url)
+          `)
+          .eq('content_id', postId)
+          .eq('content_type', 'forum')
+          .order('created_at', { ascending: true });
+        
+        if (commentsError) {
+          console.error('Error fetching comments:', commentsError);
+        } else if (commentsData) {
+          // Map comments data to our Comment interface
+          const mappedComments: Comment[] = commentsData.map(comment => ({
+            id: comment.id,
+            content: comment.comment,
+            authorId: comment.user_id,
+            authorName: comment.profiles?.name || comment.profiles?.username || 'Unknown',
+            authorAvatar: comment.profiles?.avatar_url,
+            createdAt: new Date(comment.created_at),
+            upvotes: 0 // We don't track this in our DB currently
+          }));
+          
+          setComments(mappedComments);
+        }
         
         setIsLoading(false);
       } catch (error) {
@@ -156,10 +185,25 @@ export const ForumPostDetail = () => {
     setIsSubmittingComment(true);
     
     try {
-      // In a real implementation, we would add the comment to the database
-      // For now, we'll just simulate adding a comment to the local state
+      // Insert the comment into the database
+      const { data: commentData, error: commentError } = await supabase
+        .from('content_comments')
+        .insert({
+          content_id: postId,
+          content_type: 'forum',
+          user_id: user.id,
+          comment: newComment.trim()
+        })
+        .select()
+        .single();
+      
+      if (commentError) {
+        throw commentError;
+      }
+      
+      // Create a new comment object for the UI
       const newCommentObj: Comment = {
-        id: `comment-${Date.now()}`,
+        id: commentData.id,
         authorId: user.id,
         authorName: user.name || user.email || 'Anonymous',
         authorAvatar: user.avatar_url,
@@ -173,10 +217,10 @@ export const ForumPostDetail = () => {
       setNewComment('');
       
       // Update post comment count in local state
-      setPost(prev => ({
+      setPost(prev => prev ? {
         ...prev,
         comments: (prev.comments || 0) + 1
-      }));
+      } : null);
       
       // Update comment count in database
       await supabase.rpc('increment_counter_fn', {
