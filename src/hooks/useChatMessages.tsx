@@ -81,8 +81,9 @@ export const useChatMessages = () => {
           userId: msg.user_id || 'unknown',
           createdAt: msg.created_at,
           isCurrentUser: false, // Will be updated in the component
-          isAdmin: msg.is_admin || false,
-          effectType: msg.effect_type
+          // Handle potentially missing properties
+          isAdmin: (msg as any).is_admin || false,
+          effectType: (msg as any).effect_type || undefined
         }));
         setMessages(formattedMessages);
       } else {
