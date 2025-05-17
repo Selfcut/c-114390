@@ -77,13 +77,13 @@ export const fetchMediaPosts = async ({
       
       if (!profilesError && profiles) {
         // Map profiles to posts
-        const profileMap = profiles.reduce((map, profile) => {
+        const profileMap = profiles.reduce((map: Record<string, any>, profile: any) => {
           map[profile.id] = profile;
           return map;
         }, {});
         
         // Attach author info to each post
-        posts.forEach(post => {
+        posts.forEach((post: MediaPost) => {
           if (profileMap[post.user_id]) {
             post.author = {
               name: profileMap[post.user_id].name || 'Unknown',
