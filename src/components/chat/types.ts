@@ -6,6 +6,7 @@ export interface ChatMessage {
   userId: string;
   createdAt: string;
   conversationId: string;
+  isCurrentUser?: boolean;
   reactions?: Array<{
     emoji: string;
     count: number;

@@ -70,7 +70,7 @@ export const ChatMessageList = ({
               onReply={onMessageReply}
               onReactionAdd={onReactionAdd}
               onReactionRemove={onReactionRemove}
-              isCurrentUser={msg.userId === currentUserId}
+              isCurrentUser={msg.isCurrentUser}
             />
           ))}
           <div ref={messagesEndRef} />

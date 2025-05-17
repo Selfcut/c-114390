@@ -42,10 +42,11 @@ export const FullHeightChatSidebar = () => {
       
       if (error) throw error;
       
-      const formattedMessages = data?.map(msg => ({
+      const formattedMessages: ChatMessage[] = data?.map(msg => ({
         id: msg.id,
         content: msg.content,
-        timestamp: msg.created_at,
+        createdAt: msg.created_at,
+        conversationId: msg.conversation_id,
         userId: msg.user_id || 'anonymous',
         senderName: msg.sender_name || 'Anonymous',
         isCurrentUser: msg.user_id === user?.id
@@ -62,10 +63,11 @@ export const FullHeightChatSidebar = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
     
-    const newMessage = {
+    const newMessage: ChatMessage = {
       id: crypto.randomUUID(),
       content: inputMessage,
-      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      conversationId: 'global', // For simplicity, using a single global conversation
       userId: user?.id || 'anonymous',
       senderName: user?.name || user?.email?.split('@')[0] || 'Anonymous',
       isCurrentUser: true
