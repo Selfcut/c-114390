@@ -4,13 +4,21 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 interface ContentFeedErrorProps {
   message: string;
+  onRetry?: () => void;
+  isRetrying?: boolean;
 }
 
-export const ContentFeedError: React.FC<ContentFeedErrorProps> = ({ message }) => {
+export const ContentFeedError: React.FC<ContentFeedErrorProps> = ({ 
+  message, 
+  onRetry, 
+  isRetrying 
+}) => {
   return (
     <ErrorMessage
-      title="Error"
+      title="Error Loading Content"
       message={message}
+      retry={onRetry}
+      isRetrying={isRetrying}
       variant="destructive"
     />
   );
