@@ -5,13 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Comment, ForumPost } from './useForumPost';
 import { UserProfile } from '@/lib/auth/types';
 
-interface UserWithAvatar {
-  id: string;
-  username?: string;
-  name?: string;
-  avatar_url?: string | null;
-}
-
 export function useForumActions(postId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -83,7 +76,12 @@ export function useForumActions(postId?: string) {
     }
   };
 
-  const handleSubmitComment = async (user: UserProfile | null, newComment: string, discussion: ForumPost | null, setComments: React.Dispatch<React.SetStateAction<Comment[]>>) => {
+  const handleSubmitComment = async (
+    user: UserProfile | null, 
+    newComment: string, 
+    discussion: ForumPost | null, 
+    setComments: React.Dispatch<React.SetStateAction<Comment[]>>
+  ) => {
     if (!user) {
       toast({
         title: "Authentication Required",
