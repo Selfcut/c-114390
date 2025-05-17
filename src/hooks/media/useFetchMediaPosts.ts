@@ -21,11 +21,11 @@ export const useFetchMediaPosts = (
         const startIndex = page * pageSize;
         const endIndex = startIndex + pageSize - 1;
         
-        // Use explicit join syntax with profiles table
+        // Use profiles table for user data
         let query = supabase.from('media_posts')
           .select(`
             *,
-            profiles:user_id(name, avatar_url, username)
+            profiles(name, avatar_url, username)
           `)
           .range(startIndex, endIndex);
         
@@ -76,6 +76,7 @@ export const useFetchMediaPosts = (
             updated_at: post.updated_at,
             likes: post.likes || 0,
             comments: post.comments || 0,
+            views: post.views || 0, // Ensure views property is included
             author: profileData ? {
               name: profileData.name || 'Unknown',
               avatar_url: profileData.avatar_url,

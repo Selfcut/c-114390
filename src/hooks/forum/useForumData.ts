@@ -42,21 +42,23 @@ export const useForumData = () => {
             post.tags.forEach((tag: string) => allTagsSet.add(tag));
           }
           
+          // Determine if post is popular based on views & comments
+          const isPopular = (post.views || 0) > 50 || (post.comments || 0) > 5;
+          
           return {
             id: post.id,
             title: post.title,
             content: post.content,
-            author: {
-              name: post.profiles?.name || 'Unknown User',
-              avatar: post.profiles?.avatar_url,
-              username: post.profiles?.username,
-            },
+            authorId: post.user_id,
+            author: post.profiles?.name || 'Unknown User',
+            authorAvatar: post.profiles?.avatar_url,
             createdAt: new Date(post.created_at),
             tags: post.tags || [],
             views: post.views || 0,
             upvotes: post.upvotes || 0,
             comments: post.comments || 0,
             isPinned: post.is_pinned || false,
+            isPopular: isPopular,
           };
         });
         
@@ -91,7 +93,7 @@ export const useForumData = () => {
         discussion =>
           discussion.title.toLowerCase().includes(searchLower) ||
           discussion.content.toLowerCase().includes(searchLower) ||
-          discussion.author.name.toLowerCase().includes(searchLower) ||
+          discussion.author.toLowerCase().includes(searchLower) ||
           (discussion.tags && discussion.tags.some(tag => tag.toLowerCase().includes(searchLower)))
       );
     }

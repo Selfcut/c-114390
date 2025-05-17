@@ -98,8 +98,8 @@ export const Sidebar = () => {
             {user && (
               <>
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden mr-3">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
                   ) : (
                     user.name?.charAt(0) || "U"
                   )}

@@ -29,9 +29,11 @@ export const fetchUserProfile = async (userId: string, session?: Session): Promi
       email: session?.user?.email,
       name: profile.name || 'Anonymous User',
       avatar_url: profile.avatar_url,
+      avatar: profile.avatar_url, // Add avatar as an alias for avatar_url
       username: profile.username,
       role: profile.role,
       isAdmin: profile.role === 'admin',
+      status: profile.status || 'offline',
     };
 
     return userProfile;
@@ -48,7 +50,9 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
     const profileUpdates: any = {};
     if (updates.name) profileUpdates.name = updates.name;
     if (updates.avatar_url) profileUpdates.avatar_url = updates.avatar_url;
+    if (updates.avatar) profileUpdates.avatar_url = updates.avatar; // Handle avatar alias
     if (updates.username) profileUpdates.username = updates.username;
+    if (updates.status) profileUpdates.status = updates.status;
     
     const { error } = await supabase
       .from('profiles')

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -249,7 +248,7 @@ export const ForumPostDetail = () => {
         id: `comment-${Date.now()}`,
         authorId: user.id,
         authorName: user.name || user.username || 'Anonymous',
-        authorAvatar: user.avatar,
+        authorAvatar: user.avatar_url,
         content: newComment.trim(),
         createdAt: new Date(),
         upvotes: 0

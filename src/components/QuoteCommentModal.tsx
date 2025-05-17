@@ -218,7 +218,7 @@ export const QuoteCommentModal = ({
           {isAuthenticated ? (
             <div className="flex gap-3 mb-6">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/personas/svg?seed=${user?.username || user?.id}`} />
+                <AvatarImage src={user?.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${user?.username || user?.id}`} />
                 <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
