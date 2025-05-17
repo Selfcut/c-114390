@@ -12,6 +12,17 @@ import { ArrowLeft, MessageSquare, ThumbsUp, Share, AlertTriangle } from 'lucide
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { problemsData } from '@/data/problemsData';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Comment {
+  id: string;
+  author: string;
+  authorAvatar?: string | null;
+  authorId: string;
+  content: string;
+  createdAt: Date;
+  upvotes: number;
+}
 
 const ProblemDetail = () => {
   const { problemId } = useParams<{ problemId: string }>();
@@ -20,7 +31,9 @@ const ProblemDetail = () => {
   const { toast } = useToast();
   const [problem, setProblem] = useState<any>(null);
   const [comment, setComment] = useState('');
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   
   useEffect(() => {
     // Find the problem by ID
@@ -31,35 +44,62 @@ const ProblemDetail = () => {
       if (foundProblem) {
         setProblem(foundProblem);
         
-        // For now, generate some sample comments
-        // In a real application, these would come from a database
-        setComments([
-          {
-            id: 1,
-            author: "Researcher",
-            authorAvatar: null,
-            content: "This is a complex issue that requires international cooperation.",
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            upvotes: 5
-          },
-          {
-            id: 2,
-            author: "PolicyExpert",
-            authorAvatar: null,
-            content: "There are several promising approaches to addressing this problem that have been tested in various countries.",
-            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            upvotes: 3
+        // Fetch real discussion comments from the forum_posts table that are related to this problem
+        const fetchComments = async () => {
+          try {
+            setIsLoading(true);
+            
+            // Get forum posts that are specifically about this problem
+            // In a real app, you might have a separate table for problem comments or a relation field
+            const { data, error } = await supabase
+              .from('forum_posts')
+              .select(`
+                *,
+                profiles:user_id(name, username, avatar_url)
+              `)
+              .like('tags', `%Problem ${id}%`)
+              .order('created_at', { ascending: false });
+              
+            if (error) {
+              console.error('Error fetching comments:', error);
+              toast({
+                title: "Error",
+                description: "Failed to load comments",
+                variant: "destructive"
+              });
+              return;
+            }
+            
+            if (data) {
+              const formattedComments: Comment[] = data.map(post => ({
+                id: post.id,
+                content: post.content,
+                author: post.profiles?.name || post.profiles?.username || 'Unknown User',
+                authorAvatar: post.profiles?.avatar_url,
+                authorId: post.user_id,
+                createdAt: new Date(post.created_at),
+                upvotes: post.upvotes || 0
+              }));
+              
+              setComments(formattedComments);
+            }
+          } catch (err) {
+            console.error('Error fetching comments:', err);
+          } finally {
+            setIsLoading(false);
           }
-        ]);
+        };
+        
+        fetchComments();
       }
     }
-  }, [problemId]);
+  }, [problemId, toast]);
   
   const handleBack = () => {
     navigate('/problems');
   };
   
-  const handleCommentSubmit = () => {
+  const handleCommentSubmit = async () => {
     if (!comment.trim()) {
       toast({
         description: "Please write something before posting.",
@@ -77,22 +117,56 @@ const ProblemDetail = () => {
       return;
     }
     
-    // Add the new comment
-    const newComment = {
-      id: comments.length + 1,
-      author: user.name || user.email || "Anonymous",
-      authorAvatar: user.avatar_url,
-      content: comment,
-      createdAt: new Date(),
-      upvotes: 0
-    };
+    setIsSubmittingComment(true);
     
-    setComments([newComment, ...comments]);
-    setComment('');
-    
-    toast({
-      description: "Your input has been added to the discussion.",
-    });
+    try {
+      // Create a new forum post connected to this problem
+      const newPost = {
+        title: `Contribution to Problem #${problem.id}: ${problem.title}`,
+        content: comment.trim(),
+        user_id: user.id,
+        tags: [`Problem ${problem.id}`, ...problem.categories.slice(0, 2)],
+        is_pinned: false,
+      };
+      
+      // Insert into real database
+      const { data: postData, error: postError } = await supabase
+        .from('forum_posts')
+        .insert(newPost)
+        .select('*, profiles:user_id(name, username, avatar_url)')
+        .single();
+      
+      if (postError) {
+        throw postError;
+      }
+      
+      // Add to local comments state
+      const newComment: Comment = {
+        id: postData.id,
+        content: postData.content,
+        author: postData.profiles?.name || postData.profiles?.username || user.name || user.email || 'Anonymous',
+        authorAvatar: postData.profiles?.avatar_url || user.avatar_url,
+        authorId: user.id,
+        createdAt: new Date(),
+        upvotes: 0
+      };
+      
+      setComments(prev => [newComment, ...prev]);
+      setComment('');
+      
+      toast({
+        description: "Your input has been added to the discussion.",
+      });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add your comment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
   
   const formatDate = (date: Date) => {
@@ -161,6 +235,10 @@ const ProblemDetail = () => {
             <div className="prose dark:prose-invert max-w-none">
               <p className="text-lg mb-4">{problem.description}</p>
               
+              {problem.longDescription && (
+                <p>{problem.longDescription}</p>
+              )}
+              
               {problem.impact && (
                 <>
                   <h3 className="text-xl font-semibold mt-6 mb-2">Impact</h3>
@@ -225,9 +303,9 @@ const ProblemDetail = () => {
             <div className="flex justify-end">
               <Button 
                 onClick={handleCommentSubmit}
-                disabled={!comment.trim()}
+                disabled={!comment.trim() || isSubmittingComment}
               >
-                Post Contribution
+                {isSubmittingComment ? "Posting..." : "Post Contribution"}
               </Button>
             </div>
           </CardContent>
@@ -235,34 +313,72 @@ const ProblemDetail = () => {
         
         {/* Comments list */}
         <div className="space-y-4">
-          {comments.map((item) => (
-            <Card key={item.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <Avatar>
-                    <AvatarImage src={item.authorAvatar} />
-                    <AvatarFallback>{item.author.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-medium">{item.author}</h4>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(item.createdAt)}
-                      </span>
-                    </div>
-                    <p className="mb-4">{item.content}</p>
-                    <div className="flex items-center gap-4">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                        <ThumbsUp size={14} />
-                        <span>{item.upvotes}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm">Reply</Button>
+          {isLoading ? (
+            Array(2).fill(0).map((_, index) => (
+              <Card key={`skeleton-${index}`} className="animate-pulse">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-full bg-muted h-10 w-10"></div>
+                    <div className="flex-1">
+                      <div className="h-5 bg-muted rounded w-1/4 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-32 mb-4"></div>
+                      <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-5/6 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 bg-muted rounded w-16"></div>
+                        <div className="h-8 bg-muted rounded w-16"></div>
+                      </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : comments.length > 0 ? (
+            comments.map((item) => (
+              <Card key={item.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <Avatar>
+                      <AvatarImage src={item.authorAvatar || undefined} />
+                      <AvatarFallback>{item.author.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-medium">{item.author}</h4>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDate(item.createdAt)}
+                        </span>
+                      </div>
+                      <p className="mb-4">{item.content}</p>
+                      <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                          <ThumbsUp size={14} />
+                          <span>{item.upvotes}</span>
+                        </Button>
+                        <Button variant="ghost" size="sm">Reply</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="rounded-full bg-muted p-4">
+                  <MessageSquare size={32} className="text-muted-foreground" />
                 </div>
-              </CardContent>
+              </div>
+              <h3 className="text-xl font-medium mb-2">No Comments Yet</h3>
+              <p className="text-muted-foreground mb-4">Be the first to share your thoughts</p>
+              {!user && (
+                <Button asChild>
+                  <a href="/auth">Sign In to Comment</a>
+                </Button>
+              )}
             </Card>
-          ))}
+          )}
         </div>
       </div>
     </PageLayout>
