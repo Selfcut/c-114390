@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Bookmark, MessageSquare, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from 'date-fns';
-import { ContentItem } from '@/hooks/useContentFeed';
+import { ContentFeedItem as ContentItem } from '@/lib/content-types';
 
 interface ContentFeedItemProps {
   item: ContentItem;

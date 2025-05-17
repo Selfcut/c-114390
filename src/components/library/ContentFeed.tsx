@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { useContentFeed } from '@/hooks/useContentFeed';
+import { useContentFeed, ContentFeedItem } from '@/hooks/useContentFeed';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
-import { ContentFeedItem } from './ContentFeedItem';
+import { ContentFeedItem as ContentFeedItemComponent } from './ContentFeedItem';
 import { ContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
 
@@ -16,7 +16,7 @@ interface ContentFeedProps {
 
 export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode }) => {
   const {
-    content,
+    feedItems,
     isLoading,
     error,
     hasMore,
@@ -26,7 +26,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
     handleLike,
     handleBookmark,
     handleContentClick
-  } = useContentFeed({ contentType, viewMode });
+  } = useContentFeed();
 
   // Error state
   if (error) {
@@ -42,12 +42,12 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
     <>
       <div className={containerClassName}>
         {/* Initial loading state */}
-        {isLoading && content.length === 0 ? (
+        {isLoading && feedItems.length === 0 ? (
           <ContentFeedSkeleton viewMode={viewMode} />
-        ) : content.length > 0 ? (
+        ) : feedItems.length > 0 ? (
           // Content items
-          content.map(item => (
-            <ContentFeedItem
+          feedItems.map(item => (
+            <ContentFeedItemComponent
               key={item.id}
               item={item}
               userLikes={userLikes}
@@ -64,12 +64,12 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
       </div>
       
       {/* Load more button */}
-      {hasMore && !isLoading && content.length > 0 && (
+      {hasMore && !isLoading && feedItems.length > 0 && (
         <LoadMoreButton isLoading={false} onClick={loadMore} />
       )}
       
       {/* Loading more indicator */}
-      {isLoading && content.length > 0 && (
+      {isLoading && feedItems.length > 0 && (
         <ContentFeedLoading />
       )}
     </>

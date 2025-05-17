@@ -1,12 +1,30 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { KnowledgeEntry, MediaPost, Quote, ContentFeedItem } from '@/lib/content-types';
+import { KnowledgeEntry, MediaPost, Quote, ContentFeedItem, ContentItem } from '@/lib/content-types';
+import { useAuth } from '@/lib/auth';
 
-export const useContentFeed = () => {
+interface UseContentFeedReturn {
+  feedItems: ContentFeedItem[];
+  isLoading: boolean;
+  error: string | null;
+  hasMore: boolean;
+  loadMore: () => void;
+  userLikes: string[];
+  userBookmarks: string[];
+  handleLike: (contentId: string, contentType: string) => void;
+  handleBookmark: (contentId: string, contentType: string) => void;
+  handleContentClick: (contentId: string, contentType: string) => void;
+}
+
+export const useContentFeed = (): UseContentFeedReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [feedItems, setFeedItems] = useState<ContentFeedItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [userLikes, setUserLikes] = useState<string[]>([]);
+  const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
+  const { user } = useAuth();
   
   useEffect(() => {
     const fetchContentData = async () => {
@@ -50,7 +68,7 @@ export const useContentFeed = () => {
 
         // Transform knowledge entries to feed items
         const knowledgeItems: ContentFeedItem[] = knowledgeData 
-          ? knowledgeData.map((item: KnowledgeEntry) => ({
+          ? knowledgeData.map((item: any) => ({
               id: item.id,
               title: item.title,
               description: item.summary,
@@ -67,7 +85,7 @@ export const useContentFeed = () => {
 
         // Transform media posts to feed items
         const mediaItems: ContentFeedItem[] = mediaData 
-          ? mediaData.map((item: MediaPost) => ({
+          ? mediaData.map((item: any) => ({
               id: item.id,
               title: item.title,
               description: item.content || '',
@@ -83,7 +101,7 @@ export const useContentFeed = () => {
 
         // Transform quotes to feed items
         const quoteItems: ContentFeedItem[] = quoteData 
-          ? quoteData.map((item: Quote) => ({
+          ? quoteData.map((item: any) => ({
               id: item.id,
               title: item.author,
               description: item.text,
@@ -101,8 +119,8 @@ export const useContentFeed = () => {
         // Get AI generated content separately
         const aiContent: ContentFeedItem[] = knowledgeData 
           ? knowledgeData
-              .filter((item: KnowledgeEntry) => item.is_ai_generated)
-              .map((item: KnowledgeEntry) => ({
+              .filter((item: any) => item.is_ai_generated)
+              .map((item: any) => ({
                 id: item.id,
                 title: item.title,
                 description: item.summary,
@@ -126,10 +144,16 @@ export const useContentFeed = () => {
         });
 
         setFeedItems(sortedItems);
+        setHasMore(sortedItems.length >= 15);
 
         if (knowledgeError || mediaError || quoteError) {
           console.error('Error fetching content:', { knowledgeError, mediaError, quoteError });
           setError('Failed to load some content');
+        }
+
+        // Fetch user likes and bookmarks if the user is logged in
+        if (user) {
+          fetchUserInteractions();
         }
       } catch (err) {
         console.error('Error in content feed:', err);
@@ -139,8 +163,151 @@ export const useContentFeed = () => {
       }
     };
 
-    fetchContentData();
-  }, []);
+    const fetchUserInteractions = async () => {
+      try {
+        // Fetch user likes
+        const { data: likesData } = await supabase
+          .from('content_likes')
+          .select('content_id')
+          .eq('user_id', user?.id);
 
-  return { feedItems, isLoading, error };
+        // Fetch user bookmarks
+        const { data: bookmarksData } = await supabase
+          .from('content_bookmarks')
+          .select('content_id')
+          .eq('user_id', user?.id);
+
+        if (likesData) {
+          setUserLikes(likesData.map(item => item.content_id));
+        }
+
+        if (bookmarksData) {
+          setUserBookmarks(bookmarksData.map(item => item.content_id));
+        }
+      } catch (err) {
+        console.error('Error fetching user interactions:', err);
+      }
+    };
+
+    fetchContentData();
+  }, [user]);
+
+  const loadMore = () => {
+    // For now, just a placeholder function
+    console.log('Load more content requested');
+    // Would need to implement proper pagination
+  };
+
+  const handleLike = async (contentId: string, contentType: string) => {
+    if (!user) {
+      setError('You must be logged in to like content');
+      return;
+    }
+
+    try {
+      // Toggle like status
+      const isLiked = userLikes.includes(contentId);
+      
+      if (isLiked) {
+        // Remove like
+        await supabase
+          .from('content_likes')
+          .delete()
+          .eq('content_id', contentId)
+          .eq('user_id', user.id);
+        
+        setUserLikes(userLikes.filter(id => id !== contentId));
+      } else {
+        // Add like
+        await supabase
+          .from('content_likes')
+          .insert({
+            content_id: contentId,
+            content_type: contentType,
+            user_id: user.id
+          });
+        
+        setUserLikes([...userLikes, contentId]);
+      }
+
+      // Update the feed item
+      setFeedItems(feedItems.map(item => 
+        item.id === contentId 
+          ? { 
+              ...item, 
+              likes: isLiked ? item.likes - 1 : item.likes + 1 
+            }
+          : item
+      ));
+    } catch (err) {
+      console.error('Error handling like:', err);
+    }
+  };
+
+  const handleBookmark = async (contentId: string, contentType: string) => {
+    if (!user) {
+      setError('You must be logged in to bookmark content');
+      return;
+    }
+
+    try {
+      // Toggle bookmark status
+      const isBookmarked = userBookmarks.includes(contentId);
+      
+      if (isBookmarked) {
+        // Remove bookmark
+        await supabase
+          .from('content_bookmarks')
+          .delete()
+          .eq('content_id', contentId)
+          .eq('user_id', user.id);
+        
+        setUserBookmarks(userBookmarks.filter(id => id !== contentId));
+      } else {
+        // Add bookmark
+        await supabase
+          .from('content_bookmarks')
+          .insert({
+            content_id: contentId,
+            content_type: contentType,
+            user_id: user.id
+          });
+        
+        setUserBookmarks([...userBookmarks, contentId]);
+      }
+
+      // Update the feed item if it has bookmarks property
+      setFeedItems(feedItems.map(item => 
+        item.id === contentId && typeof item.bookmarks !== 'undefined'
+          ? { 
+              ...item, 
+              bookmarks: isBookmarked ? (item.bookmarks || 0) - 1 : (item.bookmarks || 0) + 1 
+            }
+          : item
+      ));
+    } catch (err) {
+      console.error('Error handling bookmark:', err);
+    }
+  };
+
+  const handleContentClick = (contentId: string, contentType: string) => {
+    // This would be replaced with actual navigation logic
+    console.log(`Clicked on ${contentType} content with ID: ${contentId}`);
+  };
+
+  return { 
+    feedItems, 
+    isLoading, 
+    error, 
+    hasMore, 
+    loadMore, 
+    userLikes, 
+    userBookmarks, 
+    handleLike, 
+    handleBookmark, 
+    handleContentClick 
+  };
 };
+
+// Export ContentItem type
+export type { ContentFeedItem, ContentItem };

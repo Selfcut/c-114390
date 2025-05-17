@@ -23,7 +23,7 @@ export interface KnowledgeEntry {
   user_id: string;
   created_at: string;
   updated_at: string;
-  profiles?: UserProfile;
+  profiles?: UserProfile | null;
 }
 
 export interface MediaPost {
@@ -38,7 +38,7 @@ export interface MediaPost {
   user_id: string;
   created_at: string;
   updated_at: string;
-  profiles?: UserProfile;
+  profiles?: UserProfile | null;
 }
 
 export interface Quote {
@@ -54,7 +54,7 @@ export interface Quote {
   user_id: string;
   created_at: string;
   updated_at: string;
-  profiles?: UserProfile;
+  profiles?: UserProfile | null;
 }
 
 // Interface for content items in the feed
@@ -73,3 +73,6 @@ export interface ContentFeedItem {
   category?: string;
   tags?: string[];
 }
+
+// Add ContentItem type for ContentFeedItem.tsx
+export interface ContentItem extends ContentFeedItem {}

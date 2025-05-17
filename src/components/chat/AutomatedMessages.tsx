@@ -84,7 +84,8 @@ export const getRandomAutomatedMessage = (): ChatMessage => {
   return {
     ...message,
     id: `auto-${Date.now()}`, // Generate a new ID to ensure uniqueness
-    createdAt: new Date().toISOString() // Update timestamp to current time
+    createdAt: new Date().toISOString(), // Update timestamp to current time
+    conversationId: 'global' // Ensure this is set
   };
 };
 

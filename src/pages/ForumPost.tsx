@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -72,8 +71,8 @@ const ForumPost = () => {
 
         // Process the data
         const authorInfo = postData.profiles || {};
-        const authorName = authorInfo.name || authorInfo.username || 'Unknown User';
-        const authorAvatar = authorInfo.avatar_url || 
+        const authorName = authorInfo?.name || authorInfo?.username || 'Unknown User';
+        const authorAvatar = authorInfo?.avatar_url || 
           `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
           
         const processedPost = {
@@ -110,8 +109,8 @@ const ForumPost = () => {
           // Process comments
           const processedComments: Comment[] = commentsData.map(comment => {
             const commentAuthorInfo = comment.profiles || {};
-            const commentAuthorName = commentAuthorInfo.name || commentAuthorInfo.username || 'Unknown User';
-            const commentAuthorAvatar = commentAuthorInfo.avatar_url || 
+            const commentAuthorName = commentAuthorInfo?.name || commentAuthorInfo?.username || 'Unknown User';
+            const commentAuthorAvatar = commentAuthorInfo?.avatar_url || 
               `https://api.dicebear.com/7.x/avataaars/svg?seed=${commentAuthorName}`;
               
             return {
