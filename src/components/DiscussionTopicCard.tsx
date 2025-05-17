@@ -14,16 +14,14 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     title, 
     author, 
     authorAvatar, 
-    replies, 
+    content,
     createdAt, 
     tags, 
     upvotes, 
-    excerpt, 
-    content,
     views,
     isPinned,
-    isNew,
-    isPopular
+    isPopular,
+    comments
   } = discussion;
   
   // Generate avatar fallback from author name if no avatar URL provided
@@ -31,8 +29,17 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
   
-  // Display excerpt or content
-  const displayText = excerpt || (content ? content.slice(0, 120) + (content.length > 120 ? '...' : '') : '');
+  // Determine if the post is new (less than 24 hours old)
+  const isNew = (() => {
+    const now = new Date();
+    const diffInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    return diffInHours < 24;
+  })();
+  
+  // Display excerpt of content
+  const displayText = content ? (
+    content.length > 120 ? content.slice(0, 120) + '...' : content
+  ) : '';
   
   return (
     <div 
@@ -96,7 +103,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
                 <Eye size={12} /> {views || 0}
               </span>
               <span className="text-xs flex items-center gap-1">
-                <MessageSquare size={12} /> {replies || 0}
+                <MessageSquare size={12} /> {comments || 0}
               </span>
               <span className="text-xs flex items-center gap-1">
                 <ThumbsUp size={12} /> {upvotes || 0}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
@@ -85,83 +86,77 @@ const Forum = () => {
       try {
         setIsLoading(true);
         
-        // Check if the forum_posts table exists by making a direct query
-        const { data: tableExists } = await supabase
+        // Fixed: Check if the forum_posts table exists and has data using proper query
+        const { data: postsData, error: checkError } = await supabase
           .from('forum_posts')
-          .select('count(*)')
-          .limit(1)
-          .single();
+          .select('*')
+          .limit(1);
         
-        if (tableExists) {
-          // Table exists, fetch the data
-          const { data, error } = await supabase
-            .from('forum_posts')
-            .select(`
-              id, 
-              title, 
-              content,
-              created_at, 
-              tags, 
-              upvotes, 
-              views, 
-              comments, 
-              is_pinned,
-              user_id,
-              profiles:user_id(name, avatar_url)
-            `)
-            .order('is_pinned', { ascending: false })
-            .order('created_at', { ascending: false });
+        if (checkError) {
+          console.error('Error checking forum posts:', checkError);
+          throw checkError;
+        }
+        
+        // Table exists and we can query it
+        const { data, error } = await supabase
+          .from('forum_posts')
+          .select(`
+            id, 
+            title, 
+            content,
+            created_at, 
+            tags, 
+            upvotes, 
+            views, 
+            comments, 
+            is_pinned,
+            user_id,
+            profiles:user_id(name, avatar_url)
+          `)
+          .order('is_pinned', { ascending: false })
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Transform data to match the DiscussionTopic interface
+        if (data && Array.isArray(data)) {
+          // Safe type casting to ForumPost[] since we've verified its structure
+          const formattedData: DiscussionTopic[] = (data as ForumPost[]).map(post => ({
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            author: post.profiles?.name || 'Anonymous',
+            authorId: post.user_id,
+            authorAvatar: post.profiles?.avatar_url,
+            createdAt: new Date(post.created_at),
+            tags: post.tags,
+            upvotes: post.upvotes || 0,
+            views: post.views || 0,
+            comments: post.comments || 0,
+            isPinned: post.is_pinned || false,
+            isPopular: (post.comments || 0) > 5 || (post.views || 0) > 50
+          }));
           
-          if (error) throw error;
+          // Extract unique tags
+          const tags = Array.from(
+            new Set(formattedData.flatMap(post => post.tags || []))
+          );
           
-          // Transform data to match the DiscussionTopic interface
-          if (data && Array.isArray(data)) {
-            // Safe type casting to ForumPost[] since we've verified its structure
-            const formattedData: DiscussionTopic[] = (data as ForumPost[]).map(post => ({
-              id: post.id,
-              title: post.title,
-              content: post.content,
-              author: post.profiles?.name || 'Anonymous',
-              authorId: post.user_id,
-              authorAvatar: post.profiles?.avatar_url,
-              createdAt: new Date(post.created_at),
-              tags: post.tags,
-              upvotes: post.upvotes || 0,
-              views: post.views || 0,
-              comments: post.comments || 0,
-              isPinned: post.is_pinned || false,
-              isPopular: (post.comments || 0) > 5 || (post.views || 0) > 50
-            }));
-            
-            // Extract unique tags
-            const tags = Array.from(
-              new Set(formattedData.flatMap(post => post.tags || []))
-            );
-            
-            setAllTags(tags);
-            setDiscussions(formattedData);
-            
-            if (formattedData.length === 0) {
-              toast({
-                description: "No forum posts found. Be the first to create a discussion!",
-                variant: "default"
-              });
-            }
-          } else {
-            // Handle empty or invalid data
-            setDiscussions([]);
-            setAllTags([]);
+          setAllTags(tags);
+          setDiscussions(formattedData);
+          
+          if (formattedData.length === 0) {
             toast({
               description: "No forum posts found. Be the first to create a discussion!",
               variant: "default"
             });
           }
         } else {
-          console.log("Forum posts table is empty or doesn't exist");
+          // Handle empty or invalid data
           setDiscussions([]);
+          setAllTags([]);
           toast({
-            title: "Welcome to the Forum",
-            description: "There are no discussions yet. Start the first one!",
+            description: "No forum posts found. Be the first to create a discussion!",
             variant: "default"
           });
         }
@@ -279,13 +274,7 @@ const Forum = () => {
         
       if (error) {
         console.error('Forum post creation error:', error);
-        
-        // Provide more specific error message
-        if (error.message.includes('does not exist')) {
-          throw new Error('Forum posts table does not exist. Please configure the database.');
-        } else {
-          throw error;
-        }
+        throw error;
       }
 
       // Add to local state
