@@ -24,5 +24,13 @@ export const useContentNavigation = () => {
     }
   };
   
-  return { handleContentClick };
+  // Add handleWikiClick function for wiki articles
+  const handleWikiClick = (id: string) => {
+    navigate(`/wiki/${id}`);
+  };
+  
+  return { 
+    handleContentClick,
+    handleWikiClick
+  };
 };
