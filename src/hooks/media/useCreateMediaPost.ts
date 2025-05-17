@@ -25,26 +25,36 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
     const fileExt = file.name.split('.').pop();
     const filePath = `${userId}/${uuidv4()}.${fileExt}`;
     
-    // Create a custom upload function that can track progress
-    const fileBuffer = await file.arrayBuffer();
-    const { error: uploadError, data } = await supabase.storage
-      .from('media')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    setUploadProgress(10); // Starting upload
     
-    // Simulate progress since we can't track it directly
-    setUploadProgress(100);
-    
-    if (uploadError) throw uploadError;
-    
-    // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage
-      .from('media')
-      .getPublicUrl(filePath);
+    try {
+      // Create a custom upload function that can track progress
+      const { error: uploadError, data } = await supabase.storage
+        .from('media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
       
-    return publicUrl;
+      // Simulate progress steps since we can't directly track it
+      setUploadProgress(70);
+      
+      if (uploadError) throw uploadError;
+      
+      setUploadProgress(90);
+      
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(filePath);
+      
+      setUploadProgress(100); // Upload completed
+      
+      return publicUrl;
+    } catch (error) {
+      setUploadProgress(0); // Reset on error
+      throw error;
+    }
   };
 
   // Create post mutation
@@ -89,6 +99,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
           description: "Your media has been shared successfully",
         });
         onSuccess();
+        setUploadProgress(0); // Reset progress
       },
       onError: (error: Error) => {
         console.error("Error creating post:", error);
@@ -97,6 +108,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
           description: error.message || "An error occurred while creating your post",
           variant: "destructive"
         });
+        setUploadProgress(0); // Reset progress
       }
     }
   });
@@ -107,6 +119,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
       await createPostMutation.mutateAsync(postData);
     } catch (error) {
       console.error("Error in handleCreatePost:", error);
+      setUploadProgress(0); // Ensure progress is reset on error
     }
   };
 

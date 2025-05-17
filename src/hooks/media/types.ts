@@ -29,4 +29,5 @@ export interface UseMediaPostsReturn {
   page: number;
   createPostMutation: any;
   handleCreatePost: (data: any) => Promise<void>;
+  uploadProgress?: number;
 }
