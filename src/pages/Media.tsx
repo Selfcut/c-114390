@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,7 @@ const Media = () => {
       sortOrder, 
       searchQuery: searchTerm
     }),
-    keepPreviousData: true
+    placeholderData: (previousData) => previousData // This replaces keepPreviousData in v5
   });
 
   // Create post mutation

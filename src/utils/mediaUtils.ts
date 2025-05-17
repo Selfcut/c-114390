@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -45,17 +44,8 @@ export async function fetchMediaPosts({
     let query = supabase
       .from('media_posts')
       .select(`
-        id,
-        title,
-        content,
-        url,
-        type,
-        created_at,
-        updated_at,
-        user_id,
-        likes,
-        comments,
-        profiles:user_id(name, avatar_url, username)
+        *,
+        profiles(name, avatar_url, username)
       `)
       .range(page * pageSize, (page + 1) * pageSize - 1);
       
@@ -72,7 +62,7 @@ export async function fetchMediaPosts({
     // Apply sorting
     query = query.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching media posts:', error);
@@ -82,6 +72,8 @@ export async function fetchMediaPosts({
     // Transform to match the expected format
     const posts: MediaPost[] = data?.map(post => ({
       ...post,
+      // Ensure type is one of the allowed values
+      type: (post.type as 'image' | 'video' | 'document' | 'youtube' | 'text') || 'text', 
       author: post.profiles ? {
         name: post.profiles.name,
         username: post.profiles.username,
@@ -112,17 +104,8 @@ export async function getMediaPost(id: string) {
     const { data, error } = await supabase
       .from('media_posts')
       .select(`
-        id,
-        title,
-        content,
-        url,
-        type,
-        created_at,
-        updated_at,
-        user_id,
-        likes,
-        comments,
-        profiles:user_id(name, avatar_url, username)
+        *,
+        profiles(name, avatar_url, username)
       `)
       .eq('id', id)
       .single();
@@ -132,6 +115,8 @@ export async function getMediaPost(id: string) {
     // Transform to match the expected format
     const post: MediaPost = {
       ...data,
+      // Ensure type is one of the allowed values
+      type: (data.type as 'image' | 'video' | 'document' | 'youtube' | 'text') || 'text',
       author: data.profiles ? {
         name: data.profiles.name,
         username: data.profiles.username,
