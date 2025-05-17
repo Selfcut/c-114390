@@ -1,8 +1,7 @@
 
-import React, { useRef } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatMessageList } from "./ChatMessageList";
-import { ChatInputArea } from "./ChatInputArea";
+import React from "react";
+import { ChatMessageArea } from "./ChatMessageArea";
+import { ChatInputSection } from "./ChatInputSection";
 import { ChatMessage } from "./types";
 
 interface ChatContentProps {
@@ -62,33 +61,26 @@ export const ChatContent = ({
 }: ChatContentProps) => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {isLoadingMessages ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <ChatMessageList 
-            messages={messages}
-            isLoading={isLoading}
-            formatTime={formatTime}
-            onMessageEdit={onMessageEdit}
-            onMessageDelete={onMessageDelete}
-            onMessageReply={onMessageReply}
-            onReactionAdd={onReactionAdd}
-            onReactionRemove={onReactionRemove}
-            currentUserId={currentUserId}
-            messagesEndRef={messagesEndRef}
-          />
-        </ScrollArea>
-      )}
+      <ChatMessageArea
+        isLoadingMessages={isLoadingMessages}
+        messages={messages}
+        isLoading={isLoading}
+        formatTime={formatTime}
+        onMessageEdit={onMessageEdit}
+        onMessageDelete={onMessageDelete}
+        onMessageReply={onMessageReply}
+        onReactionAdd={onReactionAdd}
+        onReactionRemove={onReactionRemove}
+        currentUserId={currentUserId}
+        messagesEndRef={messagesEndRef}
+      />
       
-      <ChatInputArea 
-        message={inputMessage}
-        setMessage={setInputMessage}
+      <ChatInputSection
+        inputMessage={inputMessage}
+        setInputMessage={setInputMessage}
         handleSendMessage={handleSendMessage}
         handleKeyDown={handleKeyDown}
-        editingMessage={editingMessageId}
+        editingMessageId={editingMessageId}
         replyingToMessage={replyingToMessage}
         onCancelEdit={onCancelEdit}
         onCancelReply={onCancelReply}
