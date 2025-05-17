@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -52,16 +53,10 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Fetch the post from Supabase using proper join syntax
+        // Changed the query to use profiles directly instead of trying to use a non-existent relationship
         const { data: postData, error: postError } = await supabase
           .from('forum_posts')
-          .select(`
-            *,
-            user:user_id(
-              name:username,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('id', postId)
           .maybeSingle();
         
@@ -75,14 +70,31 @@ export const ForumPostDetail = () => {
           return; // Post not found will be handled in render
         }
         
+        // After getting the post, fetch the author's profile separately
+        let authorName = 'Unknown User';
+        let authorAvatar = undefined;
+        
+        if (postData.user_id) {
+          const { data: userData } = await supabase
+            .from('profiles')
+            .select('username, name, avatar_url')
+            .eq('id', postData.user_id)
+            .maybeSingle();
+            
+          if (userData) {
+            authorName = userData.name || userData.username || 'Unknown User';
+            authorAvatar = userData.avatar_url;
+          }
+        }
+        
         // Process post data with proper type safety
         const processedPost = {
           id: postData.id,
           title: postData.title,
           content: postData.content,
-          authorName: postData.user?.name || 'Unknown User',
+          authorName,
           authorId: postData.user_id,
-          authorAvatar: postData.user?.avatar_url,
+          authorAvatar,
           created_at: postData.created_at,
           tags: postData.tags || [],
           upvotes: postData.upvotes || 0,
@@ -93,16 +105,17 @@ export const ForumPostDetail = () => {
         
         setPost(processedPost);
         
-        // Increment view count for the post
-        await supabase.rpc('increment_counter_fn', {
-          row_id: postId,
-          column_name: 'views',
-          table_name: 'forum_posts'
-        }).then(() => {
+        // Increment view count for the post - fixed Promise chaining
+        try {
+          await supabase.rpc('increment_counter_fn', {
+            row_id: postId,
+            column_name: 'views',
+            table_name: 'forum_posts'
+          });
           console.log('View count incremented');
-        }).catch(err => {
+        } catch (err) {
           console.error('Error incrementing view count:', err);
-        });
+        }
         
         // TODO: Implement fetching comments once we have a forum_comments table
         // For now, just set empty comments array
