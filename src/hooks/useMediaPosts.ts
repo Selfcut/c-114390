@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +54,6 @@ export const useMediaPosts = (
   } = useQuery({
     queryKey: [mediaType, sortBy, sortOrder, searchTerm, 'mediaPosts'],
     queryFn: () => fetchPosts({ pageParam: page }),
-    keepPreviousData: true,
     staleTime: 5000,
   });
 
