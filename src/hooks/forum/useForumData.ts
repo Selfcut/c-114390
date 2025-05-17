@@ -19,33 +19,18 @@ export const useForumData = () => {
       try {
         setIsLoading(true);
         
-        // Query forums - fixed to avoid using an incorrect relationship
+        // Query forum posts
         const { data, error } = await supabase
           .from('forum_posts')
-          .select('*');
+          .select(`
+            *,
+            profiles:user_id(name, username, avatar_url)
+          `);
         
         if (error) {
           console.error("Error fetching discussions:", error);
           setError("Failed to load discussions. Please try again later.");
           return;
-        }
-        
-        // Get authors separately if needed
-        const userIds = data.map((post: any) => post.user_id).filter(Boolean);
-        let usersMap: Record<string, any> = {};
-        
-        if (userIds.length > 0) {
-          const { data: usersData, error: usersError } = await supabase
-            .from('profiles')
-            .select('id, name, username, avatar_url')
-            .in('id', userIds);
-            
-          if (!usersError && usersData) {
-            usersMap = usersData.reduce((acc: Record<string, any>, user: any) => {
-              acc[user.id] = user;
-              return acc;
-            }, {});
-          }
         }
         
         // Process the data and collect tags
@@ -56,8 +41,8 @@ export const useForumData = () => {
             post.tags.forEach((tag: string) => allTagsSet.add(tag));
           }
           
-          // Get author info from usersMap
-          const authorInfo = post.user_id ? usersMap[post.user_id] : null;
+          // Extract author info from the joined profiles data
+          const authorInfo = post.profiles;
           
           // Determine if post is popular based on views & comments
           const isPopular = (post.views || 0) > 50 || (post.comments || 0) > 5;
