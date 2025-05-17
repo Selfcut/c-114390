@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-import { PageLayout } from '@/components/layouts/PageLayout';
 import { 
   Search, 
   Filter, 
