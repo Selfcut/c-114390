@@ -22,7 +22,7 @@ export const useFetchMediaPosts = () => {
         .from('media_posts')
         .select(`
           *,
-          profiles:user_id(name, avatar_url, username)
+          profiles(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
         .range(page * 10, (page + 1) * 10 - 1);

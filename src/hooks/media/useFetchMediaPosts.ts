@@ -24,7 +24,7 @@ export const useFetchMediaPosts = (
         let query = supabase.from('media_posts')
           .select(`
             *,
-            profiles:user_id(name, avatar_url, username)
+            profiles(name, avatar_url, username)
           `)
           .range(startIndex, endIndex);
         
@@ -68,10 +68,14 @@ export const useFetchMediaPosts = (
           likes: post.likes,
           comments: post.comments,
           author: post.profiles ? {
-            name: post.profiles.name,
+            name: post.profiles.name || 'Unknown',
             avatar_url: post.profiles.avatar_url,
             username: post.profiles.username
-          } : undefined
+          } : {
+            name: 'Unknown',
+            avatar_url: null,
+            username: null
+          }
         }));
         
         return {
@@ -89,6 +93,6 @@ export const useFetchMediaPosts = (
       }
     },
     staleTime: 60 * 1000, // 1 minute
-    keepPreviousData: true
+    placeholderData: (previousData) => previousData // This replaces keepPreviousData in newer versions
   });
 };
