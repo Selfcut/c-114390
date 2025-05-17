@@ -5,7 +5,7 @@ import { ContentItemProps, ContentItemType } from '@/components/library/content-
 import { ContentType } from '@/components/library/ContentTypeFilter';
 import { ViewMode } from '@/components/library/ViewSwitcher';
 import { useFetchKnowledgeEntries } from './useFetchKnowledgeEntries';
-import { useFetchMediaPosts } from './useFetchMediaPosts';
+import { useFetchMediaPosts } from './media/useFetchMediaPosts';
 import { useFetchQuotes } from './useFetchQuotes';
 import { useContentInteractions } from './useContentInteractions';
 import { useContentNavigation } from './useContentNavigation';
