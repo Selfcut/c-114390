@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -50,12 +49,18 @@ const ProblemDetail = () => {
             setIsLoading(true);
             
             // Get forum posts that are specifically about this problem
-            // In a real app, you might have a separate table for problem comments or a relation field
+            // Using proper join syntax with the user_id foreign key
             const { data, error } = await supabase
               .from('forum_posts')
               .select(`
-                *,
-                profiles(name, username, avatar_url)
+                id,
+                title,
+                content,
+                tags,
+                upvotes,
+                created_at,
+                user_id,
+                profiles:profiles(name, username, avatar_url)
               `)
               .like('tags', `%Problem ${id}%`)
               .order('created_at', { ascending: false });
@@ -140,11 +145,15 @@ const ProblemDetail = () => {
       }
       
       // Fetch the user profile for the newly created post
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('name, username, avatar_url')
         .eq('id', user.id)
         .single();
+        
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+      }
       
       // Add to local comments state
       const newComment: Comment = {
