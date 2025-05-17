@@ -70,6 +70,13 @@ export const CommentForm = ({
         async () => {
           const response = await supabase.from('forum_posts').insert(newPost).select();
           return { data: response.data, error: response.error };
+        },
+        undefined, // Add this as the second parameter (empty variables)
+        {
+          successMessage: {
+            title: "Success",
+            description: "Your input has been added to the discussion."
+          }
         }
       );
       
@@ -105,11 +112,6 @@ export const CommentForm = ({
         // Call the callback to update parent component
         onCommentAdded(newComment);
         setComment('');
-        
-        toast({
-          title: "Success",
-          description: "Your input has been added to the discussion."
-        });
       }
     } catch (error) {
       console.error('Error adding comment:', error);
