@@ -93,7 +93,7 @@ export const useForumData = () => {
         discussion =>
           discussion.title.toLowerCase().includes(searchLower) ||
           discussion.content.toLowerCase().includes(searchLower) ||
-          discussion.author.toLowerCase().includes(searchLower) ||
+          (typeof discussion.author === 'string' && discussion.author.toLowerCase().includes(searchLower)) ||
           (discussion.tags && discussion.tags.some(tag => tag.toLowerCase().includes(searchLower)))
       );
     }
