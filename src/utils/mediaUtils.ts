@@ -5,7 +5,7 @@ export interface MediaPostAuthor {
   username?: string | null;
 }
 
-export type MediaPostType = "youtube" | "image" | "document" | "text";
+export type MediaPostType = "youtube" | "image" | "document" | "text" | "video";
 
 export interface MediaPost {
   id: string;
@@ -23,7 +23,7 @@ export interface MediaPost {
 
 // Function to validate media type
 export const validateMediaType = (type: string): MediaPostType => {
-  const validTypes: MediaPostType[] = ["youtube", "image", "document", "text"];
+  const validTypes: MediaPostType[] = ["youtube", "image", "document", "text", "video"];
   return validTypes.includes(type as MediaPostType) 
     ? (type as MediaPostType) 
     : "text";  // Default to "text" if invalid type
