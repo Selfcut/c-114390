@@ -30,26 +30,34 @@ const MediaDetail = () => {
     queryFn: async () => {
       if (!id) throw new Error("Media ID is required");
       
-      const { data, error } = await supabase
+      // First fetch the media post
+      const { data: postData, error: postError } = await supabase
         .from("media_posts")
-        .select(`
-          *,
-          profiles:user_id(name, avatar_url, username)
-        `)
+        .select("*")
         .eq("id", id)
         .single();
         
-      if (error) throw error;
-      if (!data) throw new Error("Media post not found");
+      if (postError) throw postError;
+      if (!postData) throw new Error("Media post not found");
       
-      return {
-        ...data,
+      // Then fetch the author profile separately
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("name, avatar_url, username")
+        .eq("id", postData.user_id)
+        .maybeSingle();
+      
+      // Create the post object with author information
+      const completePost: MediaPost = {
+        ...postData,
         author: {
-          name: data.profiles?.name || "Unknown",
-          avatar_url: data.profiles?.avatar_url,
-          username: data.profiles?.username
+          name: profileData?.name || "Unknown User",
+          avatar_url: profileData?.avatar_url,
+          username: profileData?.username
         }
-      } as MediaPost;
+      };
+      
+      return completePost;
     },
     meta: {
       onError: (err: Error) => {
