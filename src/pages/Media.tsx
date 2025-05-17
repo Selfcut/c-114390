@@ -1,8 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { MediaPost, fetchMediaPosts, createMediaPost } from "@/utils/mediaUtils";
+import { MediaPost, createMediaPost } from "@/utils/mediaUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { MediaHeader } from "@/components/media/MediaHeader";
@@ -13,6 +13,21 @@ import { MediaEmptyState } from "@/components/media/MediaEmptyState";
 import { MediaErrorDisplay } from "@/components/media/MediaErrorDisplay";
 import { MediaFeed } from "@/components/media/MediaFeed";
 import { extractYoutubeId, isValidYoutubeUrl } from "@/utils/youtubeUtils";
+
+// Improved fetch function with proper typing and caching
+const fetchMediaPostsQuery = async ({ 
+  type = 'all', 
+  page = 0, 
+  sortBy = 'created_at', 
+  sortOrder = 'desc', 
+  searchTerm = '' 
+}) => {
+  const response = await fetch(`/api/media-posts?type=${type}&page=${page}&sortBy=${sortBy}&sortOrder=${sortOrder}&search=${encodeURIComponent(searchTerm)}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch media posts');
+  }
+  return response.json();
+};
 
 const Media = () => {
   const { user } = useAuth();
@@ -27,17 +42,83 @@ const Media = () => {
   // Create post states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Fetch media posts using react-query with better error handling
+  // Create a memoized query key
+  const queryKey = ['mediaPosts', mediaType, sortBy, sortOrder, searchTerm, page];
+  
+  // Fetch media posts using react-query with better caching
   const { data: postsData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['mediaPosts', mediaType, sortBy, sortOrder, searchTerm, page],
-    queryFn: () => fetchMediaPosts({
-      type: mediaType, 
-      page, 
-      sortBy, 
-      sortOrder, 
-      searchQuery: searchTerm
-    }),
-    retry: 1,
+    queryKey,
+    queryFn: async () => {
+      const supabase = (await import('@/integrations/supabase/client')).supabase;
+      
+      // Start building the query
+      let query = supabase.from('media_posts').select('*');
+      
+      // Add filters
+      if (mediaType !== 'all') {
+        query = query.eq('type', mediaType);
+      }
+      
+      // Add search
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+      }
+      
+      // Add sorting
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+      
+      // Add pagination
+      const limit = 10;
+      const offset = page * limit;
+      query = query.range(offset, offset + limit - 1);
+      
+      // Execute the query
+      const { data: posts, error } = await query;
+      
+      if (error) throw error;
+      
+      // Get user profiles separately
+      if (posts && posts.length > 0) {
+        const userIds = [...new Set(posts.map(post => post.user_id))];
+        
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .in('id', userIds);
+          
+        const profileMap = profiles?.reduce((map, profile) => {
+          map[profile.id] = profile;
+          return map;
+        }, {}) || {};
+        
+        // Attach author info to each post
+        posts.forEach(post => {
+          post.author = profileMap[post.user_id] 
+            ? {
+                name: profileMap[post.user_id].name || 'Unknown',
+                avatar_url: profileMap[post.user_id].avatar_url
+              }
+            : {
+                name: 'Unknown User',
+                avatar_url: undefined
+              };
+        });
+      }
+      
+      // Check if there's more content
+      const { count } = await supabase
+        .from('media_posts')
+        .select('*', { count: 'exact', head: true });
+        
+      const hasMore = offset + (posts?.length || 0) < (count || 0);
+      
+      return {
+        posts,
+        hasMore,
+        error: null
+      };
+    },
+    staleTime: 1000 * 60, // Cache for 1 minute
     placeholderData: (previousData) => previousData,
     meta: {
       onError: (err: any) => {
@@ -51,7 +132,7 @@ const Media = () => {
     }
   });
 
-  // Create post mutation
+  // Create post mutation with optimistic updates
   const createPostMutation = useMutation({
     mutationFn: (newPost: {
       title: string;
@@ -60,6 +141,36 @@ const Media = () => {
       type: 'image' | 'video' | 'document' | 'youtube' | 'text';
       userId: string;
     }) => createMediaPost(newPost),
+    onMutate: async (newPost) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey });
+      
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(queryKey);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(queryKey, (old: any) => {
+        const optimisticPost = {
+          ...newPost,
+          id: 'temp-id-' + new Date().getTime(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          likes: 0,
+          comments: 0,
+          author: {
+            name: user?.name || 'You',
+            avatar_url: user?.avatar
+          }
+        };
+        
+        return {
+          ...old,
+          posts: [optimisticPost, ...(old?.posts || [])]
+        };
+      });
+      
+      return { previousData };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mediaPosts'] });
       toast({
@@ -69,7 +180,10 @@ const Media = () => {
       setIsCreateDialogOpen(false);
       setPage(0);
     },
-    onError: (error: any) => {
+    onError: (error: any, _, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(queryKey, context?.previousData);
+      
       toast({
         title: "Error Creating Post",
         description: error.message || "Failed to create post",
@@ -78,8 +192,8 @@ const Media = () => {
     }
   });
 
-  // Handle post creation
-  const handleCreatePost = async (postData: any) => {
+  // Handle post creation with improved validation
+  const handleCreatePost = useCallback(async (postData: any) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -124,14 +238,14 @@ const Media = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [user, toast, createPostMutation]);
 
   // Load more posts
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     if (!isLoading) {
       setPage(prevPage => prevPage + 1);
     }
-  };
+  }, [isLoading]);
 
   return (
     <PageLayout>

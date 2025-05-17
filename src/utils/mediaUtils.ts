@@ -1,21 +1,39 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+export type MediaPostType = 'image' | 'video' | 'document' | 'youtube' | 'text';
+
+export interface MediaPostAuthor {
+  name: string;
+  avatar_url?: string;
+}
+
 export interface MediaPost {
   id: string;
   title: string;
   content?: string;
   url?: string;
-  type: 'image' | 'video' | 'document' | 'youtube' | 'text';
+  type: MediaPostType;
   user_id: string;
   created_at: string;
   updated_at: string;
   likes: number;
   comments: number;
-  author?: {
-    name: string;
-    avatar_url?: string;
-  };
+  author?: MediaPostAuthor;
+}
+
+// Raw database response type to handle type differences
+interface RawMediaPost {
+  id: string;
+  title: string;
+  content?: string;
+  url?: string;
+  type: string; // This comes as string from DB before validation
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  likes: number;
+  comments: number;
 }
 
 interface FetchMediaPostsParams {
@@ -59,7 +77,7 @@ export const fetchMediaPosts = async ({
     query = query.range(offset, offset + limit - 1);
     
     // Execute the query
-    const { data: posts, error } = await query;
+    const { data: rawPosts, error } = await query;
     
     if (error) {
       console.error("Error in fetchMediaPosts:", error);
@@ -67,6 +85,7 @@ export const fetchMediaPosts = async ({
     }
     
     // Get user profiles separately instead of using a join
+    const posts = rawPosts as RawMediaPost[];
     if (posts && posts.length > 0) {
       const userIds = [...new Set(posts.map(post => post.user_id))];
       
@@ -82,34 +101,38 @@ export const fetchMediaPosts = async ({
           return map;
         }, {});
         
-        // Attach author info to each post
-        // Cast the database posts to MediaPost with a type assertion to ensure compatibility
-        posts.forEach((post: any) => {
+        // Safely transform raw posts into MediaPost objects with author info
+        posts.forEach((post: RawMediaPost) => {
+          const validatedType = validateMediaType(post.type);
+          
+          // Add author information
           if (profileMap[post.user_id]) {
-            (post as MediaPost).author = {
+            (post as unknown as MediaPost).author = {
               name: profileMap[post.user_id].name || 'Unknown',
               avatar_url: profileMap[post.user_id].avatar_url
             };
           } else {
-            (post as MediaPost).author = {
+            (post as unknown as MediaPost).author = {
               name: 'Unknown User',
               avatar_url: undefined
             };
           }
+          
+          // Ensure type is valid
+          (post as unknown as MediaPost).type = validatedType;
         });
       }
     }
     
     // Check if there's more content
-    const { data: countData } = await supabase
+    const { count } = await supabase
       .from('media_posts')
-      .select('id', { count: 'exact', head: true });
-      
-    const count = countData?.length !== undefined ? countData.length : 0;
-    const hasMore = offset + (posts?.length || 0) < count;
+      .select('*', { count: 'exact', head: true });
+    
+    const hasMore = offset + (posts?.length || 0) < (count || 0);
     
     return {
-      posts: posts as MediaPost[],
+      posts: posts as unknown as MediaPost[],
       hasMore,
       error: null
     };
@@ -123,11 +146,19 @@ export const fetchMediaPosts = async ({
   }
 };
 
+// Helper function to validate media types
+function validateMediaType(type: string): MediaPostType {
+  const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
+  return validTypes.includes(type as MediaPostType) 
+    ? (type as MediaPostType) 
+    : 'text'; // Default to text if invalid
+}
+
 export const createMediaPost = async (newPost: {
   title: string;
   content?: string;
   url?: string;
-  type: 'image' | 'video' | 'document' | 'youtube' | 'text';
+  type: MediaPostType;
   userId: string;
 }) => {
   try {

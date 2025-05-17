@@ -1,12 +1,6 @@
 
-// Re-export the AuthProvider and useAuth from auth-context file
+// src/lib/auth/index.ts
 export { AuthProvider, useAuth } from './auth-context';
-
-// Export types
-export * from './types';
-
-// Export utility functions
-export * from './utils';
-
-// Export auth methods
-export * from './auth-methods';
+export { UserProfile, AuthContextType } from './types';
+export { fetchUserProfile, updateUserProfile } from './utils';
+export { signIn, signOut, signUp } from './auth-methods';
