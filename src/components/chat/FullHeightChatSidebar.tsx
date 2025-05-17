@@ -61,8 +61,8 @@ export const FullHeightChatSidebar = () => {
             userId: newMessage.user_id || 'anonymous',
             senderName: newMessage.sender_name || 'Anonymous',
             isCurrentUser: newMessage.user_id === user?.id,
-            isAdmin: newMessage.isAdmin || false,
-            effectType: newMessage.effectType
+            isAdmin: newMessage.is_admin || false, // Corrected: using is_admin from database
+            effectType: newMessage.effect_type // Corrected: using effect_type from database
           };
           
           setMessages(prev => [...prev, chatMessage]);
@@ -143,8 +143,8 @@ export const FullHeightChatSidebar = () => {
         userId: msg.user_id || 'anonymous',
         senderName: msg.sender_name || 'Anonymous',
         isCurrentUser: msg.user_id === user?.id,
-        isAdmin: msg.isAdmin,
-        effectType: msg.effectType
+        isAdmin: msg.is_admin || false, // Corrected: using is_admin from database
+        effectType: msg.effect_type // Corrected: using effect_type from database
       })) || [];
       
       setMessages(formattedMessages);
@@ -467,3 +467,4 @@ export const FullHeightChatSidebar = () => {
     </>
   );
 };
+
