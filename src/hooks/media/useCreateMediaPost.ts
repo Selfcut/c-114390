@@ -3,6 +3,20 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { MediaPost } from '@/utils/mediaUtils';
+
+interface CreatePostData {
+  title: string;
+  content?: string;
+  file?: File;
+  type: string;
+  tags?: string[];
+}
+
+interface CreatePostResponse {
+  id: string;
+  [key: string]: any;
+}
 
 export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => void) => {
   const { toast } = useToast();
@@ -15,7 +29,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
       url?: string; 
       type: string;
       tags?: string[];
-    }) => {
+    }): Promise<CreatePostResponse> => {
       if (!userId) {
         throw new Error('User must be authenticated to create a post');
       }
@@ -52,13 +66,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
   });
 
   // Helper function to handle file uploads and create posts
-  const handleCreatePost = async (data: {
-    title: string;
-    content?: string;
-    file?: File;
-    type: string;
-    tags?: string[];
-  }) => {
+  const handleCreatePost = async (data: CreatePostData): Promise<CreatePostResponse | null> => {
     try {
       let url;
       
@@ -98,7 +106,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
       }
       
       // Create the post with the file URL if applicable
-      await createPostMutation.mutateAsync({
+      const response = await createPostMutation.mutateAsync({
         title: data.title,
         content: data.content,
         url,
@@ -106,6 +114,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
         tags: data.tags
       });
       
+      return response;
     } catch (error: any) {
       console.error('Error in handleCreatePost:', error);
       toast({
@@ -113,6 +122,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
         description: error.message || 'Failed to create post',
         variant: 'destructive',
       });
+      return null;
     } finally {
       setUploadProgress(0);
     }

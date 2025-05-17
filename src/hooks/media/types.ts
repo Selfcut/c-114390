@@ -15,6 +15,19 @@ export interface MediaQueryResult {
   error: string | null;
 }
 
+export interface CreatePostData {
+  title: string;
+  content?: string;
+  file?: File;
+  type: string;
+  tags?: string[];
+}
+
+export interface CreatePostResponse {
+  id: string;
+  [key: string]: any;
+}
+
 export interface UseMediaPostsReturn {
   postsData: MediaQueryResult | undefined;
   isLoading: boolean;
@@ -22,9 +35,9 @@ export interface UseMediaPostsReturn {
   error: Error | null;
   refetch: () => Promise<any>;
   loadMore: () => void;
-  resetPage: () => void; // Ensuring resetPage is properly defined in the interface
+  resetPage: () => void;
   page: number;
   createPostMutation: any;
-  handleCreatePost: (data: any) => Promise<any>;
+  handleCreatePost: (data: CreatePostData) => Promise<CreatePostResponse | null>;
   uploadProgress: number;
 }
