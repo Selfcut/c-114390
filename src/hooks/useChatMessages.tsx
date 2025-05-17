@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { ChatMessage } from "@/components/chat/types";
 import { useConversations } from "./chat/useConversations";
@@ -86,7 +85,7 @@ export const useChatMessages = () => {
       
       if (data && data.length > 0) {
         // Convert DB messages to the ChatMessage format
-        const formattedMessages: ChatMessage[] = data.map(msg => ({
+        const formattedMessages: ChatMessage[] = data.map((msg: DbChatMessage) => ({
           id: msg.id,
           conversationId: msg.conversation_id,
           content: msg.content,

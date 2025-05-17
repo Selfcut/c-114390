@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage } from "../types";
-import { DbChatMessage } from "./useChatMessages";
+import { DbChatMessage } from "@/hooks/useChatMessages";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
