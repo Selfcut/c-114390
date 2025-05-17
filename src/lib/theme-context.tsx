@@ -43,10 +43,31 @@ export function ThemeProvider({
         : "light";
 
       root.classList.add(systemTheme);
+      console.log("Applied system theme:", systemTheme);
       return;
     }
 
     root.classList.add(theme);
+    console.log("Applied theme:", theme);
+  }, [theme]);
+
+  // Listen for changes to the prefers-color-scheme media query
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const handleChange = () => {
+      if (theme === 'system') {
+        const root = window.document.documentElement;
+        root.classList.remove("light", "dark");
+        root.classList.add(
+          mediaQuery.matches ? "dark" : "light"
+        );
+        console.log("System theme changed to:", mediaQuery.matches ? "dark" : "light");
+      }
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   const value = {
@@ -54,11 +75,12 @@ export function ThemeProvider({
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
+      console.log("Theme set to:", theme);
     },
   };
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext.Provider value={value} {...props}>
       {children}
     </ThemeProviderContext.Provider>
   );
@@ -67,8 +89,9 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
-  if (context === undefined)
+  if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
+  }
 
   return context;
 };

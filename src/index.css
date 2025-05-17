@@ -21,7 +21,7 @@
   border-color: hsl(var(--sidebar-border));
 }
 
-/* Fix for white backgrounds in various components */
+/* Fix for white borders in various components */
 .dark .bg-background {
   background-color: hsl(var(--background)) !important;
 }
@@ -42,6 +42,13 @@
 .dark .border-gray-100, 
 .dark .border-gray-200, 
 .dark .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .border-l,
+.dark .border-r,
+.dark .border-t,
+.dark .border-b {
   border-color: hsl(var(--border)) !important;
 }
 
@@ -79,4 +86,9 @@ article a:not(.button):not([role="button"]):hover,
 p a:not(.button):not([role="button"]):hover,
 .text-link:hover {
   text-decoration: underline;
+}
+
+:root {
+  --chat-sidebar-width: 320px;
+  --content-margin-right: 0;
 }

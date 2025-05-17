@@ -1,17 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { ChevronLeft, MessageSquare } from 'lucide-react';
+import { useChatSidebarToggle } from '@/hooks/useChatSidebarToggle';
 
 export const FullHeightChatSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, toggleSidebar } = useChatSidebarToggle();
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <>
-      {/* Collapsed button that's always visible */}
+      {/* Collapsed button that's always visible when chat is closed */}
       {!isOpen && (
         <Button
-          onClick={() => setIsOpen(true)}
+          onClick={toggleSidebar}
           className="fixed right-4 bottom-4 h-12 w-12 rounded-full shadow-md z-40 bg-primary hover:bg-primary/90"
           aria-label="Open chat"
         >
@@ -21,36 +23,55 @@ export const FullHeightChatSidebar = () => {
       
       {/* Expanded sidebar */}
       <div 
-        className={`fixed top-0 right-0 h-screen bg-background border-l shadow-lg transition-all duration-300 z-40 ${
-          isOpen ? 'translate-x-0 w-80' : 'translate-x-full w-0'
+        className={`fixed top-0 right-0 h-screen bg-background border-l border-border shadow-lg transition-all duration-300 z-40 ${
+          isOpen ? 'translate-x-0 w-[var(--chat-sidebar-width)]' : 'translate-x-full w-0'
         }`}
       >
         <div className="h-full flex flex-col">
-          <div className="p-4 border-b flex items-center justify-between">
-            <h3 className="font-semibold">Chat</h3>
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <h3 className="font-semibold">Community Chat</h3>
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => setIsOpen(false)}
+              onClick={toggleSidebar}
               aria-label="Close chat"
             >
-              <ChevronRight size={18} />
+              <ChevronLeft size={18} />
             </Button>
           </div>
           
-          {/* Chat content would go here */}
           <div className="flex-1 overflow-auto p-4">
-            <div className="space-y-4">
-              <div className="flex justify-center py-8">
-                <div className="text-center">
-                  <div className="h-12 w-12 bg-primary/10 text-primary flex items-center justify-center rounded-full mx-auto mb-4">
-                    <MessageSquare size={24} />
+            <div className="flex flex-col h-full">
+              <div className="flex-1 pb-4">
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center h-40">
+                    <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p className="mt-2 text-sm text-muted-foreground">Loading chat...</p>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">Chat Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground max-w-[200px] mx-auto">
-                    Real-time messaging will be available in a future update.
-                  </p>
-                </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="h-14 w-14 bg-primary/10 text-primary flex items-center justify-center rounded-full mb-4">
+                      <MessageSquare size={28} />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">Live Chat</h3>
+                    <p className="text-sm text-muted-foreground max-w-[240px] mx-auto mb-6">
+                      Connect with other community members in real-time discussions.
+                    </p>
+                    <Button 
+                      onClick={() => setIsLoading(true)}
+                      className="w-full mb-2"
+                    >
+                      Start a New Conversation
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setIsLoading(true)}
+                      className="w-full"
+                    >
+                      Browse Active Chats
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

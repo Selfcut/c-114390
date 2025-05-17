@@ -7,7 +7,10 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    // For debugging purposes
+    console.log("Theme toggled to:", newTheme);
   };
 
   return (
@@ -15,7 +18,7 @@ export function ThemeToggle() {
       variant="ghost" 
       size="icon" 
       onClick={toggleTheme}
-      aria-label="Toggle theme" 
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} 
       className="w-9 h-9"
     >
       <div className="relative w-full h-full flex items-center justify-center">

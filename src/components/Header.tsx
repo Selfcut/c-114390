@@ -2,10 +2,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Bell, User, Settings, LogOut, Sun, Moon, Search
+  Bell, User, Settings, LogOut, Search, HelpCircle
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { useTheme } from '@/lib/theme-context';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,14 +20,9 @@ import {
 
 const Header = () => {
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
 
   return (
-    <header className="h-16 border-b bg-background sticky top-0 z-10">
+    <header className="h-16 border-b border-border bg-background sticky top-0 z-10">
       <div className="container h-full mx-auto px-4 flex items-center justify-between">
         <div className="relative w-64">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
@@ -38,14 +33,7 @@ const Header = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </Button>
+          <ThemeToggle />
           
           <Button
             variant="ghost"
@@ -54,6 +42,22 @@ const Header = () => {
           >
             <Bell size={20} />
           </Button>
+          
+          {/* Help Button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Help">
+                <HelpCircle size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Getting Started</DropdownMenuItem>
+              <DropdownMenuItem>Documentation</DropdownMenuItem>
+              <DropdownMenuItem>FAQ</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Contact Support</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {user ? (
             <DropdownMenu>

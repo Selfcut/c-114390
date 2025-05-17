@@ -21,7 +21,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       <CollapsibleSidebar />
       
       {/* Main content */}
-      <div className="flex-1 relative ml-[var(--sidebar-width)]">
+      <div className="flex-1 relative ml-[var(--sidebar-width)] transition-[margin-right] duration-300" style={{ marginRight: 'var(--content-margin-right, 0)' }}>
         {!hideHeader && <Header />}
         <div className="min-h-[calc(100vh-4rem)] p-4">
           {children}

@@ -2,7 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/ModeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { HelpCircle, Crown } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ export const HeaderActions = () => {
   return (
     <div className="flex items-center gap-2">
       {/* Theme Toggle */}
-      <ModeToggle />
+      <ThemeToggle />
       
       {/* Notifications - Only show for logged in users */}
       {user && <NotificationsDropdown />}
