@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router-dom';
+import { PageLayout } from "@/components/layouts/PageLayout";
 
 interface DiscussionTopic {
   id: string;
@@ -294,166 +295,168 @@ const Forum = () => {
   };
   
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <MessageSquare size={28} />
-          Forum
-        </h1>
-        <Button 
-          className="flex items-center gap-2"
-          onClick={handleCreateDiscussion}
-        >
-          <PenSquare size={18} />
-          <span>New Discussion</span>
-        </Button>
-      </div>
-      
-      <DiscussionFilters 
-        onSortChange={setSortOption}
-        onFilterChange={setActiveTag}
-        onSearchChange={setSearchTerm}
-        availableTags={allTags}
-      />
-      
-      {activeTag && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active Filter:</span>
-          <Badge className="flex items-center gap-1">
-            {activeTag}
-            <button
-              className="ml-2 hover:text-foreground"
-              onClick={() => setActiveTag(null)}
-            >
-              ×
-            </button>
-          </Badge>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 gap-4">
-        {isLoading ? (
-          // Skeleton UI for loading state
-          Array.from({ length: 5 }).map((_, index) => (
-            <Card key={index} className="bg-card rounded-lg p-5">
-              <div className="flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6 mb-3" />
-                  <div className="flex gap-2 mb-3">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-6 w-24 rounded-full" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-5 w-32" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))
-        ) : filteredDiscussions.length > 0 ? (
-          filteredDiscussions.map((discussion) => (
-            <DiscussionTopicCard 
-              key={discussion.id} 
-              discussion={discussion} 
-              onClick={() => handleDiscussionClick(discussion)}
-            />
-          ))
-        ) : (
-          <Card className="bg-card rounded-lg p-8 text-center">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <div className="rounded-full bg-muted p-4">
-                  <MessageSquare size={32} className="text-muted-foreground" />
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-4">No discussions found matching your criteria.</p>
-              <Button 
-                className="mt-4"
-                onClick={() => {
-                  setSearchTerm('');
-                  setActiveTag(null);
-                }}
-              >
-                Reset Filters
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-      
-      {!isAuthenticated && (
-        <div className="mt-8 border border-primary/20 bg-primary/5 rounded-lg p-6 text-center">
-          <h3 className="text-lg font-medium mb-2">Join the conversation</h3>
-          <p className="mb-4 text-muted-foreground">Sign in to create discussions and participate in the community.</p>
-          <Button asChild>
-            <a href="/auth">Sign In</a>
+    <PageLayout>
+      <div className="container mx-auto py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <MessageSquare size={28} />
+            Forum
+          </h1>
+          <Button 
+            className="flex items-center gap-2"
+            onClick={handleCreateDiscussion}
+          >
+            <PenSquare size={18} />
+            <span>New Discussion</span>
           </Button>
         </div>
-      )}
-
-      {/* Create Discussion Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Create New Discussion</DialogTitle>
-            <DialogDescription>
-              Share your thoughts with the community. Be respectful and follow our community guidelines.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[70vh]">
-            <div className="space-y-4 p-1">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input 
-                  id="title" 
-                  placeholder="Add a descriptive title" 
-                  value={newDiscussion.title}
-                  onChange={(e) => setNewDiscussion({...newDiscussion, title: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
-                <Textarea 
-                  id="content" 
-                  placeholder="Share your thoughts, questions, or ideas..."
-                  className="min-h-[200px]"
-                  value={newDiscussion.content}
-                  onChange={(e) => setNewDiscussion({...newDiscussion, content: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tags">Tags (comma separated)</Label>
-                <Input 
-                  id="tags" 
-                  placeholder="philosophy, consciousness, etc."
-                  value={newDiscussion.tags}
-                  onChange={(e) => setNewDiscussion({...newDiscussion, tags: e.target.value})}
-                />
-              </div>
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={handleSubmitDiscussion}
-              disabled={isSubmitting || !newDiscussion.title || !newDiscussion.content}
-              className="flex items-center gap-2"
-            >
-              {isSubmitting ? "Posting..." : (
-                <>
-                  <Send size={16} />
-                  <span>Post Discussion</span>
-                </>
-              )}
+        
+        <DiscussionFilters 
+          onSortChange={setSortOption}
+          onFilterChange={setActiveTag}
+          onSearchChange={setSearchTerm}
+          availableTags={allTags}
+        />
+        
+        {activeTag && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Active Filter:</span>
+            <Badge className="flex items-center gap-1">
+              {activeTag}
+              <button
+                className="ml-2 hover:text-foreground"
+                onClick={() => setActiveTag(null)}
+              >
+                ×
+              </button>
+            </Badge>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 gap-4">
+          {isLoading ? (
+            // Skeleton UI for loading state
+            Array.from({ length: 5 }).map((_, index) => (
+              <Card key={index} className="bg-card rounded-lg p-5">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-5/6 mb-3" />
+                    <div className="flex gap-2 mb-3">
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-5 w-24" />
+                      <Skeleton className="h-5 w-32" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : filteredDiscussions.length > 0 ? (
+            filteredDiscussions.map((discussion) => (
+              <DiscussionTopicCard 
+                key={discussion.id} 
+                discussion={discussion} 
+                onClick={() => handleDiscussionClick(discussion)}
+              />
+            ))
+          ) : (
+            <Card className="bg-card rounded-lg p-8 text-center">
+              <CardContent className="pt-6">
+                <div className="flex justify-center mb-4">
+                  <div className="rounded-full bg-muted p-4">
+                    <MessageSquare size={32} className="text-muted-foreground" />
+                  </div>
+                </div>
+                <p className="text-muted-foreground mb-4">No discussions found matching your criteria.</p>
+                <Button 
+                  className="mt-4"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setActiveTag(null);
+                  }}
+                >
+                  Reset Filters
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+        
+        {!isAuthenticated && (
+          <div className="mt-8 border border-primary/20 bg-primary/5 rounded-lg p-6 text-center">
+            <h3 className="text-lg font-medium mb-2">Join the conversation</h3>
+            <p className="mb-4 text-muted-foreground">Sign in to create discussions and participate in the community.</p>
+            <Button asChild>
+              <a href="/auth">Sign In</a>
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </div>
+        )}
+        
+        {/* Create Discussion Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Create New Discussion</DialogTitle>
+              <DialogDescription>
+                Share your thoughts with the community. Be respectful and follow our community guidelines.
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh]">
+              <div className="space-y-4 p-1">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input 
+                    id="title" 
+                    placeholder="Add a descriptive title" 
+                    value={newDiscussion.title}
+                    onChange={(e) => setNewDiscussion({...newDiscussion, title: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="content">Content</Label>
+                  <Textarea 
+                    id="content" 
+                    placeholder="Share your thoughts, questions, or ideas..."
+                    className="min-h-[200px]"
+                    value={newDiscussion.content}
+                    onChange={(e) => setNewDiscussion({...newDiscussion, content: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags (comma separated)</Label>
+                  <Input 
+                    id="tags" 
+                    placeholder="philosophy, consciousness, etc."
+                    value={newDiscussion.tags}
+                    onChange={(e) => setNewDiscussion({...newDiscussion, tags: e.target.value})}
+                  />
+                </div>
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+              <Button 
+                onClick={handleSubmitDiscussion}
+                disabled={isSubmitting || !newDiscussion.title || !newDiscussion.content}
+                className="flex items-center gap-2"
+              >
+                {isSubmitting ? "Posting..." : (
+                  <>
+                    <Send size={16} />
+                    <span>Post Discussion</span>
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageLayout>
   );
 };
 

@@ -10,7 +10,7 @@ import { fetchWikiArticles } from "@/utils/wikiUtils";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus } from "lucide-react";
 import { CategorySidebar } from "@/components/wiki/CategorySidebar";
-import { WikiHeader } from "@/components/wiki/WikiHeader";
+import { PageLayout } from "@/components/layouts/PageLayout";
 
 const Wiki = () => {
   const { toast } = useToast();
@@ -84,40 +84,53 @@ const Wiki = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Using WikiHeader component for consistent header */}
-      <WikiHeader onCreateArticle={handleCreateArticle} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar with categories */}
-        <div className="lg:col-span-1">
-          <CategorySidebar 
-            selectedCategory={selectedCategory} 
-            setSelectedCategory={setSelectedCategory} 
-          />
+    <PageLayout>
+      <div className="container mx-auto py-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <BookOpen size={28} className="text-primary" />
+            Knowledge Wiki
+          </h1>
+          <Button 
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto"
+            onClick={handleCreateArticle}
+          >
+            <Plus size={18} />
+            <span>New Article</span>
+          </Button>
         </div>
 
-        {/* Main content */}
-        <div className="lg:col-span-3">
-          <WikiSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar with categories */}
+          <div className="lg:col-span-1">
+            <CategorySidebar 
+              selectedCategory={selectedCategory} 
+              setSelectedCategory={setSelectedCategory} 
+            />
+          </div>
 
-          <ArticleList 
-            filteredArticles={filteredArticles}
-            getCategoryIcon={getCategoryIcon}
-            isLoading={isLoading}
-            loadMoreArticles={loadMoreArticles}
-            resetFilters={resetFilters}
-          />
+          {/* Main content */}
+          <div className="lg:col-span-3">
+            <WikiSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+
+            <ArticleList 
+              filteredArticles={filteredArticles}
+              getCategoryIcon={getCategoryIcon}
+              isLoading={isLoading}
+              loadMoreArticles={loadMoreArticles}
+              resetFilters={resetFilters}
+            />
+          </div>
         </div>
+
+        {/* Create Article Dialog */}
+        <CreateArticleDialog 
+          isOpen={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSuccess={handleArticleSubmit}
+        />
       </div>
-
-      {/* Create Article Dialog */}
-      <CreateArticleDialog 
-        isOpen={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSuccess={handleArticleSubmit}
-      />
-    </div>
+    </PageLayout>
   );
 };
 

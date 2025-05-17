@@ -1,98 +1,109 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
-import { WikiArticle } from "./types";
-import { createWikiArticle } from "@/utils/wikiUtils";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth";
-import { categories } from "./CategorySidebar";
+
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth';
+import { createWikiArticle } from '@/utils/wikiUtils';
+import { WikiArticle } from './types';
+import { Loader2 } from 'lucide-react';
 
 interface CreateArticleDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newArticle: WikiArticle) => void;
+  onSuccess: (article: WikiArticle) => void;
 }
 
-export const CreateArticleDialog = ({ 
-  isOpen, 
+export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
+  isOpen,
   onOpenChange,
   onSuccess
-}: CreateArticleDialogProps) => {
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
-  const [category, setCategory] = useState("");
-
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setContent("");
-    setCategory("");
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    content: '',
+    category: 'Philosophy',
+    tagsInput: '',
+    imageUrl: ''
+  });
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, category: value }));
+  };
+  
+  const handleSubmit = async () => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "You must be logged in to create articles",
+        title: "Authentication Required",
+        description: "You must be signed in to create an article",
         variant: "destructive"
       });
       return;
     }
-
-    if (!title || !description || !content || !category) {
+    
+    if (!formData.title || !formData.description || !formData.content || !formData.category) {
       toast({
-        title: "Required Fields Missing",
+        title: "Missing Fields",
         description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
     }
-
+    
+    setIsSubmitting(true);
+    
     try {
-      setIsSubmitting(true);
+      // Process tags
+      const tags = formData.tagsInput
+        ? formData.tagsInput.split(',').map(tag => tag.trim().toLowerCase())
+        : [];
       
+      // Create article
       const { article, error } = await createWikiArticle({
-        title,
-        description,
-        content,
-        category,
-        tags: []
-      }, user.id);
+        title: formData.title,
+        description: formData.description,
+        content: formData.content,
+        category: formData.category,
+        tags,
+        userId: user.id,
+        imageUrl: formData.imageUrl || undefined
+      });
       
-      if (error) throw new Error(error.toString());
+      if (error) throw error;
       
       if (article) {
         toast({
           title: "Article Created",
-          description: "Your wiki article has been published successfully!",
+          description: "Your article has been published successfully",
         });
         
-        if (onSuccess) {
-          onSuccess(article);
-        }
+        // Convert the returned article to the expected format
+        const newArticle: WikiArticle = {
+          ...article,
+          created_at: new Date(article.created_at),
+          last_updated: new Date(article.last_updated),
+          author_name: user.name || user.username || 'Anonymous'
+        };
         
-        resetForm();
+        onSuccess(newArticle);
         onOpenChange(false);
+        resetForm();
       }
     } catch (err: any) {
-      console.error("Error creating article:", err);
+      console.error('Error creating article:', err);
       toast({
         title: "Error",
         description: err.message || "Failed to create article",
@@ -102,51 +113,90 @@ export const CreateArticleDialog = ({
       setIsSubmitting(false);
     }
   };
-
+  
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      content: '',
+      category: 'Philosophy',
+      tagsInput: '',
+      imageUrl: ''
+    });
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Create New Wiki Article</DialogTitle>
+          <DialogTitle>Create New Article</DialogTitle>
+          <DialogDescription>
+            Share your knowledge with the community. Fill in the details below to create a new article.
+          </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
+              name="title"
               placeholder="Enter article title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
+              value={formData.title}
+              onChange={handleChange}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="description">Description *</Label>
             <Textarea
               id="description"
-              placeholder="Brief description of the article"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
+              name="description"
+              placeholder="A brief description of the article (1-2 sentences)"
+              value={formData.description}
+              onChange={handleChange}
               rows={2}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="category">Category *</Label>
+            <Select value={formData.category} onValueChange={handleSelectChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Philosophy">Philosophy</SelectItem>
+                <SelectItem value="Science">Science</SelectItem>
+                <SelectItem value="History">History</SelectItem>
+                <SelectItem value="Art">Art</SelectItem>
+                <SelectItem value="Education">Education</SelectItem>
+                <SelectItem value="Mathematics">Mathematics</SelectItem>
+                <SelectItem value="Literature">Literature</SelectItem>
+                <SelectItem value="Ideas">Ideas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="tagsInput">Tags (comma-separated)</Label>
+            <Input
+              id="tagsInput"
+              name="tagsInput"
+              placeholder="philosophy, knowledge, etc."
+              value={formData.tagsInput}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Cover Image URL (optional)</Label>
+            <Input
+              id="imageUrl"
+              name="imageUrl"
+              placeholder="https://example.com/image.jpg"
+              value={formData.imageUrl}
+              onChange={handleChange}
             />
           </div>
           
@@ -154,33 +204,43 @@ export const CreateArticleDialog = ({
             <Label htmlFor="content">Content *</Label>
             <Textarea
               id="content"
-              placeholder="The main content of your article. You can use Markdown formatting."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
+              name="content"
+              placeholder="Write your article content here. Markdown formatting is supported."
+              value={formData.content}
+              onChange={handleChange}
               rows={10}
+              className="font-mono"
             />
+            <p className="text-xs text-muted-foreground">
+              Use markdown formatting: # for headings, ** for bold, * for italic, - for lists.
+            </p>
           </div>
-          
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="flex items-center gap-2"
-            >
-              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              {isSubmitting ? "Creating..." : "Create Article"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              resetForm();
+              onOpenChange(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting || !formData.title || !formData.description || !formData.content}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              'Create Article'
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
