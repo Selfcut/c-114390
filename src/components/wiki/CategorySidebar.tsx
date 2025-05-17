@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BookOpen, GraduationCap, Atom, Stethoscope, Building2, Globe, Users, Rocket, Brain, Laptop, PaletteSwatch, Leaf } from 'lucide-react';
+import { BookOpen, GraduationCap, Atom, Stethoscope, Building2, Globe, Users, Rocket, Brain, Laptop, Palette, Leaf } from 'lucide-react';
 
 export const categories = [
   { id: "Philosophy", name: "Philosophy", icon: Brain, count: 12 },
@@ -13,7 +13,7 @@ export const categories = [
   { id: "Geography", name: "Geography", icon: Globe, count: 6 },
   { id: "Society", name: "Society", icon: Users, count: 14 },
   { id: "Space", name: "Space", icon: Rocket, count: 9 },
-  { id: "Arts", name: "Arts", icon: PaletteSwatch, count: 11 },
+  { id: "Arts", name: "Arts", icon: Palette, count: 11 },
   { id: "Environment", name: "Environment", icon: Leaf, count: 7 }
 ];
 
