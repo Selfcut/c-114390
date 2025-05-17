@@ -187,7 +187,7 @@ export const FullHeightChatSidebar = () => {
           />
         </div>
         
-        {/* Add styles for our shake animation using standard React style approach */}
+        {/* Add styles for our shake animation */}
         <style>
           {`
           @keyframes shake {

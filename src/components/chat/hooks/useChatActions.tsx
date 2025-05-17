@@ -81,9 +81,25 @@ export const useChatActions = () => {
   };
 
   // Edit message
-  const handleEditMessage = (messageId: string, currentContent: string) => {
-    setEditingMessageId(messageId);
-    setInputMessage(currentContent);
+  const handleEditMessage = async (messageId: string) => {
+    // First get the content from the message
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('content')
+        .eq('id', messageId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setEditingMessageId(messageId);
+        setInputMessage(data.content);
+      }
+    } catch (error) {
+      console.error('Error fetching message content:', error);
+      toast.error('Failed to edit message');
+    }
   };
 
   // Delete message
@@ -105,12 +121,28 @@ export const useChatActions = () => {
   };
 
   // Reply to message
-  const handleReplyToMessage = (messageId: string, content: string, senderName: string) => {
-    setReplyingToMessage({
-      id: messageId,
-      content,
-      senderName
-    });
+  const handleReplyToMessage = async (messageId: string) => {
+    // Fetch the message details to get content and sender name
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('content, sender_name')
+        .eq('id', messageId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setReplyingToMessage({
+          id: messageId,
+          content: data.content,
+          senderName: data.sender_name || 'Unknown'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching message for reply:', error);
+      toast.error('Failed to reply to message');
+    }
   };
 
   // Cancel edit
