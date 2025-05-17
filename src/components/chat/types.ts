@@ -5,79 +5,48 @@ export interface ChatMessage {
   senderName: string;
   userId: string;
   createdAt: string;
-  conversationId: string;
-  isCurrentUser?: boolean;
-  reactions?: Array<{
-    emoji: string;
-    count: number;
-    users: string[];
-  }>;
+  conversationId?: string;
   isEdited?: boolean;
+  isCurrentUser?: boolean;
+  isSystem?: boolean;
+  isAdmin?: boolean;
+  effectType?: string;
+  mentions?: string[];
+  reactions?: Reaction[];
   replyTo?: {
     id: string;
     content: string;
-    sender: { name: string };
-  } | null;
-  mentions?: string[];
-  attachments?: Array<{
-    id: string;
-    type: "image" | "file" | "audio" | "video" | "gif";
-    url: string;
-    name: string;
-    size?: number;
-    dimensions?: { width: number; height: number };
-  }>;
-  sender?: {
-    id: string;
-    name: string;
-    username?: string;
-    avatar?: string;
-    status?: string;
+    sender: {
+      name: string;
+    };
   };
+  attachments?: {
+    id?: string;
+    type: 'image' | 'file' | 'gif' | 'audio' | 'video';
+    url: string;
+    name?: string;
+    size?: number;
+  }[];
 }
 
-export interface Conversation {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  unread: number;
-  updatedAt?: string;
-  isGlobal?: boolean;
-  isGroup?: boolean;
-  members?: Array<{id: string; name: string; avatar: string;}>;
+export interface Reaction {
+  emoji: string;
+  count: number;
+  users: string[];
 }
 
 export interface ConversationItem {
   id: string;
   name: string;
   lastMessage?: string;
-  updated_at?: string;
-  created_at?: string;
-  is_group?: boolean;
-  is_global?: boolean;
-}
-
-export interface ChatInterfaceProps {
-  initialConversations?: ConversationItem[];
-  chatType?: "direct" | "global" | "group";
-  recipientId?: string;
-  recipientName?: string;
-  recipientAvatar?: string;
-  recipientStatus?: string;
-  groupId?: string;
-  groupName?: string;
-  groupAvatar?: string;
-  groupMembers?: Array<{
+  updatedAt: string;
+  isGroup?: boolean;
+  isGlobal?: boolean;
+  participants?: {
     id: string;
     name: string;
     avatar?: string;
-    status?: string;
-  }>;
+  }[];
 }
 
-export interface MessageReaction {
-  emoji: string;
-  count: number;
-  users: string[];
-}
+export type ChatInputMode = 'normal' | 'editing' | 'replying';

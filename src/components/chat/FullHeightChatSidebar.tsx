@@ -1,19 +1,18 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, X, Smile, PaperclipIcon, SendIcon } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { Avatar } from "@/components/ui/avatar";
-import { AvatarImage } from "@/components/ui/avatar";
-import { AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatSidebarHeader } from "./ChatSidebarHeader";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatInputArea } from "./ChatInputArea";
 import { ChatMessage } from "./types";
 import { toast } from "sonner";
+import { scheduleAutomatedMessages, getRandomAutomatedMessage } from "./AutomatedMessages";
+import confetti from 'canvas-confetti';
 
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
@@ -28,11 +27,21 @@ export const FullHeightChatSidebar = () => {
     senderName: string;
   } | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false); // For demo purposes. In real app, check user roles
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Check if user is admin
+  useEffect(() => {
+    // For demo purposes, we'll consider any user with email containing "admin" as an admin
+    // In a real application, this would be a proper role check
+    if (user?.email?.includes('admin')) {
+      setIsAdmin(true);
+    }
+  }, [user]);
 
   // Set up real-time subscription for chat messages
   useEffect(() => {
@@ -51,10 +60,18 @@ export const FullHeightChatSidebar = () => {
             conversationId: newMessage.conversation_id,
             userId: newMessage.user_id || 'anonymous',
             senderName: newMessage.sender_name || 'Anonymous',
-            isCurrentUser: newMessage.user_id === user?.id
+            isCurrentUser: newMessage.user_id === user?.id,
+            isAdmin: newMessage.is_admin || false,
+            effectType: newMessage.effect_type
           };
           
           setMessages(prev => [...prev, chatMessage]);
+          
+          // If there's a special effect, handle it
+          if (chatMessage.effectType) {
+            handleSpecialEffect(chatMessage.effectType);
+          }
+          
           setTimeout(scrollToBottom, 100);
         }
       )
@@ -64,6 +81,39 @@ export const FullHeightChatSidebar = () => {
       supabase.removeChannel(channel);
     };
   }, [isOpen, user]);
+
+  // Schedule automated messages
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    // Add an initial message when chat is first opened
+    if (messages.length === 0) {
+      const welcomeMessage: ChatMessage = {
+        id: `welcome-${Date.now()}`,
+        content: "Welcome to the chat! This is a space to discuss consciousness, philosophy, and STEM topics. I'll occasionally share interesting facts and insights. Feel free to join the conversation!",
+        senderName: "Neural Network",
+        userId: "system",
+        createdAt: new Date().toISOString(),
+        isSystem: true
+      };
+      
+      setMessages([welcomeMessage]);
+      
+      // Add a first automated message after 10 seconds
+      setTimeout(() => {
+        const firstAutomatedMessage = getRandomAutomatedMessage();
+        setMessages(prev => [...prev, firstAutomatedMessage]);
+      }, 10000);
+    }
+    
+    // Schedule recurring automated messages
+    const cleanup = scheduleAutomatedMessages((msg) => {
+      setMessages(prev => [...prev, msg]);
+      setTimeout(scrollToBottom, 100);
+    }, 60000, 180000); // Between 1-3 minutes
+    
+    return cleanup;
+  }, [isOpen, messages.length]);
 
   // Fetch messages when the sidebar is opened
   useEffect(() => {
@@ -92,7 +142,9 @@ export const FullHeightChatSidebar = () => {
         conversationId: msg.conversation_id || 'global',
         userId: msg.user_id || 'anonymous',
         senderName: msg.sender_name || 'Anonymous',
-        isCurrentUser: msg.user_id === user?.id
+        isCurrentUser: msg.user_id === user?.id,
+        isAdmin: msg.is_admin || false,
+        effectType: msg.effect_type
       })) || [];
       
       setMessages(formattedMessages);
@@ -102,6 +154,29 @@ export const FullHeightChatSidebar = () => {
       toast.error('Failed to load messages');
     } finally {
       setIsLoadingMessages(false);
+    }
+  };
+
+  // Handle special effects for admin messages
+  const handleSpecialEffect = (effectType: string) => {
+    switch (effectType) {
+      case 'confetti':
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+        break;
+      case 'shake':
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+          chatContainer.classList.add('shake-animation');
+          setTimeout(() => {
+            chatContainer.classList.remove('shake-animation');
+          }, 1000);
+        }
+        break;
+      // Additional effects could be implemented here
     }
   };
 
@@ -115,7 +190,8 @@ export const FullHeightChatSidebar = () => {
       conversationId: 'global', // For simplicity, using a single global conversation
       userId: user?.id || 'anonymous',
       senderName: user?.name || user?.email?.split('@')[0] || 'Anonymous',
-      isCurrentUser: true
+      isCurrentUser: true,
+      isAdmin: isAdmin
     };
     
     // If replying to another message
@@ -140,6 +216,7 @@ export const FullHeightChatSidebar = () => {
           user_id: user?.id,
           sender_name: user?.name || user?.email?.split('@')[0] || 'Anonymous',
           conversation_id: 'global', // For simplicity, using a single global conversation
+          is_admin: isAdmin,
           // Include reply info if applicable
           ...(replyingToMessage ? { 
             reply_to: replyingToMessage.id 
@@ -151,6 +228,40 @@ export const FullHeightChatSidebar = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message');
+    }
+  };
+
+  const handleAdminEffectSelect = async (effectType: string, content?: string) => {
+    if (!isAdmin) return;
+    
+    const messageContent = content || inputMessage;
+    if (!messageContent.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          content: messageContent,
+          user_id: user?.id,
+          sender_name: user?.name || user?.email?.split('@')[0] || 'Anonymous',
+          conversation_id: 'global',
+          is_admin: true,
+          effect_type: effectType
+        });
+      
+      if (error) throw error;
+      
+      // Clear input if we used it
+      if (!content) {
+        setInputMessage('');
+      }
+      
+      // Apply effect locally too
+      handleSpecialEffect(effectType);
+      
+    } catch (error) {
+      console.error('Error sending admin message:', error);
+      toast.error('Failed to send message with effect');
     }
   };
 
@@ -193,7 +304,6 @@ export const FullHeightChatSidebar = () => {
 
   const handleReactionAdd = async (messageId: string, emoji: string) => {
     // In a real app, this would update a reactions table in the database
-    // For now we'll just update the local state
     setMessages(prev => 
       prev.map(msg => {
         if (msg.id === messageId) {
@@ -202,12 +312,17 @@ export const FullHeightChatSidebar = () => {
           
           let updatedReactions;
           if (existingReaction) {
-            // Increase count if reaction exists
-            updatedReactions = existingReactions.map(r => 
-              r.emoji === emoji 
-                ? { ...r, count: r.count + 1, users: [...r.users, user?.id || 'anonymous'] }
-                : r
-            );
+            // Increase count if reaction exists and user hasn't already reacted
+            if (!existingReaction.users.includes(user?.id || 'anonymous')) {
+              updatedReactions = existingReactions.map(r => 
+                r.emoji === emoji 
+                  ? { ...r, count: r.count + 1, users: [...r.users, user?.id || 'anonymous'] }
+                  : r
+              );
+            } else {
+              // User already reacted with this emoji
+              updatedReactions = existingReactions;
+            }
           } else {
             // Add new reaction type
             updatedReactions = [
@@ -253,6 +368,15 @@ export const FullHeightChatSidebar = () => {
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setInputMessage(prev => prev + emoji);
+  };
+
+  const handleGifSelect = (gif: { url: string; alt: string }) => {
+    const gifMarkdown = `![${gif.alt}](${gif.url})`;
+    setInputMessage(prev => prev + " " + gifMarkdown);
+  };
+
   const cancelEdit = () => {
     setEditingMessageId(null);
     setInputMessage('');
@@ -282,7 +406,7 @@ export const FullHeightChatSidebar = () => {
       
       {/* Expanded sidebar */}
       <div 
-        className={`fixed top-0 right-0 h-screen bg-background border-l border-border shadow-lg transition-all duration-300 z-40 flex flex-col ${
+        className={`fixed top-0 right-0 h-screen bg-background border-l border-border shadow-lg transition-all duration-300 z-40 flex flex-col chat-container ${
           isOpen ? 'translate-x-0 w-[var(--chat-sidebar-width)]' : 'translate-x-full w-0'
         }`}
       >
@@ -294,17 +418,20 @@ export const FullHeightChatSidebar = () => {
               <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <ChatMessageList 
-              messages={messages}
-              isLoading={false}
-              formatTime={formatTime}
-              onMessageEdit={handleEditMessage}
-              onMessageDelete={handleDeleteMessage}
-              onMessageReply={handleReplyToMessage}
-              onReactionAdd={handleReactionAdd}
-              onReactionRemove={handleReactionRemove}
-              currentUserId={user?.id}
-            />
+            <ScrollArea className="flex-1">
+              <ChatMessageList 
+                messages={messages}
+                isLoading={isLoading}
+                formatTime={formatTime}
+                onMessageEdit={handleEditMessage}
+                onMessageDelete={handleDeleteMessage}
+                onMessageReply={handleReplyToMessage}
+                onReactionAdd={handleReactionAdd}
+                onReactionRemove={handleReactionRemove}
+                currentUserId={user?.id}
+                messagesEndRef={messagesEndRef}
+              />
+            </ScrollArea>
           )}
           
           <ChatInputArea 
@@ -316,8 +443,24 @@ export const FullHeightChatSidebar = () => {
             replyingToMessage={replyingToMessage}
             onCancelEdit={cancelEdit}
             onCancelReply={cancelReply}
+            onEmojiSelect={handleEmojiSelect}
+            onGifSelect={handleGifSelect}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={handleAdminEffectSelect}
           />
         </div>
+        
+        {/* Add some CSS for our shake animation */}
+        <style jsx global>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+          }
+          .shake-animation {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+          }
+        `}</style>
       </div>
     </>
   );

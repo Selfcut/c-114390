@@ -1,17 +1,15 @@
 
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmojiPicker } from "./EmojiPicker";
 import { GifPicker } from "./GifPicker";
-import { Send } from "lucide-react";
+import { Send, XCircle } from "lucide-react";
 import { useChatTextarea } from "@/hooks/useChatTextarea";
-import { useChatInput } from "@/hooks/useChatInput";
 import { MessageEditingIndicator } from "./input/MessageEditingIndicator";
 import { MessageReplyIndicator } from "./input/MessageReplyIndicator";
-import { QuickMentions } from "./input/QuickMentions";
 import { ChatInputTools } from "./input/ChatInputTools";
-import { QuickEmojiPicker } from "./input/QuickEmojiPicker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ChatInputAreaProps {
   message: string;
@@ -26,6 +24,10 @@ interface ChatInputAreaProps {
   } | null;
   onCancelEdit?: () => void;
   onCancelReply?: () => void;
+  onEmojiSelect?: (emoji: string) => void;
+  onGifSelect?: (gif: { url: string; alt: string }) => void;
+  isAdmin?: boolean;
+  onAdminEffectSelect?: (effectType: string, content?: string) => void;
 }
 
 export const ChatInputArea = ({
@@ -36,30 +38,70 @@ export const ChatInputArea = ({
   editingMessage,
   replyingToMessage,
   onCancelEdit,
-  onCancelReply
+  onCancelReply,
+  onEmojiSelect,
+  onGifSelect,
+  isAdmin = false,
+  onAdminEffectSelect
 }: ChatInputAreaProps) => {
   const { textareaRef, textareaHeight } = useChatTextarea({ 
     message,
     isEditing: !!editingMessage 
   });
 
-  const {
-    showEmojiPicker,
-    setShowEmojiPicker,
-    showGifPicker,
-    setShowGifPicker,
-    handleEmojiSelect,
-    handleGifSelect,
-    handleMentionUser,
-    handleFileUpload
-  } = useChatInput({
-    textareaRef,
-    message,
-    setMessage
-  });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
+  };
+
+  const handleEmojiPickerToggle = () => {
+    setShowEmojiPicker(!showEmojiPicker);
+    setShowGifPicker(false);
+  };
+
+  const handleGifPickerToggle = () => {
+    setShowGifPicker(!showGifPicker);
+    setShowEmojiPicker(false);
+  };
+
+  const handleFileUpload = () => {
+    // In a real implementation, this would open a file picker
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,video/*,audio/*,application/pdf';
+    fileInput.style.display = 'none';
+    fileInput.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        // Here you would handle uploading to storage
+        const updatedMessage = message + ` [File uploaded: ${files[0].name}]`;
+        setMessage(updatedMessage);
+      }
+    };
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+  };
+
+  const handleInternalEmojiSelect = (emoji: string) => {
+    if (onEmojiSelect) {
+      onEmojiSelect(emoji);
+    } else {
+      setMessage(prev => prev + emoji);
+    }
+    setShowEmojiPicker(false);
+  };
+
+  const handleInternalGifSelect = (gif: { url: string; alt: string }) => {
+    if (onGifSelect) {
+      onGifSelect(gif);
+    } else {
+      const gifMarkdown = `![${gif.alt}](${gif.url})`;
+      setMessage(prev => prev + " " + gifMarkdown);
+    }
+    setShowGifPicker(false);
   };
 
   return (
@@ -89,9 +131,13 @@ export const ChatInputArea = ({
             style={{ height: `${textareaHeight}px` }}
           />
           <ChatInputTools
-            onEmojiPickerToggle={() => setShowEmojiPicker(!showEmojiPicker)}
-            onGifPickerToggle={() => setShowGifPicker(!showGifPicker)}
+            onEmojiPickerToggle={handleEmojiPickerToggle}
+            onGifPickerToggle={handleGifPickerToggle}
             onFileUpload={handleFileUpload}
+            showEmojiPicker={showEmojiPicker}
+            showGifPicker={showGifPicker}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={onAdminEffectSelect}
           />
         </div>
         <Button 
@@ -105,20 +151,47 @@ export const ChatInputArea = ({
         </Button>
       </div>
       
-      {/* Quick emoji picker */}
+      {/* Emoji picker */}
       {showEmojiPicker && (
-        <QuickEmojiPicker onEmojiSelect={handleEmojiSelect} />
+        <div className="relative">
+          <div className="absolute bottom-2 right-2 z-50">
+            <Popover open={true} onOpenChange={setShowEmojiPicker}>
+              <PopoverContent className="w-64 p-0" align="end">
+                <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
+                  onClick={() => setShowEmojiPicker(false)}
+                >
+                  <XCircle size={14} />
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
       )}
       
       {/* GIF picker */}
       {showGifPicker && (
-        <div className="absolute bottom-16 right-4 z-50">
-          <GifPicker onGifSelect={handleGifSelect} />
+        <div className="relative">
+          <div className="absolute bottom-2 right-2 z-50">
+            <Popover open={true} onOpenChange={setShowGifPicker}>
+              <PopoverContent className="w-72 p-2" align="end">
+                <GifPicker onGifSelect={handleInternalGifSelect} />
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
+                  onClick={() => setShowGifPicker(false)}
+                >
+                  <XCircle size={14} />
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       )}
-      
-      {/* Quick mentions */}
-      <QuickMentions onMentionUser={handleMentionUser} />
     </div>
   );
 };

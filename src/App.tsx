@@ -9,7 +9,6 @@ import { AuthProvider } from './lib/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingScreen } from './components/routing/LoadingScreen';
-import { FloatingChatWidget } from './components/chat/FloatingChatWidget';
 import './App.css';
 
 // Create a client with improved error handling
@@ -33,7 +32,6 @@ function App() {
             <QueryClientProvider client={queryClient}>
               <Router>
                 <AppRoutes />
-                <FloatingChatWidget />
                 <Toaster />
                 <Sonner position="top-center" />
               </Router>

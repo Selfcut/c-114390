@@ -1,48 +1,67 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Paperclip, Image } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { PaperclipIcon, Image, Smile } from 'lucide-react';
+import { EmojiPicker } from '../EmojiPicker';
+import { GifPicker } from '../GifPicker';
+import { AdminEffects } from '../AdminEffects';
 
 interface ChatInputToolsProps {
   onEmojiPickerToggle: () => void;
   onGifPickerToggle: () => void;
   onFileUpload: () => void;
+  showEmojiPicker?: boolean;
+  showGifPicker?: boolean;
+  isAdmin?: boolean;
+  onAdminEffectSelect?: (effectType: string, content?: string) => void;
 }
 
-export const ChatInputTools = ({ 
-  onEmojiPickerToggle, 
-  onGifPickerToggle, 
-  onFileUpload 
+export const ChatInputTools = ({
+  onEmojiPickerToggle,
+  onGifPickerToggle,
+  onFileUpload,
+  showEmojiPicker,
+  showGifPicker,
+  isAdmin = false,
+  onAdminEffectSelect = () => {}
 }: ChatInputToolsProps) => {
   return (
-    <div className="absolute bottom-2 right-2 flex items-center gap-1">
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        type="button"
-        className="h-8 w-8 rounded-full"
+    <div className="absolute right-2 bottom-1.5 flex items-center">
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onEmojiPickerToggle}
+        className="h-7 w-7 rounded-full"
+        aria-pressed={showEmojiPicker}
+        aria-label="Insert emoji"
       >
-        <span role="img" aria-label="emoji">😀</span>
+        <Smile size={16} />
       </Button>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        type="button"
-        className="h-8 w-8 rounded-full"
-        onClick={onFileUpload}
-      >
-        <Paperclip size={18} />
-      </Button>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        type="button"
-        className="h-8 w-8 rounded-full"
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onGifPickerToggle}
+        className="h-7 w-7 rounded-full"
+        aria-pressed={showGifPicker}
+        aria-label="Insert GIF"
       >
-        <Image size={18} />
+        <Image size={16} />
       </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onFileUpload}
+        className="h-7 w-7 rounded-full"
+        aria-label="Attach file"
+      >
+        <PaperclipIcon size={16} />
+      </Button>
+      {isAdmin && (
+        <AdminEffects 
+          onEffectSelect={onAdminEffectSelect} 
+          isAdmin={isAdmin}
+        />
+      )}
     </div>
   );
 };
