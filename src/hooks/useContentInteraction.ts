@@ -97,11 +97,14 @@ export function useContentInteraction(options: InteractionOptions) {
       if (existingLike) {
         // Unlike
         await mutate(
-          () => supabase
-            .from(likesTable)
-            .delete()
-            .eq('user_id', user.id)
-            .eq(contentIdField, contentId),
+          async () => {
+            const result = await supabase
+              .from(likesTable)
+              .delete()
+              .eq('user_id', user.id)
+              .eq(contentIdField, contentId);
+            return result;
+          },
           {},
           { 
             onSuccess: () => {
@@ -118,13 +121,23 @@ export function useContentInteraction(options: InteractionOptions) {
         );
       } else {
         // Like
+        const insertPayload: Record<string, any> = {
+          user_id: user.id
+        };
+        insertPayload[contentIdField] = contentId;
+        
+        // Add content_type if needed
+        if (contentIdField === 'content_id') {
+          insertPayload.content_type = contentType;
+        }
+        
         await mutate(
-          () => supabase
-            .from(likesTable)
-            .insert({
-              user_id: user.id,
-              [contentIdField]: contentId
-            }),
+          async () => {
+            const result = await supabase
+              .from(likesTable)
+              .insert(insertPayload);
+            return result;  
+          },
           {},
           { 
             onSuccess: () => {
@@ -176,15 +189,30 @@ export function useContentInteraction(options: InteractionOptions) {
     try {
       const { commentsTable, contentTable, contentIdField } = getTableNames();
       
+      const insertPayload: Record<string, any> = {
+        user_id: user.id,
+        comment: comment.trim()
+      };
+      
+      insertPayload[contentIdField] = contentId;
+      
+      // Add content_type and content if needed
+      if (contentIdField === 'content_id') {
+        insertPayload.content_type = contentType;
+        insertPayload.content = comment.trim();
+      }
+      
+      if (contentIdField === 'post_id') {
+        insertPayload.content = comment.trim();
+      }
+      
       await mutate(
-        () => supabase
-          .from(commentsTable)
-          .insert({
-            user_id: user.id,
-            [contentIdField]: contentId,
-            comment: comment.trim(),
-            content: comment.trim() // For compatibility with some tables
-          }),
+        async () => {
+          const result = await supabase
+            .from(commentsTable)
+            .insert(insertPayload);
+          return result;
+        },
         {},
         { 
           onSuccess: () => {
@@ -208,7 +236,7 @@ export function useContentInteraction(options: InteractionOptions) {
     } finally {
       setIsProcessing(prev => ({ ...prev, [operationKey]: false }));
     }
-  }, [user, toast, mutate, getTableNames, isProcessing, onSuccess, onError]);
+  }, [user, toast, mutate, getTableNames, isProcessing, onSuccess, onError, contentType]);
 
   // Check if user has liked content
   const checkUserLike = useCallback(async (contentId: string): Promise<boolean> => {
@@ -221,7 +249,7 @@ export function useContentInteraction(options: InteractionOptions) {
       .select()
       .eq('user_id', user.id)
       .eq(contentIdField, contentId)
-      .single();
+      .maybeSingle();
       
     return !!data;
   }, [user, getTableNames]);
@@ -239,11 +267,14 @@ export function useContentInteraction(options: InteractionOptions) {
       const { commentsTable, contentTable } = getTableNames();
       
       await mutate(
-        () => supabase
-          .from(commentsTable)
-          .delete()
-          .eq('id', commentId)
-          .eq('user_id', user.id),
+        async () => {
+          const result = await supabase
+            .from(commentsTable)
+            .delete()
+            .eq('id', commentId)
+            .eq('user_id', user.id);
+          return result;
+        },
         {},
         { 
           onSuccess: () => {
