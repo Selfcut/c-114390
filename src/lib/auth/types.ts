@@ -1,5 +1,6 @@
 
 import { Session } from "@supabase/supabase-js";
+import { UserStatus } from "@/types/user";
 
 export interface UserProfile {
   id: string;
@@ -10,7 +11,7 @@ export interface UserProfile {
   role?: string;
   isAdmin?: boolean;
   avatar?: string;
-  status?: string;
+  status?: UserStatus;
   isGhostMode?: boolean;
 }
 

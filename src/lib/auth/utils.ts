@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from './types';
+import { UserStatus } from '@/types/user';
 
 /**
  * Fetches user profile data from Supabase
@@ -35,7 +36,7 @@ export function mapUserProfile(user: any, profile: any): UserProfile {
     role: profile?.role || 'user',
     isAdmin: profile?.role === 'admin',
     avatar: profile?.avatar_url || user.user_metadata?.avatar_url,
-    status: profile?.status || 'online',
+    status: (profile?.status as UserStatus) || 'online',
     isGhostMode: profile?.is_ghost_mode || false
   };
 }
@@ -54,11 +55,14 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
       delete profileUpdates.avatar;
     }
     
-    // Map status properly
+    // Ensure status is a valid user_status enum value
+    let updatedStatus: UserStatus | undefined;
     if (profileUpdates.status) {
-      // Ensure status is a valid user_status enum value
-      // This depends on your Supabase setup
-      profileUpdates.status = profileUpdates.status;
+      // Cast the status to the enum or use a safe default
+      const status = profileUpdates.status as string;
+      updatedStatus = ['online', 'away', 'offline', 'invisible', 'do-not-disturb'].includes(status)
+        ? status as UserStatus
+        : 'online';
     }
     
     // Map isGhostMode to is_ghost_mode
@@ -66,7 +70,8 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
       const { isGhostMode, ...rest } = profileUpdates;
       const updatedData = {
         ...rest,
-        is_ghost_mode: isGhostMode
+        is_ghost_mode: isGhostMode,
+        status: updatedStatus
       };
       
       const { error } = await supabase
@@ -77,9 +82,14 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
       if (error) throw error;
     } else {
       // Regular update without ghost mode change
+      const updatedData = {
+        ...profileUpdates,
+        status: updatedStatus
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .update(profileUpdates)
+        .update(updatedData)
         .eq('id', userId);
       
       if (error) throw error;

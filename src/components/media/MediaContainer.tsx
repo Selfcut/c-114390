@@ -135,13 +135,14 @@ export const MediaContainer = () => {
             onSubmit={(data) => {
               const result = handleCreatePost(data);
               if (result) {
-                result.then((response) => {
-                  if (response?.id) {
+                return result.then((response) => {
+                  if (response && response.id) {
                     handlePostCreationSuccess(response.id);
                   }
+                  return response;
                 });
               }
-              return Promise.resolve();
+              return Promise.resolve(null);
             }}
             isSubmitting={createPostMutation?.isPending}
           />

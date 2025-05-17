@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useContentInteractions } from './useContentInteractions';
 import { useToast } from './use-toast';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentItemType, MediaType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentFeedItem } from '@/components/library/ContentFeedItem';
 import { useNavigate } from 'react-router-dom';
 

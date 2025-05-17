@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -31,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Don't fetch profile directly in the callback to avoid Supabase deadlocks
         // Instead use setTimeout to run it on the next event loop tick
         setTimeout(() => { 
-          fetchUserProfile(newSession.user.id, newSession)
+          fetchUserProfile(newSession.user.id)
             .then(profile => {
               if (profile) setUser(profile as UserProfile);
               else setUser(null);
@@ -47,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(initialSession);
       
       if (initialSession?.user) {
-        fetchUserProfile(initialSession.user.id, initialSession)
+        fetchUserProfile(initialSession.user.id)
           .then(profile => {
             if (profile) setUser(profile as UserProfile);
             else setUser(null);

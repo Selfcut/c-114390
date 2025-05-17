@@ -7,6 +7,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatar: string;
+  avatar_url?: string;
   bio?: string;
   website?: string;
   role?: string;

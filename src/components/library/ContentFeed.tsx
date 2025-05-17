@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { useContentFeed, ContentFeedItem } from '@/hooks/useContentFeed';
+import { useContentFeed } from '@/hooks/useContentFeed';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
@@ -11,6 +11,7 @@ import { ViewMode } from './ViewSwitcher';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { ContentItemType } from './content-items/ContentItemTypes';
 
 interface ContentFeedProps {
   contentType: ContentType;
@@ -64,16 +65,16 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     action();
   };
   
-  const handleLikeWithAuth = (contentId: string, contentType: string) => {
+  const handleLikeWithAuth = (contentId: string, contentType: ContentItemType) => {
     handleAuthAction(() => handleLike(contentId, contentType));
   };
   
-  const handleBookmarkWithAuth = (contentId: string, contentType: string) => {
+  const handleBookmarkWithAuth = (contentId: string, contentType: ContentItemType) => {
     handleAuthAction(() => handleBookmark(contentId, contentType));
   };
   
   // Custom content click handler that can include analytics
-  const handleItemClick = (contentId: string, contentType: string) => {
+  const handleItemClick = (contentId: string, contentType: ContentItemType) => {
     // Track content click
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);

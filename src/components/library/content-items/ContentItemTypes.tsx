@@ -66,8 +66,8 @@ export interface ContentItemProps {
   viewMode: ContentViewMode;
   onClick?: (id: string) => void;
   onTagClick?: (tag: string) => void;
-  onLike?: (id: string, type: ContentItemType) => void;
-  onBookmark?: (id: string, type: ContentItemType) => void;
+  onLike?: (id: string, type?: ContentItemType) => void;
+  onBookmark?: (id: string, type?: ContentItemType) => void;
   onComment?: (id: string) => void;
   onShare?: (id: string) => void;
   className?: string;
