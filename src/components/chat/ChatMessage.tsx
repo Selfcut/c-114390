@@ -147,7 +147,7 @@ export const ChatMessage = ({
         {!message.isSystem && (
           <div className="flex-shrink-0">
             <Avatar className="h-8 w-8">
-              <AvatarFallback>{message.senderName[0]}</AvatarFallback>
+              <AvatarFallback>{message.senderName?.[0] || '?'}</AvatarFallback>
             </Avatar>
           </div>
         )}
@@ -200,14 +200,14 @@ export const ChatMessage = ({
                 </Button>
               )}
               
-              {/* Reactions */}
-              {(onReactionAdd || onReactionRemove) && (
-                <MessageReactions 
-                  reactions={message.reactions || []}
+              {/* Message reactions */}
+              {message.reactions && message.reactions.length > 0 && (
+                <MessageReactions
+                  reactions={message.reactions}
                   messageId={message.id}
+                  currentUserId={currentUserId || ''}
                   onReactionAdd={onReactionAdd}
                   onReactionRemove={onReactionRemove}
-                  currentUserId={currentUserId}
                 />
               )}
             </div>

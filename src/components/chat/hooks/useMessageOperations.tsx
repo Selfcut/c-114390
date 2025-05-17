@@ -101,9 +101,45 @@ export const useMessageOperations = () => {
     }
   };
 
+  // Add reaction to message
+  const addReaction = async (messageId: string, emoji: string) => {
+    if (!user) {
+      toast.error('You need to be logged in to react to messages');
+      return;
+    }
+    
+    try {
+      // In a real implementation, you would have a reactions table
+      // For now, we'll just show a toast indicating success
+      toast.success(`Added reaction ${emoji}`);
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      toast.error('Failed to add reaction');
+    }
+  };
+
+  // Remove reaction from message
+  const removeReaction = async (messageId: string, emoji: string) => {
+    if (!user) {
+      toast.error('You need to be logged in to remove reactions');
+      return;
+    }
+    
+    try {
+      // In a real implementation, you would remove from a reactions table
+      // For now, we'll just show a toast indicating success
+      toast.success(`Removed reaction ${emoji}`);
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      toast.error('Failed to remove reaction');
+    }
+  };
+
   return {
     fetchMessageForEdit,
     deleteMessage,
-    fetchMessageForReply
+    fetchMessageForReply,
+    addReaction,
+    removeReaction
   };
 };

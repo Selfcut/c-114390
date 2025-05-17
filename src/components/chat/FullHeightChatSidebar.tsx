@@ -84,6 +84,19 @@ export const FullHeightChatSidebar = () => {
     setInputMessage(prev => prev + " " + gifMarkdown);
   };
 
+  // Handle reaction operations
+  const handleReactionAdd = (messageId: string, emoji: string) => {
+    // This would call to a backend API in production
+    console.log(`Adding reaction ${emoji} to message ${messageId}`);
+    // Mock implementation for now
+  };
+  
+  const handleReactionRemove = (messageId: string, emoji: string) => {
+    // This would call to a backend API in production
+    console.log(`Removing reaction ${emoji} from message ${messageId}`);
+    // Mock implementation for now
+  };
+
   // Format time helper function
   const formatTime = (timestamp: string) => {
     try {
@@ -111,8 +124,8 @@ export const FullHeightChatSidebar = () => {
           onMessageEdit={handleEditMessage}
           onMessageDelete={handleDeleteMessage}
           onMessageReply={handleReplyToMessage}
-          onReactionAdd={() => {}} // Not implemented yet
-          onReactionRemove={() => {}} // Not implemented yet
+          onReactionAdd={handleReactionAdd}
+          onReactionRemove={handleReactionRemove}
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           handleSendMessage={handleSendMessage}

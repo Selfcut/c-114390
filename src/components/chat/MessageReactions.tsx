@@ -1,7 +1,8 @@
 
-import React from "react";
+import React from 'react';
+import { Button } from "@/components/ui/button";
 
-export interface Reaction {
+interface Reaction {
   emoji: string;
   count: number;
   users: string[];
@@ -10,52 +11,42 @@ export interface Reaction {
 interface MessageReactionsProps {
   reactions: Reaction[];
   messageId: string;
+  currentUserId: string;
   onReactionAdd?: (messageId: string, emoji: string) => void;
   onReactionRemove?: (messageId: string, emoji: string) => void;
-  currentUserId?: string;
 }
 
-export const MessageReactions = ({
+export const MessageReactions: React.FC<MessageReactionsProps> = ({
   reactions,
   messageId,
+  currentUserId,
   onReactionAdd,
-  onReactionRemove,
-  currentUserId = "current-user"
-}: MessageReactionsProps) => {
+  onReactionRemove
+}) => {
   const handleReactionClick = (emoji: string, hasReacted: boolean) => {
-    if (hasReacted) {
-      onReactionRemove?.(messageId, emoji);
-    } else {
-      onReactionAdd?.(messageId, emoji);
+    if (hasReacted && onReactionRemove) {
+      onReactionRemove(messageId, emoji);
+    } else if (!hasReacted && onReactionAdd) {
+      onReactionAdd(messageId, emoji);
     }
   };
 
-  // Filter out reactions with count 0
-  const visibleReactions = reactions.filter(r => r.count > 0);
-
-  if (!visibleReactions.length) {
-    return null;
-  }
-
   return (
-    <div className="flex flex-wrap gap-1 mt-1">
-      {visibleReactions.map((reaction) => {
-        const hasReacted = reaction.users.includes(currentUserId || "");
+    <div className="flex flex-wrap gap-1 ml-2">
+      {reactions.map((reaction, index) => {
+        const hasReacted = reaction.users.includes(currentUserId);
         
         return (
-          <button
-            key={reaction.emoji}
+          <Button
+            key={`${reaction.emoji}-${index}`}
+            variant={hasReacted ? "secondary" : "outline"}
+            size="sm"
+            className="h-6 px-2 py-0 text-xs rounded-full flex items-center gap-1"
             onClick={() => handleReactionClick(reaction.emoji, hasReacted)}
-            className={`
-              flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs
-              ${hasReacted ? 'bg-primary/20 text-primary' : 'bg-muted hover:bg-muted/80 text-muted-foreground'}
-              transition-colors
-            `}
-            aria-label={`${reaction.emoji} reaction (${reaction.count})`}
           >
             <span>{reaction.emoji}</span>
-            <span className="min-w-4 text-center">{reaction.count}</span>
-          </button>
+            <span>{reaction.count}</span>
+          </Button>
         );
       })}
     </div>

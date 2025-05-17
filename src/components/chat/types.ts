@@ -1,18 +1,22 @@
 
+export interface Reaction {
+  emoji: string;
+  count: number;
+  users: string[];
+}
+
 export interface ChatMessage {
   id: string;
   content: string;
   senderName: string;
   userId: string;
   createdAt: string;
-  conversationId?: string;
-  isEdited?: boolean;
+  conversationId: string;
   isCurrentUser?: boolean;
-  isSystem?: boolean;
   isAdmin?: boolean;
+  isSystem?: boolean;
+  isEdited?: boolean;
   effectType?: string;
-  mentions?: string[];
-  reactions?: Reaction[];
   replyTo?: {
     id: string;
     content: string;
@@ -20,52 +24,16 @@ export interface ChatMessage {
       name: string;
     };
   };
-  attachments?: {
-    id?: string;
-    type: 'image' | 'file' | 'gif' | 'audio' | 'video';
-    url: string;
-    name?: string;
-    size?: number;
-  }[];
-}
-
-export interface Reaction {
-  emoji: string;
-  count: number;
-  users: string[];
+  reactions?: Reaction[];
+  mentions?: string[];
 }
 
 export interface ConversationItem {
   id: string;
   name: string;
   lastMessage?: string;
-  updatedAt: string;
   isGroup?: boolean;
   isGlobal?: boolean;
-  unread?: number;
-  avatar?: string;
-  participants?: {
-    id: string;
-    name: string;
-    avatar?: string;
-  }[];
-}
-
-// Add the Conversation interface that was missing
-export interface Conversation {
-  id: string;
-  name: string;
-  lastMessage?: string;
+  createdAt: string;
   updatedAt: string;
-  isGroup?: boolean;
-  isGlobal?: boolean;
-  unread?: number;
-  avatar?: string;
-  participants?: {
-    id: string;
-    name: string;
-    avatar?: string;
-  }[];
 }
-
-export type ChatInputMode = 'normal' | 'editing' | 'replying';
