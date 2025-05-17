@@ -103,6 +103,6 @@ export const useFetchMediaPosts = (
       }
     },
     staleTime: 60 * 1000, // 1 minute
-    placeholderData: (previousData) => previousData // This replaces keepPreviousData in newer versions
+    refetchOnWindowFocus: false // Disable automatic refetch when window gains focus
   });
 };

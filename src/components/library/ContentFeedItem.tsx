@@ -24,9 +24,9 @@ export const ContentFeedItem: React.FC<ContentFeedItemProps> = ({
     ...item,
     author: {
       ...item.author,
-      // Ensure the avatar field is populated by using any available avatar source
-      // The ContentItemAuthor type only has 'avatar', not 'avatar_url'
-      avatar: item.author.avatar || (item.author as any).avatar_url
+      // ContentItemAuthor only has 'avatar' field, not 'avatar_url'
+      // Make sure we use the avatar field consistently
+      avatar: item.author.avatar || ((item.author as any).avatar_url)
     }
   };
 
