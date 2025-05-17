@@ -1,0 +1,151 @@
+
+import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { ContentFeedState } from './types';
+import { mapKnowledgeToFeedItem, mapQuoteToFeedItem, mapMediaToFeedItem } from './contentMappers';
+
+interface UseContentFetchDataProps {
+  userId?: string | null;
+  checkUserInteractions?: (itemIds: string[]) => Promise<void>;
+}
+
+export const useContentFetchData = ({ userId, checkUserInteractions }: UseContentFetchDataProps) => {
+  const [state, setState] = useState<ContentFeedState>({
+    feedItems: [],
+    isLoading: true,
+    error: null,
+    hasMore: true,
+    page: 0
+  });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const { toast } = useToast();
+
+  const loadContent = useCallback(async (reset = false) => {
+    if (reset) {
+      setState(prev => ({
+        ...prev,
+        page: 0,
+        feedItems: [],
+        hasMore: true
+      }));
+    }
+    
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      const pageSize = 10;
+      const currentPage = reset ? 0 : state.page;
+      
+      // Get knowledge entries
+      const { data: knowledgeData, error: knowledgeError } = await supabase
+        .from('knowledge_entries')
+        .select(`
+          *,
+          profiles(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Get quotes
+      const { data: quotesData, error: quoteError } = await supabase
+        .from('quotes')
+        .select(`
+          *,
+          profiles(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Get media posts
+      const { data: mediaData, error: mediaError } = await supabase
+        .from('media_posts')
+        .select(`
+          *,
+          profiles(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Check if we have any errors
+      if (knowledgeError || quoteError || mediaError) {
+        console.error("Error fetching content:", {
+          knowledgeError,
+          quoteError,
+          mediaError
+        });
+        
+        // Show error only if all queries fail
+        if (knowledgeError && quoteError && mediaError) {
+          setState(prev => ({
+            ...prev,
+            error: "Failed to load content. Please try again later."
+          }));
+          return;
+        }
+      }
+      
+      // Map data to ContentFeedItem format
+      const mappedKnowledge = knowledgeData ? knowledgeData.map(mapKnowledgeToFeedItem) : [];
+      const mappedQuotes = quotesData ? quotesData.map(mapQuoteToFeedItem) : [];
+      const mappedMedia = mediaData ? mediaData.map(mapMediaToFeedItem) : [];
+      
+      // Combine all items and sort by date
+      const combinedItems = [
+        ...mappedKnowledge,
+        ...mappedQuotes,
+        ...mappedMedia
+      ].sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+      
+      // Update state
+      setState(prev => ({
+        ...prev,
+        feedItems: reset ? combinedItems : [...prev.feedItems, ...combinedItems],
+        hasMore: combinedItems.length === pageSize * 3,
+        page: reset ? 0 : prev.page,
+        isLoading: false
+      }));
+      
+      // If user is logged in, check their interactions (likes, bookmarks)
+      if (userId && combinedItems.length > 0 && checkUserInteractions) {
+        const itemIds = combinedItems.map(item => item.id);
+        await checkUserInteractions(itemIds);
+      }
+      
+    } catch (err) {
+      console.error('Error fetching feed items:', err);
+      setState(prev => ({
+        ...prev,
+        error: 'Failed to load content. Please try again later.',
+        isLoading: false
+      }));
+      toast({
+        title: "Error",
+        description: "Failed to load content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+      setIsInitialLoad(false);
+    }
+  }, [state.page, userId, toast, checkUserInteractions]);
+
+  const refetch = useCallback(() => loadContent(true), [loadContent]);
+  
+  const loadMore = useCallback(() => {
+    if (!state.isLoading && state.hasMore) {
+      setState(prev => ({ ...prev, page: prev.page + 1 }));
+    }
+  }, [state.isLoading, state.hasMore]);
+
+  // Return the data and functions
+  return {
+    ...state,
+    loadMore,
+    refetch,
+    loadContent,
+    isInitialLoad
+  };
+};

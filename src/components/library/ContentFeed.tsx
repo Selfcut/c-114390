@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useContentFeed } from '@/hooks/useContentFeed';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
