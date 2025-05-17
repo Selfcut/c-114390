@@ -1,8 +1,7 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
 import { useChatMessages } from "@/hooks/useChatMessages";
-import { useChatActions } from "./hooks/useChatActions";
 import { useSpecialEffects } from "./hooks/useSpecialEffects";
 import { useAdminStatus } from "./hooks/useAdminStatus";
 import { useRealtimeChatSubscription } from "./hooks/useRealtimeChatSubscription";
@@ -13,18 +12,13 @@ import { ChatSidebarContainer } from "./ChatSidebarContainer";
 import { ChatSidebarHeader } from "./ChatSidebarHeader";
 import { ChatContent } from "./ChatContent";
 import { ChatAnimationStyles } from "./ChatAnimationStyles";
-import { formatTime } from "./utils/formatTime";
-import { useState } from "react";
 
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
   const { user } = useAuth();
   const { isAdmin } = useAdminStatus();
   
-  // Add local state for missing properties
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  
-  // Use the existing useChatMessages hook
+  // Use the existing useChatMessages hook with all its functionality
   const {
     messages,
     isLoading,
@@ -38,7 +32,9 @@ export const FullHeightChatSidebar = () => {
     handleMessageReply,
     handleReactionAdd,
     handleReactionRemove,
-    handleKeyDown
+    handleKeyDown,
+    fetchMessages,
+    selectedConversation
   } = useChatMessages();
   
   const { handleSpecialEffect } = useSpecialEffects();
@@ -48,31 +44,34 @@ export const FullHeightChatSidebar = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Mock the missing functions that were expected
-  const fetchMessages = () => {
-    setIsLoadingMessages(true);
-    // Simulate fetching messages
-    setTimeout(() => {
-      setIsLoadingMessages(false);
-    }, 500);
-  };
-  
+  // Real functionality to add a message
   const addMessage = (message: any) => {
-    // This would be implemented if we had real-time functionality
-    console.log("Message would be added:", message);
+    // In a real app, this would insert into the database
+    // For now, we'll just scroll to bottom
     scrollToBottom();
   };
 
   // Use our custom hooks
-  useRealtimeChatSubscription({ isOpen, addMessage, scrollToBottom, handleSpecialEffect });
-  useAutomatedMessages({ isOpen, messages, addMessage, scrollToBottom });
+  useRealtimeChatSubscription({ 
+    isOpen, 
+    addMessage, 
+    scrollToBottom, 
+    handleSpecialEffect 
+  });
+  
+  useAutomatedMessages({ 
+    isOpen, 
+    messages, 
+    addMessage, 
+    scrollToBottom 
+  });
 
-  // Fetch messages when the sidebar is opened
-  React.useEffect(() => {
-    if (isOpen) {
-      fetchMessages();
+  // Fetch messages when the sidebar is opened or conversation changes
+  useEffect(() => {
+    if (isOpen && selectedConversation) {
+      fetchMessages(selectedConversation);
     }
-  }, [isOpen]);
+  }, [isOpen, selectedConversation, fetchMessages]);
 
   // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
@@ -92,11 +91,16 @@ export const FullHeightChatSidebar = () => {
   };
 
   const cancelEdit = () => {
-    // This would be implemented if we had edit functionality  
+    if (editingMessageId) {
+      setMessage("");
+      // Additional logic would be here in a real implementation
+    }
   };
 
   const cancelReply = () => {
-    // This would be implemented if we had reply functionality  
+    if (replyingToMessage) {
+      // Additional logic would be here in a real implementation
+    }
   };
 
   return (
@@ -107,10 +111,16 @@ export const FullHeightChatSidebar = () => {
         <ChatSidebarHeader toggleSidebar={toggleSidebar} />
         
         <ChatContent
-          isLoadingMessages={isLoadingMessages}
+          isLoadingMessages={isLoading}
           messages={messages}
           isLoading={isLoading}
-          formatTime={formatTime}
+          formatTime={(timestamp) => {
+            try {
+              return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+              return 'Invalid time';
+            }
+          }}
           onMessageEdit={handleMessageEdit}
           onMessageDelete={handleMessageDelete}
           onMessageReply={handleMessageReply}

@@ -19,6 +19,12 @@ export const useChatActions = () => {
   // Send a message
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
+    if (!user) {
+      toast.error('You need to be logged in to send messages');
+      return;
+    }
+    
+    setIsLoading(true);
     
     // Clear input and reply state
     const messageContent = inputMessage;
@@ -32,10 +38,10 @@ export const useChatActions = () => {
         .from('chat_messages')
         .insert({
           content: messageContent,
-          user_id: user?.id,
-          sender_name: user?.name || user?.email?.split('@')[0] || 'Anonymous',
+          user_id: user.id,
+          sender_name: user.name || user.email?.split('@')[0] || 'Anonymous',
           conversation_id: 'global', // For simplicity, using a single global conversation
-          is_admin: user?.email?.includes('admin') || false,
+          is_admin: user.isAdmin || false,
           // Include reply info if applicable
           ...(replyInfo ? { 
             reply_to: replyInfo.id 
@@ -44,24 +50,39 @@ export const useChatActions = () => {
       
       if (error) throw error;
       
-    } catch (error) {
+      if (editingMessageId) {
+        setEditingMessageId(null);
+      }
+      
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      toast.error('Failed to send message: ' + (error.message || 'Unknown error'));
+      // Return the input message so user doesn't lose their text
+      setInputMessage(messageContent);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Handle admin effect
   const handleAdminEffectSelect = async (effectType: string, content?: string) => {
+    if (!user?.isAdmin) {
+      toast.error('Only admins can use special effects');
+      return;
+    }
+    
     const messageContent = content || inputMessage;
     if (!messageContent.trim()) return;
+    
+    setIsLoading(true);
     
     try {
       const { error } = await supabase
         .from('chat_messages')
         .insert({
           content: messageContent,
-          user_id: user?.id,
-          sender_name: user?.name || user?.email?.split('@')[0] || 'Anonymous',
+          user_id: user.id,
+          sender_name: user.name || user.email?.split('@')[0] || 'Anonymous',
           conversation_id: 'global',
           is_admin: true,
           effect_type: effectType
@@ -74,23 +95,40 @@ export const useChatActions = () => {
         setInputMessage('');
       }
       
-    } catch (error) {
+      toast.success(`${effectType} effect sent!`);
+      
+    } catch (error: any) {
       console.error('Error sending admin message:', error);
-      toast.error('Failed to send message with effect');
+      toast.error('Failed to send message with effect: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Edit message
   const handleEditMessage = async (messageId: string) => {
+    if (!user) {
+      toast.error('You need to be logged in to edit messages');
+      return;
+    }
+    
     // First get the content from the message
     try {
       const { data, error } = await supabase
         .from('chat_messages')
         .select('content')
         .eq('id', messageId)
+        .eq('user_id', user.id) // Only allow users to edit their own messages
         .single();
       
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          toast.error("You can only edit your own messages");
+        } else {
+          toast.error('Failed to fetch message content');
+        }
+        return;
+      }
       
       if (data) {
         setEditingMessageId(messageId);
@@ -104,14 +142,26 @@ export const useChatActions = () => {
 
   // Delete message
   const handleDeleteMessage = async (messageId: string) => {
+    if (!user) {
+      toast.error('You need to be logged in to delete messages');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('chat_messages')
         .delete()
         .eq('id', messageId)
-        .eq('user_id', user?.id); // Only allow users to delete their own messages
+        .eq('user_id', user.id); // Only allow users to delete their own messages
       
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          toast.error("You can only delete your own messages");
+        } else {
+          toast.error('Failed to delete message');
+        }
+        return;
+      }
       
       toast.success('Message deleted');
     } catch (error) {
@@ -130,7 +180,10 @@ export const useChatActions = () => {
         .eq('id', messageId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        toast.error('Failed to fetch message for reply');
+        return;
+      }
       
       if (data) {
         setReplyingToMessage({
@@ -161,6 +214,14 @@ export const useChatActions = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+    
+    if (e.key === 'Escape') {
+      if (editingMessageId) {
+        cancelEdit();
+      } else if (replyingToMessage) {
+        cancelReply();
+      }
     }
   };
 

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { ChatMessage as ChatMessageType } from "./types";
 import { ChatMessage } from "./ChatMessage";
 
@@ -12,7 +12,7 @@ interface ChatMessageListProps {
   onMessageReply?: (messageId: string) => void;
   onReactionAdd?: (messageId: string, emoji: string) => void;
   onReactionRemove?: (messageId: string, emoji: string) => void;
-  currentUserId?: string;
+  currentUserId?: string | null;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
 }
 
@@ -29,22 +29,45 @@ export const ChatMessageList = ({
   messagesEndRef
 }: ChatMessageListProps) => {
   // Group messages by date for better organization
-  const groupedMessages = messages.reduce((groups: Record<string, ChatMessageType[]>, message) => {
-    const date = new Date(message.createdAt).toLocaleDateString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(message);
-    return groups;
-  }, {});
+  const groupedMessages = useMemo(() => {
+    return messages.reduce((groups: Record<string, ChatMessageType[]>, message) => {
+      try {
+        const date = new Date(message.createdAt).toLocaleDateString();
+        if (!groups[date]) {
+          groups[date] = [];
+        }
+        groups[date].push(message);
+      } catch (error) {
+        // Handle invalid dates gracefully
+        const fallbackDate = 'Unknown Date';
+        if (!groups[fallbackDate]) {
+          groups[fallbackDate] = [];
+        }
+        groups[fallbackDate].push(message);
+        console.error('Error parsing message date:', error, message);
+      }
+      return groups;
+    }, {});
+  }, [messages]);
 
   // Get dates in order
-  const dates = Object.keys(groupedMessages).sort((a, b) => 
-    new Date(a).getTime() - new Date(b).getTime()
-  );
+  const dates = useMemo(() => {
+    return Object.keys(groupedMessages).sort((a, b) => {
+      try {
+        return new Date(a).getTime() - new Date(b).getTime();
+      } catch (error) {
+        return 0; // Keep the order as is if dates are invalid
+      }
+    });
+  }, [groupedMessages]);
 
   if (isLoading) {
-    return <div className="flex justify-center p-4">Loading messages...</div>;
+    return (
+      <div className="flex justify-center items-center p-4 h-full">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <span className="ml-2 text-sm text-muted-foreground">Loading messages...</span>
+      </div>
+    );
   }
 
   if (messages.length === 0) {
@@ -62,7 +85,7 @@ export const ChatMessageList = ({
         <div key={date}>
           <div className="text-center my-2">
             <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
-              {new Date(date).toLocaleDateString(undefined, { 
+              {date === 'Unknown Date' ? date : new Date(date).toLocaleDateString(undefined, { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
@@ -75,21 +98,24 @@ export const ChatMessageList = ({
             {groupedMessages[date].map((message) => (
               <ChatMessage
                 key={message.id}
-                message={message}
+                message={{
+                  ...message,
+                  isCurrentUser: message.userId === currentUserId || message.isCurrentUser === true
+                }}
                 formatTime={formatTime}
                 onEdit={onMessageEdit}
                 onDelete={onMessageDelete}
                 onReply={onMessageReply}
                 onReactionAdd={onReactionAdd}
                 onReactionRemove={onReactionRemove}
-                isCurrentUser={message.userId === currentUserId}
+                isCurrentUser={message.userId === currentUserId || message.isCurrentUser === true}
                 currentUserId={currentUserId}
               />
             ))}
           </div>
         </div>
       ))}
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} className="h-1" />
     </div>
   );
 };

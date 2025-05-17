@@ -6,61 +6,18 @@ import { useMessageInput } from "./chat/useMessageInput";
 import { useMessageHandlers } from "./chat/useMessageHandlers";
 import { useMessageReactions } from "./chat/useMessageReactions";
 import { useMessageUtils } from "./chat/useMessageUtils";
-
-// Initial messages for the first conversation
-const initialMessages: ChatMessage[] = [
-  {
-    id: "1",
-    conversationId: "1",
-    content: "Welcome to the Philosophy community! Feel free to ask questions or share insights.",
-    senderName: "System",
-    userId: "system",
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: "2", 
-    conversationId: "1",
-    content: "Hello everyone! What major philosophical work has influenced you the most?",
-    senderName: "Maria",
-    userId: "user-1",
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: "3",
-    conversationId: "1",
-    content: "I'd say Nietzsche's 'Beyond Good and Evil' changed my perspective significantly.",
-    senderName: "John",
-    userId: "user-2",
-    createdAt: new Date(Date.now() - 1800000).toISOString(),
-  },
-  {
-    id: "4",
-    conversationId: "1",
-    content: "@Maria I've been deeply influenced by Eastern philosophy, particularly the Tao Te Ching.",
-    senderName: "Alex",
-    userId: "user-3",
-    createdAt: new Date(Date.now() - 900000).toISOString(),
-    mentions: ["Maria"],
-  },
-  {
-    id: "5",
-    conversationId: "1",
-    content: "![meditation](https://media.tenor.com/YrJDHCj7JFAAAAAd/meditation-meditate.gif)",
-    senderName: "Zen",
-    userId: "user-4",
-    createdAt: new Date(Date.now() - 300000).toISOString(),
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export const useChatMessages = () => {
-  // Use the extracted hooks
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  // Use real data from component hook instead of mock data
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const {
     conversations,
     selectedConversation,
     setSelectedConversation,
-    handleSelectConversation: selectConversation, // Rename to avoid conflict
+    handleSelectConversation: selectConversationFromHook, // Rename to avoid conflict
     updateConversationLastMessage
   } = useConversations();
   
@@ -76,7 +33,7 @@ export const useChatMessages = () => {
   } = useMessageInput();
   
   const {
-    isLoading,
+    isLoading: isSendingMessage,
     handleSendMessage: sendMessage,
     handleMessageEdit: editMessage,
     handleMessageDelete,
@@ -95,6 +52,52 @@ export const useChatMessages = () => {
   const { handleReactionAdd, handleReactionRemove } = useMessageReactions(messages);
   const { formatTime } = useMessageUtils();
 
+  // Function to fetch messages from the database
+  const fetchMessages = async (conversationId: string) => {
+    setIsLoading(true);
+    try {
+      // Fetch messages from Supabase
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Convert DB messages to the ChatMessage format
+        const formattedMessages: ChatMessage[] = data.map(msg => ({
+          id: msg.id,
+          conversationId: msg.conversation_id,
+          content: msg.content,
+          senderName: msg.sender_name || 'Unknown',
+          userId: msg.user_id || 'unknown',
+          createdAt: msg.created_at,
+          isCurrentUser: false // Will be updated in the component
+        }));
+        setMessages(formattedMessages);
+      } else {
+        // If no messages, show a welcome message
+        setMessages([{
+          id: crypto.randomUUID(),
+          conversationId: conversationId,
+          content: `Welcome to the conversation!`,
+          senderName: "System",
+          userId: "system",
+          createdAt: new Date().toISOString(),
+        }]);
+      }
+    } catch (err) {
+      console.error('Error in fetchMessages:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Wrap the original handlers to update input state
   const handleMessageEdit = (messageId: string) => {
     const result = editMessage(messageId);
@@ -111,47 +114,33 @@ export const useChatMessages = () => {
     }
   };
 
-  // Handle sending a message (wrapper for handleSendMessage from useMessageHandlers)
+  // Handle sending a message
   const handleSendMessage = () => {
     sendMessage();
   };
 
   // Select conversation wrapper
   const handleSelectConversation = (conversationId: string) => {
-    const conversation = selectConversation(conversationId); // Use the renamed function
+    // Use the renamed function from the hook
+    const conversation = selectConversationFromHook(conversationId);
     
-    // In a real app, this would fetch messages for the selected conversation from a database
-    // For now, we'll just show some mock messages for the first conversation and empty for others
-    if (conversationId === "1") {
-      setMessages(initialMessages);
-    } else {
-      const conversationName = conversation?.name || "conversation";
-      setMessages([
-        {
-          id: crypto.randomUUID(),
-          conversationId: conversationId,
-          content: `Welcome to the ${conversationName}!`,
-          senderName: "System",
-          userId: "system",
-          createdAt: new Date().toISOString(),
-        }
-      ]);
-    }
+    // Fetch real messages for this conversation
+    fetchMessages(conversationId);
     
     // Clear any editing or replying state
     setEditingMessageId(null);
     setReplyingToMessage(null);
     
-    return conversation; // Return the conversation
+    return conversation;
   };
 
   return {
     conversations,
     selectedConversation,
-    message, // Keep using 'message' for consistency with hooks
-    setMessage, // Keep using 'setMessage' for consistency with hooks
+    message,
+    setMessage,
     messages,
-    isLoading,
+    isLoading: isLoading || isSendingMessage,
     formatTime,
     handleSendMessage,
     handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => handleKeyDown(e, handleSendMessage),
@@ -162,6 +151,7 @@ export const useChatMessages = () => {
     handleReactionAdd,
     handleReactionRemove,
     editingMessageId,
-    replyingToMessage
+    replyingToMessage,
+    fetchMessages
   };
 };
