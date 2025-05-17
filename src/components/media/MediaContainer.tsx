@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/useMediaPosts";
@@ -27,7 +26,7 @@ export const MediaContainer = () => {
     loadMore,
     createPostMutation,
     handleCreatePost
-  } = useMediaPosts(user?.id, mediaType, sortBy, sortOrder, searchTerm);
+  } = useMediaPosts(mediaType, sortBy, sortOrder, searchTerm);
 
   const mediaData = {
     postsData,
@@ -79,7 +78,7 @@ export const MediaContainer = () => {
             isOpen={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
             onSubmit={handleCreatePost}
-            isSubmitting={createPostMutation.isPending}
+            isSubmitting={createPostMutation?.isPending}
           />
         )}
       </div>

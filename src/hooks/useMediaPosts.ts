@@ -17,7 +17,7 @@ export const useMediaPosts = (
   const [page, setPage] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
-	const { user } = useAuth();
+  const { user } = useAuth();
   const [createPostMutation, setCreatePostMutation] = useState<any>(null);
 
   const fetchPosts = async ({ pageParam = 1 }) => {
@@ -50,14 +50,12 @@ export const useMediaPosts = (
     isError,
     error,
     refetch
-  } = useQuery(
-    [mediaType, sortBy, sortOrder, searchTerm, 'mediaPosts'],
-    () => fetchPosts({ pageParam: page }),
-    {
-      keepPreviousData: true,
-      staleTime: 5000,
-    }
-  );
+  } = useQuery({
+    queryKey: [mediaType, sortBy, sortOrder, searchTerm, 'mediaPosts'],
+    queryFn: () => fetchPosts({ pageParam: page }),
+    keepPreviousData: true,
+    staleTime: 5000,
+  });
 
   const postsData = data ? {
     posts: data.data as MediaPost[],
