@@ -3,7 +3,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { ChatMessage } from "../types";
 
 export const useChatActions = () => {
   const { user } = useAuth();

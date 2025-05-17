@@ -16,6 +16,7 @@ export interface DbChatMessage {
   is_admin?: boolean;
   effect_type?: string;
   reply_to?: string;
+  updated_at?: string;
 }
 
 export const useChatMessages = () => {

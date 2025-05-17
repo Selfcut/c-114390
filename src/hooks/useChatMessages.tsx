@@ -8,7 +8,20 @@ import { useMessageReactions } from "./chat/useMessageReactions";
 import { useMessageUtils } from "./chat/useMessageUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DbChatMessage } from "@/components/chat/hooks/useChatMessages";
+
+// Define an interface for the database message shape
+export interface DbChatMessage {
+  id: string;
+  content: string;
+  created_at: string;
+  conversation_id: string;
+  user_id?: string;
+  sender_name?: string;
+  is_admin?: boolean;
+  effect_type?: string;
+  reply_to?: string;
+  updated_at?: string;
+}
 
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -82,8 +95,8 @@ export const useChatMessages = () => {
           createdAt: msg.created_at,
           isCurrentUser: false, // Will be updated in the component
           // Handle potentially missing properties
-          isAdmin: (msg as any).is_admin || false,
-          effectType: (msg as any).effect_type || undefined
+          isAdmin: msg.is_admin || false,
+          effectType: msg.effect_type || undefined
         }));
         setMessages(formattedMessages);
       } else {
