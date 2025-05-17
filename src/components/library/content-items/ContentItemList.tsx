@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Image, Quote as QuoteIcon, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContentItemProps } from './ContentItemTypes';
+import { ContentItemProps, MediaType } from './ContentItemTypes';
 import { ContentItemMedia } from './ContentItemMedia';
 import { ContentItemMeta } from './ContentItemMeta';
 import { ContentItemTags } from './ContentItemTags';

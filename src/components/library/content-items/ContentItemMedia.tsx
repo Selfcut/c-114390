@@ -1,10 +1,11 @@
 
 import React from 'react';
+import { MediaType } from './ContentItemTypes';
 
 interface ContentItemMediaProps {
   mediaUrl?: string;
   coverImage?: string;
-  mediaType?: 'image' | 'video' | 'document' | 'youtube' | 'text';
+  mediaType?: MediaType;
   title: string;
 }
 
