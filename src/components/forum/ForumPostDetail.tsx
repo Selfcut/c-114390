@@ -143,26 +143,27 @@ export const ForumPostDetail = () => {
         } else if (commentsData) {
           // Map comments data to our Comment interface
           const mappedComments: Comment[] = commentsData.map(comment => {
-            // Safely handle profiles data, ensuring it's the correct type
-            let profileData: ProfileData = { 
-              name: undefined, 
-              username: undefined, 
-              avatar_url: undefined 
+            // Fix: Initialize profileData with default empty values
+            const profileData: ProfileData = {
+              name: undefined,
+              username: undefined,
+              avatar_url: undefined
             };
             
-            // Only assign if profiles exists and is not an error object
-            // Fix: Add full null check before accessing properties
-            if (comment.profiles && 
-                comment.profiles !== null && 
-                typeof comment.profiles === 'object' && 
-                !('code' in comment.profiles)) {
-              profileData = comment.profiles as ProfileData;
+            // Only assign profile data if it exists and is an object (not null)
+            if (comment.profiles && typeof comment.profiles === 'object') {
+              // Fix: The key line that checks if profiles is not null before accessing
+              if (comment.profiles !== null) {
+                profileData.name = comment.profiles.name;
+                profileData.username = comment.profiles.username;
+                profileData.avatar_url = comment.profiles.avatar_url;
+              }
             }
             
-            // Use null-safe access for properties
-            const name = profileData?.name;
-            const username = profileData?.username;
-            const avatarUrl = profileData?.avatar_url;
+            // Use these safely extracted values
+            const name = profileData.name;
+            const username = profileData.username;
+            const avatarUrl = profileData.avatar_url;
             
             return {
               id: comment.id,
