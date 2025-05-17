@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -156,10 +155,10 @@ export const ForumPostDetail = () => {
               // Fix: Properly check if profiles is not null before accessing properties
               const profiles = comment.profiles;
               if (profiles !== null) {
-                // Using optional chaining to safely access properties
-                profileData.name = profiles?.name;
-                profileData.username = profiles?.username;
-                profileData.avatar_url = profiles?.avatar_url;
+                // Using non-null assertion since we've already checked profiles isn't null
+                profileData.name = profiles.name;
+                profileData.username = profiles.username;
+                profileData.avatar_url = profiles.avatar_url;
               }
             }
             
