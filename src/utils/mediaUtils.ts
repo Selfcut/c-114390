@@ -44,6 +44,14 @@ interface FetchMediaPostsParams {
   searchQuery?: string;
 }
 
+// Helper function to validate media types
+export function validateMediaType(type: string): MediaPostType {
+  const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
+  return validTypes.includes(type as MediaPostType) 
+    ? (type as MediaPostType) 
+    : 'text'; // Default to text if invalid
+}
+
 export const fetchMediaPosts = async ({
   type = 'all',
   page = 0,
@@ -142,14 +150,6 @@ export const fetchMediaPosts = async ({
     };
   }
 };
-
-// Helper function to validate media types
-function validateMediaType(type: string): MediaPostType {
-  const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
-  return validTypes.includes(type as MediaPostType) 
-    ? (type as MediaPostType) 
-    : 'text'; // Default to text if invalid
-}
 
 export const createMediaPost = async (newPost: {
   title: string;
