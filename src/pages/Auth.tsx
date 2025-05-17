@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,11 +14,22 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { signIn, signUp, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  
+  // Check for error param in URL
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'callback_error') {
+      setError('There was a problem processing your authentication. Please try again.');
+    }
+  }, [searchParams]);
   
   useEffect(() => {
     if (isAuthenticated) {
@@ -26,16 +37,41 @@ const Auth = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const validateForm = () => {
+    if (!email) {
+      setError('Email is required.');
+      return false;
+    }
+    
+    if (!password) {
+      setError('Password is required.');
+      return false;
+    }
+    
+    if (!isLogin) {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        return false;
+      }
+      
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
-
-    if (!email || !password) {
-      setError('Please enter both email and password.');
-      setLoading(false);
+    
+    if (!validateForm()) {
       return;
     }
+    
+    setLoading(true);
 
     try {
       if (isLogin) {
@@ -47,9 +83,15 @@ const Auth = () => {
             title: "Sign in successful",
             description: "Welcome back!"
           });
+          navigate('/dashboard');
         }
       } else {
-        const { error: signUpError } = await signUp(email, password);
+        const userData = {
+          name,
+          username: email.split('@')[0],
+        };
+        
+        const { error: signUpError } = await signUp(email, password, userData);
         if (signUpError) {
           setError(signUpError.message || 'Failed to sign up.');
         } else {
@@ -57,6 +99,7 @@ const Auth = () => {
             title: "Sign up successful",
             description: "Please check your email to verify your account."
           });
+          setIsLogin(true);
         }
       }
     } catch (err: any) {
@@ -64,6 +107,11 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTabChange = (value: string) => {
+    setError(null);
+    setIsLogin(value === 'login');
   };
 
   return (
@@ -74,52 +122,54 @@ const Auth = () => {
           <p className="text-muted-foreground">Intellectual Science Community</p>
         </div>
         
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue={isLogin ? "login" : "signup"} className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login" onClick={() => setIsLogin(true)}>
+            <TabsTrigger value="login">
               Login
             </TabsTrigger>
-            <TabsTrigger value="signup" onClick={() => setIsLogin(false)}>
+            <TabsTrigger value="signup">
               Sign Up
             </TabsTrigger>
           </TabsList>
           <TabsContent value="login" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="Enter your email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                placeholder="Enter your password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Login'
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  placeholder="Enter your email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  placeholder="Enter your password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
+              <Button className="w-full mt-6" type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </Button>
+            </form>
             <div className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link to="/auth" onClick={() => setIsLogin(false)} className="text-primary hover:underline">
@@ -128,42 +178,64 @@ const Auth = () => {
             </div>
           </TabsContent>
           <TabsContent value="signup" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="Enter your email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                placeholder="Enter your password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Sign Up'
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter your name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="signup-email">Email</Label>
+                <Input
+                  id="signup-email"
+                  placeholder="Enter your email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input
+                  id="signup-password"
+                  placeholder="Create a password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  placeholder="Confirm your password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
+              <Button className="w-full mt-6" type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
+              </Button>
+            </form>
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link to="/auth" onClick={() => setIsLogin(true)} className="text-primary hover:underline">

@@ -1,13 +1,8 @@
 
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { MediaPost, fetchMediaPosts, createMediaPost } from "@/utils/mediaUtils";
-import { MediaFeed } from "@/components/media/MediaFeed";
-import { Plus, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { MediaHeader } from "@/components/media/MediaHeader";
@@ -16,6 +11,8 @@ import { MediaSearchBar } from "@/components/media/MediaSearchBar";
 import { CreatePostDialog } from "@/components/media/CreatePostDialog";
 import { MediaEmptyState } from "@/components/media/MediaEmptyState";
 import { MediaErrorDisplay } from "@/components/media/MediaErrorDisplay";
+import { MediaFeed } from "@/components/media/MediaFeed";
+import { extractYoutubeId, isValidYoutubeUrl } from "@/utils/youtubeUtils";
 
 const Media = () => {
   const { user } = useAuth();
@@ -81,13 +78,6 @@ const Media = () => {
     }
   });
 
-  // Extract YouTube video ID
-  const extractYoutubeId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  };
-
   // Handle post creation
   const handleCreatePost = async (postData: any) => {
     if (!user) {
@@ -101,10 +91,9 @@ const Media = () => {
 
     try {
       // Process YouTube URL if applicable
-      let finalUrl = postData.youtubeUrl || '';
+      let finalUrl = postData.url || '';
       if (postData.type === 'youtube') {
-        const videoId = extractYoutubeId(finalUrl);
-        if (!videoId) {
+        if (!isValidYoutubeUrl(finalUrl)) {
           toast({
             title: "Invalid YouTube URL",
             description: "Please enter a valid YouTube video URL",
@@ -112,7 +101,11 @@ const Media = () => {
           });
           return;
         }
-        finalUrl = `https://www.youtube.com/embed/${videoId}`;
+        
+        const videoId = extractYoutubeId(finalUrl);
+        if (videoId) {
+          finalUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
       }
       
       // Create post
@@ -145,29 +138,30 @@ const Media = () => {
       <div className="container mx-auto py-8">
         <MediaHeader onCreatePost={() => setIsCreateDialogOpen(true)} />
         
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MediaSearchBar 
-                searchTerm={searchTerm} 
-                setSearchTerm={setSearchTerm} 
-              />
-              
-              <MediaFilters 
-                filterType={mediaType}
-                setFilterType={setMediaType}
-                sortBy={sortBy as any}
-                setSortBy={(value) => setSortBy(value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mb-6 p-4 bg-background border rounded-lg shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MediaSearchBar 
+              searchTerm={searchTerm} 
+              setSearchTerm={setSearchTerm} 
+            />
+            
+            <MediaFilters 
+              filterType={mediaType}
+              setFilterType={setMediaType}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+            />
+          </div>
+        </div>
         
         {isError ? (
           <MediaErrorDisplay 
             message={error instanceof Error ? error.message : "Failed to load media posts"} 
             onRetry={refetch}
+            isRetrying={isLoading}
           />
+        ) : postsData?.posts?.length === 0 && !isLoading ? (
+          <MediaEmptyState onCreatePost={() => setIsCreateDialogOpen(true)} />
         ) : (
           <MediaFeed 
             posts={postsData?.posts || []}
