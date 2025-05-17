@@ -5,7 +5,7 @@ import { ContentItemProps, ContentItemType } from '@/components/library/content-
 import { ContentType } from '@/components/library/ContentTypeFilter';
 import { ViewMode } from '@/components/library/ViewSwitcher';
 import { useFetchKnowledgeEntries } from './useFetchKnowledgeEntries';
-import { useFetchMediaPosts } from './media/useFetchMediaPosts';
+import { fetchMediaPosts } from './fetchMediaPosts';
 import { useFetchQuotes } from './useFetchQuotes';
 import { useContentInteractions } from './useContentInteractions';
 import { useContentNavigation } from './useContentNavigation';
@@ -40,7 +40,6 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps): 
 
   // Import the smaller hooks
   const { fetchKnowledgeEntries } = useFetchKnowledgeEntries();
-  const { fetchMediaPosts } = useFetchMediaPosts();
   const { fetchQuotes } = useFetchQuotes();
   const { userLikes, userBookmarks, handleLike: interactionHandleLike, 
           handleBookmark: interactionHandleBookmark, checkUserInteractions } = useContentInteractions({ userId: user?.id });
@@ -62,8 +61,14 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps): 
         
         // Fetch media posts if requested
         if (contentType === 'all' || contentType === 'media') {
-          const mediaItems = await fetchMediaPosts(page, viewMode);
-          allContent = [...allContent, ...mediaItems];
+          // Direct fetch from Supabase instead of using the hook
+          const { data: mediaData, error: mediaError } = await fetchMediaPosts(page, viewMode);
+          
+          if (mediaError) {
+            console.error('Error fetching media posts:', mediaError);
+          } else if (mediaData) {
+            allContent = [...allContent, ...mediaData];
+          }
         }
         
         // Fetch quotes if requested
