@@ -21,7 +21,7 @@ export const useFetchMediaPosts = (
         const startIndex = page * pageSize;
         const endIndex = startIndex + pageSize - 1;
         
-        // Use profiles table for user data
+        // Use correct join syntax for profiles table
         let query = supabase.from('media_posts')
           .select(`
             *,
