@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
+import { validateMediaType } from "@/utils/mediaUtils";
 
 interface MediaPostData {
   title: string;
@@ -33,8 +34,8 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
         upsert: false
       });
     
-    // Track progress manually since onUploadProgress isn't available in this version
-    setUploadProgress(100); // Set to complete since we can't track actual progress
+    // Simulate progress since we can't track it directly
+    setUploadProgress(100);
     
     if (uploadError) throw uploadError;
     
@@ -58,6 +59,9 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
         url = await uploadMediaFile(postData.file);
       }
       
+      // Validate the media type
+      const validatedType = validateMediaType(postData.type);
+      
       // Insert the post into the database
       const { data, error } = await supabase
         .from('media_posts')
@@ -65,7 +69,7 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
           {
             title: postData.title,
             content: postData.content || '',
-            type: postData.type,
+            type: validatedType,
             url: url || null,
             user_id: userId,
             likes: 0,

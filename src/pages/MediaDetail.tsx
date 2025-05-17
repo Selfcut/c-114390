@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { MediaPost } from "@/utils/mediaUtils";
+import { MediaPost, validateMediaType } from "@/utils/mediaUtils";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -50,6 +50,8 @@ const MediaDetail = () => {
       // Create the post object with author information
       const completePost: MediaPost = {
         ...postData,
+        // Validate the media type to ensure it's a valid MediaPostType
+        type: validateMediaType(postData.type),
         author: {
           name: profileData?.name || "Unknown User",
           avatar_url: profileData?.avatar_url,
