@@ -41,12 +41,12 @@ export async function fetchMediaPosts({
   searchQuery?: string;
 }) {
   try {
-    // Start building the query
+    // Start building the query - Fix the join to use a proper format
     let query = supabase
       .from('media_posts')
       .select(`
         *,
-        profiles:user_id(name, avatar_url, username)
+        profiles(name, avatar_url, username)
       `)
       .range(page * pageSize, (page + 1) * pageSize - 1);
       
@@ -70,7 +70,7 @@ export async function fetchMediaPosts({
       throw error;
     }
     
-    // Transform to match the expected format
+    // Transform to match the expected format with proper type safety
     const posts: MediaPost[] = data?.map(post => {
       // Assert the type to ensure it's one of the allowed values
       const safeType = (post.type as string).toLowerCase();
@@ -78,14 +78,17 @@ export async function fetchMediaPosts({
         ['image', 'video', 'document', 'youtube', 'text'].includes(safeType) 
           ? safeType as 'image' | 'video' | 'document' | 'youtube' | 'text'
           : 'text';
+      
+      // Handle profiles data safely with optional chaining
+      const profileData = post.profiles as any;
           
       return {
         ...post,
         type: validType,
-        author: post.profiles ? {
-          name: post.profiles.name,
-          username: post.profiles.username,
-          avatar_url: post.profiles.avatar_url
+        author: profileData ? {
+          name: profileData.name,
+          username: profileData.username,
+          avatar_url: profileData.avatar_url
         } : undefined
       };
     }) || [];
@@ -110,11 +113,12 @@ export async function fetchMediaPosts({
  */
 export async function getMediaPost(id: string) {
   try {
+    // Fix the join syntax here too
     const { data, error } = await supabase
       .from('media_posts')
       .select(`
         *,
-        profiles:user_id(name, avatar_url, username)
+        profiles(name, avatar_url, username)
       `)
       .eq('id', id)
       .single();
@@ -128,14 +132,17 @@ export async function getMediaPost(id: string) {
         ? safeType as 'image' | 'video' | 'document' | 'youtube' | 'text'
         : 'text';
     
+    // Handle profiles data safely with optional chaining
+    const profileData = data.profiles as any;
+    
     // Transform to match the expected format
     const post: MediaPost = {
       ...data,
       type: validType,
-      author: data.profiles ? {
-        name: data.profiles.name,
-        username: data.profiles.username,
-        avatar_url: data.profiles.avatar_url
+      author: profileData ? {
+        name: profileData.name,
+        username: profileData.username,
+        avatar_url: profileData.avatar_url
       } : undefined
     };
     
