@@ -42,6 +42,25 @@ export interface ConversationItem {
   updatedAt: string;
   isGroup?: boolean;
   isGlobal?: boolean;
+  unread?: number;
+  avatar?: string;
+  participants?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  }[];
+}
+
+// Add the Conversation interface that was missing
+export interface Conversation {
+  id: string;
+  name: string;
+  lastMessage?: string;
+  updatedAt: string;
+  isGroup?: boolean;
+  isGlobal?: boolean;
+  unread?: number;
+  avatar?: string;
   participants?: {
     id: string;
     name: string;

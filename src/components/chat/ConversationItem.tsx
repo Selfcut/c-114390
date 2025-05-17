@@ -37,7 +37,7 @@ export const ConversationItem = ({
                 <Badge variant="outline" className="ml-2 text-xs">Group</Badge>
               )}
             </div>
-            {conversation.unread > 0 && (
+            {conversation.unread && conversation.unread > 0 && (
               <Badge className="bg-primary">{conversation.unread}</Badge>
             )}
           </div>

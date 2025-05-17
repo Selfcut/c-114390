@@ -89,7 +89,8 @@ export const ChatInputArea = ({
     if (onEmojiSelect) {
       onEmojiSelect(emoji);
     } else {
-      setMessage(prev => prev + emoji);
+      // Fix: using string concatenation instead of function updater
+      setMessage(message + emoji);
     }
     setShowEmojiPicker(false);
   };
@@ -99,7 +100,8 @@ export const ChatInputArea = ({
       onGifSelect(gif);
     } else {
       const gifMarkdown = `![${gif.alt}](${gif.url})`;
-      setMessage(prev => prev + " " + gifMarkdown);
+      // Fix: using string concatenation instead of function updater
+      setMessage(message + " " + gifMarkdown);
     }
     setShowGifPicker(false);
   };

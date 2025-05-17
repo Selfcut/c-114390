@@ -75,7 +75,7 @@ const initialMessages: ChatMessage[] = [
 ];
 
 export const useChatMessages = () => {
-  const [conversations, setConversations] = useState(initialConversations);
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [selectedConversation, setSelectedConversation] = useState<string>(initialConversations[0].id);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [message, setMessage] = useState("");

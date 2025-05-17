@@ -61,8 +61,8 @@ export const FullHeightChatSidebar = () => {
             userId: newMessage.user_id || 'anonymous',
             senderName: newMessage.sender_name || 'Anonymous',
             isCurrentUser: newMessage.user_id === user?.id,
-            isAdmin: newMessage.is_admin || false,
-            effectType: newMessage.effect_type
+            isAdmin: newMessage.isAdmin || false,
+            effectType: newMessage.effectType
           };
           
           setMessages(prev => [...prev, chatMessage]);
@@ -143,8 +143,8 @@ export const FullHeightChatSidebar = () => {
         userId: msg.user_id || 'anonymous',
         senderName: msg.sender_name || 'Anonymous',
         isCurrentUser: msg.user_id === user?.id,
-        isAdmin: msg.is_admin || false,
-        effectType: msg.effect_type
+        isAdmin: msg.isAdmin,
+        effectType: msg.effectType
       })) || [];
       
       setMessages(formattedMessages);
@@ -369,12 +369,12 @@ export const FullHeightChatSidebar = () => {
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setInputMessage(prev => prev + emoji);
+    setInputMessage(inputMessage + emoji);
   };
 
   const handleGifSelect = (gif: { url: string; alt: string }) => {
     const gifMarkdown = `![${gif.alt}](${gif.url})`;
-    setInputMessage(prev => prev + " " + gifMarkdown);
+    setInputMessage(inputMessage + " " + gifMarkdown);
   };
 
   const cancelEdit = () => {
@@ -451,7 +451,8 @@ export const FullHeightChatSidebar = () => {
         </div>
         
         {/* Add some CSS for our shake animation */}
-        <style jsx global>{`
+        <style>
+          {`
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
@@ -460,7 +461,8 @@ export const FullHeightChatSidebar = () => {
           .shake-animation {
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
           }
-        `}</style>
+          `}
+        </style>
       </div>
     </>
   );
