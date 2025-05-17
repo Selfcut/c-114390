@@ -25,7 +25,8 @@ export const useForumData = () => {
           .select(`
             *,
             profiles:user_id(name, avatar_url, username)
-          `);
+          `)
+          .order('created_at', { ascending: false });
         
         if (error) {
           console.error("Error fetching discussions:", error);
