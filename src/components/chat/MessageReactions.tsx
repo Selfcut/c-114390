@@ -1,10 +1,5 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Smile } from "lucide-react";
+import React from "react";
 
 export interface Reaction {
   emoji: string;
@@ -15,107 +10,54 @@ export interface Reaction {
 interface MessageReactionsProps {
   reactions: Reaction[];
   messageId: string;
-  onReactionAdd: (messageId: string, emoji: string) => void;
-  onReactionRemove: (messageId: string, emoji: string) => void;
-  onReact?: (emoji: string) => void;
+  onReactionAdd?: (messageId: string, emoji: string) => void;
+  onReactionRemove?: (messageId: string, emoji: string) => void;
+  currentUserId?: string;
 }
 
-// Common quick reactions
-const quickReactions = ["👍", "❤️", "😂", "😮", "😢", "👏", "🔥", "🎉"];
-
-export const MessageReactions = ({ 
-  reactions, 
-  messageId, 
+export const MessageReactions = ({
+  reactions,
+  messageId,
   onReactionAdd,
   onReactionRemove,
-  onReact
+  currentUserId = "current-user"
 }: MessageReactionsProps) => {
-  // Current user ID (would come from auth context in a real app)
-  const currentUserId = "current-user";
-  const [showReactionPicker, setShowReactionPicker] = useState(false);
-
-  // Filter out reactions with zero count
-  const validReactions = reactions.filter(r => r.count > 0);
-
-  const handleReactionToggle = (emoji: string) => {
-    const existingReaction = validReactions.find(r => r.emoji === emoji);
-    const hasReacted = existingReaction?.users.includes(currentUserId);
-    
+  const handleReactionClick = (emoji: string, hasReacted: boolean) => {
     if (hasReacted) {
-      onReactionRemove(messageId, emoji);
+      onReactionRemove?.(messageId, emoji);
     } else {
-      onReactionAdd(messageId, emoji);
+      onReactionAdd?.(messageId, emoji);
     }
-    
-    // Call onReact if provided
-    if (onReact) {
-      onReact(emoji);
-    }
-
-    setShowReactionPicker(false);
   };
 
+  // Filter out reactions with count 0
+  const visibleReactions = reactions.filter(r => r.count > 0);
+
+  if (!visibleReactions.length) {
+    return null;
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-1 mt-1">
-      {validReactions.map((reaction, index) => {
-        const hasReacted = reaction.users.includes(currentUserId);
+    <div className="flex flex-wrap gap-1 mt-1">
+      {visibleReactions.map((reaction) => {
+        const hasReacted = reaction.users.includes(currentUserId || "");
         
         return (
-          <TooltipProvider key={`${reaction.emoji}-${index}`}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className={cn(
-                    "h-6 px-2 rounded-full text-xs gap-1 hover:bg-muted",
-                    hasReacted ? "bg-primary/20" : "bg-muted/50"
-                  )}
-                  onClick={() => handleReactionToggle(reaction.emoji)}
-                >
-                  <span>{reaction.emoji}</span>
-                  <span>{reaction.count}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {reaction.users.length > 3
-                    ? `${reaction.users.slice(0, 3).join(", ")} and ${reaction.users.length - 3} others`
-                    : reaction.users.join(", ")}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <button
+            key={reaction.emoji}
+            onClick={() => handleReactionClick(reaction.emoji, hasReacted)}
+            className={`
+              flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs
+              ${hasReacted ? 'bg-primary/20 text-primary' : 'bg-muted hover:bg-muted/80 text-muted-foreground'}
+              transition-colors
+            `}
+            aria-label={`${reaction.emoji} reaction (${reaction.count})`}
+          >
+            <span>{reaction.emoji}</span>
+            <span className="min-w-4 text-center">{reaction.count}</span>
+          </button>
         );
       })}
-
-      <Popover open={showReactionPicker} onOpenChange={setShowReactionPicker}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 rounded-full hover:bg-muted"
-          >
-            <Smile size={14} />
-            <span className="sr-only">Add reaction</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-2">
-          <div className="flex gap-1 flex-wrap">
-            {quickReactions.map((emoji) => (
-              <Button
-                key={emoji}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 hover:bg-accent"
-                onClick={() => handleReactionToggle(emoji)}
-              >
-                {emoji}
-              </Button>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
     </div>
   );
 };

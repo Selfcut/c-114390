@@ -1,70 +1,71 @@
 
-// Event utils for pub/sub pattern
+type EventCallback<T = any> = (data: T) => void;
 
-// Sidebar collapse event channel
-const SIDEBAR_COLLAPSE_EVENT = "sidebar-collapse";
+const eventListeners: Record<string, EventCallback[]> = {};
 
-// Publish sidebar collapse event
-export const publishSidebarCollapse = (isCollapsed: boolean): void => {
-  // Store in localStorage for persistence across page navigation
-  localStorage.setItem('sidebar-collapsed', String(isCollapsed));
-  
-  // Dispatch event for real-time updates
-  const event = new CustomEvent(SIDEBAR_COLLAPSE_EVENT, { detail: isCollapsed });
-  document.dispatchEvent(event);
-  
-  // Update CSS variable for sidebar width
-  document.documentElement.style.setProperty(
-    '--sidebar-width', 
-    isCollapsed ? '64px' : '256px'
-  );
+// Function to publish a chat sidebar toggle event
+export const publishChatSidebarToggle = (isOpen: boolean | ((prev: boolean) => boolean)) => {
+  const eventName = 'chat-sidebar-toggle';
+  const listeners = eventListeners[eventName] || [];
+  listeners.forEach(callback => callback(isOpen));
 };
 
-// Subscribe to sidebar collapse events
-export const subscribeToSidebarCollapse = (callback: (isCollapsed: boolean) => void): () => void => {
-  const handler = (event: Event) => {
-    const customEvent = event as CustomEvent;
-    callback(customEvent.detail);
-  };
+// Function to subscribe to a chat sidebar toggle event
+export const subscribeToChatSidebarToggle = (callback: EventCallback<boolean | ((prev: boolean) => boolean)>) => {
+  const eventName = 'chat-sidebar-toggle';
   
-  document.addEventListener(SIDEBAR_COLLAPSE_EVENT, handler);
-  return () => document.removeEventListener(SIDEBAR_COLLAPSE_EVENT, handler);
-};
-
-// Chat sidebar toggle event channel
-const CHAT_SIDEBAR_TOGGLE_EVENT = "chat-sidebar-toggle";
-
-// Publish chat sidebar toggle event
-export const publishChatSidebarToggle = (isOpen: boolean | ((prev: boolean) => boolean)): void => {
-  // Save to localStorage for persistence
-  if (typeof isOpen === 'boolean') {
-    localStorage.setItem('chatSidebarOpen', String(isOpen));
+  if (!eventListeners[eventName]) {
+    eventListeners[eventName] = [];
   }
   
-  // Broadcast event
-  const event = new CustomEvent(CHAT_SIDEBAR_TOGGLE_EVENT, { detail: isOpen });
-  document.dispatchEvent(event);
-};
-
-// Subscribe to chat sidebar toggle events
-export const subscribeToChatSidebarToggle = (callback: (isOpen: boolean | ((prev: boolean) => boolean)) => void): () => void => {
-  const handler = (event: Event) => {
-    const customEvent = event as CustomEvent;
-    callback(customEvent.detail);
+  eventListeners[eventName].push(callback);
+  
+  // Return unsubscribe function
+  return () => {
+    eventListeners[eventName] = eventListeners[eventName].filter(cb => cb !== callback);
   };
-  
-  document.addEventListener(CHAT_SIDEBAR_TOGGLE_EVENT, handler);
-  return () => document.removeEventListener(CHAT_SIDEBAR_TOGGLE_EVENT, handler);
 };
 
-// Initialize UI state from localStorage
-export const initializeUIState = (): void => {
-  // Initialize sidebar width based on collapsed state
-  const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-  document.documentElement.style.setProperty(
-    '--sidebar-width', 
-    sidebarCollapsed ? '64px' : '256px'
-  );
-  
-  // Other UI state initializations can be added here
+// Function to publish any custom event
+export const publishEvent = <T>(eventName: string, data: T) => {
+  const listeners = eventListeners[eventName] || [];
+  listeners.forEach(callback => callback(data));
 };
+
+// Function to subscribe to any custom event
+export const subscribeToEvent = <T>(eventName: string, callback: EventCallback<T>) => {
+  if (!eventListeners[eventName]) {
+    eventListeners[eventName] = [];
+  }
+  
+  eventListeners[eventName].push(callback as EventCallback);
+  
+  // Return unsubscribe function
+  return () => {
+    eventListeners[eventName] = eventListeners[eventName].filter(cb => cb !== callback);
+  };
+};
+
+// Add CSS for pushing main content when sidebar opens
+export const addChatSidebarStyles = () => {
+  // Add a style element if it doesn't exist
+  const styleId = 'chat-sidebar-styles';
+  if (!document.getElementById(styleId)) {
+    const styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    styleElement.textContent = `
+      body.chat-sidebar-open main {
+        margin-right: var(--chat-sidebar-width);
+        transition: margin-right 0.3s ease;
+      }
+      
+      main {
+        transition: margin-right 0.3s ease;
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
+};
+
+// Call this function to ensure the styles are added
+addChatSidebarStyles();

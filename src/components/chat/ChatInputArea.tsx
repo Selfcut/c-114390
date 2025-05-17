@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmojiPicker } from "./EmojiPicker";
 import { GifPicker } from "./GifPicker";
-import { X } from "lucide-react";
+import { X, Send, Paperclip, Image } from "lucide-react";
 
 interface ChatInputAreaProps {
   message: string;
@@ -33,6 +33,8 @@ export const ChatInputArea = ({
 }: ChatInputAreaProps) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [textareaHeight, setTextareaHeight] = useState<number>(40);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   // Focus textarea when editing starts
   useEffect(() => {
@@ -55,6 +57,7 @@ export const ChatInputArea = ({
     const cursorPosition = textareaRef.current?.selectionStart || message.length;
     const newMessage = message.substring(0, cursorPosition) + emoji + message.substring(cursorPosition);
     setMessage(newMessage);
+    setShowEmojiPicker(false);
     
     // Focus back on textarea and set cursor position after the inserted emoji
     setTimeout(() => {
@@ -72,6 +75,7 @@ export const ChatInputArea = ({
     const cursorPosition = textareaRef.current?.selectionStart || message.length;
     const newMessage = message.substring(0, cursorPosition) + " " + gifMarkdown + message.substring(cursorPosition);
     setMessage(newMessage);
+    setShowGifPicker(false);
     
     // Focus back on textarea
     setTimeout(() => {
@@ -106,6 +110,26 @@ export const ChatInputArea = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
+  };
+
+  // Method to handle file uploads (not fully implemented)
+  const handleFileUpload = () => {
+    // In a real implementation, this would open a file picker
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,video/*,audio/*,application/pdf';
+    fileInput.style.display = 'none';
+    fileInput.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        // Here you would handle uploading to storage
+        // For now just append a placeholder
+        setMessage(prev => prev + " [File uploaded: " + files[0].name + "]");
+      }
+    };
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
   };
 
   return (
@@ -159,31 +183,75 @@ export const ChatInputArea = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-            className="min-h-[40px] max-h-[120px] resize-none pr-12 py-2"
+            className="min-h-[40px] max-h-[120px] resize-none pr-24 py-2"
             style={{ height: `${textareaHeight}px` }}
           />
-          <div className="absolute bottom-1 right-1 flex items-center">
-            <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-            <GifPicker onGifSelect={handleGifSelect} />
+          <div className="absolute bottom-2 right-2 flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              type="button"
+              className="h-8 w-8 rounded-full"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            >
+              <span role="img" aria-label="emoji">😀</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              type="button"
+              className="h-8 w-8 rounded-full"
+              onClick={handleFileUpload}
+            >
+              <Paperclip size={18} />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              type="button"
+              className="h-8 w-8 rounded-full"
+              onClick={() => setShowGifPicker(!showGifPicker)}
+            >
+              <Image size={18} />
+            </Button>
           </div>
         </div>
         <Button 
           onClick={handleSendMessage}
           disabled={!message.trim()}
           size="sm"
+          className="flex items-center gap-1"
         >
+          <Send size={16} />
           {editingMessage ? "Save" : "Send"}
         </Button>
       </div>
       
-      {/* Quick mentions - In a real app, this would be populated with users in the conversation */}
-      <div className="flex gap-1 mt-1">
-        {["john", "maria", "alex"].map(username => (
+      {/* Emoji picker (simplified version) */}
+      {showEmojiPicker && (
+        <div className="absolute bottom-16 right-4 bg-background border rounded-md shadow-lg p-2 z-50">
+          <div className="grid grid-cols-6 gap-1">
+            {["😀", "😂", "❤️", "👍", "👎", "😎", "🎉", "😢", "🤔", "😡", "👏", "🙏"].map(emoji => (
+              <button
+                key={emoji}
+                className="hover:bg-accent rounded-md w-8 h-8 flex items-center justify-center"
+                onClick={() => handleEmojiSelect(emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Quick mentions - Using real users instead of static ones */}
+      <div className="flex gap-1 mt-2">
+        {["global", "channel", "all"].map(username => (
           <Button 
             key={username}
-            variant="ghost" 
+            variant="outline" 
             size="sm" 
-            className="h-6 px-2 text-xs hover:bg-primary/10" 
+            className="h-6 px-2 text-xs" 
             onClick={() => handleMentionUser(username)}
           >
             @{username}

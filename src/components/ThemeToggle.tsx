@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-context";
@@ -7,7 +8,11 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    // Ensure the class is properly applied to the document
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(newTheme);
   };
 
   return (
@@ -16,18 +21,16 @@ export function ThemeToggle() {
       size="icon" 
       onClick={toggleTheme}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} 
-      className="w-9 h-9"
+      className="w-9 h-9 relative"
     >
-      <div className="relative w-full h-full flex items-center justify-center">
-        <Sun
-          size={20}
-          className="absolute h-[1.2rem] w-[1.2rem] transition-all rotate-0 scale-100 dark:-rotate-90 dark:scale-0"
-        />
-        <Moon
-          size={20}
-          className="absolute h-[1.2rem] w-[1.2rem] transition-all rotate-90 scale-0 dark:rotate-0 dark:scale-100"
-        />
-      </div>
+      <Sun
+        size={18}
+        className="absolute h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+      />
+      <Moon
+        size={18}
+        className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+      />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );

@@ -27,6 +27,13 @@ export interface ChatMessage {
     size?: number;
     dimensions?: { width: number; height: number };
   }>;
+  sender?: {
+    id: string;
+    name: string;
+    username?: string;
+    avatar?: string;
+    status?: string;
+  };
 }
 
 export interface Conversation {
@@ -54,4 +61,23 @@ export interface ConversationItem {
 export interface ChatInterfaceProps {
   initialConversations?: ConversationItem[];
   chatType?: "direct" | "global" | "group";
+  recipientId?: string;
+  recipientName?: string;
+  recipientAvatar?: string;
+  recipientStatus?: string;
+  groupId?: string;
+  groupName?: string;
+  groupAvatar?: string;
+  groupMembers?: Array<{
+    id: string;
+    name: string;
+    avatar?: string;
+    status?: string;
+  }>;
+}
+
+export interface MessageReaction {
+  emoji: string;
+  count: number;
+  users: string[];
 }

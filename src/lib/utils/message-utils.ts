@@ -1,135 +1,38 @@
 
-import React from "react";
-import { ChatMessage } from "@/components/chat/types";
+// Function to parse and render message content with markdown, mentions and GIFs
+export function parseMarkdown(content: string): JSX.Element | string {
+  if (!content) return "";
 
-// Function to parse mentions in a message
-export const parseMentions = (content: string): string[] => {
-  const mentionRegex = /@(\w+)/g;
-  const mentions: string[] = [];
-  
-  let match;
-  while ((match = mentionRegex.exec(content)) !== null) {
-    mentions.push(match[1]);
-  }
-  
-  return mentions;
-};
+  // Very simple markdown parsing
+  let formattedContent = content;
 
-// Function to format message content with mentions highlighted
-export const formatMessageWithMentions = (content: string): React.ReactNode => {
-  const parts = content.split(/(^|\s)@(\w+)/g);
-  if (parts.length <= 1) return content;
+  // 1. Handle bold text: **bold** -> <strong>bold</strong>
+  formattedContent = formattedContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
-  const formattedContent: React.ReactNode[] = [];
+  // 2. Handle italic text: *italic* -> <em>italic</em>
+  formattedContent = formattedContent.replace(/\*(.*?)\*/g, '<em>$1</em>');
   
-  for (let i = 0; i < parts.length; i += 3) {
-    // Add regular text
-    if (parts[i]) {
-      formattedContent.push(parts[i]);
-    }
-    
-    // Add mention if it exists
-    if (i + 2 < parts.length) {
-      const spacer = parts[i + 1] || '';
-      const mention = parts[i + 2];
-      
-      if (mention) {
-        formattedContent.push(
-          spacer,
-          React.createElement("span", {
-            key: `mention-${i}`,
-            className: "text-primary font-medium"
-          }, `@${mention}`)
-        );
-      }
-    }
-  }
+  // 3. Handle mentions: @username -> <span class="mention">@username</span>
+  formattedContent = formattedContent.replace(/@(\w+)/g, '<span class="text-primary font-medium">@$1</span>');
   
-  return React.createElement(React.Fragment, null, ...formattedContent);
-};
+  // 4. Handle inline code: `code` -> <code>code</code>
+  formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>');
+  
+  // 5. Handle image embeds: ![alt](url) -> <img src="url" alt="alt" />
+  formattedContent = formattedContent.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-h-48 rounded-md my-2" />');
+  
+  // 6. Handle links: [text](url) -> <a href="url">text</a>
+  formattedContent = formattedContent.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>');
+  
+  // 7. Handle line breaks: \n -> <br />
+  formattedContent = formattedContent.replace(/\n/g, '<br />');
+  
+  // Return as HTML
+  return <div dangerouslySetInnerHTML={{ __html: formattedContent }} />;
+}
 
-// Parse markdown content with image support for GIFs
-export const parseMarkdown = (content: string): React.ReactNode => {
-  // Handle images/GIFs
-  const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-  const parts = content.split(imgRegex);
-  
-  if (parts.length <= 1) {
-    return formatMessageWithMentions(content);
-  }
-  
-  const formattedContent: React.ReactNode[] = [];
-  
-  for (let i = 0; i < parts.length; i += 3) {
-    // Add text content with mentions processed
-    if (parts[i]) {
-      formattedContent.push(formatMessageWithMentions(parts[i]));
-    }
-    
-    // Add image if it exists
-    if (i + 2 < parts.length) {
-      const alt = parts[i + 1] || '';
-      const url = parts[i + 2];
-      
-      if (url) {
-        formattedContent.push(
-          React.createElement("div", {
-            key: `img-${i}`,
-            className: "my-2 rounded overflow-hidden max-w-xs"
-          }, 
-            React.createElement("img", {
-              src: url,
-              alt: alt,
-              className: "max-w-full",
-              loading: "lazy",
-              onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                e.currentTarget.src = "https://placehold.co/600x400/png?text=Image+not+available";
-              }
-            })
-          )
-        );
-      }
-    }
-  }
-  
-  return React.createElement(React.Fragment, null, ...formattedContent);
-};
-
-// Format URLs as clickable links
-export const formatLinks = (content: string): React.ReactNode => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = content.split(urlRegex);
-  
-  if (parts.length <= 1) {
-    return content;
-  }
-  
-  const formattedContent: React.ReactNode[] = [];
-  
-  for (let i = 0; i < parts.length; i++) {
-    // Check if this part is a URL
-    if (i % 2 === 0) {
-      formattedContent.push(parts[i]);
-    } else {
-      // It's a URL, make it a link
-      formattedContent.push(
-        React.createElement("a", {
-          key: `url-${i}`,
-          href: parts[i],
-          target: "_blank",
-          rel: "noopener noreferrer",
-          className: "text-primary hover:underline"
-        }, parts[i])
-      );
-    }
-  }
-  
-  return React.createElement(React.Fragment, null, ...formattedContent);
-};
-
-// Process YouTube links and extract video IDs
-export const extractYouTubeID = (url: string): string | null => {
-  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[7].length === 11) ? match[7] : null;
-};
+// Function to detect and extract mentions from a message content
+export function extractMentions(content: string): string[] {
+  const matches = content.match(/@(\w+)/g);
+  return matches ? matches.map(m => m.substring(1)) : [];
+}

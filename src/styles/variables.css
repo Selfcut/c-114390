@@ -39,6 +39,10 @@
   
   --promo: 260 60% 30%;
   --promo-foreground: 0 0% 100%;
+
+  /* Chat sidebar width */
+  --chat-sidebar-width: 360px;
+  --content-margin-right: 0;
   
   /* Typography improvements */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

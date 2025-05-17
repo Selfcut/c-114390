@@ -7,6 +7,9 @@ import { parseMarkdown } from "@/lib/utils/message-utils";
 import { Button } from "@/components/ui/button";
 import { SmileIcon, Reply, Pencil, Trash } from "lucide-react";
 import { CustomTooltip } from "@/components/ui/CustomTooltip";
+import { Avatar } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/avatar";
+import { AvatarFallback } from "@/components/ui/avatar";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -33,7 +36,9 @@ export const ChatMessage = ({
   const [reactions, setReactions] = useState<Reaction[]>([
     { emoji: "👍", count: 0, users: [] },
     { emoji: "❤️", count: 0, users: [] },
-    { emoji: "😂", count: 0, users: [] }
+    { emoji: "😂", count: 0, users: [] },
+    { emoji: "🎉", count: 0, users: [] },
+    { emoji: "👀", count: 0, users: [] },
   ]);
   
   const currentUserId = "current-user"; // This would come from auth in a real app
@@ -84,19 +89,21 @@ export const ChatMessage = ({
   };
 
   // Parse and render message content with markdown, mentions and GIFs
-  const renderedContent = parseMarkdown(message.content);
+  const renderedContent = parseMarkdown ? parseMarkdown(message.content) : message.content;
 
   return (
     <div 
       className={cn(
-        "group relative px-4 py-2",
+        "group relative px-4 py-2 rounded-md mb-1",
         message.isCurrentUser ? "bg-primary/10" : "hover:bg-accent/20"
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-          {message.senderName?.charAt(0) || "U"}
-        </div>
+        <Avatar className="w-8 h-8 flex-shrink-0">
+          <AvatarFallback className="bg-primary/20 text-primary">
+            {message.senderName?.charAt(0) || "U"}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-medium">{message.senderName}</span>
@@ -120,6 +127,30 @@ export const ChatMessage = ({
           <div className="mt-1 text-sm break-words">
             {renderedContent}
           </div>
+          
+          {/* Attachments render */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {message.attachments.map((attachment, index) => {
+                if (attachment.type === "image") {
+                  return (
+                    <div key={attachment.id || index} className="relative overflow-hidden rounded-md border">
+                      <img 
+                        src={attachment.url} 
+                        alt={attachment.name || "Attachment"} 
+                        className="max-h-48 object-cover"
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <div key={attachment.id || index} className="border rounded-md p-2 flex items-center gap-2">
+                    <span className="text-xs">{attachment.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           
           {/* Reactions */}
           {message.reactions && message.reactions.some(r => r.count > 0) && (
@@ -149,7 +180,7 @@ export const ChatMessage = ({
           </CustomTooltip>
         )}
         
-        {isCurrentUser && onEdit && (
+        {message.isCurrentUser && onEdit && (
           <CustomTooltip content="Edit">
             <Button
               variant="ghost"
@@ -163,7 +194,7 @@ export const ChatMessage = ({
           </CustomTooltip>
         )}
         
-        {isCurrentUser && onDelete && (
+        {message.isCurrentUser && onDelete && (
           <CustomTooltip content="Delete">
             <Button
               variant="ghost"

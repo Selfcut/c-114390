@@ -23,16 +23,25 @@ export const useChatSidebarToggle = () => {
         } else {
           document.documentElement.style.setProperty('--content-margin-right', '0');
         }
+        
+        // Add a class to the body element for more CSS control
+        if (newState) {
+          document.body.classList.add('chat-sidebar-open');
+        } else {
+          document.body.classList.remove('chat-sidebar-open');
+        }
       } else if (typeof newState === 'function') {
         setIsOpen(prev => {
           const nextState = newState(prev);
           localStorage.setItem('chatSidebarOpen', String(nextState));
           
-          // Update CSS variable for the main content area
+          // Update CSS variable and body class for the main content area
           if (nextState) {
             document.documentElement.style.setProperty('--content-margin-right', 'var(--chat-sidebar-width)');
+            document.body.classList.add('chat-sidebar-open');
           } else {
             document.documentElement.style.setProperty('--content-margin-right', '0');
+            document.body.classList.remove('chat-sidebar-open');
           }
           
           return nextState;
@@ -46,16 +55,19 @@ export const useChatSidebarToggle = () => {
         setIsOpen(false);
         publishChatSidebarToggle(false);
         document.documentElement.style.setProperty('--content-margin-right', '0');
+        document.body.classList.remove('chat-sidebar-open');
       }
     };
 
     window.addEventListener('resize', handleResize);
     
-    // Initial CSS variable setup
+    // Initial CSS variable and body class setup
     if (isOpen) {
       document.documentElement.style.setProperty('--content-margin-right', 'var(--chat-sidebar-width)');
+      document.body.classList.add('chat-sidebar-open');
     } else {
       document.documentElement.style.setProperty('--content-margin-right', '0');
+      document.body.classList.remove('chat-sidebar-open');
     }
     
     return () => {
@@ -73,8 +85,10 @@ export const useChatSidebarToggle = () => {
     // Update CSS variable for the main content area
     if (newState) {
       document.documentElement.style.setProperty('--content-margin-right', 'var(--chat-sidebar-width)');
+      document.body.classList.add('chat-sidebar-open');
     } else {
       document.documentElement.style.setProperty('--content-margin-right', '0');
+      document.body.classList.remove('chat-sidebar-open');
     }
   };
 
