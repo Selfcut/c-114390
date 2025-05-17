@@ -1,7 +1,7 @@
 
 import React, { useRef } from "react";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
-import { useChatMessages } from "./hooks/useChatMessages";
+import { useChatMessages } from "@/hooks/useChatMessages";
 import { useChatActions } from "./hooks/useChatActions";
 import { useSpecialEffects } from "./hooks/useSpecialEffects";
 import { useAdminStatus } from "./hooks/useAdminStatus";
