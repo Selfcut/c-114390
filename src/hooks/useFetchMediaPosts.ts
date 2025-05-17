@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentItemProps } from '@/components/library/content-items/ContentItemTypes';
 import { ViewMode } from '@/components/library/ViewSwitcher';
-import { MediaPostType } from '@/utils/mediaUtils';
+import { MediaPostType, validateMediaType } from '@/utils/mediaUtils';
 
 export const useFetchMediaPosts = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -64,14 +64,6 @@ export const useFetchMediaPosts = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Helper function to validate media types
-  const validateMediaType = (type: string): MediaPostType => {
-    const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
-    return validTypes.includes(type as MediaPostType) 
-      ? (type as MediaPostType) 
-      : 'text'; // Default to text if invalid
   };
 
   return { fetchMediaPosts, isLoading, error };

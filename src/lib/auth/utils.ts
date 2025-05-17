@@ -28,7 +28,7 @@ export const fetchUserProfile = async (userId: string, session?: Session) => {
       id: userId,
       email: session?.user?.email,
       name: profile.name || 'Anonymous User',
-      avatar: profile.avatar_url,
+      avatar: profile.avatar_url, // Map avatar_url to avatar
       username: profile.username,
       role: profile.role,
       isAdmin: profile.role === 'admin',
@@ -47,7 +47,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
     // Map UserProfile fields to profile table fields
     const profileUpdates: any = {};
     if (updates.name) profileUpdates.name = updates.name;
-    if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
+    if (updates.avatar) profileUpdates.avatar_url = updates.avatar; // Map avatar to avatar_url
     if (updates.username) profileUpdates.username = updates.username;
     
     const { error } = await supabase
