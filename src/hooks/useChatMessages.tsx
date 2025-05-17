@@ -60,7 +60,7 @@ export const useChatMessages = () => {
     conversations,
     selectedConversation,
     setSelectedConversation,
-    handleSelectConversation,
+    handleSelectConversation: selectConversation, // Rename to avoid conflict
     updateConversationLastMessage
   } = useConversations();
   
@@ -118,7 +118,7 @@ export const useChatMessages = () => {
 
   // Select conversation wrapper
   const handleSelectConversation = (conversationId: string) => {
-    const conversation = handleSelectConversation(conversationId);
+    const conversation = selectConversation(conversationId); // Use the renamed function
     
     // In a real app, this would fetch messages for the selected conversation from a database
     // For now, we'll just show some mock messages for the first conversation and empty for others
