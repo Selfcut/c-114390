@@ -10,7 +10,8 @@ import {
   Share,
   Flag,
   Bookmark,
-  Send
+  Send,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -23,12 +24,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { formatDistanceToNow } from 'date-fns';
 
-interface ForumComment {
+interface Comment {
   id: string;
+  content: string;
   authorId: string;
   authorName: string;
   authorAvatar?: string;
-  content: string;
   createdAt: Date;
   upvotes: number;
 }
@@ -42,7 +43,7 @@ export const ForumPostDetail = () => {
   
   const [isLoading, setIsLoading] = useState(true);
   const [post, setPost] = useState<any>(null);
-  const [comments, setComments] = useState<ForumComment[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   
@@ -53,21 +54,16 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Changed the query to use profiles directly instead of trying to use a non-existent relationship
+        // Fetch the post directly without trying to join with profiles
         const { data: postData, error: postError } = await supabase
           .from('forum_posts')
           .select('*')
           .eq('id', postId)
-          .maybeSingle();
+          .single();
         
         if (postError) {
           console.error('Error fetching post:', postError);
           throw postError;
-        }
-        
-        if (!postData) {
-          setIsLoading(false);
-          return; // Post not found will be handled in render
         }
         
         // After getting the post, fetch the author's profile separately
@@ -77,7 +73,7 @@ export const ForumPostDetail = () => {
         if (postData.user_id) {
           const { data: userData } = await supabase
             .from('profiles')
-            .select('username, name, avatar_url')
+            .select('name, username, avatar_url')
             .eq('id', postData.user_id)
             .maybeSingle();
             
@@ -87,7 +83,7 @@ export const ForumPostDetail = () => {
           }
         }
         
-        // Process post data with proper type safety
+        // Process post data
         const processedPost = {
           id: postData.id,
           title: postData.title,
@@ -105,20 +101,19 @@ export const ForumPostDetail = () => {
         
         setPost(processedPost);
         
-        // Increment view count for the post - fixed Promise chaining
+        // Increment view count for the post
         try {
           await supabase.rpc('increment_counter_fn', {
             row_id: postId,
             column_name: 'views',
             table_name: 'forum_posts'
           });
-          console.log('View count incremented');
         } catch (err) {
           console.error('Error incrementing view count:', err);
         }
         
-        // TODO: Implement fetching comments once we have a forum_comments table
-        // For now, just set empty comments array
+        // TODO: In a real implementation, we would fetch comments here
+        // For now just set empty comments array
         setComments([]);
         
         setIsLoading(false);
@@ -161,12 +156,12 @@ export const ForumPostDetail = () => {
     setIsSubmittingComment(true);
     
     try {
-      // TODO: Implement once we have a forum_comments table
-      // For now, simulate adding a comment
-      const newCommentObj: ForumComment = {
+      // In a real implementation, we would add the comment to the database
+      // For now, we'll just simulate adding a comment to the local state
+      const newCommentObj: Comment = {
         id: `comment-${Date.now()}`,
         authorId: user.id,
-        authorName: user.name || user.username || 'Anonymous',
+        authorName: user.name || user.email || 'Anonymous',
         authorAvatar: user.avatar_url,
         content: newComment.trim(),
         createdAt: new Date(),
@@ -380,6 +375,7 @@ export const ForumPostDetail = () => {
             </div>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
+            <Eye size={16} className="mr-1" />
             <span>{post.views} views</span>
           </div>
         </CardFooter>

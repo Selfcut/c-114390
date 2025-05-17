@@ -19,19 +19,33 @@ export const useForumData = () => {
       try {
         setIsLoading(true);
         
-        // Query forums with profiles data - fixed relationship query
+        // Query forums - fixed to avoid using an incorrect relationship
         const { data, error } = await supabase
           .from('forum_posts')
-          .select(`
-            *,
-            profiles:user_id(name, avatar_url, username)
-          `)
-          .order('created_at', { ascending: false });
+          .select('*');
         
         if (error) {
           console.error("Error fetching discussions:", error);
           setError("Failed to load discussions. Please try again later.");
           return;
+        }
+        
+        // Get authors separately if needed
+        const userIds = data.map((post: any) => post.user_id).filter(Boolean);
+        let usersMap: Record<string, any> = {};
+        
+        if (userIds.length > 0) {
+          const { data: usersData, error: usersError } = await supabase
+            .from('profiles')
+            .select('id, name, username, avatar_url')
+            .in('id', userIds);
+            
+          if (!usersError && usersData) {
+            usersMap = usersData.reduce((acc: Record<string, any>, user: any) => {
+              acc[user.id] = user;
+              return acc;
+            }, {});
+          }
         }
         
         // Process the data and collect tags
@@ -42,6 +56,9 @@ export const useForumData = () => {
             post.tags.forEach((tag: string) => allTagsSet.add(tag));
           }
           
+          // Get author info from usersMap
+          const authorInfo = post.user_id ? usersMap[post.user_id] : null;
+          
           // Determine if post is popular based on views & comments
           const isPopular = (post.views || 0) > 50 || (post.comments || 0) > 5;
           
@@ -50,8 +67,8 @@ export const useForumData = () => {
             title: post.title,
             content: post.content,
             authorId: post.user_id,
-            author: post.profiles?.name || 'Unknown User',
-            authorAvatar: post.profiles?.avatar_url,
+            author: authorInfo?.name || authorInfo?.username || 'Unknown User',
+            authorAvatar: authorInfo?.avatar_url,
             createdAt: new Date(post.created_at),
             tags: post.tags || [],
             views: post.views || 0,
