@@ -8,28 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { MediaPost, fetchMediaPosts, createMediaPost } from "@/utils/mediaUtils";
 import { MediaFeed } from "@/components/media/MediaFeed";
 import { Plus, Image as ImageIcon, FileText, Loader2, Upload, Youtube } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-export interface MediaPost {
-  id: string;
-  title: string;
-  content?: string;
-  url?: string;
-  type: 'image' | 'video' | 'document' | 'youtube' | 'text';
-  created_at: string;
-  user_id: string;
-  likes?: number;
-  comments?: number;
-  views?: number;
-  profiles?: {
-    name?: string;
-    avatar_url?: string;
-  } | null;
-}
 
 const Media = () => {
   const { user } = useAuth();
@@ -37,7 +20,8 @@ const Media = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [mediaType, setMediaType] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("new");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState("");
   
   // Create post states
@@ -47,75 +31,28 @@ const Media = () => {
   const [postUrl, setPostUrl] = useState("");
   const [postType, setPostType] = useState<'image' | 'video' | 'document' | 'youtube' | 'text'>('text');
 
-  // Fetch media posts from Supabase
+  // Fetch media posts using react-query
   const { data: postsData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['mediaPosts', mediaType, sortBy, searchTerm, page],
-    queryFn: async () => {
-      let query = supabase
-        .from('media_posts')
-        .select(`
-          id,
-          title,
-          content,
-          url,
-          type,
-          created_at,
-          user_id,
-          likes,
-          comments,
-          profiles:profiles(name, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .range(page * 10, (page + 1) * 10 - 1);
-        
-      // Apply media type filter
-      if (mediaType !== "all") {
-        query = query.eq('type', mediaType);
-      }
-      
-      // Apply search filter if provided
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
-      }
-      
-      // Apply sorting
-      if (sortBy === "popular") {
-        query = query.order('likes', { ascending: false });
-      } else if (sortBy === "new") {
-        query = query.order('created_at', { ascending: false });
-      }
-      
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching media posts:', error);
-        throw error;
-      }
-      
-      return {
-        posts: data as MediaPost[],
-        hasMore: data && data.length === 10
-      };
-    }
+    queryKey: ['mediaPosts', mediaType, sortBy, sortOrder, searchTerm, page],
+    queryFn: () => fetchMediaPosts({
+      type: mediaType, 
+      page, 
+      sortBy, 
+      sortOrder, 
+      searchQuery: searchTerm
+    }),
+    keepPreviousData: true
   });
 
   // Create post mutation
   const createPostMutation = useMutation({
-    mutationFn: async (newPost: {
+    mutationFn: (newPost: {
       title: string;
       content?: string;
       url?: string;
-      type: string;
-      user_id: string;
-    }) => {
-      const { data, error } = await supabase
-        .from('media_posts')
-        .insert(newPost)
-        .select();
-      
-      if (error) throw error;
-      return data;
-    },
+      type: 'image' | 'video' | 'document' | 'youtube' | 'text';
+      userId: string;
+    }) => createMediaPost(newPost),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mediaPosts'] });
       toast({
@@ -188,13 +125,13 @@ const Media = () => {
         finalUrl = `https://www.youtube.com/embed/${videoId}`;
       }
       
-      // Create post in Supabase
+      // Create post
       createPostMutation.mutate({
         title: postTitle,
         content: postContent,
         url: finalUrl,
         type: postType,
-        user_id: user.id
+        userId: user.id
       });
     } catch (error: any) {
       console.error('Error creating post:', error);
@@ -250,7 +187,7 @@ const Media = () => {
         </div>
         <Button 
           onClick={() => setIsCreateDialogOpen(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 hover-lift"
         >
           <Plus size={16} />
           <span>Create Post</span>
@@ -288,8 +225,9 @@ const Media = () => {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="new">Newest First</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
+                  <SelectItem value="created_at">Newest First</SelectItem>
+                  <SelectItem value="likes">Most Popular</SelectItem>
+                  <SelectItem value="title">Alphabetical</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -298,15 +236,23 @@ const Media = () => {
       </div>
       
       {isError ? (
-        <MediaFeed 
-          posts={[]}
-          isLoading={isLoading}
-          hasMore={false}
-          loadMore={loadMore}
-          currentUser={user}
-          error={error instanceof Error ? error.message : "An error occurred while fetching posts"}
-        />
-      ) : !postsData?.posts || postsData.posts.length === 0 && !isLoading ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-red-500 mb-4">
+              <div className="mx-auto w-16 h-16 bg-red-50 flex items-center justify-center rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium">Error Loading Media Posts</h3>
+              <p className="mt-2 text-sm">{error instanceof Error ? error.message : "An error occurred while fetching posts"}</p>
+              <Button className="mt-4" onClick={() => refetch()}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (!postsData?.posts || postsData.posts.length === 0) && !isLoading ? (
         <Card>
           <CardContent className="p-6">
             <EmptyState />

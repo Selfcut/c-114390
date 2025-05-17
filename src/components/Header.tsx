@@ -5,8 +5,8 @@ import { HeaderActions } from "./header/HeaderActions";
 
 const Header = () => {
   return (
-    <header className="border-b bg-background">
-      <div className="container px-4 h-16 flex items-center justify-between">
+    <header className="h-16 border-b bg-background shadow-sm sticky top-0 z-20">
+      <div className="container h-full px-4 flex items-center justify-between">
         {/* Search Bar */}
         <div className="flex items-center flex-1 gap-4">
           <HeaderSearch />

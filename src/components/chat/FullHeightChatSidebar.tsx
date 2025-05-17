@@ -1,108 +1,61 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { MessageSquare, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ChatSidebarHeader } from "./ChatSidebarHeader";
-import { ConversationsList } from "./ConversationsList";
-import { ChatMessageList } from "./ChatMessageList";
-import { ChatInputArea } from "./ChatInputArea";
-import { useChatMessages } from "@/hooks/useChatMessages";
-import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
-import { Conversation } from "./types";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 
 export const FullHeightChatSidebar = () => {
-  const { 
-    conversations,
-    selectedConversation,
-    message,
-    setMessage,
-    messages,
-    isLoading,
-    formatTime,
-    handleSendMessage,
-    handleKeyDown,
-    handleSelectConversation,
-    handleMessageEdit,
-    handleMessageDelete,
-    handleMessageReply,
-    handleReactionAdd,
-    handleReactionRemove
-  } = useChatMessages();
-  
-  const { isOpen, toggleSidebar } = useChatSidebarToggle();
-
-  // Cast the conversations to the expected Conversation type
-  const conversationsWithAvatars = conversations.map(conv => ({
-    ...conv,
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.name}`, // Generate avatar from name
-    unread: 0 // Add unread count
-  })) as Conversation[];
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Chat toggle button (visible when sidebar is closed) */}
+      {/* Collapsed button that's always visible */}
       {!isOpen && (
         <Button
-          onClick={toggleSidebar}
-          className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg z-50 bg-primary hover:bg-primary/90"
+          onClick={() => setIsOpen(true)}
+          className="fixed right-4 bottom-4 h-12 w-12 rounded-full shadow-md z-40 bg-primary hover:bg-primary/90"
           aria-label="Open chat"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageSquare size={20} />
         </Button>
       )}
-
-      {/* Chat sidebar */}
-      <aside 
-        className={`fixed top-0 right-0 h-full bg-background border-l border-border w-[350px] transform transition-transform duration-300 ease-in-out z-40 shadow-lg flex flex-col ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+      
+      {/* Expanded sidebar */}
+      <div 
+        className={`fixed top-0 right-0 h-screen bg-background border-l shadow-lg transition-all duration-300 z-40 ${
+          isOpen ? 'translate-x-0 w-80' : 'translate-x-full w-0'
         }`}
       >
-        {/* Header */}
-        <ChatSidebarHeader toggleSidebar={toggleSidebar} />
-
-        {/* Go to full chat page button */}
-        <div className="px-3 py-2 border-b border-border">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full flex items-center justify-center"
-            asChild
-          >
-            <Link to="/chat">
-              <span>Go to chat page</span>
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+        <div className="h-full flex flex-col">
+          <div className="p-4 border-b flex items-center justify-between">
+            <h3 className="font-semibold">Chat</h3>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close chat"
+            >
+              <ChevronRight size={18} />
+            </Button>
+          </div>
+          
+          {/* Chat content would go here */}
+          <div className="flex-1 overflow-auto p-4">
+            <div className="space-y-4">
+              <div className="flex justify-center py-8">
+                <div className="text-center">
+                  <div className="h-12 w-12 bg-primary/10 text-primary flex items-center justify-center rounded-full mx-auto mb-4">
+                    <MessageSquare size={24} />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Chat Coming Soon</h3>
+                  <p className="text-sm text-muted-foreground max-w-[200px] mx-auto">
+                    Real-time messaging will be available in a future update.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Conversations list */}
-        <ConversationsList 
-          conversations={conversationsWithAvatars}
-          selectedConversation={selectedConversation}
-          handleSelectConversation={handleSelectConversation}
-        />
-
-        {/* Messages area */}
-        <ChatMessageList 
-          messages={messages}
-          isLoading={isLoading}
-          formatTime={formatTime}
-          onMessageEdit={handleMessageEdit}
-          onMessageDelete={handleMessageDelete}
-          onMessageReply={handleMessageReply}
-          onReactionAdd={handleReactionAdd}
-          onReactionRemove={handleReactionRemove}
-        />
-
-        {/* Input area */}
-        <ChatInputArea 
-          message={message}
-          setMessage={setMessage}
-          handleSendMessage={handleSendMessage}
-          handleKeyDown={handleKeyDown}
-        />
-      </aside>
+      </div>
     </>
   );
 };

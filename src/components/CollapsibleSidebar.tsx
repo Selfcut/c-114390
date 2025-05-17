@@ -1,187 +1,106 @@
 
 import React, { useState, useEffect } from "react";
-import { NavLink, Link } from "react-router-dom";
-import {
-  LayoutDashboard,
-  MessageSquare,
-  BookOpen,
-  Settings,
-  User,
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Youtube,
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Home, Library, MessageSquare, User, Settings, 
+  BookOpen, FileText, Image, Shield, Menu, X 
 } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
-import { Button } from "./ui/button";
 import { useAuth } from "@/lib/auth";
-import { CustomTooltip } from "./ui/CustomTooltip";
-import { publishSidebarCollapse, subscribeToSidebarCollapse } from "@/lib/utils/event-utils";
-import { HeaderLogo } from "./header/HeaderLogo";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export const CollapsibleSidebar = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
-    // Get state from localStorage
-    const savedState = localStorage.getItem('sidebar-collapsed');
-    return savedState === 'true';
+    return localStorage.getItem('sidebar-collapsed') === 'true';
   });
-  
-  const isAdmin = user?.role === 'admin' || user?.isAdmin;
-  
-  // Update localStorage and CSS variables when collapsed state changes
+
+  const toggleSidebar = () => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem('sidebar-collapsed', String(newState));
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      newState ? '64px' : '256px'
+    );
+  };
+
+  // Initialize the CSS variable on component mount
   useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(collapsed));
     document.documentElement.style.setProperty(
       '--sidebar-width', 
       collapsed ? '64px' : '256px'
     );
-    
-    // Publish the state change so other components can react
-    publishSidebarCollapse(collapsed);
   }, [collapsed]);
 
-  // Listen for sidebar collapse events from other components
-  useEffect(() => {
-    const unsubscribe = subscribeToSidebarCollapse((isCollapsed) => {
-      setCollapsed(isCollapsed);
-    });
-    
-    return () => unsubscribe();
-  }, []);
-  
   const navItems = [
-    {
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      label: "Dashboard",
-      path: "/dashboard",
-    },
-    {
-      icon: <MessageSquare className="h-5 w-5" />,
-      label: "Forum",
-      path: "/forum",
-    },
-    {
-      icon: <BookOpen className="h-5 w-5" />,
-      label: "Wiki",
-      path: "/wiki",
-    },
-    {
-      icon: <Youtube className="h-5 w-5" />,
-      label: "Media",
-      path: "/media",
-    },
-    {
-      icon: <User className="h-5 w-5" />,
-      label: "Profile",
-      path: "/profile",
-    },
-    {
-      icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
-      path: "/settings",
-    }
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/forum", icon: MessageSquare, label: "Forum" },
+    { path: "/library", icon: Library, label: "Library" },
+    { path: "/wiki", icon: BookOpen, label: "Wiki" },
+    { path: "/media", icon: Image, label: "Media" },
+    { path: "/quotes", icon: FileText, label: "Quotes" }
   ];
 
-  // Add admin entry if user is admin
-  if (isAdmin) {
-    navItems.push({
-      icon: <ShieldCheck className="h-5 w-5" />,
-      label: "Admin",
-      path: "/admin",
-    });
+  // Admin route
+  if (user?.isAdmin) {
+    navItems.push({ path: "/admin", icon: Shield, label: "Admin" });
   }
 
+  // User routes
+  navItems.push(
+    { path: "/profile", icon: User, label: "Profile" },
+    { path: "/settings", icon: Settings, label: "Settings" }
+  );
+
   return (
-    <div className={`sidebar h-screen flex flex-col bg-background border-r border-border fixed left-0 top-0 overflow-hidden z-20 transition-all duration-300 ${
-      collapsed ? 'w-16' : 'w-64'
-    }`}>
-      <div className="flex items-center p-4 h-16 border-b border-border justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <HeaderLogo />
-            {!collapsed && <span className="font-medium text-lg ml-2">Polymath</span>}
-          </Link>
-        </div>
-        <CustomTooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-0 h-8 w-8"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </Button>
-        </CustomTooltip>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <CustomTooltip content={item.label} side="right" delayDuration={100} disabled={!collapsed}>
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) => `
-                    flex items-center px-4 py-2 rounded-md text-sm font-medium
-                    ${isActive 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-foreground hover:bg-secondary transition-colors no-underline"
-                    }
-                  `}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  {!collapsed && item.label}
-                </NavLink>
-              </CustomTooltip>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center justify-between">
-          <CustomTooltip content={user ? `${user.name} (${user.email})` : "User profile"} side="right" disabled={!collapsed}>
-            <div className="flex items-center">
-              {user && (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-accent-foreground overflow-hidden mr-3">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                    ) : (
-                      user.name?.charAt(0) || "U"
-                    )}
-                  </div>
-                  {!collapsed && (
-                    <div className="truncate">
-                      <div className="text-sm font-medium">{user.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {user.email}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </CustomTooltip>
-          <div className="flex-shrink-0">
-            {!collapsed && <ThemeToggle />}
-          </div>
-        </div>
-        {user && (
-          <CustomTooltip content="Sign out" side="top" disabled={!collapsed}>
-            <Button
-              onClick={signOut}
-              variant="outline"
-              size="sm"
-              className={`mt-4 text-sm ${collapsed ? 'p-2 w-10 h-10' : 'w-full'} no-underline`}
-            >
-              {collapsed ? <LogOut size={16} /> : "Sign out"}
-            </Button>
-          </CustomTooltip>
+    <aside 
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-background border-r z-30 transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="p-4 flex items-center justify-between border-b h-16">
+        {!collapsed && (
+          <h2 className="font-semibold text-lg">Polymath</h2>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleSidebar}
+          className={cn("ml-auto", collapsed && "mx-auto")}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <Menu size={20} /> : <X size={20} />}
+        </Button>
       </div>
-    </div>
+      
+      <div className="py-4 h-[calc(100vh-4rem)] overflow-y-auto">
+        <nav className="space-y-1 px-2">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 hover:no-underline",
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "hover:bg-accent hover:text-accent-foreground text-foreground/80"
+                )}
+              >
+                <item.icon size={20} className={cn(
+                  isActive ? "text-primary" : "text-foreground/70"
+                )} />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </aside>
   );
 };

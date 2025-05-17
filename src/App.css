@@ -1,174 +1,122 @@
 
-#root {
-  margin: 0 auto;
-  width: 100%;
-  max-width: 100%;
-  padding: 0;
-  text-align: left;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar-width: 256px;
+  --header-height: 4rem;
+  --chat-sidebar-width: 300px;
 }
 
-/* Improved typography */
-body {
-  font-family: var(--font-sans);
-  line-height: var(--line-height-normal);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  line-height: 1.3;
-  margin-bottom: 0.75em;
-  font-weight: 600;
-}
-
-p {
-  margin-bottom: 1em;
-  line-height: 1.6;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms, transform 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em rgba(100, 108, 255, 0.6));
-  transform: rotate(5deg) scale(1.05);
-}
-
-/* Discord-like spacing and containers */
-.container {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-lg);
-}
-
-.section {
-  padding: var(--spacing-lg) 0;
-}
-
-/* Card improvements */
-.card {
-  padding: var(--spacing-lg);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: var(--radius);
-  background-color: hsl(var(--card));
-  color: hsl(var(--card-foreground));
-  border: 1px solid hsl(var(--border));
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-/* Remove blue outlines */
-:focus {
-  outline: none !important;
-}
-
-button:focus, a:focus, input:focus, textarea:focus, select:focus {
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(var(--primary), 0.2) !important;
-}
-
-/* Add smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar - Discord style */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsla(var(--muted), 0.7);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--muted-foreground), 0.8);
-}
-
-/* Enhance text selection */
-::selection {
-  background-color: hsla(var(--primary), 0.2);
-  color: hsl(var(--foreground));
-}
-
-/* Enhance links */
+/* Reset link styles */
 a {
-  transition: all 0.2s ease;
-  color: hsl(var(--primary));
+  color: inherit;
   text-decoration: none;
 }
 
-a:hover {
-  opacity: 0.9;
+/* Only apply underline to text links, not navigation or buttons */
+a.text-link {
+  text-decoration: none;
+  color: hsl(var(--primary));
+}
+
+a.text-link:hover {
   text-decoration: underline;
 }
 
-/* Enhance images */
-img {
-  max-width: 100%;
-  height: auto;
-  object-fit: cover;
+/* Remove underline from buttons and navigation links */
+button:hover, 
+a[role="button"]:hover, 
+.nav-link:hover,
+nav a:hover {
+  text-decoration: none !important;
 }
 
-/* Badge styles */
-.badge {
-  display: inline-flex;
+/* For proper layout with fixed sidebars */
+.main-layout {
+  margin-left: var(--sidebar-width);
+}
+
+/* Empty state styling */
+.empty-state {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
 }
 
-/* Discord-like spacing helpers */
-.space-y-1 > * + * {
-  margin-top: 0.25rem;
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  background-color: hsl(var(--muted));
 }
 
-.space-y-2 > * + * {
-  margin-top: 0.5rem;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.space-y-4 > * + * {
-  margin-top: 1rem;
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-.space-x-2 > * + * {
-  margin-left: 0.5rem;
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
 }
 
-.space-x-4 > * + * {
-  margin-left: 1rem;
+.slide-up {
+  animation: slideUp 0.4s ease forwards;
 }
 
-/* Paper effect - subtle version */
-.paper-effect {
-  position: relative;
-  background-color: hsl(var(--card));
-  border-radius: var(--radius);
-  box-shadow: 
-    0 1px 3px rgba(0,0,0,0.06),
-    0 1px 2px rgba(0,0,0,0.12);
-  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+/* Stagger fade animation for lists */
+.stagger-fade > * {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
 }
 
-.paper-effect:hover {
-  box-shadow: 
-    0 10px 20px rgba(0,0,0,0.12),
-    0 6px 6px rgba(0,0,0,0.1);
+.stagger-fade > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-fade > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-fade > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-fade > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-fade > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-fade > *:nth-child(6) { animation-delay: 0.6s; }
+.stagger-fade > *:nth-child(7) { animation-delay: 0.7s; }
+.stagger-fade > *:nth-child(8) { animation-delay: 0.8s; }
+.stagger-fade > *:nth-child(9) { animation-delay: 0.9s; }
+.stagger-fade > *:nth-child(10) { animation-delay: 1s; }
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg, 
+    hsl(var(--muted)) 25%, 
+    hsl(var(--muted-foreground)/0.1) 50%, 
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

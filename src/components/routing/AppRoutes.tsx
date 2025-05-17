@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { LoadingScreen } from './LoadingScreen';
 import Auth from '@/pages/Auth';
@@ -11,9 +11,9 @@ import Chat from '@/pages/Chat';
 import Forum from '@/pages/Forum';
 import Library from '@/pages/Library';
 import Wiki from '@/pages/Wiki';
+import Media from '@/pages/Media';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
-import AI from '@/pages/AI';
 import Admin from '@/pages/Admin';
 import AdminPanel from '@/pages/admin/AdminPanel';
 import { AuthCallback } from './AuthCallback';
@@ -22,6 +22,7 @@ import { ProtectedRoute } from '../ProtectedRoute';
 
 export const AppRoutes = () => {
   const { isLoading, isAuthenticated } = useAuth();
+  const location = useLocation();
   
   // Load the sidebar state from localStorage
   useEffect(() => {
@@ -32,6 +33,11 @@ export const AppRoutes = () => {
       sidebarCollapsed ? '64px' : '256px'
     );
   }, []);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
   
   if (isLoading) {
     return <LoadingScreen />;
@@ -69,6 +75,13 @@ export const AppRoutes = () => {
             </PageLayout>
           </ProtectedRoute>
         } />
+        <Route path="/forum/:id" element={
+          <ProtectedRoute allowGuests={true}>
+            <PageLayout allowGuests={true}>
+              <Forum />
+            </PageLayout>
+          </ProtectedRoute>
+        } />
         <Route path="/library" element={
           <ProtectedRoute allowGuests={true}>
             <PageLayout allowGuests={true}>
@@ -84,8 +97,14 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         } />
         
-        {/* Redirects for consolidated pages */}
-        <Route path="/media" element={<Navigate to="/library?view=media" replace />} />
+        {/* Media page directly, not redirected */}
+        <Route path="/media" element={
+          <ProtectedRoute allowGuests={true}>
+            <PageLayout allowGuests={true}>
+              <Media />
+            </PageLayout>
+          </ProtectedRoute>
+        } />
         <Route path="/quotes" element={<Navigate to="/library?view=quotes" replace />} />
         <Route path="/ai" element={<Navigate to="/library?view=ai" replace />} />
         
