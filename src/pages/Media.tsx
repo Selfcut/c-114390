@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { MediaPost, fetchMediaPosts, createMediaPost } from "@/utils/mediaUtils";
 import { MediaFeed } from "@/components/media/MediaFeed";
-import { Plus, Image as ImageIcon, FileText, Loader2, Upload, Youtube } from "lucide-react";
+import { Plus, Image as ImageIcon, FileText, Loader2, Upload, Youtube, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -31,7 +31,7 @@ const Media = () => {
   const [postUrl, setPostUrl] = useState("");
   const [postType, setPostType] = useState<'image' | 'video' | 'document' | 'youtube' | 'text'>('text');
 
-  // Fetch media posts using react-query
+  // Fetch media posts using react-query with better error handling
   const { data: postsData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['mediaPosts', mediaType, sortBy, sortOrder, searchTerm, page],
     queryFn: () => fetchMediaPosts({
@@ -41,8 +41,17 @@ const Media = () => {
       sortOrder, 
       searchQuery: searchTerm
     }),
-    // Replace keepPreviousData with placeholderData in v5
-    placeholderData: (previousData) => previousData 
+    // Add these options to better handle errors
+    retry: 1,
+    placeholderData: (previousData) => previousData,
+    onError: (err) => {
+      console.error('Error fetching media posts:', err);
+      toast({
+        title: "Error loading media",
+        description: "There was a problem connecting to the database. Please try again later.",
+        variant: "destructive"
+      });
+    }
   });
 
   // Create post mutation
@@ -176,6 +185,23 @@ const Media = () => {
     </div>
   );
 
+  // Error display component
+  const ErrorDisplay = ({ message }: { message: string }) => (
+    <Card className="w-full">
+      <CardContent className="p-6 flex flex-col items-center text-center">
+        <div className="bg-destructive/10 p-4 rounded-full mb-4">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+        </div>
+        <h3 className="text-xl font-medium mb-2">Connection Error</h3>
+        <p className="text-muted-foreground mb-4">{message}</p>
+        <Button onClick={() => refetch()} className="flex items-center gap-2">
+          <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Try Again
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <PageLayout>
       <div className="container mx-auto py-8">
@@ -238,28 +264,7 @@ const Media = () => {
         </div>
         
         {isError ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <div className="text-red-500 mb-4">
-                <div className="mx-auto w-16 h-16 bg-red-50 flex items-center justify-center rounded-full mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium">Error Loading Media Posts</h3>
-                <p className="mt-2 text-sm">{error instanceof Error ? error.message : "An error occurred while fetching posts"}</p>
-                <Button className="mt-4" onClick={() => refetch()}>
-                  Retry
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (!postsData?.posts || postsData.posts.length === 0) && !isLoading ? (
-          <Card>
-            <CardContent className="p-6">
-              <EmptyState />
-            </CardContent>
-          </Card>
+          <ErrorDisplay message={error instanceof Error ? error.message : "Failed to load media posts"} />
         ) : (
           <MediaFeed 
             posts={postsData?.posts || []}
@@ -267,6 +272,7 @@ const Media = () => {
             hasMore={postsData?.hasMore || false}
             loadMore={loadMore}
             currentUser={user}
+            error={postsData?.error ? "Error loading content" : undefined}
           />
         )}
         

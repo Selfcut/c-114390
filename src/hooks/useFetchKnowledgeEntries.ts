@@ -9,13 +9,20 @@ export const useFetchKnowledgeEntries = () => {
     const formatDate = (dateStr: string) => new Date(dateStr);
     
     try {
+      // Fix: Use proper join syntax for Supabase
       const { data: knowledgeData, error: knowledgeError } = await supabase
         .from('knowledge_entries')
-        .select('*, profiles(*)')
+        .select(`
+          *,
+          profiles:user_id(name, avatar_url, username)
+        `)
         .order('created_at', { ascending: false })
         .range(page * 10, (page + 1) * 10 - 1);
         
-      if (knowledgeError) throw knowledgeError;
+      if (knowledgeError) {
+        console.error('Error fetching knowledge entries:', knowledgeError);
+        throw knowledgeError;
+      }
       
       if (knowledgeData) {
         const knowledgeItems: ContentItemProps[] = knowledgeData.map((item: any) => ({

@@ -9,13 +9,20 @@ export const useFetchQuotes = () => {
     const formatDate = (dateStr: string) => new Date(dateStr);
     
     try {
+      // Fix: Use proper join syntax for Supabase with profiles table
       const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
-        .select('*, profiles(*)')
+        .select(`
+          *,
+          profiles:user_id(name, avatar_url, username)
+        `)
         .order('created_at', { ascending: false })
         .range(page * 10, (page + 1) * 10 - 1);
         
-      if (quotesError) throw quotesError;
+      if (quotesError) {
+        console.error('Error fetching quotes:', quotesError);
+        throw quotesError;
+      }
       
       if (quotesData) {
         const quoteItems: ContentItemProps[] = quotesData.map((item: any) => ({
