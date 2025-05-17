@@ -1,5 +1,4 @@
 
-
 import { MediaPost } from "@/utils/mediaUtils";
 
 export interface MediaQueryParams {
@@ -23,6 +22,7 @@ export interface UseMediaPostsReturn {
   error: Error | null;
   refetch: () => Promise<any>;
   loadMore: () => void;
+  resetPage: () => void; // Added resetPage function to the interface
   page: number;
   createPostMutation: any;
   handleCreatePost: (data: any) => Promise<any>;

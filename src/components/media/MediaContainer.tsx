@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { useMediaPosts } from "@/hooks/useMediaPosts";
+import { useMediaPosts } from "@/hooks/media/useMediaPosts";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { MediaHeader } from "@/components/media/MediaHeader";
 import { MediaFilterBar } from "@/components/media/MediaFilterBar";
