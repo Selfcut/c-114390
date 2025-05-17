@@ -10,6 +10,7 @@ import { ContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface ContentFeedProps {
   contentType: ContentType;
@@ -24,6 +25,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const {
     feedItems,
@@ -57,6 +59,9 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
         description: "Please sign in to perform this action",
         variant: "destructive"
       });
+      
+      // Optional: Navigate to login page
+      // navigate('/login', { state: { returnUrl: window.location.pathname } });
       return;
     }
     action();
@@ -68,6 +73,26 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
   
   const handleBookmarkWithAuth = (contentId: string, contentType: string) => {
     handleAuthAction(() => handleBookmark(contentId, contentType));
+  };
+  
+  // Custom content click handler that can include analytics
+  const handleItemClick = (contentId: string, contentType: string) => {
+    // Optional: Track content click
+    try {
+      console.log(`User clicked ${contentType} content: ${contentId}`);
+      // You could add analytics tracking here
+      
+      // Call the original handler
+      handleContentClick(contentId, contentType);
+    } catch (err) {
+      console.error("Error handling content click:", err);
+      // Fallback if the main handler fails
+      const path = contentType === 'knowledge' ? `/knowledge/${contentId}` :
+                   contentType === 'media' ? `/media/${contentId}` :
+                   contentType === 'quotes' ? `/quotes/${contentId}` :
+                   contentType === 'ai' ? `/ai-content/${contentId}` : '/';
+      navigate(path);
+    }
   };
 
   // Error state
@@ -96,7 +121,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
               userBookmarks={userBookmarks}
               onLike={handleLikeWithAuth}
               onBookmark={handleBookmarkWithAuth}
-              onClick={handleContentClick}
+              onClick={handleItemClick}
               viewMode={viewMode}
             />
           ))
