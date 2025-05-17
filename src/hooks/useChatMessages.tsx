@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { ChatMessage } from "@/components/chat/types";
 import { useConversations } from "./chat/useConversations";
@@ -8,7 +9,7 @@ import { useMessageUtils } from "./chat/useMessageUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Define an interface for the database message shape
+// Define an interface for the database message shape that matches the Supabase schema
 export interface DbChatMessage {
   id: string;
   content: string;

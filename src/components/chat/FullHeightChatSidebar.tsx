@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
-import { useChatMessages } from "@/hooks/useChatMessages";
+import { useChatMessages } from "./hooks/useChatMessages";
 import { useSpecialEffects } from "./hooks/useSpecialEffects";
 import { useAdminStatus } from "./hooks/useAdminStatus";
 import { useRealtimeChatSubscription } from "./hooks/useRealtimeChatSubscription";
@@ -24,8 +24,7 @@ export const FullHeightChatSidebar = () => {
     messages,
     isLoadingMessages,
     addMessage,
-    fetchMessages,
-    isLoading
+    fetchMessages
   } = useChatMessages();
 
   // Use chat actions for message operations

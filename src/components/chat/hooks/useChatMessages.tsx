@@ -4,20 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ChatMessage } from "../types";
 import { toast } from "sonner";
-
-// Define an interface for the database message shape
-export interface DbChatMessage {
-  id: string;
-  content: string;
-  created_at: string;
-  conversation_id: string;
-  user_id?: string;
-  sender_name?: string;
-  is_admin?: boolean;
-  effect_type?: string;
-  reply_to?: string;
-  updated_at?: string;
-}
+import { DbChatMessage } from "@/hooks/useChatMessages";
 
 export const useChatMessages = () => {
   const { user } = useAuth();
