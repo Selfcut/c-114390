@@ -1,38 +1,32 @@
 
-import { MediaPost, MediaPostType } from "@/utils/mediaUtils";
-import { UseMutationResult } from "@tanstack/react-query";
+import { MediaPost } from "@/utils/mediaUtils";
 
-// Query parameters for fetching media posts
 export interface MediaQueryParams {
-  type?: string;
-  page?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  searchTerm?: string;
+  mediaType: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  searchTerm: string;
+  page: number;
 }
 
-// Return type for useMediaPosts hook
+export interface MediaQueryResult {
+  posts: MediaPost[];
+  hasMore: boolean;
+  error: string | null;
+}
+
 export interface UseMediaPostsReturn {
-  postsData: { 
+  postsData: {
     posts: MediaPost[];
     hasMore: boolean;
-    error: any;
+    error?: string;
   } | undefined;
   isLoading: boolean;
   isError: boolean;
-  error: any;
+  error: Error | null;
   refetch: () => void;
   loadMore: () => void;
   page: number;
-  createPostMutation: UseMutationResult<any, unknown, any, any>;
-  handleCreatePost: (postData: any) => Promise<void>;
-}
-
-// Structure for post creation input
-export interface CreatePostInput {
-  title: string;
-  content?: string;
-  url?: string;
-  type: MediaPostType;
-  userId: string;
+  createPostMutation: any;
+  handleCreatePost: (data: any) => Promise<void>;
 }

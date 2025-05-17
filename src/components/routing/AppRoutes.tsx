@@ -7,6 +7,7 @@ import { ErrorBoundary } from '../ErrorBoundary';
 import Auth from '@/pages/Auth';
 import Landing from '@/pages/Landing';
 import Media from '@/pages/Media';
+import MediaDetail from '@/pages/MediaDetail';
 import Forum from '@/pages/Forum';
 import ForumPost from '@/pages/ForumPost';
 import Wiki from '@/pages/Wiki';
@@ -75,6 +76,11 @@ export const AppRoutes = () => {
           <Route path="/media" element={
             <ErrorBoundary>
               <Media />
+            </ErrorBoundary>
+          } />
+          <Route path="/media/:id" element={
+            <ErrorBoundary>
+              <MediaDetail />
             </ErrorBoundary>
           } />
           <Route path="/forum" element={

@@ -1,10 +1,15 @@
 
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MediaPost, validateMediaType } from "@/utils/mediaUtils";
+import { MediaPost, MediaPostType } from "@/utils/mediaUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaQueryParams } from "./types";
+
+export interface MediaQueryResult {
+  posts: MediaPost[];
+  hasMore: boolean;
+  error: string | null;
+}
 
 export const useFetchMediaPosts = (
   mediaType: string,
@@ -19,7 +24,7 @@ export const useFetchMediaPosts = (
   const queryKey = ['mediaPosts', mediaType, sortBy, sortOrder, searchTerm, page];
   
   // Query function to fetch media posts
-  const fetchMediaPostsQuery = useCallback(async () => {
+  const fetchMediaPostsQuery = useCallback(async (): Promise<MediaQueryResult> => {
     // Start building the query
     let query = supabase.from('media_posts').select('*');
     
@@ -78,8 +83,13 @@ export const useFetchMediaPosts = (
       
       // Attach author info to each post and validate types
       posts.forEach(post => {
-        // Validate and convert the post type to a valid MediaPostType
-        post.type = validateMediaType(post.type);
+        // Validate the post type
+        const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
+        const validatedType = validTypes.includes(post.type as MediaPostType) 
+          ? post.type as MediaPostType
+          : 'text';
+        
+        post.type = validatedType;
         
         // Add author information as a separate property
         post.author = profileMap[post.user_id] 
@@ -101,7 +111,6 @@ export const useFetchMediaPosts = (
       
     const hasMore = offset + (posts?.length || 0) < (count || 0);
     
-    // Cast the response to MediaPost[] since we've validated and transformed the data
     return {
       posts: posts as unknown as MediaPost[],
       hasMore,

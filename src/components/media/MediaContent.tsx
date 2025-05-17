@@ -29,7 +29,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
     );
   }
   
-  if (postsData?.posts?.length === 0 && !isLoading) {
+  if (!isLoading && (!postsData?.posts || postsData.posts.length === 0)) {
     return <MediaEmptyState onCreatePost={onCreatePost} />;
   }
   

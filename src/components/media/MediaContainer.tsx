@@ -37,10 +37,11 @@ export const MediaContainer = () => {
   };
 
   const handleOpenCreateDialog = () => setIsCreateDialogOpen(true);
+  const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
 
   return (
     <PageLayout>
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-8 px-4">
         <MediaHeader onCreatePost={handleOpenCreateDialog} />
         
         <MediaFilterBar

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,13 @@ export const MediaFeed = ({
   currentUser,
   error 
 }: MediaFeedProps) => {
+  const navigate = useNavigate();
+  
+  // Navigate to media detail page
+  const handleViewPost = (post: MediaPost) => {
+    navigate(`/media/${post.id}`);
+  };
+  
   // Render loading skeletons
   if (isLoading && posts.length === 0) {
     return (
@@ -126,7 +134,7 @@ export const MediaFeed = ({
               </div>
             </CardHeader>
             
-            <div className="relative">
+            <div className="relative cursor-pointer" onClick={() => handleViewPost(post)}>
               {renderPostContent(post)}
             </div>
             
@@ -141,7 +149,12 @@ export const MediaFeed = ({
                   <span>{post.comments || 0}</span>
                 </Button>
               </div>
-              <Button variant="outline" size="sm" className="text-xs">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleViewPost(post)}
+                className="text-xs"
+              >
                 View Details
               </Button>
             </CardFooter>
@@ -163,6 +176,15 @@ export const MediaFeed = ({
               <>Load More</>
             )}
           </Button>
+        </div>
+      )}
+
+      {/* Loading indicator for additional content */}
+      {isLoading && posts.length > 0 && (
+        <div className="flex justify-center">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-4 w-24 bg-primary/20 rounded" />
+          </div>
         </div>
       )}
     </div>
