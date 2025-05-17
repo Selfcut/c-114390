@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,7 @@ import { EditWikiArticleDialog } from '@/components/wiki/EditWikiArticleDialog';
 import { WikiArticle } from '@/components/wiki/types';
 import { fetchWikiArticleById } from '@/utils/wikiUtils';
 import { formatDate } from '@/components/wiki/WikiUtils';
-import { ArrowLeft, Edit, Clock, Eye, BookOpen, Tag, Calendar, Heart, MessagesSquare, UserCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Clock, Eye, BookOpen, Tag, UserCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';

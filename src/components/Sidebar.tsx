@@ -6,12 +6,11 @@ import {
   MessageSquare,
   MessageCircle,
   BookOpen,
-  Settings,
-  User,
-  Quote,
   Brain,
   ShieldCheck,
-  GraduationCap
+  GraduationCap,
+  Quote,
+  Library
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -37,7 +36,7 @@ export const Sidebar = () => {
       path: "/chat",
     },
     {
-      icon: <BookOpen className="h-5 w-5" />,
+      icon: <Library className="h-5 w-5" />,
       label: "Library",
       path: "/library",
     },
@@ -55,16 +54,6 @@ export const Sidebar = () => {
       icon: <Brain className="h-5 w-5" />,
       label: "AI Tools",
       path: "/ai",
-    },
-    {
-      icon: <User className="h-5 w-5" />,
-      label: "Profile",
-      path: "/profile",
-    },
-    {
-      icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
-      path: "/settings",
     },
   ];
 

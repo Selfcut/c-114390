@@ -1,26 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { BookOpen, LucideIcon, Book, Lightbulb, Dna, Compass, PenTool, BookMarked, GraduationCap, PieChart } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { BookOpen, GraduationCap, Atom, Stethoscope, Building2, Globe, Users, Rocket, Brain, Laptop, PaletteSwatch, Leaf } from 'lucide-react';
 
-interface CategoryItem {
-  name: string;
-  id: string;
-  icon: LucideIcon;
-  count?: number;
-}
-
-export const categories: CategoryItem[] = [
-  { name: "Philosophy", id: "Philosophy", icon: BookOpen, count: 42 },
-  { name: "Science", id: "Science", icon: Dna, count: 37 },
-  { name: "History", id: "History", icon: BookMarked, count: 29 },
-  { name: "Art", id: "Art", icon: PenTool, count: 22 },
-  { name: "Education", id: "Education", icon: GraduationCap, count: 18 },
-  { name: "Mathematics", id: "Mathematics", icon: PieChart, count: 16 },
-  { name: "Literature", id: "Literature", icon: Book, count: 14 },
-  { name: "Ideas", id: "Ideas", icon: Lightbulb, count: 12 }
+export const categories = [
+  { id: "Philosophy", name: "Philosophy", icon: Brain, count: 12 },
+  { id: "Science", name: "Science", icon: Atom, count: 24 },
+  { id: "Technology", name: "Technology", icon: Laptop, count: 18 },
+  { id: "Education", name: "Education", icon: GraduationCap, count: 15 },
+  { id: "Health", name: "Health", icon: Stethoscope, count: 10 },
+  { id: "Business", name: "Business", icon: Building2, count: 8 },
+  { id: "History", name: "History", icon: BookOpen, count: 20 },
+  { id: "Geography", name: "Geography", icon: Globe, count: 6 },
+  { id: "Society", name: "Society", icon: Users, count: 14 },
+  { id: "Space", name: "Space", icon: Rocket, count: 9 },
+  { id: "Arts", name: "Arts", icon: PaletteSwatch, count: 11 },
+  { id: "Environment", name: "Environment", icon: Leaf, count: 7 }
 ];
 
 interface CategorySidebarProps {
@@ -28,50 +22,44 @@ interface CategorySidebarProps {
   setSelectedCategory: (category: string | null) => void;
 }
 
-export const CategorySidebar: React.FC<CategorySidebarProps> = ({
-  selectedCategory,
-  setSelectedCategory
+export const CategorySidebar: React.FC<CategorySidebarProps> = ({ 
+  selectedCategory, 
+  setSelectedCategory 
 }) => {
-  const handleCategoryClick = (category: string | null) => {
-    setSelectedCategory(category);
-  };
-  
   return (
-    <Card className="p-4">
-      <h2 className="text-lg font-semibold mb-3">Categories</h2>
+    <div className="bg-card rounded-lg border p-4">
+      <h2 className="font-semibold text-lg mb-4">Categories</h2>
       <div className="space-y-1">
-        <Button 
-          variant={selectedCategory === null ? "secondary" : "ghost"} 
-          className={cn(
-            "w-full justify-start",
-            selectedCategory === null ? "bg-secondary" : ""
-          )}
-          onClick={() => handleCategoryClick(null)}
+        <button
+          className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center justify-between transition-colors ${
+            selectedCategory === null ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+          }`}
+          onClick={() => setSelectedCategory(null)}
         >
-          <Compass className="mr-2 h-4 w-4" />
-          All Categories
-        </Button>
+          <span className="flex items-center gap-2">
+            <BookOpen size={18} />
+            <span>All Categories</span>
+          </span>
+        </button>
         
         {categories.map((category) => (
-          <Button 
-            key={category.name}
-            variant={selectedCategory === category.name ? "secondary" : "ghost"} 
-            className={cn(
-              "w-full justify-start",
-              selectedCategory === category.name ? "bg-secondary" : ""
-            )}
-            onClick={() => handleCategoryClick(category.name)}
+          <button
+            key={category.id}
+            className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center justify-between transition-colors ${
+              selectedCategory === category.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+            }`}
+            onClick={() => setSelectedCategory(category.id)}
           >
-            <category.icon className="mr-2 h-4 w-4" />
-            {category.name}
-            {category.count !== undefined && (
-              <span className="ml-auto text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-                {category.count}
-              </span>
-            )}
-          </Button>
+            <span className="flex items-center gap-2">
+              <category.icon size={18} />
+              <span>{category.name}</span>
+            </span>
+            <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
+              {category.count}
+            </span>
+          </button>
         ))}
       </div>
-    </Card>
+    </div>
   );
 };

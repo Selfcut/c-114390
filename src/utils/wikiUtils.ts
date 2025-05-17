@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { WikiArticle } from "@/components/wiki/types";
 
@@ -252,7 +253,7 @@ export async function updateWikiArticle(
         category,
         tags,
         contributors: incrementContributors ? existingArticle.contributors + 1 : existingArticle.contributors,
-        last_updated: new Date().toISOString() // Fix: Convert Date to ISO string for database compatibility
+        last_updated: new Date().toISOString() // Convert Date to ISO string for database compatibility
       })
       .eq('id', articleId)
       .select();

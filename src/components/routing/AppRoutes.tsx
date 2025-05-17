@@ -14,6 +14,9 @@ import ForumPost from '@/pages/ForumPost';
 import Wiki from '@/pages/Wiki';
 import WikiArticle from '@/pages/WikiArticle';
 import AdminPanel from '@/pages/AdminPanel';
+import Quotes from '@/pages/Quotes';
+import Library from '@/pages/Library';
+import Chat from '@/pages/Chat';
 
 export const AppRoutes = () => {
   const { user, isLoading } = useAuth();
@@ -39,6 +42,9 @@ export const AppRoutes = () => {
       <Route path="/forum/:id" element={<ForumPost />} />
       <Route path="/wiki" element={<Wiki />} />
       <Route path="/wiki/:id" element={<WikiArticle />} />
+      <Route path="/quotes" element={<Quotes />} />
+      <Route path="/library" element={<Library />} />
+      <Route path="/chat" element={<Chat />} />
       
       {/* Protected Routes */}
       <Route path="/profile" element={user ? <Profile /> : <Navigate to="/auth" />} />
