@@ -1,101 +1,79 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type MediaType = 'image' | 'youtube' | 'document' | 'text' | 'audio' | 'video';
+export type MediaPostType = 'image' | 'video' | 'youtube' | 'document' | 'text';
+
+export interface MediaAuthor {
+  name: string;
+  avatar_url?: string | null;
+  username?: string | null;
+}
 
 export interface MediaPost {
   id: string;
   title: string;
   content?: string;
   url?: string;
-  type: MediaType;
+  type: MediaPostType;
   user_id: string;
   created_at: string;
   updated_at: string;
   likes: number;
   comments: number;
-  views?: number;
-  author?: {
-    name?: string;
-    avatar_url?: string;
-    username?: string;
-  };
+  views: number;
+  author?: MediaAuthor;
 }
 
-export function validateMediaType(type: string): MediaType {
-  const validTypes: MediaType[] = ['image', 'youtube', 'document', 'text', 'audio', 'video'];
-  if (validTypes.includes(type as MediaType)) {
-    return type as MediaType;
+// Validate that a string is a valid MediaPostType
+export function validateMediaType(type: string): MediaPostType {
+  const validTypes: MediaPostType[] = ['image', 'video', 'youtube', 'document', 'text'];
+  
+  if (validTypes.includes(type as MediaPostType)) {
+    return type as MediaPostType;
   }
+  
   return 'text'; // Default to text if invalid type
 }
 
-/**
- * Track when a media item is viewed by a user
- * @param mediaId The ID of the media being viewed
- * @param userId The ID of the user viewing the media (optional)
- * @returns Promise that resolves to whether the tracking was successful
- */
-export const trackMediaView = async (
-  mediaId: string,
-  userId?: string | null
-): Promise<boolean> => {
+// Track media view with proper error handling
+export async function trackMediaView(mediaId: string, userId?: string): Promise<void> {
   try {
-    // First, increment the view count on the media post using our new DB function
-    const { error: updateError } = await supabase.rpc('increment_media_views', {
+    if (!mediaId) {
+      console.error("Cannot track view: Media ID is required");
+      return;
+    }
+    
+    // First increment the views counter in the media_posts table
+    const { error: incrementError } = await supabase.rpc('increment_media_views', {
       media_id: mediaId
     });
     
-    if (updateError) {
-      console.error('Error incrementing media views:', updateError);
-      return false;
+    if (incrementError) {
+      console.error("Error incrementing media views:", incrementError);
     }
     
-    // If user is logged in, also record this specific view in user_media_views
+    // If user is logged in, also track the view in user_media_views
     if (userId) {
-      // Check if there's an existing record
-      const { data: existingView } = await supabase
+      const { error: upsertError } = await supabase
         .from('user_media_views')
-        .select('id, view_count')
-        .eq('user_id', userId)
-        .eq('media_id', mediaId)
-        .single();
-        
-      if (existingView) {
-        // Update existing record
-        const { error: updateViewError } = await supabase
-          .from('user_media_views')
-          .update({
-            view_count: (existingView.view_count || 0) + 1,
-            last_viewed_at: new Date().toISOString()
-          })
-          .eq('id', existingView.id);
-          
-        if (updateViewError) {
-          console.error('Error updating user media view:', updateViewError);
-          return false;
-        }
-      } else {
-        // Insert new record
-        const { error: insertViewError } = await supabase
-          .from('user_media_views')
-          .insert({
-            user_id: userId,
+        .upsert(
+          {
             media_id: mediaId,
+            user_id: userId,
             last_viewed_at: new Date().toISOString(),
             view_count: 1
-          });
-          
-        if (insertViewError) {
-          console.error('Error recording user media view:', insertViewError);
-          return false;
-        }
+          },
+          {
+            onConflict: 'media_id,user_id',
+            ignoreDuplicates: false
+          }
+        );
+      
+      if (upsertError) {
+        console.error("Error updating user media views:", upsertError);
       }
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error tracking media view:', error);
-    return false;
+  } catch (err) {
+    console.error("Error tracking media view:", err);
   }
-};
+}

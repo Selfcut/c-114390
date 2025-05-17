@@ -1,17 +1,17 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Session } from "@supabase/supabase-js";
 import { UserProfile } from "./types";
+import { Session } from "@supabase/supabase-js";
 
 // Function to fetch user profile from Supabase
-export const fetchUserProfile = async (userId: string, session?: Session) => {
+export const fetchUserProfile = async (userId: string, session?: Session): Promise<UserProfile | null> => {
   try {
     // Fetch profile data
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching user profile:", error);
@@ -28,7 +28,7 @@ export const fetchUserProfile = async (userId: string, session?: Session) => {
       id: userId,
       email: session?.user?.email,
       name: profile.name || 'Anonymous User',
-      avatar: profile.avatar_url, // Map avatar_url to avatar
+      avatar_url: profile.avatar_url,
       username: profile.username,
       role: profile.role,
       isAdmin: profile.role === 'admin',
@@ -47,7 +47,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
     // Map UserProfile fields to profile table fields
     const profileUpdates: any = {};
     if (updates.name) profileUpdates.name = updates.name;
-    if (updates.avatar) profileUpdates.avatar_url = updates.avatar; // Map avatar to avatar_url
+    if (updates.avatar_url) profileUpdates.avatar_url = updates.avatar_url;
     if (updates.username) profileUpdates.username = updates.username;
     
     const { error } = await supabase
