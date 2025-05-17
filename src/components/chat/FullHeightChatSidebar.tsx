@@ -1,21 +1,23 @@
 
 import React, { useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatSidebarHeader } from "./ChatSidebarHeader";
-import { ChatMessageList } from "./ChatMessageList";
-import { ChatInputArea } from "./ChatInputArea";
 import { useChatMessages } from "./hooks/useChatMessages";
 import { useChatActions } from "./hooks/useChatActions";
 import { useSpecialEffects } from "./hooks/useSpecialEffects";
 import { useAdminStatus } from "./hooks/useAdminStatus";
 import { useRealtimeChatSubscription } from "./hooks/useRealtimeChatSubscription";
 import { useAutomatedMessages } from "./hooks/useAutomatedMessages";
+import { useAuth } from "@/lib/auth";
+import { CollapsedChatButton } from "./CollapsedChatButton";
+import { ChatSidebarContainer } from "./ChatSidebarContainer";
+import { ChatSidebarHeader } from "./ChatSidebarHeader";
+import { ChatContent } from "./ChatContent";
+import { ChatAnimationStyles } from "./ChatAnimationStyles";
+import { formatTime } from "./utils/formatTime";
 
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
+  const { user } = useAuth();
   const { isAdmin } = useAdminStatus();
   const { messages, setMessages, isLoadingMessages, fetchMessages, addMessage } = useChatMessages();
   const { 
@@ -50,12 +52,6 @@ export const FullHeightChatSidebar = () => {
       fetchMessages();
     }
   }, [isOpen, fetchMessages]);
-
-  // Format time helper
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
 
   // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
@@ -130,77 +126,39 @@ export const FullHeightChatSidebar = () => {
 
   return (
     <>
-      {/* Collapsed button that's always visible when chat is closed */}
-      {!isOpen && (
-        <Button
-          onClick={toggleSidebar}
-          className="fixed right-4 bottom-4 h-12 w-12 rounded-full shadow-md z-40 bg-primary hover:bg-primary/90"
-          aria-label="Open chat"
-        >
-          <MessageSquare size={20} />
-        </Button>
-      )}
+      {!isOpen && <CollapsedChatButton onClick={toggleSidebar} />}
       
-      {/* Expanded sidebar */}
-      <div 
-        className={`fixed top-0 right-0 h-screen bg-background border-l border-border shadow-lg transition-all duration-300 z-40 flex flex-col chat-container ${
-          isOpen ? 'translate-x-0 w-[var(--chat-sidebar-width)]' : 'translate-x-full w-0'
-        }`}
-      >
+      <ChatSidebarContainer isOpen={isOpen}>
         <ChatSidebarHeader toggleSidebar={toggleSidebar} />
         
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {isLoadingMessages ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : (
-            <ScrollArea className="flex-1">
-              <ChatMessageList 
-                messages={messages}
-                isLoading={isLoading}
-                formatTime={formatTime}
-                onMessageEdit={handleEditMessage}
-                onMessageDelete={handleDeleteMessage}
-                onMessageReply={handleReplyToMessage}
-                onReactionAdd={handleReactionAdd}
-                onReactionRemove={handleReactionRemove}
-                currentUserId={null}
-                messagesEndRef={messagesEndRef}
-              />
-            </ScrollArea>
-          )}
-          
-          <ChatInputArea 
-            message={inputMessage}
-            setMessage={setInputMessage}
-            handleSendMessage={handleSendMessage}
-            handleKeyDown={handleKeyDown}
-            editingMessage={editingMessageId}
-            replyingToMessage={replyingToMessage}
-            onCancelEdit={cancelEdit}
-            onCancelReply={cancelReply}
-            onEmojiSelect={handleEmojiSelect}
-            onGifSelect={handleGifSelect}
-            isAdmin={isAdmin}
-            onAdminEffectSelect={handleAdminEffectSelect}
-          />
-        </div>
+        <ChatContent
+          isLoadingMessages={isLoadingMessages}
+          messages={messages}
+          isLoading={isLoading}
+          formatTime={formatTime}
+          onMessageEdit={handleEditMessage}
+          onMessageDelete={handleDeleteMessage}
+          onMessageReply={handleReplyToMessage}
+          onReactionAdd={handleReactionAdd}
+          onReactionRemove={handleReactionRemove}
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleKeyDown={handleKeyDown}
+          editingMessageId={editingMessageId}
+          replyingToMessage={replyingToMessage}
+          onCancelEdit={cancelEdit}
+          onCancelReply={cancelReply}
+          onEmojiSelect={handleEmojiSelect}
+          onGifSelect={handleGifSelect}
+          isAdmin={isAdmin}
+          onAdminEffectSelect={handleAdminEffectSelect}
+          messagesEndRef={messagesEndRef}
+          currentUserId={user?.id || null}
+        />
         
-        {/* Add styles for our shake animation */}
-        <style>
-          {`
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-          }
-          .shake-animation {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-          }
-          `}
-        </style>
-      </div>
+        <ChatAnimationStyles />
+      </ChatSidebarContainer>
     </>
   );
 };
