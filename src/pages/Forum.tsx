@@ -60,7 +60,7 @@ const Forum = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [allTags, setAllTags] = useState<string[]>([]);
   
-  // Fetch discussions (using simulated data until forum_posts table is created)
+  // Fetch discussions
   useEffect(() => {
     const fetchDiscussions = async () => {
       try {
