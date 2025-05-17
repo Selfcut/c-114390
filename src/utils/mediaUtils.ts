@@ -1,50 +1,47 @@
 
-// Media post types
-export type MediaPostType = 'image' | 'video' | 'document' | 'youtube' | 'text';
+export interface MediaPostAuthor {
+  name: string;
+  avatar_url?: string | null;
+  username?: string | null;
+}
 
-// Media post interface
+export type MediaPostType = "youtube" | "image" | "document" | "text";
+
 export interface MediaPost {
   id: string;
   title: string;
-  content?: string;
-  url?: string;
+  content?: string | null;
+  url?: string | null;
   type: MediaPostType;
   user_id: string;
-  created_at: string;
-  updated_at: string;
-  likes: number;
-  comments: number;
-  author?: {
-    name: string;
-    avatar_url?: string;
-    username?: string;
-  };
+  created_at?: string | null;
+  updated_at?: string | null;
+  likes?: number | null;
+  comments?: number | null;
+  author?: MediaPostAuthor;
 }
 
-// Function to validate media post type
+// Function to validate media type
 export const validateMediaType = (type: string): MediaPostType => {
-  const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
-  return validTypes.includes(type as MediaPostType) ? (type as MediaPostType) : 'text';
+  const validTypes: MediaPostType[] = ["youtube", "image", "document", "text"];
+  return validTypes.includes(type as MediaPostType) 
+    ? (type as MediaPostType) 
+    : "text";  // Default to "text" if invalid type
 };
 
-// Helper functions for media interaction analytics
-export const trackMediaView = async (mediaId: string, userId?: string): Promise<void> => {
-  if (!mediaId) return;
-  
+// Function to track media views
+export const trackMediaView = async (mediaId: string, userId?: string) => {
   try {
-    // Record view even for anonymous users
-    await fetch('/api/media/track-view', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mediaId, userId })
-    });
+    // Implementation would depend on your tracking mechanism
+    console.log(`Media ${mediaId} viewed by user ${userId || 'anonymous'}`);
+    // Here you would typically call an API or update database
   } catch (error) {
-    console.error('Error tracking media view:', error);
+    console.error("Error tracking media view:", error);
   }
 };
 
-// Format media created date for display
-export const formatMediaDate = (dateString?: string): string => {
+// Utility function to format a date
+export const formatMediaDate = (dateString?: string | null): string => {
   if (!dateString) return 'Unknown date';
   
   try {
@@ -52,9 +49,9 @@ export const formatMediaDate = (dateString?: string): string => {
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
-      day: 'numeric'
+      day: 'numeric' 
     });
-  } catch (e) {
+  } catch (error) {
     return 'Invalid date';
   }
 };

@@ -1,5 +1,4 @@
 
-// This is a new consolidated file that simplifies our auth management
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -10,7 +9,7 @@ export interface UserProfile {
   id: string;
   email?: string;
   name: string;
-  avatar?: string;
+  avatar_url?: string;
   username?: string;
   role?: string;
   isAdmin?: boolean;
@@ -32,14 +31,14 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Function to fetch user profile from Supabase
-export const fetchUserProfile = async (userId: string, session?: Session) => {
+export const fetchUserProfile = async (userId: string, session?: Session): Promise<UserProfile | null> => {
   try {
     // Fetch profile data
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching user profile:", error);
@@ -56,7 +55,7 @@ export const fetchUserProfile = async (userId: string, session?: Session) => {
       id: userId,
       email: session?.user?.email,
       name: profile.name || 'Anonymous User',
-      avatar: profile.avatar_url,
+      avatar_url: profile.avatar_url,
       username: profile.username,
       role: profile.role,
       isAdmin: profile.role === 'admin',
@@ -75,7 +74,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
     // Map UserProfile fields to profile table fields
     const profileUpdates: any = {};
     if (updates.name) profileUpdates.name = updates.name;
-    if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
+    if (updates.avatar_url) profileUpdates.avatar_url = updates.avatar_url;
     if (updates.username) profileUpdates.username = updates.username;
     
     const { error } = await supabase
@@ -91,7 +90,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
 };
 
 // Auth provider component
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,7 +158,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       return { error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign in error:", error);
       return { error };
     }
@@ -185,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       return { error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign up error:", error);
       return { error };
     }
@@ -207,7 +206,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           title: "Signed out successfully"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign out exception:", error);
     }
   };

@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,6 +31,7 @@ const Auth = () => {
     }
   }, [searchParams]);
   
+  // Redirect authenticated users
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
@@ -48,7 +49,12 @@ const Auth = () => {
       return false;
     }
     
-    if (!isLogin) {
+    if (activeTab === "signup") {
+      if (!name) {
+        setError('Name is required.');
+        return false;
+      }
+      
       if (password.length < 6) {
         setError('Password must be at least 6 characters.');
         return false;
@@ -74,7 +80,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (activeTab === "login") {
         const { error: signInError } = await signIn(email, password);
         if (signInError) {
           setError(signInError.message || 'Failed to sign in.');
@@ -99,7 +105,7 @@ const Auth = () => {
             title: "Sign up successful",
             description: "Please check your email to verify your account."
           });
-          setIsLogin(true);
+          setActiveTab("login");
         }
       }
     } catch (err: any) {
@@ -111,7 +117,7 @@ const Auth = () => {
 
   const handleTabChange = (value: string) => {
     setError(null);
-    setIsLogin(value === 'login');
+    setActiveTab(value as "login" | "signup");
   };
 
   return (
@@ -122,7 +128,7 @@ const Auth = () => {
           <p className="text-muted-foreground">Intellectual Science Community</p>
         </div>
         
-        <Tabs defaultValue={isLogin ? "login" : "signup"} className="w-full" onValueChange={handleTabChange}>
+        <Tabs defaultValue={activeTab} className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">
               Login
@@ -172,7 +178,7 @@ const Auth = () => {
             </form>
             <div className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/auth" onClick={() => setIsLogin(false)} className="text-primary hover:underline">
+              <Link to="#" onClick={() => setActiveTab("signup")} className="text-primary hover:underline">
                 Sign up
               </Link>
             </div>
@@ -238,7 +244,7 @@ const Auth = () => {
             </form>
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/auth" onClick={() => setIsLogin(true)} className="text-primary hover:underline">
+              <Link to="#" onClick={() => setActiveTab("login")} className="text-primary hover:underline">
                 Login
               </Link>
             </div>

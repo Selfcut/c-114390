@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,9 @@ import {
 import { useAuth } from "@/lib/auth";
 
 export const UserMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAuthenticated } = useAuth();
   
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return (
       <Button variant="default" asChild>
         <Link to="/auth">
@@ -37,7 +38,7 @@ export const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarImage src={user.avatar_url} alt={user.name} />
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </Button>

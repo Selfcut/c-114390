@@ -31,3 +31,16 @@ export interface UseMediaPostsReturn {
   handleCreatePost: (data: any) => Promise<void>;
   uploadProgress?: number;
 }
+
+export interface CreateMediaPostData {
+  title: string;
+  content?: string;
+  url?: string;
+  type: string;
+  file?: File;
+}
+
+export interface CreateMediaPostResponse {
+  id: string;
+  error?: string;
+}
