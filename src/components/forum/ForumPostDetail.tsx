@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -32,6 +31,13 @@ interface Comment {
   authorAvatar?: string;
   createdAt: Date;
   upvotes: number;
+}
+
+// Add a type for the profile data from Supabase
+interface ProfileData {
+  name?: string;
+  username?: string;
+  avatar_url?: string;
 }
 
 export const ForumPostDetail = () => {
@@ -137,7 +143,8 @@ export const ForumPostDetail = () => {
         } else if (commentsData) {
           // Map comments data to our Comment interface
           const mappedComments: Comment[] = commentsData.map(comment => {
-            const profileData = comment.profiles || {};
+            // Ensure profileData is properly typed or use a default empty object with defined properties
+            const profileData: ProfileData = comment.profiles || { name: undefined, username: undefined, avatar_url: undefined };
             return {
               id: comment.id,
               content: comment.comment,
