@@ -1,11 +1,25 @@
 
-import React, { Suspense } from 'react';
-import { Routes, useLocation } from 'react-router-dom';
+import React, { Suspense, useEffect } from 'react';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { LoadingScreen } from './LoadingScreen';
 import { ErrorBoundary } from '../ErrorBoundary';
-import { PublicRoutes } from './PublicRoutes';
-import { ProtectedRoutes } from './ProtectedRoutes';
+import Auth from '@/pages/Auth';
+import Landing from '@/pages/Landing';
+import Media from '@/pages/Media';
+import Forum from '@/pages/Forum';
+import ForumPost from '@/pages/ForumPost';
+import Wiki from '@/pages/Wiki';
+import WikiArticle from '@/pages/WikiArticle';
+import Quotes from '@/pages/Quotes';
+import Library from '@/pages/Library';
+import Chat from '@/pages/Chat';
+import NotFound from '@/pages/NotFound';
+import Dashboard from '@/pages/Dashboard';
+import Profile from '@/pages/Profile';
+import Settings from '@/pages/Settings';
+import AdminPanel from '@/pages/AdminPanel';
+import { AuthCallback } from './AuthCallback';
 
 const RouteErrorFallback = () => (
   <div className="flex flex-col items-center justify-center p-6 min-h-[50vh]">
@@ -20,8 +34,9 @@ const RouteErrorFallback = () => (
 );
 
 export const AppRoutes = () => {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
   const location = useLocation();
+  const isAdmin = user?.isAdmin || false;
   
   // Scroll to top on route change
   React.useEffect(() => {
@@ -38,8 +53,91 @@ export const AppRoutes = () => {
     <ErrorBoundary fallback={<RouteErrorFallback />}>
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
-          <PublicRoutes />
-          <ProtectedRoutes />
+          {/* Public Routes */}
+          <Route path="/" element={
+            <ErrorBoundary>
+              <Landing />
+            </ErrorBoundary>
+          } />
+          <Route path="/auth" element={
+            <ErrorBoundary>
+              <Auth />
+            </ErrorBoundary>
+          } />
+          <Route path="/auth/callback" element={
+            <ErrorBoundary>
+              <AuthCallback />
+            </ErrorBoundary>
+          } />
+          
+          {/* Feature Routes */}
+          <Route path="/media" element={
+            <ErrorBoundary>
+              <Media />
+            </ErrorBoundary>
+          } />
+          <Route path="/forum" element={
+            <ErrorBoundary>
+              <Forum />
+            </ErrorBoundary>
+          } />
+          <Route path="/forum/:id" element={
+            <ErrorBoundary>
+              <ForumPost />
+            </ErrorBoundary>
+          } />
+          <Route path="/wiki" element={
+            <ErrorBoundary>
+              <Wiki />
+            </ErrorBoundary>
+          } />
+          <Route path="/wiki/:id" element={
+            <ErrorBoundary>
+              <WikiArticle />
+            </ErrorBoundary>
+          } />
+          <Route path="/quotes" element={
+            <ErrorBoundary>
+              <Quotes />
+            </ErrorBoundary>
+          } />
+          <Route path="/library" element={
+            <ErrorBoundary>
+              <Library />
+            </ErrorBoundary>
+          } />
+          <Route path="/chat" element={
+            <ErrorBoundary>
+              <Chat />
+            </ErrorBoundary>
+          } />
+
+          {/* User Routes */}
+          <Route path="/dashboard" element={
+            <ErrorBoundary>
+              <Dashboard />
+            </ErrorBoundary>
+          } />
+          <Route path="/profile" element={
+            <ErrorBoundary>
+              <Profile />
+            </ErrorBoundary>
+          } />
+          <Route path="/settings" element={
+            <ErrorBoundary>
+              <Settings />
+            </ErrorBoundary>
+          } />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <ErrorBoundary>
+              {isAdmin ? <AdminPanel /> : <Navigate to="/" />}
+            </ErrorBoundary>
+          } />
+          
+          {/* 404 Route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </ErrorBoundary>
