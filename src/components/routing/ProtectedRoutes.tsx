@@ -1,14 +1,42 @@
 
 import React from 'react';
+import { Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from '../ErrorBoundary';
+import { useAuth } from '@/lib/auth';
+import Dashboard from '@/pages/Dashboard';
+import Profile from '@/pages/Profile';
+import Settings from '@/pages/Settings';
+import AdminPanel from '@/pages/AdminPanel';
 
-/**
- * This file is kept for reference but is no longer used.
- * Routes have been consolidated in AppRoutes.tsx
- */
 export const ProtectedRoutes = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.isAdmin || false;
+
   return (
     <>
-      {/* This component is no longer used directly - see AppRoutes.tsx */}
+      {/* User Routes */}
+      <Route path="/dashboard" element={
+        <ErrorBoundary>
+          <Dashboard />
+        </ErrorBoundary>
+      } />
+      <Route path="/profile" element={
+        <ErrorBoundary>
+          <Profile />
+        </ErrorBoundary>
+      } />
+      <Route path="/settings" element={
+        <ErrorBoundary>
+          <Settings />
+        </ErrorBoundary>
+      } />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <ErrorBoundary>
+          {isAdmin ? <AdminPanel /> : <Navigate to="/" />}
+        </ErrorBoundary>
+      } />
     </>
   );
 };
