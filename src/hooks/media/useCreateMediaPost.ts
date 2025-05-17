@@ -70,11 +70,6 @@ export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => 
           await supabase.storage.createBucket('media', { public: true });
         }
         
-        // Track upload progress
-        const uploadProgressCallback = (progress: { loaded: number; total: number }) => {
-          setUploadProgress((progress.loaded / progress.total) * 100);
-        };
-        
         // Upload file to storage
         const { error: uploadError, data: uploadData } = await supabase.storage
           .from('media')

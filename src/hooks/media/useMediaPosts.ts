@@ -53,7 +53,7 @@ export const useMediaPosts = (
     error,
     refetch,
     loadMore,
-    resetPage, // Explicitly returning the resetPage function
+    resetPage,
     createPostMutation,
     handleCreatePost,
     uploadProgress,

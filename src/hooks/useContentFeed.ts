@@ -20,6 +20,7 @@ export const useContentFeed = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -185,15 +186,25 @@ export const useContentFeed = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsInitialLoad(false);
     }
   }, [page, user, checkUserInteractions, toast]);
   
   const refetch = useCallback(() => loadContent(true), [loadContent]);
   
   useEffect(() => {
-    loadContent();
+    // Only load content when page changes or on initial load
+    if (isInitialLoad || page > 0) {
+      loadContent();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+  
+  // Initial data load
+  useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const loadMore = () => {
     if (!isLoading && hasMore) {

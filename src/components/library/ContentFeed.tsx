@@ -42,8 +42,9 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     handleContentClick
   } = useContentFeed();
 
-  // Refetch when content type changes or manual refresh is triggered
+  // Refetch when content type or manual refresh changes
   useEffect(() => {
+    // Only run refetch when dependencies actually change, not on every render
     refetch();
   }, [contentType, lastRefresh, refetch]);
   
