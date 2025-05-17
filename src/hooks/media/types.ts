@@ -14,16 +14,3 @@ export interface MediaQueryResult {
   hasMore: boolean;
   error: string | null;
 }
-
-export interface UseMediaPostsReturn {
-  postsData: MediaQueryResult | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: Error | null;
-  refetch: () => void;
-  loadMore: () => void;
-  page: number;
-  createPostMutation: any;
-  handleCreatePost: (data: any) => Promise<void>;
-  uploadProgress: number;
-}

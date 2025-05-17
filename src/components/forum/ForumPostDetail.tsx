@@ -17,12 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { formatDistanceToNow } from 'date-fns';
 
-interface DiscussionComment {
+interface ForumComment {
   id: string;
   authorId: string;
   authorName: string;
@@ -31,125 +31,6 @@ interface DiscussionComment {
   createdAt: Date;
   upvotes: number;
 }
-
-// Simulated post data for development
-const simulatedPosts = [
-  {
-    id: "1",
-    title: "The Relationship Between Consciousness and Quantum Mechanics",
-    content: "Recent theories in quantum physics suggest consciousness might play a role in quantum wave function collapse. This intersection of physics and philosophy opens up fascinating questions about the nature of reality and our role as observers.\n\nSome researchers propose that consciousness might be an emergent property of quantum processes in the brain, while others argue that quantum mechanics itself might be incomplete without accounting for consciousness.\n\nWhat are your thoughts on these theories? Have you encountered any compelling evidence or arguments in either direction?",
-    authorName: "QuantumThinker",
-    authorId: "user-123",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=QuantumThinker",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    tags: ["quantum-physics", "consciousness", "philosophy"],
-    upvotes: 24,
-    views: 142,
-    comments: 8,
-    is_pinned: true
-  },
-  {
-    id: "2",
-    title: "Exploring Eastern Philosophy in Modern Context",
-    content: "How can ancient Eastern philosophical concepts like non-attachment and mindfulness be meaningfully integrated into modern Western society? These concepts seem increasingly relevant to addressing contemporary problems like burnout, anxiety, and overconsumption.\n\nI've been studying both Buddhist and Taoist texts and finding remarkable similarities with modern psychological approaches to wellbeing. Yet there seems to be resistance to fully embracing these ideas in mainstream Western culture.\n\nDoes anyone have experience practicing Eastern philosophical principles in a Western context? What challenges or benefits have you found?",
-    authorName: "PhilosophyExplorer",
-    authorId: "user-456",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhilosophyExplorer",
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    tags: ["eastern-philosophy", "mindfulness", "modern-society"],
-    upvotes: 18,
-    views: 97,
-    comments: 12,
-    is_pinned: false
-  },
-  {
-    id: "3",
-    title: "The Ethics of Artificial Intelligence Development",
-    content: "As AI systems become more advanced, what ethical frameworks should guide their development and implementation? This question becomes increasingly urgent as AI is deployed in critical domains like healthcare, criminal justice, and autonomous vehicles.\n\nTraditional ethical frameworks like utilitarianism, deontology, and virtue ethics each provide different perspectives, but none seem fully adequate for the unique challenges AI presents.\n\nShould we be creating new ethical frameworks specifically for AI? How do we balance innovation with caution? And who should ultimately decide these standards?",
-    authorName: "EthicalTech",
-    authorId: "user-789",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=EthicalTech",
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    tags: ["ethics", "artificial-intelligence", "technology"],
-    upvotes: 32,
-    views: 203,
-    comments: 15,
-    is_pinned: false
-  }
-];
-
-// Simulated comments for development
-const simulatedComments = {
-  "1": [
-    {
-      id: "comment-1-1",
-      authorId: "user-444",
-      authorName: "PhysicsProfessor",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhysicsProfessor",
-      content: "This topic fascinates me. The observer effect in quantum mechanics doesn't necessarily imply consciousness is involved - it's more about measurement and interaction. But the questions this raises are profound and worthwhile.",
-      createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000),
-      upvotes: 7
-    },
-    {
-      id: "comment-1-2",
-      authorId: "user-555",
-      authorName: "MindExplorer",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=MindExplorer",
-      content: "I recommend looking into the work of Roger Penrose and Stuart Hameroff on quantum consciousness. Their Orchestrated Objective Reduction theory suggests quantum processes in microtubules within neurons could be the seat of consciousness.",
-      createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000),
-      upvotes: 5
-    },
-    {
-      id: "comment-1-3",
-      authorId: "user-666",
-      authorName: "SkepticalThinker",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SkepticalThinker",
-      content: "While these ideas are interesting to think about, I remain skeptical that quantum effects play any significant role in consciousness. The brain is simply too warm and wet for quantum coherence to be maintained long enough to matter for neural processing.",
-      createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000),
-      upvotes: 3
-    }
-  ],
-  "2": [
-    {
-      id: "comment-2-1",
-      authorId: "user-777",
-      authorName: "ZenPractitioner",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ZenPractitioner",
-      content: "I've been practicing meditation and mindfulness for over a decade, and I've found that the key is to adapt these practices to your own cultural context rather than trying to adopt the entire Eastern philosophical framework.",
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      upvotes: 9
-    },
-    {
-      id: "comment-2-2",
-      authorId: "user-888",
-      authorName: "ComparativePhilosopher",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ComparativePhilosopher",
-      content: "There are actually many parallels between Eastern concepts and Western philosophical traditions that often go unnoticed. Stoicism, for instance, shares much in common with Buddhism regarding detachment and equanimity.",
-      createdAt: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
-      upvotes: 6
-    }
-  ],
-  "3": [
-    {
-      id: "comment-3-1",
-      authorId: "user-999",
-      authorName: "AIResearcher",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AIResearcher",
-      content: "The current approach of training AI on human-generated data often leads to systems reflecting and potentially amplifying societal biases. We need more diverse input in both AI development and ethical oversight.",
-      createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-      upvotes: 12
-    },
-    {
-      id: "comment-3-2",
-      authorId: "user-111",
-      authorName: "EthicsScholar",
-      authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=EthicsScholar",
-      content: "I think we need a hybrid approach that combines existing ethical frameworks with new principles specific to AI. Transparency, fairness, non-maleficence, responsibility, and privacy should be foundational.",
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      upvotes: 8
-    }
-  ]
-};
 
 export const ForumPostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -160,7 +41,7 @@ export const ForumPostDetail = () => {
   
   const [isLoading, setIsLoading] = useState(true);
   const [post, setPost] = useState<any>(null);
-  const [comments, setComments] = useState<DiscussionComment[]>([]);
+  const [comments, setComments] = useState<ForumComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   
@@ -171,39 +52,56 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Use simulated data until forum_posts table is created
-        setTimeout(() => {
-          // Find the post in our simulated data
-          const foundPost = simulatedPosts.find(p => p.id === postId);
-          
-          if (foundPost) {
-            setPost(foundPost);
-            
-            // Get simulated comments for this post
-            const postComments = simulatedComments[postId as keyof typeof simulatedComments] || [];
-            setComments(postComments);
-          } else if (postId.startsWith('new-')) {
-            // Handle dynamically created posts from Forum.tsx
-            setPost({
-              id: postId,
-              title: "New Discussion Topic",
-              content: "This is a newly created discussion topic. In a production environment, this would be stored in the database.",
-              authorName: user?.name || user?.username || "Anonymous",
-              authorId: user?.id || "user-id",
-              authorAvatar: user?.avatar || "",
-              created_at: new Date().toISOString(),
-              tags: ["discussion"],
-              upvotes: 0,
-              views: 1,
-              comments: 0,
-              is_pinned: false
-            });
-            setComments([]);
-          }
-          
-          setIsLoading(false);
-        }, 500); // Simulate network delay
+        // Fetch the post from Supabase
+        const { data: postData, error: postError } = await supabase
+          .from('forum_posts')
+          .select(`
+            *,
+            profiles:user_id(name, avatar_url, username)
+          `)
+          .eq('id', postId)
+          .maybeSingle();
         
+        if (postError) {
+          console.error('Error fetching post:', postError);
+          throw postError;
+        }
+        
+        if (!postData) {
+          setIsLoading(false);
+          return; // Post not found will be handled in render
+        }
+        
+        // Process post data
+        const processedPost = {
+          id: postData.id,
+          title: postData.title,
+          content: postData.content,
+          authorName: postData.profiles?.name || 'Unknown User',
+          authorId: postData.user_id,
+          authorAvatar: postData.profiles?.avatar_url,
+          created_at: postData.created_at,
+          tags: postData.tags || [],
+          upvotes: postData.upvotes || 0,
+          views: postData.views || 0,
+          comments: postData.comments || 0,
+          is_pinned: postData.is_pinned || false
+        };
+        
+        setPost(processedPost);
+        
+        // Increment view count for the post
+        await supabase.rpc('increment_counter_fn', {
+          row_id: postId,
+          column_name: 'views',
+          table_name: 'forum_posts'
+        }).catch(err => console.error('Error incrementing view count:', err));
+        
+        // TODO: Implement fetching comments once we have a forum_comments table
+        // For now, just set empty comments array
+        setComments([]);
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching post:', error);
         toast({
@@ -216,7 +114,7 @@ export const ForumPostDetail = () => {
     };
     
     fetchPost();
-  }, [postId, toast, user]);
+  }, [postId, toast]);
   
   const handleBack = () => {
     navigate('/forum');
@@ -243,8 +141,9 @@ export const ForumPostDetail = () => {
     setIsSubmittingComment(true);
     
     try {
-      // Simulate adding a comment (until forum_comments table is created)
-      const newCommentObj: DiscussionComment = {
+      // TODO: Implement once we have a forum_comments table
+      // For now, simulate adding a comment
+      const newCommentObj: ForumComment = {
         id: `comment-${Date.now()}`,
         authorId: user.id,
         authorName: user.name || user.username || 'Anonymous',
@@ -258,11 +157,18 @@ export const ForumPostDetail = () => {
       setComments(prev => [...prev, newCommentObj]);
       setNewComment('');
       
-      // Update post comment count
+      // Update post comment count in local state
       setPost(prev => ({
         ...prev,
         comments: (prev.comments || 0) + 1
       }));
+      
+      // Update comment count in database
+      await supabase.rpc('increment_counter_fn', {
+        row_id: postId,
+        column_name: 'comments',
+        table_name: 'forum_posts'
+      });
       
       toast({
         description: "Comment added successfully",
@@ -410,17 +316,51 @@ export const ForumPostDetail = () => {
         </CardContent>
         <CardFooter className="border-t pt-4 flex justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="flex items-center">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center"
+              onClick={async () => {
+                if (!isAuthenticated) {
+                  toast({
+                    title: "Authentication Required",
+                    description: "Please sign in to upvote",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                try {
+                  await supabase.rpc('increment_counter_fn', {
+                    row_id: post.id,
+                    column_name: 'upvotes',
+                    table_name: 'forum_posts'
+                  });
+                  
+                  setPost(prev => ({
+                    ...prev,
+                    upvotes: prev.upvotes + 1
+                  }));
+                } catch (error) {
+                  console.error('Error upvoting:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to upvote",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
               <ThumbsUp size={16} className="mr-1" />
-              <span>{post.upvotes || 0}</span>
+              <span>{post.upvotes}</span>
             </Button>
             <div className="flex items-center">
               <MessageSquare size={16} className="mr-1" />
-              <span>{post.comments || comments.length || 0}</span>
+              <span>{post.comments}</span>
             </div>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
-            <span>{post.views || 0} views</span>
+            <span>{post.views} views</span>
           </div>
         </CardFooter>
       </Card>
