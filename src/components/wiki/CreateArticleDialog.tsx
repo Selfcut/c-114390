@@ -71,14 +71,14 @@ export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
         ? formData.tagsInput.split(',').map(tag => tag.trim().toLowerCase())
         : [];
       
-      // Create article
+      // Create article - Fixed the property name from userId to user_id
       const { article, error } = await createWikiArticle({
         title: formData.title,
         description: formData.description,
         content: formData.content,
         category: formData.category,
         tags,
-        userId: user.id,
+        user_id: user.id,
         imageUrl: formData.imageUrl || undefined
       });
       

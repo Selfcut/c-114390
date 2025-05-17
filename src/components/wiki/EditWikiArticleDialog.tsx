@@ -58,6 +58,7 @@ export const EditWikiArticleDialog = ({
     try {
       setIsSubmitting(true);
       
+      // Fixed: removed the third parameter as updateWikiArticle only expects 2 parameters
       const { article: updatedArticle, error } = await updateWikiArticle(
         article.id, 
         {
@@ -65,9 +66,9 @@ export const EditWikiArticleDialog = ({
           description,
           content,
           category,
-          tags: article.tags
-        },
-        user.id
+          tags: article.tags,
+          user_id: user.id  // Added user_id properly
+        }
       );
       
       if (error) throw new Error(error.toString());
