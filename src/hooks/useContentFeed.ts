@@ -2,456 +2,216 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
+import { useContentInteractions } from './useContentInteractions';
+import { useToast } from './use-toast';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentFeedItem } from '@/components/library/ContentFeedItem';
+import { useNavigate } from 'react-router-dom';
 
-export interface ContentFeedItem {
-  id: string;
-  title: string;
-  description: string;
-  type: 'knowledge' | 'media' | 'quotes' | 'ai';
-  image?: string;
-  author: string;
-  date: string;
-  likes?: number;
-  views?: number;
-  comments?: number;
-  bookmarks?: number;
-  category?: string;
-  tags?: string[];
+export interface ContentFeedFilters {
+  contentType?: ContentItemType | 'all';
+  sortBy?: 'latest' | 'popular' | 'trending';
+  searchTerm?: string;
 }
 
-export interface ContentItem {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  createdAt: Date;
-  likes?: number;
-  views?: number;
-  comments?: number;
-}
-
-interface UseContentFeedReturn {
-  feedItems: ContentFeedItem[];
-  isLoading: boolean;
-  error: string | null;
-  hasMore: boolean;
-  loadMore: () => void;
-  refetch: () => void;
-  userLikes: string[];
-  userBookmarks: string[];
-  handleLike: (contentId: string, contentType: string) => void;
-  handleBookmark: (contentId: string, contentType: string) => void;
-  handleContentClick: (contentId: string, contentType: string) => void;
-}
-
-export const useContentFeed = (): UseContentFeedReturn => {
-  const [isLoading, setIsLoading] = useState(true);
+export const useContentFeed = () => {
   const [feedItems, setFeedItems] = useState<ContentFeedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [userLikes, setUserLikes] = useState<string[]>([]);
-  const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
+  const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
-  const fetchContentData = useCallback(async () => {
+  const { user } = useAuth();
+  const { userLikes, userBookmarks, handleLike, handleBookmark, checkUserInteractions } = useContentInteractions({ 
+    userId: user?.id 
+  });
+  
+  const loadContent = useCallback(async (reset = false) => {
+    if (reset) {
+      setPage(0);
+      setFeedItems([]);
+      setHasMore(true);
+    }
+    
     try {
       setIsLoading(true);
       setError(null);
       
-      // Fetch knowledge entries
+      const pageSize = 10;
+      const currentPage = reset ? 0 : page;
+      
+      // Get knowledge entries
       const { data: knowledgeData, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
-          id, title, summary, content, categories, cover_image, 
-          likes, views, comments, is_ai_generated, user_id,
-          created_at, updated_at, 
-          profiles:user_id (id, username, name, avatar_url)
+          *,
+          profiles(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
-        .range(page * 5, (page + 1) * 5 - 1);
-
-      // Fetch media posts
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Get quotes
+      const { data: quotesData, error: quoteError } = await supabase
+        .from('quotes')
+        .select(`
+          *,
+          profiles(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Get media posts
       const { data: mediaData, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
-          id, title, content, type, url, likes, views, comments,
-          user_id, created_at, updated_at,
-          profiles:user_id (id, username, name, avatar_url)
+          *,
+          profiles(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
-        .range(page * 5, (page + 1) * 5 - 1);
-
-      // Fetch quotes
-      const { data: quoteData, error: quoteError } = await supabase
-        .from('quotes')
-        .select(`
-          id, text, author, source, category, tags, 
-          likes, comments, bookmarks, user_id, 
-          created_at, updated_at,
-          profiles:user_id (id, username, name, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .range(page * 5, (page + 1) * 5 - 1);
-
-      // Process knowledge entries
-      const knowledgeItems: ContentFeedItem[] = knowledgeData 
-        ? knowledgeData.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            description: item.summary,
-            type: 'knowledge',
-            image: item.cover_image || '',
-            author: item.profiles ? (item.profiles.name || item.profiles.username || 'Unknown') : 'Unknown',
-            date: item.created_at,
-            likes: item.likes,
-            views: item.views,
-            comments: item.comments,
-            tags: item.categories
-          }))
-        : [];
-
-      // Process media posts
-      const mediaItems: ContentFeedItem[] = mediaData 
-        ? mediaData.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            description: item.content || '',
-            type: 'media',
-            image: item.url || '',
-            author: item.profiles ? (item.profiles.name || item.profiles.username || 'Unknown') : 'Unknown',
-            date: item.created_at,
-            likes: item.likes,
-            views: item.views || 0,
-            comments: item.comments
-          }))
-        : [];
-
-      // Process quotes
-      const quoteItems: ContentFeedItem[] = quoteData 
-        ? quoteData.map((item: any) => ({
-            id: item.id,
-            title: item.author,
-            description: item.text,
-            type: 'quotes',
-            author: item.profiles ? (item.profiles.name || item.profiles.username || 'Unknown') : 'Unknown',
-            date: item.created_at,
-            likes: item.likes,
-            bookmarks: item.bookmarks,
-            comments: item.comments,
-            category: item.category,
-            tags: item.tags
-          }))
-        : [];
-
-      // Get AI generated content
-      const aiContent: ContentFeedItem[] = knowledgeData 
-        ? knowledgeData
-            .filter((item: any) => item.is_ai_generated)
-            .map((item: any) => ({
-              id: item.id,
-              title: item.title,
-              description: item.summary,
-              type: 'ai',
-              image: item.cover_image || '',
-              author: item.profiles ? (item.profiles.name || item.profiles.username || 'AI Assistant') : 'AI Assistant',
-              date: item.created_at,
-              likes: item.likes,
-              views: item.views,
-              comments: item.comments,
-              tags: item.categories
-            }))
-        : [];
-
-      // Combine all items
-      let allItems: ContentFeedItem[];
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
       
-      if (page === 0) {
-        // First page - replace all items
-        allItems = [...knowledgeItems, ...mediaItems, ...quoteItems, ...aiContent];
-      } else {
-        // Additional pages - append to existing items
-        allItems = [...feedItems, ...knowledgeItems, ...mediaItems, ...quoteItems, ...aiContent];
+      // Check if we have any errors
+      if (knowledgeError || quoteError || mediaError) {
+        console.error("Error fetching content:", {
+          knowledgeError,
+          quoteError,
+          mediaError
+        });
+        
+        // Show error only if all queries fail
+        if (knowledgeError && quoteError && mediaError) {
+          setError("Failed to load content. Please try again later.");
+          return;
+        }
       }
       
-      // Sort by date
-      const sortedItems = allItems.sort((a, b) => {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      // Map data to ContentFeedItem format
+      const mappedKnowledge = knowledgeData ? knowledgeData.map((item: any) => ({
+        id: item.id,
+        type: 'knowledge' as ContentItemType,
+        title: item.title,
+        summary: item.summary,
+        content: item.content,
+        author: {
+          name: item.profiles?.name || 'Unknown Author',
+          avatar: item.profiles?.avatar_url,
+          username: item.profiles?.username
+        },
+        createdAt: item.created_at,
+        metrics: {
+          likes: item.likes || 0,
+          comments: item.comments || 0,
+          views: item.views || 0
+        },
+        tags: item.categories || [],
+        coverImage: item.cover_image
+      })) : [];
+      
+      const mappedQuotes = quotesData ? quotesData.map((item: any) => ({
+        id: item.id,
+        type: 'quote' as ContentItemType,
+        title: item.author, // For quotes, we use the quote author as the title
+        summary: item.text,
+        author: {
+          name: item.profiles?.name || 'Unknown Author',
+          avatar: item.profiles?.avatar_url,
+          username: item.profiles?.username
+        },
+        createdAt: item.created_at,
+        metrics: {
+          likes: item.likes || 0,
+          comments: item.comments || 0,
+          bookmarks: item.bookmarks || 0
+        },
+        tags: item.tags || [],
+        coverImage: null
+      })) : [];
+      
+      const mappedMedia = mediaData ? mediaData.map((item: any) => ({
+        id: item.id,
+        type: 'media' as ContentItemType,
+        title: item.title,
+        summary: item.content,
+        author: {
+          name: item.profiles?.name || 'Unknown Author',
+          avatar: item.profiles?.avatar_url,
+          username: item.profiles?.username
+        },
+        createdAt: item.created_at,
+        metrics: {
+          likes: item.likes || 0,
+          comments: item.comments || 0,
+          views: item.views || 0
+        },
+        tags: item.tags || [],
+        mediaUrl: item.url,
+        mediaType: item.type as MediaType
+      })) : [];
+      
+      // Combine all items and sort by date
+      const combinedItems = [
+        ...mappedKnowledge,
+        ...mappedQuotes,
+        ...mappedMedia
+      ].sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
-
+      
       // Update state
-      setFeedItems(sortedItems);
-      setHasMore(knowledgeItems.length >= 5 || mediaItems.length >= 5 || quoteItems.length >= 5);
-
-      // Check for errors
-      if (knowledgeError || mediaError || quoteError) {
-        console.error('Error fetching content:', { knowledgeError, mediaError, quoteError });
-        setError('Failed to load some content');
+      if (reset) {
+        setFeedItems(combinedItems);
+      } else {
+        setFeedItems(prev => [...prev, ...combinedItems]);
       }
-
-      // Fetch user interactions if logged in
-      if (user) {
-        fetchUserInteractions();
+      
+      // Check if there are more items to load
+      setHasMore(combinedItems.length === pageSize * 3);
+      
+      // If user is logged in, check their interactions (likes, bookmarks)
+      if (user && combinedItems.length > 0) {
+        const itemIds = combinedItems.map(item => item.id);
+        await checkUserInteractions(itemIds);
       }
+      
     } catch (err) {
-      console.error('Error in content feed:', err);
-      setError('Failed to load content feed');
+      console.error('Error fetching feed items:', err);
+      setError('Failed to load content. Please try again later.');
+      toast({
+        title: "Error",
+        description: "Failed to load content. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [page, user]);
-
-  const fetchUserInteractions = async () => {
-    if (!user) return;
-    
-    try {
-      // Fetch user likes
-      const { data: likesData, error: likesError } = await supabase
-        .from('content_likes')
-        .select('content_id')
-        .eq('user_id', user.id);
-
-      // Fetch user bookmarks
-      const { data: bookmarksData, error: bookmarksError } = await supabase
-        .from('content_bookmarks')
-        .select('content_id')
-        .eq('user_id', user.id);
-
-      if (likesError) {
-        console.error('Error fetching user likes:', likesError);
-      } else if (likesData) {
-        setUserLikes(likesData.map(item => item.content_id));
-      }
-
-      if (bookmarksError) {
-        console.error('Error fetching user bookmarks:', bookmarksError);
-      } else if (bookmarksData) {
-        setUserBookmarks(bookmarksData.map(item => item.content_id));
-      }
-    } catch (err) {
-      console.error('Error fetching user interactions:', err);
-    }
-  };
-
-  // Initial data fetch
+  }, [page, user, checkUserInteractions, toast]);
+  
+  const refetch = useCallback(() => loadContent(true), [loadContent]);
+  
   useEffect(() => {
-    fetchContentData();
-  }, [fetchContentData]);
-
-  // Refetch when user auth changes
-  useEffect(() => {
-    if (user) {
-      fetchUserInteractions();
-    } else {
-      setUserLikes([]);
-      setUserBookmarks([]);
-    }
-  }, [user]);
-
-  // Load more content
+    loadContent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+  
   const loadMore = () => {
     if (!isLoading && hasMore) {
-      setPage(prevPage => prevPage + 1);
+      setPage(prev => prev + 1);
     }
   };
-
-  // Refresh content
-  const refetch = () => {
-    setPage(0);
-    fetchContentData();
-  };
-
-  // Handle like action
-  const handleLike = async (contentId: string, contentType: string) => {
-    if (!user) {
-      setError('You must be logged in to like content');
-      return;
-    }
-
-    try {
-      // Optimistically update UI
-      const isLiked = userLikes.includes(contentId);
-      
-      if (isLiked) {
-        // Remove like from UI
-        setUserLikes(prev => prev.filter(id => id !== contentId));
-        setFeedItems(prev => prev.map(item => 
-          item.id === contentId 
-            ? { 
-                ...item, 
-                likes: (item.likes || 0) - 1 
-              }
-            : item
-        ));
-        
-        // Remove like from database
-        await supabase
-          .from('content_likes')
-          .delete()
-          .eq('content_id', contentId)
-          .eq('user_id', user.id);
-          
-        // Decrement counter in DB
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: contentId,
-          column_name: 'likes',
-          table_name: determineTableName(contentType)
-        });
-      } else {
-        // Add like to UI
-        setUserLikes(prev => [...prev, contentId]);
-        setFeedItems(prev => prev.map(item => 
-          item.id === contentId 
-            ? { 
-                ...item, 
-                likes: (item.likes || 0) + 1 
-              }
-            : item
-        ));
-        
-        // Add like to database
-        await supabase
-          .from('content_likes')
-          .insert({
-            content_id: contentId,
-            content_type: contentType,
-            user_id: user.id
-          });
-          
-        // Increment counter in DB
-        await supabase.rpc('increment_counter_fn', {
-          row_id: contentId,
-          column_name: 'likes',
-          table_name: determineTableName(contentType)
-        });
-      }
-    } catch (err) {
-      console.error('Error handling like:', err);
-      // Revert optimistic update
-      fetchContentData();
-      toast({
-        title: "Error",
-        description: "Failed to update like status",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Handle bookmark action
-  const handleBookmark = async (contentId: string, contentType: string) => {
-    if (!user) {
-      setError('You must be logged in to bookmark content');
-      return;
-    }
-
-    try {
-      // Optimistically update UI
-      const isBookmarked = userBookmarks.includes(contentId);
-      
-      if (isBookmarked) {
-        // Remove bookmark from UI
-        setUserBookmarks(prev => prev.filter(id => id !== contentId));
-        setFeedItems(prev => prev.map(item => 
-          item.id === contentId && typeof item.bookmarks !== 'undefined'
-            ? { 
-                ...item, 
-                bookmarks: (item.bookmarks || 0) - 1 
-              }
-            : item
-        ));
-        
-        // Remove bookmark from database
-        await supabase
-          .from('content_bookmarks')
-          .delete()
-          .eq('content_id', contentId)
-          .eq('user_id', user.id);
-          
-        // Decrement counter for quotes
-        if (contentType === 'quotes') {
-          await supabase.rpc('decrement_counter_fn', {
-            row_id: contentId,
-            column_name: 'bookmarks',
-            table_name: 'quotes'
-          });
-        }
-      } else {
-        // Add bookmark to UI
-        setUserBookmarks(prev => [...prev, contentId]);
-        setFeedItems(prev => prev.map(item => 
-          item.id === contentId && typeof item.bookmarks !== 'undefined'
-            ? { 
-                ...item, 
-                bookmarks: (item.bookmarks || 0) + 1 
-              }
-            : item
-        ));
-        
-        // Add bookmark to database
-        await supabase
-          .from('content_bookmarks')
-          .insert({
-            content_id: contentId,
-            content_type: contentType,
-            user_id: user.id
-          });
-          
-        // Increment counter for quotes
-        if (contentType === 'quotes') {
-          await supabase.rpc('increment_counter_fn', {
-            row_id: contentId,
-            column_name: 'bookmarks',
-            table_name: 'quotes'
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error handling bookmark:', err);
-      // Revert optimistic update
-      fetchContentData();
-      toast({
-        title: "Error",
-        description: "Failed to update bookmark status",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Helper function to determine table name
-  const determineTableName = (contentType: string): string => {
-    switch (contentType) {
-      case 'knowledge':
-        return 'knowledge_entries';
-      case 'media':
-        return 'media_posts';
-      case 'quotes':
-        return 'quotes';
-      case 'ai':
-        return 'knowledge_entries';
-      default:
-        return 'knowledge_entries';
-    }
-  };
-
-  // Handle content click
-  const handleContentClick = (contentId: string, contentType: string) => {
-    // Navigate to content detail page
+  
+  const handleContentClick = (contentId: string, contentType: ContentItemType) => {
     let path = '';
     
-    switch (contentType) {
+    switch(contentType) {
       case 'knowledge':
         path = `/knowledge/${contentId}`;
         break;
       case 'media':
         path = `/media/${contentId}`;
         break;
-      case 'quotes':
+      case 'quote':
         path = `/quotes/${contentId}`;
         break;
       case 'ai':
@@ -462,21 +222,32 @@ export const useContentFeed = (): UseContentFeedReturn => {
         return;
     }
     
-    // Use this for navigation - will be implemented by the app
-    window.location.href = path;
+    // Track view if possible
+    if (contentType === 'media') {
+      try {
+        supabase.rpc('increment_media_views', { media_id: contentId })
+          .then(({ error }) => {
+            if (error) console.error('Error tracking view:', error);
+          });
+      } catch (err) {
+        console.error('Error tracking view:', err);
+      }
+    }
+    
+    navigate(path);
   };
 
-  return { 
-    feedItems, 
-    isLoading, 
-    error, 
-    hasMore, 
+  return {
+    feedItems,
+    isLoading,
+    error,
+    hasMore,
     loadMore,
     refetch,
-    userLikes, 
-    userBookmarks, 
-    handleLike, 
-    handleBookmark, 
-    handleContentClick 
+    userLikes,
+    userBookmarks,
+    handleLike,
+    handleBookmark,
+    handleContentClick
   };
 };

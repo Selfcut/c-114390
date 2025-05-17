@@ -8,6 +8,7 @@ import { MediaFilterBar } from "@/components/media/MediaFilterBar";
 import { MediaContent } from "@/components/media/MediaContent";
 import { CreatePostDialog } from "@/components/media/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const MediaContainer = () => {
   const { user } = useAuth();
@@ -34,6 +35,27 @@ export const MediaContainer = () => {
   useEffect(() => {
     resetPage();
   }, [mediaType, sortBy, sortOrder, searchTerm, resetPage]);
+
+  // Track page view
+  useEffect(() => {
+    try {
+      if (user?.id) {
+        // Record user activity for media page view
+        supabase
+          .from('user_activities')
+          .insert({
+            user_id: user.id,
+            event_type: 'page_view',
+            metadata: { page: 'media', filters: { mediaType, sortBy, sortOrder, searchTerm } }
+          })
+          .then(({ error }) => {
+            if (error) console.error('Error tracking page view:', error);
+          });
+      }
+    } catch (err) {
+      console.error('Error tracking media page view:', err);
+    }
+  }, [user?.id, mediaType, sortBy, sortOrder, searchTerm]);
 
   const mediaData = {
     postsData,
@@ -75,6 +97,15 @@ export const MediaContainer = () => {
     setSearchTerm(value);
   };
 
+  const handlePostCreationSuccess = (postId: string) => {
+    toast({
+      title: "Post Created",
+      description: "Your post has been created successfully."
+    });
+    refetch();
+    handleCloseCreateDialog();
+  };
+
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
@@ -101,7 +132,17 @@ export const MediaContainer = () => {
           <CreatePostDialog 
             isOpen={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
-            onSubmit={handleCreatePost}
+            onSubmit={(data) => {
+              const result = handleCreatePost(data);
+              if (result) {
+                result.then((response) => {
+                  if (response?.id) {
+                    handlePostCreationSuccess(response.id);
+                  }
+                });
+              }
+              return Promise.resolve();
+            }}
             isSubmitting={createPostMutation?.isPending}
           />
         )}

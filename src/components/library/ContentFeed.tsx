@@ -5,7 +5,7 @@ import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
-import { ContentFeedItem as ContentFeedItemComponent } from './ContentFeedItem';
+import { ContentFeedItemComponent } from './ContentFeedItem';
 import { ContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
 import { useAuth } from '@/lib/auth';
@@ -59,9 +59,6 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
         description: "Please sign in to perform this action",
         variant: "destructive"
       });
-      
-      // Optional: Navigate to login page
-      // navigate('/login', { state: { returnUrl: window.location.pathname } });
       return;
     }
     action();
@@ -77,11 +74,9 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
   
   // Custom content click handler that can include analytics
   const handleItemClick = (contentId: string, contentType: string) => {
-    // Optional: Track content click
+    // Track content click
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);
-      // You could add analytics tracking here
-      
       // Call the original handler
       handleContentClick(contentId, contentType);
     } catch (err) {
@@ -89,7 +84,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
       // Fallback if the main handler fails
       const path = contentType === 'knowledge' ? `/knowledge/${contentId}` :
                    contentType === 'media' ? `/media/${contentId}` :
-                   contentType === 'quotes' ? `/quotes/${contentId}` :
+                   contentType === 'quote' ? `/quotes/${contentId}` :
                    contentType === 'ai' ? `/ai-content/${contentId}` : '/';
       navigate(path);
     }
