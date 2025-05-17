@@ -21,6 +21,8 @@ import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import AdminPanel from '@/pages/AdminPanel';
 import AI from '@/pages/AI';
+import Problems from '@/pages/Problems';
+import ProblemDetail from '@/pages/ProblemDetail';
 import { AuthCallback } from './AuthCallback';
 
 const RouteErrorFallback = () => (
@@ -121,6 +123,17 @@ export const AppRoutes = () => {
           <Route path="/ai" element={
             <ErrorBoundary>
               <AI />
+            </ErrorBoundary>
+          } />
+          {/* New Problems Routes */}
+          <Route path="/problems" element={
+            <ErrorBoundary>
+              <Problems />
+            </ErrorBoundary>
+          } />
+          <Route path="/problems/:problemId" element={
+            <ErrorBoundary>
+              <ProblemDetail />
             </ErrorBoundary>
           } />
 

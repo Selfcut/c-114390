@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home, Library, MessageSquare, User, Settings, 
-  Youtube, Book, FileText, Shield, Cog, Menu, X 
+  Youtube, Book, FileText, Shield, Cog, Menu, X, AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/lib/auth"; // Updated import path
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ export const Sidebar = () => {
     { path: "/wiki", icon: Book, label: "Wiki" },
     { path: "/media", icon: Youtube, label: "Media" },
     { path: "/quotes", icon: FileText, label: "Quotes" },
+    { path: "/problems", icon: AlertTriangle, label: "Problems" },
     { path: "/ai", icon: Cog, label: "AI Tools" },
   ];
 
@@ -76,7 +77,7 @@ export const Sidebar = () => {
               to={item.path}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                location.pathname === item.path
+                location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
                   ? "bg-primary/10 text-primary"
                   : "hover:bg-accent/50 text-foreground"
               )}

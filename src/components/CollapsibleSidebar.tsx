@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home, Library, MessageSquare, User, 
-  BookOpen, FileText, Image, Shield, Menu, X 
+  BookOpen, FileText, Image, Shield, Menu, X, AlertTriangle 
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,8 @@ export const CollapsibleSidebar = () => {
     { path: "/library", icon: Library, label: "Library" },
     { path: "/wiki", icon: BookOpen, label: "Wiki" },
     { path: "/media", icon: Image, label: "Media" },
-    { path: "/quotes", icon: FileText, label: "Quotes" }
+    { path: "/quotes", icon: FileText, label: "Quotes" },
+    { path: "/problems", icon: AlertTriangle, label: "Problems" }
   ];
 
   // Admin route
