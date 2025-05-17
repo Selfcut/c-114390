@@ -28,8 +28,8 @@ export const FullHeightChatSidebar = () => {
   const {
     messages,
     isLoading,
-    inputMessage,
-    setInputMessage,
+    message: inputMessage,
+    setMessage: setInputMessage,
     replyingToMessage,
     editingMessageId,
     handleSendMessage,
