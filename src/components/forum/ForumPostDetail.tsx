@@ -154,11 +154,14 @@ export const ForumPostDetail = () => {
             if (comment.profiles && typeof comment.profiles === 'object') {
               // Fix: Properly check if profiles is not null before accessing properties
               const profiles = comment.profiles;
+              // Use type assertion to tell TypeScript that profiles is not null
+              // since we've already checked it above
               if (profiles !== null) {
-                // Using non-null assertion since we've already checked profiles isn't null
-                profileData.name = profiles.name;
-                profileData.username = profiles.username;
-                profileData.avatar_url = profiles.avatar_url;
+                // Access safely with type assertion
+                const typedProfiles = profiles as { name?: string; username?: string; avatar_url?: string };
+                profileData.name = typedProfiles.name;
+                profileData.username = typedProfiles.username;
+                profileData.avatar_url = typedProfiles.avatar_url;
               }
             }
             
@@ -171,7 +174,7 @@ export const ForumPostDetail = () => {
               id: comment.id,
               content: comment.comment,
               authorId: comment.user_id,
-              authorName: name || username || 'Unknown',
+              authorName: name || username || 'Unknown User',
               authorAvatar: avatarUrl,
               createdAt: new Date(comment.created_at),
               upvotes: 0 // We don't track this in our DB currently
