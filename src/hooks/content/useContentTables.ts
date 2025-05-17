@@ -1,58 +1,55 @@
 
-import { useCallback } from 'react';
-
-export interface TableNames {
-  likesTable: 'media_likes' | 'content_likes' | 'quote_likes';
-  commentsTable: 'media_comments' | 'content_comments' | 'quote_comments';
-  contentTable: 'media_posts' | 'forum_posts' | 'wiki_articles' | 'quotes';
-  contentIdField: 'post_id' | 'content_id' | 'quote_id';
-}
+import { useMemo } from 'react';
 
 export interface ContentTypeOptions {
-  contentType: 'media' | 'forum' | 'wiki' | 'quote';
+  contentType: string;
 }
 
-export const useContentTables = ({ contentType }: ContentTypeOptions) => {
-  // Helper to get the right table names based on content type
-  const getTableNames = useCallback((): TableNames => {
+interface TableNames {
+  likesTable: string;
+  contentTable: string;
+  contentIdField: string;
+}
+
+export const useContentTables = (options: ContentTypeOptions) => {
+  const { contentType } = options;
+  
+  const tableNames = useMemo<TableNames>(() => {
     switch (contentType) {
       case 'media':
         return {
           likesTable: 'media_likes',
-          commentsTable: 'media_comments',
           contentTable: 'media_posts',
-          contentIdField: 'post_id',
+          contentIdField: 'post_id'
         };
-      case 'forum':
+      case 'knowledge':
         return {
           likesTable: 'content_likes',
-          commentsTable: 'content_comments',
-          contentTable: 'forum_posts',
-          contentIdField: 'content_id',
-        };
-      case 'wiki':
-        return {
-          likesTable: 'content_likes',
-          commentsTable: 'content_comments',
-          contentTable: 'wiki_articles',
-          contentIdField: 'content_id',
+          contentTable: 'knowledge_entries',
+          contentIdField: 'content_id'
         };
       case 'quote':
         return {
           likesTable: 'quote_likes',
-          commentsTable: 'quote_comments',
           contentTable: 'quotes',
-          contentIdField: 'quote_id',
+          contentIdField: 'quote_id'
+        };
+      case 'wiki':
+        return {
+          likesTable: 'content_likes',
+          contentTable: 'wiki_articles',
+          contentIdField: 'content_id'
         };
       default:
         return {
           likesTable: 'content_likes',
-          commentsTable: 'content_comments',
-          contentTable: 'forum_posts',
-          contentIdField: 'content_id',
+          contentTable: contentType,
+          contentIdField: 'content_id'
         };
     }
   }, [contentType]);
-
+  
+  const getTableNames = () => tableNames;
+  
   return { getTableNames };
 };

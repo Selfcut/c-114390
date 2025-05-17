@@ -13,4 +13,5 @@ export interface WikiArticle {
   image_url?: string;
   user_id: string;
   created_at: Date;
+  likes?: number;
 }

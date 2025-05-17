@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -119,7 +118,7 @@ const WikiArticlePage = () => {
             if (!prev) return null;
             return {
               ...prev,
-              likes: prev.likes ? (isLiked ? prev.likes - 1 : prev.likes + 1) : (isLiked ? 0 : 1)
+              likes: prev.likes !== undefined ? (isLiked ? prev.likes - 1 : prev.likes + 1) : (isLiked ? 0 : 1)
             };
           });
         },

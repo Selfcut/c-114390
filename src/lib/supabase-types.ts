@@ -1,3 +1,4 @@
+
 /**
  * Type definitions for Supabase tables to improve type safety in our application
  */
@@ -99,4 +100,5 @@ export interface WikiArticle {
   image_url?: string;
   user_id: string;
   created_at: Date;
+  likes?: number;
 }
