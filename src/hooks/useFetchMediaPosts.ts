@@ -17,12 +17,12 @@ export const useFetchMediaPosts = () => {
     setError(null);
     
     try {
-      // Use proper join syntax for Supabase
+      // Use proper join syntax for Supabase with profiles table
       const { data: mediaData, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
           *,
-          profiles(name, avatar_url, username)
+          profiles:user_id(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
         .range(page * 10, (page + 1) * 10 - 1);

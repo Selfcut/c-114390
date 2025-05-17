@@ -22,12 +22,15 @@ export const useMediaPosts = (
     refetch 
   } = useFetchMediaPosts(mediaType, sortBy, sortOrder, searchTerm, page);
 
-  // Use the create post hook
-  const { createPostMutation, handleCreatePost } = useCreateMediaPost(userId, () => {
-    // Reset to page 0 and refetch on successful post creation
-    setPage(0);
-    refetch();
-  });
+  // Use the create post hook with proper callback
+  const { createPostMutation, handleCreatePost, uploadProgress } = useCreateMediaPost(
+    userId, 
+    () => {
+      // Reset to page 0 and refetch on successful post creation
+      setPage(0);
+      refetch();
+    }
+  );
 
   // Load more posts
   const loadMore = () => {
@@ -45,6 +48,7 @@ export const useMediaPosts = (
     loadMore,
     page,
     createPostMutation,
-    handleCreatePost
+    handleCreatePost,
+    uploadProgress
   };
 };
