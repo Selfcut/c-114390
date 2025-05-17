@@ -14,6 +14,19 @@ import { toast } from "sonner";
 import { scheduleAutomatedMessages, getRandomAutomatedMessage } from "./AutomatedMessages";
 import confetti from 'canvas-confetti';
 
+// Define an interface for the database message shape
+interface DbChatMessage {
+  id: string;
+  content: string;
+  created_at: string;
+  conversation_id: string;
+  user_id?: string;
+  sender_name?: string;
+  is_admin?: boolean;
+  effect_type?: string;
+  reply_to?: string;
+}
+
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
   const { user } = useAuth();
@@ -52,7 +65,7 @@ export const FullHeightChatSidebar = () => {
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'chat_messages' }, 
         (payload) => {
-          const newMessage = payload.new as any;
+          const newMessage = payload.new as DbChatMessage;
           const chatMessage: ChatMessage = {
             id: newMessage.id,
             content: newMessage.content,
@@ -61,8 +74,8 @@ export const FullHeightChatSidebar = () => {
             userId: newMessage.user_id || 'anonymous',
             senderName: newMessage.sender_name || 'Anonymous',
             isCurrentUser: newMessage.user_id === user?.id,
-            isAdmin: newMessage.is_admin || false, // Corrected: using is_admin from database
-            effectType: newMessage.effect_type // Corrected: using effect_type from database
+            isAdmin: newMessage.is_admin || false,
+            effectType: newMessage.effect_type
           };
           
           setMessages(prev => [...prev, chatMessage]);
@@ -135,7 +148,7 @@ export const FullHeightChatSidebar = () => {
       
       if (error) throw error;
       
-      const formattedMessages: ChatMessage[] = data?.map(msg => ({
+      const formattedMessages: ChatMessage[] = data?.map((msg: DbChatMessage) => ({
         id: msg.id,
         content: msg.content,
         createdAt: msg.created_at,
@@ -143,8 +156,8 @@ export const FullHeightChatSidebar = () => {
         userId: msg.user_id || 'anonymous',
         senderName: msg.sender_name || 'Anonymous',
         isCurrentUser: msg.user_id === user?.id,
-        isAdmin: msg.is_admin || false, // Corrected: using is_admin from database
-        effectType: msg.effect_type // Corrected: using effect_type from database
+        isAdmin: msg.is_admin || false,
+        effectType: msg.effect_type
       })) || [];
       
       setMessages(formattedMessages);
@@ -451,7 +464,7 @@ export const FullHeightChatSidebar = () => {
         </div>
         
         {/* Add some CSS for our shake animation */}
-        <style>
+        <style jsx global>
           {`
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -467,4 +480,3 @@ export const FullHeightChatSidebar = () => {
     </>
   );
 };
-
