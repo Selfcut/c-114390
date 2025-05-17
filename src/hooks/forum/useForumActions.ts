@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Comment, ForumPost } from './useForumPost';
-import { User } from '@supabase/supabase-js';
+import { UserProfile } from '@/lib/auth/types';
 
-interface UserProfile {
+interface UserWithAvatar {
+  id: string;
   username?: string;
   name?: string;
   avatar_url?: string | null;
@@ -15,7 +16,7 @@ export function useForumActions(postId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleUpvote = async (user: User | null, discussion: ForumPost | null) => {
+  const handleUpvote = async (user: UserProfile | null, discussion: ForumPost | null) => {
     if (!user || !postId) {
       toast({
         title: "Authentication Required",
@@ -82,7 +83,7 @@ export function useForumActions(postId?: string) {
     }
   };
 
-  const handleSubmitComment = async (user: User | null, newComment: string, discussion: ForumPost | null, setComments: React.Dispatch<React.SetStateAction<Comment[]>>) => {
+  const handleSubmitComment = async (user: UserProfile | null, newComment: string, discussion: ForumPost | null, setComments: React.Dispatch<React.SetStateAction<Comment[]>>) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -118,15 +119,14 @@ export function useForumActions(postId?: string) {
         
       if (commentError) throw commentError;
       
-      const userProfile = user as unknown as UserProfile;
-      const avatarSeed = userProfile.username || user.id;
+      const avatarSeed = user.username || user.id;
       
       // Create the comment object for the UI
       const newCommentObj: Comment = {
         id: commentData.id,
         content: newComment,
-        author: userProfile.username || userProfile.name || "User",
-        authorAvatar: userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+        author: user.username || user.name || "User",
+        authorAvatar: user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
         createdAt: new Date(),
         isAuthor: user.id === discussion?.authorId
       };
