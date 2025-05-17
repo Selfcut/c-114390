@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/useMediaPosts";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -24,9 +25,15 @@ export const MediaContainer = () => {
     error,
     refetch,
     loadMore,
+    resetPage,
     createPostMutation,
     handleCreatePost
   } = useMediaPosts(mediaType, sortBy, sortOrder, searchTerm);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    resetPage();
+  }, [mediaType, sortBy, sortOrder, searchTerm, resetPage]);
 
   const mediaData = {
     postsData,
@@ -51,6 +58,23 @@ export const MediaContainer = () => {
   
   const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
 
+  // Handle filter changes
+  const handleMediaTypeChange = (value: string) => {
+    setMediaType(value);
+  };
+
+  const handleSortByChange = (value: string) => {
+    setSortBy(value);
+  };
+  
+  const handleSortOrderChange = (value: 'asc' | 'desc') => {
+    setSortOrder(value);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
@@ -58,13 +82,13 @@ export const MediaContainer = () => {
         
         <MediaFilterBar
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+          setSearchTerm={handleSearchChange}
           filterType={mediaType}
-          setFilterType={setMediaType}
+          setFilterType={handleMediaTypeChange}
           sortBy={sortBy}
-          setSortBy={setSortBy}
+          setSortBy={handleSortByChange}
           sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
+          setSortOrder={handleSortOrderChange}
         />
         
         <MediaContent
