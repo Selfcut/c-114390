@@ -9,6 +9,7 @@ interface TableNames {
   likesTable: string;
   contentTable: string;
   contentIdField: string;
+  commentsTable: string;  // Add this property
 }
 
 export const useContentTables = (options: ContentTypeOptions) => {
@@ -20,31 +21,36 @@ export const useContentTables = (options: ContentTypeOptions) => {
         return {
           likesTable: 'media_likes',
           contentTable: 'media_posts',
-          contentIdField: 'post_id'
+          contentIdField: 'post_id',
+          commentsTable: 'media_comments'
         };
       case 'knowledge':
         return {
           likesTable: 'content_likes',
           contentTable: 'knowledge_entries',
-          contentIdField: 'content_id'
+          contentIdField: 'content_id',
+          commentsTable: 'content_comments'
         };
       case 'quote':
         return {
           likesTable: 'quote_likes',
           contentTable: 'quotes',
-          contentIdField: 'quote_id'
+          contentIdField: 'quote_id',
+          commentsTable: 'quote_comments'
         };
       case 'wiki':
         return {
           likesTable: 'content_likes',
           contentTable: 'wiki_articles',
-          contentIdField: 'content_id'
+          contentIdField: 'content_id',
+          commentsTable: 'content_comments'
         };
       default:
         return {
           likesTable: 'content_likes',
           contentTable: contentType,
-          contentIdField: 'content_id'
+          contentIdField: 'content_id',
+          commentsTable: 'content_comments'
         };
     }
   }, [contentType]);

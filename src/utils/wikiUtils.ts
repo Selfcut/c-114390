@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { WikiArticle } from "@/components/wiki/types";
 
@@ -54,7 +55,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
       user_id: article.user_id,
       created_at: new Date(article.created_at),
       author_name: article.author_name || 'Anonymous',
-      likes: article.likes || 0
+      likes: article.likes || 0  // Make sure likes is included
     })) : [];
 
     return { 
@@ -106,7 +107,7 @@ export const fetchWikiArticleById = async (id: string) => {
       user_id: data.user_id,
       created_at: new Date(data.created_at),
       author_name: data.author_name || 'Anonymous',
-      likes: data.likes || 0
+      likes: data.likes || 0  // Make sure likes is included
     };
 
     return { article };
