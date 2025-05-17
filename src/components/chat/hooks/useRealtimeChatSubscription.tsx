@@ -25,21 +25,7 @@ export const useRealtimeChatSubscription = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Make sure the table is enabled for realtime
-    const setupRealtime = async () => {
-      try {
-        // This ensures the table is set up for realtime updates
-        const { error } = await supabase.rpc('enable_realtime_for_table', { table_name: 'chat_messages' });
-        if (error && !error.message.includes('already exists')) {
-          console.error('Error setting up realtime:', error);
-        }
-      } catch (err) {
-        // If the function doesn't exist, that's ok, we'll just continue
-        console.log('Realtime setup not available:', err);
-      }
-    };
-
-    setupRealtime();
+    console.log('Setting up realtime chat subscription');
 
     // Subscribe to chat message insertions
     const channel = supabase
@@ -85,6 +71,7 @@ export const useRealtimeChatSubscription = ({
       });
 
     return () => {
+      console.log('Cleaning up realtime chat subscription');
       supabase.removeChannel(channel);
     };
   }, [isOpen, user, addMessage, scrollToBottom, handleSpecialEffect]);
