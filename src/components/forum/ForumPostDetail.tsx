@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -117,12 +118,15 @@ export const ForumPostDetail = () => {
           console.error('Error incrementing view count:', err);
         }
         
-        // Fetch comments
+        // Fetch comments - Fix the query to properly join with profiles table
         const { data: commentsData, error: commentsError } = await supabase
           .from('content_comments')
           .select(`
-            *,
-            profiles:user_id(name, username, avatar_url)
+            id,
+            comment,
+            user_id,
+            created_at,
+            profiles:user_id (name, username, avatar_url)
           `)
           .eq('content_id', postId)
           .eq('content_type', 'forum')
@@ -132,15 +136,18 @@ export const ForumPostDetail = () => {
           console.error('Error fetching comments:', commentsError);
         } else if (commentsData) {
           // Map comments data to our Comment interface
-          const mappedComments: Comment[] = commentsData.map(comment => ({
-            id: comment.id,
-            content: comment.comment,
-            authorId: comment.user_id,
-            authorName: comment.profiles?.name || comment.profiles?.username || 'Unknown',
-            authorAvatar: comment.profiles?.avatar_url,
-            createdAt: new Date(comment.created_at),
-            upvotes: 0 // We don't track this in our DB currently
-          }));
+          const mappedComments: Comment[] = commentsData.map(comment => {
+            const profileData = comment.profiles || {};
+            return {
+              id: comment.id,
+              content: comment.comment,
+              authorId: comment.user_id,
+              authorName: profileData.name || profileData.username || 'Unknown',
+              authorAvatar: profileData.avatar_url,
+              createdAt: new Date(comment.created_at),
+              upvotes: 0 // We don't track this in our DB currently
+            };
+          });
           
           setComments(mappedComments);
         }
