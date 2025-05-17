@@ -7,10 +7,7 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    // For debugging purposes
-    console.log("Theme toggled to:", newTheme);
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (

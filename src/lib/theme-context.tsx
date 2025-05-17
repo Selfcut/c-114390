@@ -43,12 +43,10 @@ export function ThemeProvider({
         : "light";
 
       root.classList.add(systemTheme);
-      console.log("Applied system theme:", systemTheme);
       return;
     }
 
     root.classList.add(theme);
-    console.log("Applied theme:", theme);
   }, [theme]);
 
   // Listen for changes to the prefers-color-scheme media query
@@ -62,7 +60,6 @@ export function ThemeProvider({
         root.classList.add(
           mediaQuery.matches ? "dark" : "light"
         );
-        console.log("System theme changed to:", mediaQuery.matches ? "dark" : "light");
       }
     };
     
@@ -75,7 +72,6 @@ export function ThemeProvider({
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
-      console.log("Theme set to:", theme);
     },
   };
 

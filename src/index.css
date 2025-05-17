@@ -87,8 +87,3 @@ p a:not(.button):not([role="button"]):hover,
 .text-link:hover {
   text-decoration: underline;
 }
-
-:root {
-  --chat-sidebar-width: 320px;
-  --content-margin-right: 0;
-}

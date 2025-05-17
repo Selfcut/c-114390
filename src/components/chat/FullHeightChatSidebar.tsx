@@ -3,10 +3,109 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, MessageSquare } from 'lucide-react';
 import { useChatSidebarToggle } from '@/hooks/useChatSidebarToggle';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
+import { Avatar } from '@/components/ui/avatar';
+import { AvatarImage } from '@/components/ui/avatar';
+import { AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ChatSidebarHeader } from './ChatSidebarHeader';
+import { ChatMessageList } from './ChatMessageList';
+import { ChatInputArea } from './ChatInputArea';
+import { ChatMessage } from './types';
 
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  // Fetch messages when the sidebar is opened
+  useEffect(() => {
+    if (isOpen) {
+      fetchMessages();
+    }
+  }, [isOpen]);
+
+  const fetchMessages = async () => {
+    if (!isOpen) return;
+    
+    setIsLoadingMessages(true);
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(50);
+      
+      if (error) throw error;
+      
+      const formattedMessages = data?.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        timestamp: msg.created_at,
+        userId: msg.user_id || 'anonymous',
+        senderName: msg.sender_name || 'Anonymous',
+        isCurrentUser: msg.user_id === user?.id
+      })) || [];
+      
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+    
+    const newMessage = {
+      id: crypto.randomUUID(),
+      content: inputMessage,
+      timestamp: new Date().toISOString(),
+      userId: user?.id || 'anonymous',
+      senderName: user?.name || user?.email?.split('@')[0] || 'Anonymous',
+      isCurrentUser: true
+    };
+    
+    // Optimistically update UI
+    setMessages(prev => [...prev, newMessage]);
+    setInputMessage('');
+    
+    try {
+      // Save to database
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          content: inputMessage,
+          user_id: user?.id,
+          sender_name: user?.name || user?.email?.split('@')[0] || 'Anonymous',
+          conversation_id: 'global' // For simplicity, using a single global conversation
+        });
+      
+      if (error) throw error;
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Remove the message if sending failed
+      setMessages(prev => prev.filter(msg => msg.id !== newMessage.id));
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <>
@@ -23,58 +122,32 @@ export const FullHeightChatSidebar = () => {
       
       {/* Expanded sidebar */}
       <div 
-        className={`fixed top-0 right-0 h-screen bg-background border-l border-border shadow-lg transition-all duration-300 z-40 ${
+        className={`fixed top-0 right-0 h-screen bg-background border-l border-border shadow-lg transition-all duration-300 z-40 flex flex-col ${
           isOpen ? 'translate-x-0 w-[var(--chat-sidebar-width)]' : 'translate-x-full w-0'
         }`}
       >
-        <div className="h-full flex flex-col">
-          <div className="p-4 border-b border-border flex items-center justify-between">
-            <h3 className="font-semibold">Community Chat</h3>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={toggleSidebar}
-              aria-label="Close chat"
-            >
-              <ChevronLeft size={18} />
-            </Button>
-          </div>
-          
-          <div className="flex-1 overflow-auto p-4">
-            <div className="flex flex-col h-full">
-              <div className="flex-1 pb-4">
-                {isLoading ? (
-                  <div className="flex flex-col items-center justify-center h-40">
-                    <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <p className="mt-2 text-sm text-muted-foreground">Loading chat...</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="h-14 w-14 bg-primary/10 text-primary flex items-center justify-center rounded-full mb-4">
-                      <MessageSquare size={28} />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2">Live Chat</h3>
-                    <p className="text-sm text-muted-foreground max-w-[240px] mx-auto mb-6">
-                      Connect with other community members in real-time discussions.
-                    </p>
-                    <Button 
-                      onClick={() => setIsLoading(true)}
-                      className="w-full mb-2"
-                    >
-                      Start a New Conversation
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setIsLoading(true)}
-                      className="w-full"
-                    >
-                      Browse Active Chats
-                    </Button>
-                  </div>
-                )}
-              </div>
+        <ChatSidebarHeader toggleSidebar={toggleSidebar} />
+        
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {isLoadingMessages ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
-          </div>
+          ) : (
+            <ChatMessageList 
+              messages={messages}
+              isLoading={false}
+              formatTime={formatTime}
+              currentUserId={user?.id}
+            />
+          )}
+          
+          <ChatInputArea 
+            message={inputMessage}
+            setMessage={setInputMessage}
+            handleSendMessage={handleSendMessage}
+            handleKeyDown={handleKeyDown}
+          />
         </div>
       </div>
     </>
