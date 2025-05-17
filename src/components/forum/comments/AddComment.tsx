@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { UserProfile } from '@/lib/auth/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddCommentProps {
   onSubmit: (comment: string) => void;
@@ -19,11 +20,18 @@ export const AddComment: React.FC<AddCommentProps> = ({
   user 
 }) => {
   const [newComment, setNewComment] = useState('');
+  const { toast } = useToast();
   
   const handleSubmit = () => {
     if (newComment.trim()) {
       onSubmit(newComment);
       setNewComment('');
+    } else if (!newComment.trim() && user) {
+      toast({
+        title: "Comment can't be empty",
+        description: "Please write something before posting",
+        variant: "destructive"
+      });
     }
   };
   
@@ -34,15 +42,22 @@ export const AddComment: React.FC<AddCommentProps> = ({
       handleSubmit();
     }
   };
+
+  const getAvatarFallback = () => {
+    if (!user) return 'G';
+    if (user.name) return user.name[0].toUpperCase();
+    if (user.email) return user.email[0].toUpperCase();
+    return 'U';
+  };
   
   return (
     <Card className="mb-8">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
-          {user && user.avatar_url && (
+          {user && (
             <Avatar className="h-6 w-6">
-              <AvatarImage src={user.avatar_url} alt={user.name} />
-              <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
+              <AvatarImage src={user.avatar_url} alt={user.name || 'User'} />
+              <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
             </Avatar>
           )}
           Join the Discussion
@@ -68,6 +83,11 @@ export const AddComment: React.FC<AddCommentProps> = ({
               {isSubmitting ? "Posting..." : "Post Reply"}
             </Button>
           </div>
+          {!user && (
+            <p className="text-sm text-muted-foreground text-center mt-2">
+              Please sign in to join the discussion
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

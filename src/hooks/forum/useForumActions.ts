@@ -21,13 +21,18 @@ export function useForumActions(postId?: string) {
     
     try {
       // Check if user already liked this post
-      const { data: existingLike } = await supabase
+      const { data: existingLike, error: checkError } = await supabase
         .from('content_likes')
         .select()
         .eq('content_id', postId)
         .eq('content_type', 'forum')
         .eq('user_id', user.id)
         .maybeSingle();
+        
+      if (checkError) {
+        console.error("Error checking like status:", checkError);
+        throw checkError;
+      }
         
       if (existingLike) {
         toast({
@@ -37,7 +42,7 @@ export function useForumActions(postId?: string) {
       }
       
       // Add the like
-      await supabase
+      const { error: insertError } = await supabase
         .from('content_likes')
         .insert({
           content_id: postId,
@@ -45,12 +50,22 @@ export function useForumActions(postId?: string) {
           user_id: user.id
         });
         
+      if (insertError) {
+        console.error("Error adding like:", insertError);
+        throw insertError;
+      }
+        
       // Increment the upvote count
-      await supabase.rpc('increment_counter_fn', {
+      const { error: rpcError } = await supabase.rpc('increment_counter_fn', {
         row_id: postId,
         column_name: 'upvotes',
         table_name: 'forum_posts'
       });
+      
+      if (rpcError) {
+        console.error("Error incrementing upvote count:", rpcError);
+        throw rpcError;
+      }
       
       // Update local state
       toast({
@@ -126,10 +141,10 @@ export function useForumActions(postId?: string) {
         author: user.username || user.name || "User",
         authorAvatar: user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
         createdAt: new Date(),
-        isAuthor: user.id === discussion?.authorId
+        isAuthor: discussion ? user.id === discussion.authorId : false
       };
       
-      // Update the UI
+      // Update the UI - add to the beginning to show newest first
       setComments(prev => [newCommentObj, ...prev]);
       
       // Update comment count

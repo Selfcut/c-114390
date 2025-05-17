@@ -24,14 +24,17 @@ const ForumPost = () => {
   const { isLoading, discussion, comments, setComments } = useForumPost(id);
   const { isSubmitting, handleUpvote, handleSubmitComment } = useForumActions(id);
 
+  // Handle upvoting the post
   const handleUpvotePost = async () => {
     if (discussion) {
-      await handleUpvote(user, discussion);
-      // The hook handles updating the discussion state
+      const updatedDiscussion = await handleUpvote(user, discussion);
+      // The hook handles updating the state
     }
   };
   
+  // Handle adding a new comment
   const handleAddComment = async (comment: string) => {
+    if (!user) return;
     await handleSubmitComment(user, comment, discussion, setComments);
   };
 
