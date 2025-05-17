@@ -23,6 +23,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   const fetchComments = useCallback(async () => {
@@ -32,8 +33,11 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
     }
 
     try {
-      setIsLoading(true);
       setError(null);
+      // Don't show loading state on refresh, just use isRefreshing
+      if (!isRefreshing) {
+        setIsLoading(true);
+      }
       
       // Get forum posts that are specifically about this problem
       const { data, error } = await supabase
@@ -57,6 +61,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
       if (!data || data.length === 0) {
         setComments([]);
         setIsLoading(false);
+        setIsRefreshing(false);
         return;
       }
       
@@ -66,6 +71,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
       if (userIds.length === 0) {
         setComments([]);
         setIsLoading(false);
+        setIsRefreshing(false);
         return;
       }
 
@@ -106,15 +112,20 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error fetching comments';
       setError(err instanceof Error ? err : new Error(errorMessage));
       console.error('Error fetching comments:', err);
-      toast({
-        title: "Error loading comments",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      
+      // Only show toast if it's not just a refresh
+      if (!isRefreshing) {
+        toast({
+          title: "Error loading comments",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [problemId, enabled, toast]);
+  }, [problemId, enabled, toast, isRefreshing]);
   
   useEffect(() => {
     fetchComments();
@@ -155,12 +166,14 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
   
   // Function to manually refresh comments
   const refreshComments = () => {
+    setIsRefreshing(true);
     fetchComments();
   };
 
   return {
     comments,
     isLoading,
+    isRefreshing,
     error,
     addComment,
     refreshComments

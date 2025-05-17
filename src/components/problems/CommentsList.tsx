@@ -3,10 +3,11 @@ import React, { memo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, ThumbsUp, AlertCircle } from 'lucide-react';
+import { MessageSquare, ThumbsUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Comment {
   id: string;
@@ -21,14 +22,25 @@ interface Comment {
 interface CommentsListProps {
   comments: Comment[];
   isLoading: boolean;
+  isRefreshing?: boolean;
   userAuthenticated: boolean;
+  onRefresh?: () => void;
+  error?: Error | null;
 }
 
 // Using memo to prevent unnecessary re-renders
-export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: CommentsListProps) => {
+export const CommentsList = memo(({ 
+  comments, 
+  isLoading, 
+  isRefreshing = false,
+  userAuthenticated,
+  onRefresh,
+  error 
+}: CommentsListProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [upvotingCommentId, setUpvotingCommentId] = useState<string | null>(null);
+  const [upvotedComments, setUpvotedComments] = useState<Set<string>>(new Set());
   
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -44,6 +56,14 @@ export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: Co
         title: "Authentication required",
         description: "Please sign in to upvote comments",
         variant: "destructive"
+      });
+      return;
+    }
+    
+    // Prevent double upvoting
+    if (upvotedComments.has(commentId)) {
+      toast({
+        description: "You've already upvoted this comment",
       });
       return;
     }
@@ -70,6 +90,14 @@ export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: Co
       
       if (updateError) throw updateError;
       
+      // Add this comment to the list of upvoted comments
+      setUpvotedComments(prev => {
+        const newSet = new Set(prev);
+        newSet.add(commentId);
+        return newSet;
+      });
+      
+      // Update the local state
       toast({
         title: "Upvoted",
         description: "Your upvote has been recorded"
@@ -113,6 +141,25 @@ export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: Co
     );
   }
 
+  if (error) {
+    return (
+      <Card className="p-8 text-center">
+        <div className="flex justify-center mb-4">
+          <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-4">
+            <AlertCircle size={32} className="text-red-600 dark:text-red-400" />
+          </div>
+        </div>
+        <h3 className="text-xl font-medium mb-2">Failed to Load Comments</h3>
+        <p className="text-muted-foreground mb-4">{error.message || "An error occurred while loading comments"}</p>
+        {onRefresh && (
+          <Button onClick={onRefresh}>
+            <RefreshCw size={16} className="mr-2" /> Try Again
+          </Button>
+        )}
+      </Card>
+    );
+  }
+
   if (comments.length === 0) {
     return (
       <Card className="p-8 text-center">
@@ -153,16 +200,17 @@ export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: Co
                 <p className="mb-4">{item.content}</p>
                 <div className="flex items-center gap-4">
                   <Button 
-                    variant="ghost" 
+                    variant={upvotedComments.has(item.id) ? "default" : "ghost"}
                     size="sm" 
-                    className="flex items-center gap-1"
+                    className={`flex items-center gap-1 ${upvotedComments.has(item.id) ? 'bg-primary/10' : ''}`}
                     onClick={() => handleUpvote(item.id)}
-                    disabled={upvotingCommentId === item.id || !userAuthenticated}
+                    disabled={upvotingCommentId === item.id || !userAuthenticated || upvotedComments.has(item.id)}
+                    title={upvotedComments.has(item.id) ? "You've upvoted this comment" : "Upvote this comment"}
                   >
                     {upvotingCommentId === item.id ? (
                       <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-1"></span>
                     ) : (
-                      <ThumbsUp size={14} />
+                      <ThumbsUp size={14} className={upvotedComments.has(item.id) ? 'text-primary' : ''} />
                     )}
                     <span>{item.upvotes}</span>
                   </Button>
@@ -175,6 +223,14 @@ export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: Co
           </CardContent>
         </Card>
       ))}
+
+      {/* Show refreshing indicator at the bottom */}
+      {isRefreshing && (
+        <div className="flex justify-center items-center py-4">
+          <RefreshCw size={16} className="animate-spin mr-2" />
+          <span className="text-sm text-muted-foreground">Refreshing comments...</span>
+        </div>
+      )}
     </div>
   );
 });

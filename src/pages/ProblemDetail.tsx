@@ -16,6 +16,7 @@ import { CommentsList } from '@/components/problems/CommentsList';
 import { ProblemNotFound } from '@/components/problems/ProblemNotFound';
 import { useComments } from '@/hooks/problems/useComments';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProblemStats {
   discussionCount: number;
@@ -29,6 +30,7 @@ const ProblemDetail = () => {
   const { toast } = useToast();
   const [problem, setProblem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [problemStats, setProblemStats] = useState<ProblemStats>({
     discussionCount: 0,
     solutionCount: 0
@@ -38,6 +40,7 @@ const ProblemDetail = () => {
   const { 
     comments, 
     isLoading: commentsLoading, 
+    isRefreshing: commentsRefreshing,
     error: commentsError, 
     addComment,
     refreshComments 
@@ -53,6 +56,7 @@ const ProblemDetail = () => {
       if (!problemId) return;
       
       setLoading(true);
+      setError(null);
       try {
         const id = parseInt(problemId, 10);
         
@@ -87,16 +91,23 @@ const ProblemDetail = () => {
             });
           } catch (statsError) {
             console.error("Error fetching problem statistics:", statsError);
+            // Don't show an error toast for stats errors
           }
         } else {
+          const notFoundError = new Error("Problem not found");
+          setError(notFoundError);
           toast({
             title: "Problem not found",
             description: "The problem you're looking for doesn't exist",
             variant: "destructive"
           });
+          // Give user time to see the error message before redirecting
           setTimeout(() => navigate('/problems'), 3000);
         }
       } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error loading problem';
+        const problemError = err instanceof Error ? err : new Error(errorMessage);
+        setError(problemError);
         console.error("Error loading problem:", err);
         toast({
           title: "Error",
@@ -135,12 +146,72 @@ const ProblemDetail = () => {
             <ArrowLeft size={16} className="mr-2" />
             Back to Problems Directory
           </Button>
-          <Card className="p-8">
-            <CardContent className="flex flex-col items-center justify-center min-h-[300px]">
-              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="text-muted-foreground">Loading problem details...</p>
-            </CardContent>
-          </Card>
+          
+          {/* Skeleton UI */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-3/4">
+                    <Skeleton className="h-8 w-1/2 mb-2" />
+                    <Skeleton className="h-5 w-full" />
+                  </div>
+                  <Skeleton className="h-10 w-24" />
+                </div>
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="flex justify-between items-center mb-4">
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="h-10 w-24" />
+            </div>
+            
+            {Array(2).fill(0).map((_, index) => (
+              <Card key={`comment-skeleton-${index}`}>
+                <CardContent className="p-6">
+                  <div className="flex gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1">
+                      <div className="flex justify-between mb-2">
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      <Skeleton className="h-4 w-full mb-1" />
+                      <Skeleton className="h-4 w-full mb-1" />
+                      <Skeleton className="h-4 w-2/3 mb-3" />
+                      <div className="flex gap-2">
+                        <Skeleton className="h-8 w-16" />
+                        <Skeleton className="h-8 w-16" />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (error && !problem) {
+    return (
+      <PageLayout>
+        <div className="container mx-auto py-8 px-4">
+          <Button variant="ghost" className="mb-6" onClick={handleBack}>
+            <ArrowLeft size={16} className="mr-2" />
+            Back to Problems Directory
+          </Button>
+          <ProblemNotFound onBackClick={handleBack} />
         </div>
       </PageLayout>
     );
@@ -173,8 +244,14 @@ const ProblemDetail = () => {
               
               {/* Add refresh button for comments */}
               {comments.length > 0 && (
-                <Button variant="outline" size="sm" onClick={handleRefreshComments}>
-                  <RefreshCw size={14} className="mr-1" /> Refresh
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRefreshComments}
+                  disabled={commentsRefreshing}
+                >
+                  <RefreshCw size={14} className={`mr-1 ${commentsRefreshing ? 'animate-spin' : ''}`} /> 
+                  {commentsRefreshing ? 'Refreshing...' : 'Refresh'}
                 </Button>
               )}
             </div>
@@ -202,11 +279,14 @@ const ProblemDetail = () => {
               </Card>
             )}
             
-            {/* Comments list */}
+            {/* Comments list with refreshing capability */}
             <CommentsList 
               comments={comments}
               isLoading={commentsLoading}
+              isRefreshing={commentsRefreshing}
               userAuthenticated={!!user}
+              onRefresh={handleRefreshComments}
+              error={commentsError}
             />
           </>
         )}

@@ -38,6 +38,7 @@ export const ProblemsFilters = ({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
+          aria-label="Search problems"
         />
       </div>
       
@@ -46,7 +47,7 @@ export const ProblemsFilters = ({
           value={category || 'all'} 
           onValueChange={(value) => setCategory(value === 'all' ? null : value)}
         >
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filter by category">
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
@@ -61,7 +62,7 @@ export const ProblemsFilters = ({
           value={sortBy} 
           onValueChange={(value) => setSortBy(value as 'severity' | 'solvability' | 'urgency')}
         >
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]" aria-label="Sort problems">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>

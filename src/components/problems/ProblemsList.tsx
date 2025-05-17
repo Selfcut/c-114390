@@ -6,13 +6,58 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Problem } from '@/data/problemsData';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProblemsListProps {
   problems: Problem[];
   onProblemClick: (id: number) => void;
+  isLoading?: boolean;
 }
 
-export const ProblemsList = ({ problems, onProblemClick }: ProblemsListProps) => {
+export const ProblemsList = ({ problems, onProblemClick, isLoading = false }: ProblemsListProps) => {
+  // Display loading skeleton UI when data is being fetched
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array(3).fill(0).map((_, index) => (
+          <Card key={`skeleton-${index}`} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between">
+                <div className="w-3/4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                {Array(3).fill(0).map((_, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between mb-1">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-10" />
+                    </div>
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {Array(3).fill(0).map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-16" />
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between pt-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-24" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {problems.length === 0 ? (

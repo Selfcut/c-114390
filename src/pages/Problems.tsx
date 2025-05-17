@@ -17,11 +17,13 @@ const Problems = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [problemStats, setProblemStats] = useState<Record<number, { discussions: number, solutions: number }>>({});
+  const [isLoading, setIsLoading] = useState(true);
   
   // Fetch discussion and solution counts for each problem
   useEffect(() => {
     const fetchProblemStats = async () => {
       try {
+        setIsLoading(true);
         // We'll get the stats for each problem from the forum_posts table
         const problems = problemsData.map(p => p.id);
         const stats: Record<number, { discussions: number, solutions: number }> = {};
@@ -31,8 +33,8 @@ const Problems = () => {
           stats[id] = { discussions: 0, solutions: 0 };
         });
         
-        // Try to get real statistics from Supabase for each problem
-        for (const problemId of problems) {
+        // Use Promise.all to fetch all stats in parallel for better performance
+        await Promise.all(problems.map(async (problemId) => {
           // Get count of forum posts related to this problem
           const { count: discussionCount, error: countError } = await supabase
             .from('forum_posts')
@@ -53,7 +55,7 @@ const Problems = () => {
           if (!solutionError && solutionCount !== null) {
             stats[problemId].solutions = solutionCount;
           }
-        }
+        }));
         
         setProblemStats(stats);
       } catch (error) {
@@ -63,6 +65,8 @@ const Problems = () => {
           description: "Failed to load discussion counts",
           variant: "destructive"
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -114,6 +118,7 @@ const Problems = () => {
         <ProblemsList 
           problems={filteredProblems} 
           onProblemClick={handleProblemClick}
+          isLoading={isLoading}
         />
       </div>
     </PageLayout>
