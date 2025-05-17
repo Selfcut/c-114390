@@ -4,12 +4,12 @@ import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
-import { User } from '@supabase/supabase-js';
+import { UserProfile } from '@/lib/auth/types';
 
 interface AddCommentProps {
   onSubmit: (comment: string) => void;
   isSubmitting: boolean;
-  user: User | null;
+  user: UserProfile | null;
 }
 
 export const AddComment: React.FC<AddCommentProps> = ({ 
