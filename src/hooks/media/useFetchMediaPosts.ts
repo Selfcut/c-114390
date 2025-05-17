@@ -21,12 +21,12 @@ export const useFetchMediaPosts = (
         const startIndex = page * pageSize;
         const endIndex = startIndex + pageSize - 1;
         
-        // Use correct join syntax for profiles table
+        // Build the query - use proper join syntax
         let query = supabase.from('media_posts')
           .select(`
             *,
             profiles:user_id(name, avatar_url, username)
-          `)
+          `, { count: 'exact' })
           .range(startIndex, endIndex);
         
         // Apply filters
@@ -43,23 +43,19 @@ export const useFetchMediaPosts = (
         query = query.order(sortBy || 'created_at', { ascending: sortOrder === 'asc' });
         
         // Execute query
-        const { data, error } = await query;
+        const { data, error, count } = await query;
         
         if (error) {
           throw new Error(error.message);
         }
         
         // Check if there are more posts
-        const { count } = await supabase
-          .from('media_posts')
-          .select('*', { count: 'exact', head: true });
-          
         const hasMore = (startIndex + data.length) < (count || 0);
         
         // Map data to MediaPost type with proper type safety
         const posts: MediaPost[] = data.map(post => {
-          // Type assertion to deal with the profiles object
-          const profileData = post.profiles as { 
+          // Type assertion for the profiles object
+          const profileData = post.profiles as {
             name?: string; 
             avatar_url?: string; 
             username?: string;
