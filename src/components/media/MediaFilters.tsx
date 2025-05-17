@@ -1,77 +1,87 @@
 
 import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal } from "lucide-react";
+import { MediaSortControls } from "@/components/media/MediaSortControls";
 
 interface MediaFiltersProps {
   filterType: string;
-  setFilterType: (type: string) => void;
+  setFilterType: (value: string) => void;
   sortBy: string;
-  setSortBy: (value: any) => void;
+  setSortBy: (value: string) => void;
+  sortOrder: 'asc' | 'desc';
+  setSortOrder: (value: 'asc' | 'desc') => void;
 }
 
-export const MediaFilters = ({ filterType, setFilterType, sortBy, setSortBy }: MediaFiltersProps) => {
+export const MediaFilters: React.FC<MediaFiltersProps> = ({
+  filterType,
+  setFilterType,
+  sortBy,
+  setSortBy,
+  sortOrder,
+  setSortOrder
+}) => {
   return (
-    <>
+    <div className="flex flex-col space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Button 
-          variant={filterType === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("all")}
-        >
-          All
-        </Button>
-        <Button 
-          variant={filterType === "image" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("image")}
-        >
-          Images
-        </Button>
-        <Button 
-          variant={filterType === "video" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("video")}
-        >
-          Videos
-        </Button>
-        <Button 
-          variant={filterType === "document" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("document")}
-        >
-          Documents
-        </Button>
-        <Button 
-          variant={filterType === "youtube" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("youtube")}
-        >
-          YouTube
-        </Button>
-        <Button 
-          variant={filterType === "text" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("text")}
-        >
-          Text
-        </Button>
+        <span className="text-sm text-muted-foreground">Filter by:</span>
+        <div className="flex flex-wrap">
+          <Button
+            variant={filterType === 'all' ? 'default' : 'outline'}
+            size="sm"
+            className="min-w-[70px]"
+            onClick={() => setFilterType('all')}
+          >
+            All
+          </Button>
+          <Button
+            variant={filterType === 'image' ? 'default' : 'outline'}
+            size="sm"
+            className="min-w-[70px]"
+            onClick={() => setFilterType('image')}
+          >
+            Images
+          </Button>
+          <Button
+            variant={filterType === 'video' ? 'default' : 'outline'}
+            size="sm"
+            className="min-w-[70px]"
+            onClick={() => setFilterType('video')}
+          >
+            Videos
+          </Button>
+          <Button
+            variant={filterType === 'youtube' ? 'default' : 'outline'}
+            size="sm"
+            className="min-w-[70px]"
+            onClick={() => setFilterType('youtube')}
+          >
+            YouTube
+          </Button>
+          <Button
+            variant={filterType === 'document' ? 'default' : 'outline'}
+            size="sm"
+            className="min-w-[70px]"
+            onClick={() => setFilterType('document')}
+          >
+            Documents
+          </Button>
+          <Button
+            variant={filterType === 'text' ? 'default' : 'outline'}
+            size="sm"
+            className="min-w-[70px]"
+            onClick={() => setFilterType('text')}
+          >
+            Text
+          </Button>
+        </div>
       </div>
       
-      <div className="flex items-center gap-2">
-        <SlidersHorizontal size={16} className="text-muted-foreground" />
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-36 h-9">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="created_at">Newest</SelectItem>
-            <SelectItem value="likes">Most Popular</SelectItem>
-            <SelectItem value="title">Alphabetical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </>
+      <MediaSortControls 
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+      />
+    </div>
   );
 };

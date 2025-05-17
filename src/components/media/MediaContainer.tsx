@@ -47,6 +47,8 @@ export const MediaContainer = () => {
               setFilterType={setMediaType}
               sortBy={sortBy}
               setSortBy={setSortBy}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
             />
           </div>
         </div>

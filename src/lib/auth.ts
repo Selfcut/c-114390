@@ -1,3 +1,4 @@
 
-// Re-export everything from auth.tsx to maintain backward compatibility
-export * from './auth.tsx';
+// Re-export everything from the auth module
+export * from './auth';
+export * from './auth/index';

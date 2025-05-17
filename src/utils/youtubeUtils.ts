@@ -1,35 +1,28 @@
 
 /**
- * Extract YouTube video ID from various YouTube URL formats
- * @param url YouTube URL
- * @returns Video ID or null if invalid
+ * Validates if a URL is a valid YouTube URL
+ */
+export const isValidYoutubeUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  // YouTube URL patterns to match
+  const patterns = [
+    /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})(\S*)?$/,  // Standard watch URLs
+    /^(https?:\/\/)?(www\.)?(youtu\.be\/)([a-zA-Z0-9_-]{11})(\S*)?$/,               // Short youtu.be URLs
+    /^(https?:\/\/)?(www\.)?(youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})(\S*)?$/      // Embed URLs
+  ];
+  
+  return patterns.some(pattern => pattern.test(url));
+};
+
+/**
+ * Extracts the YouTube video ID from a valid YouTube URL
  */
 export const extractYoutubeId = (url: string): string | null => {
   if (!url) return null;
   
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
+  // Extract from standard watch URL
+  let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   
-  return match && match[2].length === 11 ? match[2] : null;
-};
-
-/**
- * Convert a regular YouTube URL to an embed URL
- * @param url YouTube URL
- * @returns YouTube embed URL or null if invalid
- */
-export const getYoutubeEmbedUrl = (url: string): string | null => {
-  const videoId = extractYoutubeId(url);
-  if (!videoId) return null;
-  
-  return `https://www.youtube.com/embed/${videoId}`;
-};
-
-/**
- * Validate if a string is a valid YouTube URL
- * @param url URL to check
- * @returns true if valid YouTube URL
- */
-export const isValidYoutubeUrl = (url: string): boolean => {
-  return !!extractYoutubeId(url);
+  return match ? match[1] : null;
 };
