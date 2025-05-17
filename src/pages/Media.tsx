@@ -40,7 +40,8 @@ const Media = () => {
       sortOrder, 
       searchQuery: searchTerm
     }),
-    placeholderData: (previousData) => previousData // This replaces keepPreviousData in v5
+    // Replace keepPreviousData with placeholderData in v5
+    placeholderData: (previousData) => previousData 
   });
 
   // Create post mutation

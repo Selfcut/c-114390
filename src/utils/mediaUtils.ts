@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -45,7 +46,7 @@ export async function fetchMediaPosts({
       .from('media_posts')
       .select(`
         *,
-        profiles(name, avatar_url, username)
+        profiles:user_id(name, avatar_url, username)
       `)
       .range(page * pageSize, (page + 1) * pageSize - 1);
       
@@ -70,16 +71,24 @@ export async function fetchMediaPosts({
     }
     
     // Transform to match the expected format
-    const posts: MediaPost[] = data?.map(post => ({
-      ...post,
-      // Ensure type is one of the allowed values
-      type: (post.type as 'image' | 'video' | 'document' | 'youtube' | 'text') || 'text', 
-      author: post.profiles ? {
-        name: post.profiles.name,
-        username: post.profiles.username,
-        avatar_url: post.profiles.avatar_url
-      } : undefined
-    })) || [];
+    const posts: MediaPost[] = data?.map(post => {
+      // Assert the type to ensure it's one of the allowed values
+      const safeType = (post.type as string).toLowerCase();
+      const validType: 'image' | 'video' | 'document' | 'youtube' | 'text' = 
+        ['image', 'video', 'document', 'youtube', 'text'].includes(safeType) 
+          ? safeType as 'image' | 'video' | 'document' | 'youtube' | 'text'
+          : 'text';
+          
+      return {
+        ...post,
+        type: validType,
+        author: post.profiles ? {
+          name: post.profiles.name,
+          username: post.profiles.username,
+          avatar_url: post.profiles.avatar_url
+        } : undefined
+      };
+    }) || [];
 
     return {
       posts,
@@ -105,18 +114,24 @@ export async function getMediaPost(id: string) {
       .from('media_posts')
       .select(`
         *,
-        profiles(name, avatar_url, username)
+        profiles:user_id(name, avatar_url, username)
       `)
       .eq('id', id)
       .single();
       
     if (error) throw error;
     
+    // Assert the type to ensure it's one of the allowed values
+    const safeType = (data.type as string).toLowerCase();
+    const validType: 'image' | 'video' | 'document' | 'youtube' | 'text' = 
+      ['image', 'video', 'document', 'youtube', 'text'].includes(safeType) 
+        ? safeType as 'image' | 'video' | 'document' | 'youtube' | 'text'
+        : 'text';
+    
     // Transform to match the expected format
     const post: MediaPost = {
       ...data,
-      // Ensure type is one of the allowed values
-      type: (data.type as 'image' | 'video' | 'document' | 'youtube' | 'text') || 'text',
+      type: validType,
       author: data.profiles ? {
         name: data.profiles.name,
         username: data.profiles.username,
