@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { useChatSidebarToggle } from "@/hooks/useChatSidebarToggle";
 import { useChatMessages } from "./hooks/useChatMessages";
@@ -59,11 +58,10 @@ export const FullHeightChatSidebar = () => {
     handleSpecialEffect 
   });
   
+  // Fix: Update to use object parameter
   useAutomatedMessages({ 
-    isOpen, 
-    messages, 
-    addMessage, 
-    scrollToBottom 
+    isActive: isOpen, 
+    maxMessages: 5
   });
 
   // Fetch messages when the sidebar is opened

@@ -3,11 +3,17 @@ import { useState, useEffect } from 'react';
 import { getRandomAutomatedMessage } from '../AutomatedMessages';
 import { ChatMessage } from '../types';
 
-export const useAutomatedMessages = (
-  isActive: boolean = false,
-  interval: number = 20000,
-  maxMessages: number = 3
-) => {
+interface AutomatedMessagesProps {
+  isActive?: boolean;
+  interval?: number;
+  maxMessages?: number;
+}
+
+export const useAutomatedMessages = ({
+  isActive = false,
+  interval = 20000,
+  maxMessages = 3
+}: AutomatedMessagesProps) => {
   const [automatedMessages, setAutomatedMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
