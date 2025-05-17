@@ -9,7 +9,7 @@ import { MediaPost, validateMediaType, trackMediaView } from "@/utils/mediaUtils
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaDetailHeader } from "@/components/media/MediaDetailHeader";
 import { MediaDetailContent } from "@/components/media/MediaDetailContent";
