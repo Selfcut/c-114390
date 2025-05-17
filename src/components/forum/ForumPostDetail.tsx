@@ -52,12 +52,15 @@ export const ForumPostDetail = () => {
       try {
         setIsLoading(true);
         
-        // Fetch the post from Supabase
+        // Fetch the post from Supabase using proper join syntax
         const { data: postData, error: postError } = await supabase
           .from('forum_posts')
           .select(`
             *,
-            profiles:user_id(name, avatar_url, username)
+            user:user_id(
+              name:username,
+              avatar_url
+            )
           `)
           .eq('id', postId)
           .maybeSingle();
@@ -72,14 +75,14 @@ export const ForumPostDetail = () => {
           return; // Post not found will be handled in render
         }
         
-        // Process post data
+        // Process post data with proper type safety
         const processedPost = {
           id: postData.id,
           title: postData.title,
           content: postData.content,
-          authorName: postData.profiles?.name || 'Unknown User',
+          authorName: postData.user?.name || 'Unknown User',
           authorId: postData.user_id,
-          authorAvatar: postData.profiles?.avatar_url,
+          authorAvatar: postData.user?.avatar_url,
           created_at: postData.created_at,
           tags: postData.tags || [],
           upvotes: postData.upvotes || 0,
@@ -95,7 +98,11 @@ export const ForumPostDetail = () => {
           row_id: postId,
           column_name: 'views',
           table_name: 'forum_posts'
-        }).catch(err => console.error('Error incrementing view count:', err));
+        }).then(() => {
+          console.log('View count incremented');
+        }).catch(err => {
+          console.error('Error incrementing view count:', err);
+        });
         
         // TODO: Implement fetching comments once we have a forum_comments table
         // For now, just set empty comments array
