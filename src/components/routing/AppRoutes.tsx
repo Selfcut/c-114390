@@ -3,6 +3,7 @@ import React, { useEffect, Suspense } from 'react';
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { LoadingScreen } from './LoadingScreen';
+import { ErrorBoundary } from '../ErrorBoundary';
 import Auth from '@/pages/Auth';
 import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
@@ -18,7 +19,18 @@ import Quotes from '@/pages/Quotes';
 import Library from '@/pages/Library';
 import Chat from '@/pages/Chat';
 import Landing from '@/pages/Landing';
-import { ErrorBoundary } from '../ErrorBoundary';
+
+const RouteErrorFallback = () => (
+  <div className="flex flex-col items-center justify-center p-6 min-h-[50vh]">
+    <h2 className="text-xl font-semibold mb-2">Page Failed to Load</h2>
+    <p className="text-muted-foreground text-center mb-4">
+      There was a problem loading this page
+    </p>
+    <a href="/" className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+      Return to Home
+    </a>
+  </div>
+);
 
 export const AppRoutes = () => {
   const { user, isLoading } = useAuth();
@@ -27,19 +39,31 @@ export const AppRoutes = () => {
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Log route changes for debugging
+    console.log(`Route changed to: ${location.pathname}`);
   }, [location.pathname]);
   
+  // Show application-wide loading screen during auth check
   if (isLoading) {
     return <LoadingScreen />;
   }
   
   return (
-    <ErrorBoundary>
+    <ErrorBoundary fallback={<RouteErrorFallback />}>
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           {/* Landing and Auth Routes */}
-          <Route path="/" element={user ? <Dashboard /> : <Landing />} />
-          <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
+          <Route path="/" element={
+            <ErrorBoundary>
+              {user ? <Dashboard /> : <Landing />}
+            </ErrorBoundary>
+          } />
+          <Route path="/auth" element={
+            <ErrorBoundary>
+              {user ? <Navigate to="/" /> : <Auth />}
+            </ErrorBoundary>
+          } />
           
           {/* Public Routes */}
           <Route path="/dashboard" element={

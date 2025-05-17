@@ -18,6 +18,7 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
+    console.error("Error caught by ErrorBoundary:", error);
     return { hasError: true, error };
   }
 
@@ -32,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
       
       return (
-        <div className="flex flex-col items-center justify-center p-6 min-h-[200px] border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900/50 rounded-lg">
+        <div className="flex flex-col items-center justify-center p-6 min-h-[200px] border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900/50 rounded-lg m-4">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
           <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
           <p className="text-muted-foreground text-center mb-4">
@@ -40,9 +41,12 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <button
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            onClick={() => this.setState({ hasError: false })}
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload(); // Force reload to clear any potential state issues
+            }}
           >
-            Try again
+            Refresh page
           </button>
         </div>
       );
