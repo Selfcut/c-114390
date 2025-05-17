@@ -55,28 +55,37 @@ export const useFetchMediaPosts = (
           
         const hasMore = (startIndex + data.length) < (count || 0);
         
-        // Map data to MediaPost type
-        const posts: MediaPost[] = data.map(post => ({
-          id: post.id,
-          title: post.title,
-          content: post.content,
-          url: post.url,
-          type: validateMediaType(post.type),
-          user_id: post.user_id,
-          created_at: post.created_at,
-          updated_at: post.updated_at,
-          likes: post.likes,
-          comments: post.comments,
-          author: post.profiles ? {
-            name: post.profiles.name || 'Unknown',
-            avatar_url: post.profiles.avatar_url,
-            username: post.profiles.username
-          } : {
-            name: 'Unknown',
-            avatar_url: null,
-            username: null
-          }
-        }));
+        // Map data to MediaPost type with proper type safety
+        const posts: MediaPost[] = data.map(post => {
+          // Type assertion to deal with the profiles object
+          const profileData = post.profiles as { 
+            name?: string; 
+            avatar_url?: string; 
+            username?: string;
+          } | null;
+          
+          return {
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            url: post.url,
+            type: validateMediaType(post.type),
+            user_id: post.user_id,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
+            likes: post.likes,
+            comments: post.comments,
+            author: profileData ? {
+              name: profileData.name || 'Unknown',
+              avatar_url: profileData.avatar_url,
+              username: profileData.username
+            } : {
+              name: 'Unknown',
+              avatar_url: null,
+              username: null
+            }
+          };
+        });
         
         return {
           posts,

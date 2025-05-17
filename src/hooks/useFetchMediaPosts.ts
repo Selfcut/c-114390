@@ -34,25 +34,34 @@ export const useFetchMediaPosts = () => {
       }
       
       if (mediaData) {
-        return mediaData.map((item: any) => ({
-          id: item.id,
-          type: 'media',
-          title: item.title,
-          content: item.content,
-          author: {
-            name: item.profiles?.name || 'Unknown Author',
-            avatar: item.profiles?.avatar_url,
-            username: item.profiles?.username,
-          },
-          createdAt: formatDate(item.created_at),
-          metrics: {
-            likes: item.likes || 0,
-            comments: item.comments || 0,
-          },
-          mediaUrl: item.url,
-          mediaType: validateMediaType(item.type),
-          viewMode,
-        }));
+        return mediaData.map((item: any) => {
+          // Type assertion for profile data
+          const profileData = item.profiles as { 
+            name?: string; 
+            avatar_url?: string; 
+            username?: string;
+          } | null;
+          
+          return {
+            id: item.id,
+            type: 'media',
+            title: item.title,
+            content: item.content,
+            author: {
+              name: profileData?.name || 'Unknown Author',
+              avatar: profileData?.avatar_url,
+              username: profileData?.username,
+            },
+            createdAt: formatDate(item.created_at),
+            metrics: {
+              likes: item.likes || 0,
+              comments: item.comments || 0,
+            },
+            mediaUrl: item.url,
+            mediaType: validateMediaType(item.type),
+            viewMode,
+          };
+        });
       }
       
       return [];
