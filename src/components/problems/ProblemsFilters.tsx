@@ -41,12 +41,12 @@ export const ProblemsFilters = ({
         />
       </div>
       
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Select 
           value={category || 'all'} 
           onValueChange={(value) => setCategory(value === 'all' ? null : value)}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
@@ -57,8 +57,11 @@ export const ProblemsFilters = ({
           </SelectContent>
         </Select>
         
-        <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'severity' | 'solvability' | 'urgency')}>
-          <SelectTrigger className="w-[180px]">
+        <Select 
+          value={sortBy} 
+          onValueChange={(value) => setSortBy(value as 'severity' | 'solvability' | 'urgency')}
+        >
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>

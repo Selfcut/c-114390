@@ -1,9 +1,12 @@
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, ThumbsUp } from 'lucide-react';
+import { MessageSquare, ThumbsUp, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Comment {
   id: string;
@@ -23,12 +26,64 @@ interface CommentsListProps {
 
 // Using memo to prevent unnecessary re-renders
 export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: CommentsListProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [upvotingCommentId, setUpvotingCommentId] = useState<string | null>(null);
+  
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric'
     }).format(date);
+  };
+
+  const handleUpvote = async (commentId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upvote comments",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setUpvotingCommentId(commentId);
+      
+      // First retrieve current upvote count
+      const { data: postData, error: fetchError } = await supabase
+        .from('forum_posts')
+        .select('upvotes')
+        .eq('id', commentId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Then increment the upvote count
+      const newUpvoteCount = (postData?.upvotes || 0) + 1;
+      
+      const { error: updateError } = await supabase
+        .from('forum_posts')
+        .update({ upvotes: newUpvoteCount })
+        .eq('id', commentId);
+      
+      if (updateError) throw updateError;
+      
+      toast({
+        title: "Upvoted",
+        description: "Your upvote has been recorded"
+      });
+    } catch (error) {
+      console.error('Error upvoting comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record your upvote",
+        variant: "destructive"
+      });
+    } finally {
+      setUpvotingCommentId(null);
+    }
   };
 
   if (isLoading) {
@@ -97,11 +152,23 @@ export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: Co
                 </div>
                 <p className="mb-4">{item.content}</p>
                 <div className="flex items-center gap-4">
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                    <ThumbsUp size={14} />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => handleUpvote(item.id)}
+                    disabled={upvotingCommentId === item.id || !userAuthenticated}
+                  >
+                    {upvotingCommentId === item.id ? (
+                      <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-1"></span>
+                    ) : (
+                      <ThumbsUp size={14} />
+                    )}
                     <span>{item.upvotes}</span>
                   </Button>
-                  <Button variant="ghost" size="sm">Reply</Button>
+                  {userAuthenticated && (
+                    <Button variant="ghost" size="sm">Reply</Button>
+                  )}
                 </div>
               </div>
             </div>
