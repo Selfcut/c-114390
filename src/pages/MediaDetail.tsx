@@ -44,7 +44,7 @@ const MediaDetail = () => {
         .eq("id", postData.user_id)
         .maybeSingle();
       
-      // Track view
+      // Track view using our fixed trackMediaView function
       await trackMediaView(id, user?.id);
       
       // Create the post object with author information

@@ -310,6 +310,7 @@ export type Database = {
           updated_at: string | null
           url: string | null
           user_id: string
+          views: number | null
         }
         Insert: {
           comments?: number | null
@@ -322,6 +323,7 @@ export type Database = {
           updated_at?: string | null
           url?: string | null
           user_id: string
+          views?: number | null
         }
         Update: {
           comments?: number | null
@@ -334,6 +336,7 @@ export type Database = {
           updated_at?: string | null
           url?: string | null
           user_id?: string
+          views?: number | null
         }
         Relationships: []
       }
@@ -562,6 +565,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_media_views: {
+        Row: {
+          id: string
+          last_viewed_at: string | null
+          media_id: string
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          id?: string
+          last_viewed_at?: string | null
+          media_id: string
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          id?: string
+          last_viewed_at?: string | null
+          media_id?: string
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_media_views_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -646,6 +681,10 @@ export type Database = {
       }
       increment_counter_fn: {
         Args: { row_id: string; column_name: string; table_name: string }
+        Returns: undefined
+      }
+      increment_media_views: {
+        Args: { media_id: string }
         Returns: undefined
       }
     }

@@ -14,6 +14,7 @@ export interface MediaPost {
   updated_at: string;
   likes: number;
   comments: number;
+  views?: number;
   author?: {
     name?: string;
     avatar_url?: string;
@@ -40,7 +41,7 @@ export const trackMediaView = async (
   userId?: string | null
 ): Promise<boolean> => {
   try {
-    // First, increment the view count on the media post
+    // First, increment the view count on the media post using our new DB function
     const { error: updateError } = await supabase.rpc('increment_media_views', {
       media_id: mediaId
     });
@@ -52,20 +53,43 @@ export const trackMediaView = async (
     
     // If user is logged in, also record this specific view in user_media_views
     if (userId) {
-      const { error: viewError } = await supabase
+      // Check if there's an existing record
+      const { data: existingView } = await supabase
         .from('user_media_views')
-        .upsert(
-          {
+        .select('id, view_count')
+        .eq('user_id', userId)
+        .eq('media_id', mediaId)
+        .single();
+        
+      if (existingView) {
+        // Update existing record
+        const { error: updateViewError } = await supabase
+          .from('user_media_views')
+          .update({
+            view_count: (existingView.view_count || 0) + 1,
+            last_viewed_at: new Date().toISOString()
+          })
+          .eq('id', existingView.id);
+          
+        if (updateViewError) {
+          console.error('Error updating user media view:', updateViewError);
+          return false;
+        }
+      } else {
+        // Insert new record
+        const { error: insertViewError } = await supabase
+          .from('user_media_views')
+          .insert({
             user_id: userId,
             media_id: mediaId,
-            last_viewed_at: new Date().toISOString()
-          },
-          { onConflict: 'user_id,media_id' }
-        );
-        
-      if (viewError) {
-        console.error('Error recording user media view:', viewError);
-        return false;
+            last_viewed_at: new Date().toISOString(),
+            view_count: 1
+          });
+          
+        if (insertViewError) {
+          console.error('Error recording user media view:', insertViewError);
+          return false;
+        }
       }
     }
     
