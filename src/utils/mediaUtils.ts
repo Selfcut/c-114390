@@ -83,14 +83,15 @@ export const fetchMediaPosts = async ({
         }, {});
         
         // Attach author info to each post
-        posts.forEach((post: MediaPost) => {
+        // Cast the database posts to MediaPost with a type assertion to ensure compatibility
+        posts.forEach((post: any) => {
           if (profileMap[post.user_id]) {
-            post.author = {
+            (post as MediaPost).author = {
               name: profileMap[post.user_id].name || 'Unknown',
               avatar_url: profileMap[post.user_id].avatar_url
             };
           } else {
-            post.author = {
+            (post as MediaPost).author = {
               name: 'Unknown User',
               avatar_url: undefined
             };
@@ -108,7 +109,7 @@ export const fetchMediaPosts = async ({
     const hasMore = offset + (posts?.length || 0) < count;
     
     return {
-      posts,
+      posts: posts as MediaPost[],
       hasMore,
       error: null
     };
