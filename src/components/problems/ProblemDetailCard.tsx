@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ interface ProblemDetailCardProps {
   commentsCount: number;
 }
 
-export const ProblemDetailCard = ({ problem, commentsCount }: ProblemDetailCardProps) => {
+// Using memo to prevent unnecessary re-renders
+export const ProblemDetailCard = memo(({ problem, commentsCount }: ProblemDetailCardProps) => {
   if (!problem) return null;
   
   return (
@@ -92,4 +93,7 @@ export const ProblemDetailCard = ({ problem, commentsCount }: ProblemDetailCardP
       </CardFooter>
     </Card>
   );
-};
+});
+
+// Display name for debugging purposes
+ProblemDetailCard.displayName = 'ProblemDetailCard';

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,8 @@ interface CommentsListProps {
   userAuthenticated: boolean;
 }
 
-export const CommentsList = ({ comments, isLoading, userAuthenticated }: CommentsListProps) => {
+// Using memo to prevent unnecessary re-renders
+export const CommentsList = memo(({ comments, isLoading, userAuthenticated }: CommentsListProps) => {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'long',
@@ -76,6 +77,7 @@ export const CommentsList = ({ comments, isLoading, userAuthenticated }: Comment
     );
   }
 
+  // Using keyed fragments for optimized list rendering
   return (
     <div className="space-y-4">
       {comments.map((item) => (
@@ -108,4 +110,7 @@ export const CommentsList = ({ comments, isLoading, userAuthenticated }: Comment
       ))}
     </div>
   );
-};
+});
+
+// Display name for debugging purposes
+CommentsList.displayName = 'CommentsList';

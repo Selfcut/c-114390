@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseMutation } from '@/hooks/api/useSupabaseQuery';
 
 interface CommentFormProps {
   problemId: number;
@@ -31,9 +32,11 @@ export const CommentForm = ({
   onCommentAdded 
 }: CommentFormProps) => {
   const [comment, setComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Use the Supabase mutation hook
+  const { mutate, isLoading: isSubmitting } = useSupabaseMutation();
 
   const handleCommentSubmit = async () => {
     if (!comment.trim()) {
@@ -53,66 +56,52 @@ export const CommentForm = ({
       return;
     }
     
-    setIsSubmitting(true);
+    // Create a new forum post connected to this problem
+    const newPost = {
+      title: `Contribution to Problem #${problemId}: ${problemTitle}`,
+      content: comment.trim(),
+      user_id: user.id,
+      tags: [`Problem ${problemId}`, ...problemCategories.slice(0, 2)],
+      is_pinned: false,
+    };
     
-    try {
-      // Create a new forum post connected to this problem
-      const newPost = {
-        title: `Contribution to Problem #${problemId}: ${problemTitle}`,
-        content: comment.trim(),
-        user_id: user.id,
-        tags: [`Problem ${problemId}`, ...problemCategories.slice(0, 2)],
-        is_pinned: false,
-      };
-      
-      // Insert into real database
-      const { data, error } = await supabase
-        .from('forum_posts')
-        .insert(newPost)
-        .select();
-      
-      if (error) {
-        throw error;
+    // Use the mutation hook to insert the new post
+    const { data, error } = await mutate(
+      (variables) => supabase.from('forum_posts').insert(variables).select(),
+      newPost,
+      {
+        successMessage: {
+          title: "Success",
+          description: "Your input has been added to the discussion."
+        },
+        onSuccess: async (data) => {
+          // Fetch the user profile for the newly created post
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('name, username, avatar_url')
+            .eq('id', user.id)
+            .single();
+
+          // Create new comment object
+          const newComment: Comment = {
+            id: data?.[0]?.id || '',
+            content: comment.trim(),
+            author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
+            authorAvatar: profileData?.avatar_url || user.avatar_url,
+            authorId: user.id,
+            createdAt: new Date(),
+            upvotes: 0
+          };
+          
+          // Call the callback to update parent component
+          onCommentAdded(newComment);
+          setComment('');
+        }
       }
-      
-      // Fetch the user profile for the newly created post
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('name, username, avatar_url')
-        .eq('id', user.id)
-        .single();
-        
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-      }
-      
-      // Create new comment object
-      const newComment: Comment = {
-        id: data?.[0]?.id || '',
-        content: comment.trim(),
-        author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
-        authorAvatar: profileData?.avatar_url || user.avatar_url,
-        authorId: user.id,
-        createdAt: new Date(),
-        upvotes: 0
-      };
-      
-      // Call the callback to update parent component
-      onCommentAdded(newComment);
-      setComment('');
-      
-      toast({
-        description: "Your input has been added to the discussion.",
-      });
-    } catch (error) {
+    );
+    
+    if (error) {
       console.error('Error adding comment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add your comment. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
