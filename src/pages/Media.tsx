@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,16 +42,17 @@ const Media = () => {
       sortOrder, 
       searchQuery: searchTerm
     }),
-    // Add these options to better handle errors
     retry: 1,
     placeholderData: (previousData) => previousData,
-    onError: (err) => {
-      console.error('Error fetching media posts:', err);
-      toast({
-        title: "Error loading media",
-        description: "There was a problem connecting to the database. Please try again later.",
-        variant: "destructive"
-      });
+    meta: {
+      onError: (err: any) => {
+        console.error('Error fetching media posts:', err);
+        toast({
+          title: "Error loading media",
+          description: "There was a problem connecting to the database. Please try again later.",
+          variant: "destructive"
+        });
+      }
     }
   });
 
