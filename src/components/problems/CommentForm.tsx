@@ -65,9 +65,12 @@ export const CommentForm = ({
       is_pinned: false,
     };
     
-    // Use the mutation hook to insert the new post
+    // Fix: Convert the Supabase query to a Promise that matches the expected type
     const { data, error } = await mutate(
-      (variables) => supabase.from('forum_posts').insert(variables).select(),
+      async (variables) => {
+        const response = await supabase.from('forum_posts').insert(variables).select();
+        return { data: response.data, error: response.error };
+      },
       newPost,
       {
         successMessage: {
