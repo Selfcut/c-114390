@@ -55,7 +55,7 @@ const ProblemDetail = () => {
               .from('forum_posts')
               .select(`
                 *,
-                profiles:user_id(name, username, avatar_url)
+                profiles(name, username, avatar_url)
               `)
               .like('tags', `%Problem ${id}%`)
               .order('created_at', { ascending: false });
@@ -130,22 +130,28 @@ const ProblemDetail = () => {
       };
       
       // Insert into real database
-      const { data: postData, error: postError } = await supabase
+      const { data, error } = await supabase
         .from('forum_posts')
         .insert(newPost)
-        .select('*, profiles:user_id(name, username, avatar_url)')
-        .single();
+        .select();
       
-      if (postError) {
-        throw postError;
+      if (error) {
+        throw error;
       }
+      
+      // Fetch the user profile for the newly created post
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name, username, avatar_url')
+        .eq('id', user.id)
+        .single();
       
       // Add to local comments state
       const newComment: Comment = {
-        id: postData.id,
-        content: postData.content,
-        author: postData.profiles?.name || postData.profiles?.username || user.name || user.email || 'Anonymous',
-        authorAvatar: postData.profiles?.avatar_url || user.avatar_url,
+        id: data?.[0]?.id || '',
+        content: comment.trim(),
+        author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
+        authorAvatar: profileData?.avatar_url || user.avatar_url,
         authorId: user.id,
         createdAt: new Date(),
         upvotes: 0
