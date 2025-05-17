@@ -19,7 +19,6 @@ const ForumPost = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [newComment, setNewComment] = useState('');
   
   // Use custom hooks for forum state and actions
   const { isLoading, discussion, comments, setComments } = useForumPost(id);
@@ -34,7 +33,6 @@ const ForumPost = () => {
   
   const handleAddComment = async (comment: string) => {
     await handleSubmitComment(user, comment, discussion, setComments);
-    setNewComment('');
   };
 
   return (
