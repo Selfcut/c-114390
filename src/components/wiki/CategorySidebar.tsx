@@ -7,9 +7,21 @@ import { cn } from '@/lib/utils';
 
 interface CategoryItem {
   name: string;
+  id: string;
   icon: LucideIcon;
   count?: number;
 }
+
+export const categories: CategoryItem[] = [
+  { name: "Philosophy", id: "Philosophy", icon: BookOpen, count: 42 },
+  { name: "Science", id: "Science", icon: Dna, count: 37 },
+  { name: "History", id: "History", icon: BookMarked, count: 29 },
+  { name: "Art", id: "Art", icon: PenTool, count: 22 },
+  { name: "Education", id: "Education", icon: GraduationCap, count: 18 },
+  { name: "Mathematics", id: "Mathematics", icon: PieChart, count: 16 },
+  { name: "Literature", id: "Literature", icon: Book, count: 14 },
+  { name: "Ideas", id: "Ideas", icon: Lightbulb, count: 12 }
+];
 
 interface CategorySidebarProps {
   selectedCategory: string | null;
@@ -20,18 +32,6 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
   selectedCategory,
   setSelectedCategory
 }) => {
-  // Define categories with their icons
-  const categories: CategoryItem[] = [
-    { name: "Philosophy", icon: BookOpen, count: 42 },
-    { name: "Science", icon: Dna, count: 37 },
-    { name: "History", icon: BookMarked, count: 29 },
-    { name: "Art", icon: PenTool, count: 22 },
-    { name: "Education", icon: GraduationCap, count: 18 },
-    { name: "Mathematics", icon: PieChart, count: 16 },
-    { name: "Literature", icon: Book, count: 14 },
-    { name: "Ideas", icon: Lightbulb, count: 12 }
-  ];
-  
   const handleCategoryClick = (category: string | null) => {
     setSelectedCategory(category);
   };

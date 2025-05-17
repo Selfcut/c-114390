@@ -131,7 +131,7 @@ export async function fetchWikiArticles({
 /**
  * Get a specific wiki article by ID
  */
-export async function getWikiArticle(id: string) {
+export async function fetchWikiArticleById(id: string) {
   try {
     const { data, error } = await supabase
       .from('wiki_articles')
@@ -203,6 +203,66 @@ export async function createWikiArticle({
     return { article: data?.[0], error: null };
   } catch (error) {
     console.error('Error creating wiki article:', error);
+    return { article: null, error };
+  }
+}
+
+/**
+ * Update an existing wiki article
+ */
+export async function updateWikiArticle(
+  articleId: string,
+  {
+    title,
+    description,
+    content,
+    category,
+    tags = []
+  }: {
+    title: string;
+    description: string;
+    content: string;
+    category: string;
+    tags?: string[];
+  },
+  userId: string
+) {
+  try {
+    // First, increment contributors if this is a new contributor
+    const { data: existingArticle, error: fetchError } = await supabase
+      .from('wiki_articles')
+      .select('user_id, contributors')
+      .eq('id', articleId)
+      .single();
+    
+    if (fetchError) throw fetchError;
+    
+    let incrementContributors = false;
+    // Check if the current user is not the original author
+    if (existingArticle && existingArticle.user_id !== userId) {
+      incrementContributors = true;
+    }
+    
+    // Update the article
+    const { data, error } = await supabase
+      .from('wiki_articles')
+      .update({
+        title,
+        description,
+        content,
+        category,
+        tags,
+        contributors: incrementContributors ? existingArticle.contributors + 1 : existingArticle.contributors,
+        last_updated: new Date()
+      })
+      .eq('id', articleId)
+      .select();
+      
+    if (error) throw error;
+    
+    return { article: data?.[0], error: null };
+  } catch (error) {
+    console.error('Error updating wiki article:', error);
     return { article: null, error };
   }
 }

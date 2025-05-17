@@ -41,7 +41,7 @@ export const WikiArticleCard = ({ article, getCategoryIcon }: WikiArticleCardPro
               {article.description}
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <div>Last updated: {article.lastUpdated}</div>
+              <div>Last updated: {formatDate(article.last_updated)}</div>
               <div>{article.contributors} contributors</div>
               <div>{article.views} views</div>
             </div>
@@ -50,4 +50,13 @@ export const WikiArticleCard = ({ article, getCategoryIcon }: WikiArticleCardPro
       </CardContent>
     </Card>
   );
+};
+
+// Helper function to format date
+const formatDate = (date: Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date);
 };

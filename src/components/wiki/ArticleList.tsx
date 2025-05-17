@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { Eye, Clock, Users, LucideIcon } from 'lucide-react';
+import { Eye, Clock, Users, BookOpen } from 'lucide-react';
 import { WikiArticle } from './types';
 import { formatDate, truncateText } from './WikiUtils';
 
@@ -65,9 +65,6 @@ export const ArticleList: React.FC<ArticleListProps> = ({
       </Card>
     );
   }
-
-  // The LucideIcon type is just for type definition and won't be rendered
-  const BookOpen: LucideIcon = require('lucide-react').BookOpen;
 
   return (
     <div className="space-y-6">

@@ -22,6 +22,12 @@ interface Comment {
   isAuthor: boolean;
 }
 
+interface UserProfile {
+  username?: string;
+  name?: string;
+  avatar_url?: string | null;
+}
+
 const ForumPost = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -126,11 +132,14 @@ const ForumPost = () => {
     
     // Simulate adding a comment
     setTimeout(() => {
+      const userProfile = user as unknown as UserProfile;
+      const avatarSeed = userProfile.username || user.id;
+      
       const newCommentObj = {
         id: `new-${Date.now()}`,
         content: newComment,
-        author: user.username || user.name || "User",
-        authorAvatar: user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`,
+        author: userProfile.username || userProfile.name || "User",
+        authorAvatar: userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
         createdAt: new Date(),
         isAuthor: false
       };

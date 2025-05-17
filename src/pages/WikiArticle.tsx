@@ -8,141 +8,57 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { WikiArticle as WikiArticleType } from '@/components/wiki/types';
-import { ArrowLeft, Edit, Clock, Eye, BookOpen, Tag } from 'lucide-react';
+import { EditWikiArticleDialog } from '@/components/wiki/EditWikiArticleDialog';
+import { WikiArticle } from '@/components/wiki/types';
+import { fetchWikiArticleById } from '@/utils/wikiUtils';
+import { formatDate } from '@/components/wiki/WikiUtils';
+import { ArrowLeft, Edit, Clock, Eye, BookOpen, Tag, Calendar, Heart, MessagesSquare, UserCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-const WikiArticle = () => {
+const WikiArticlePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [article, setArticle] = useState<WikiArticleType | null>(null);
+  const [article, setArticle] = useState<WikiArticle | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // Load article data
   useEffect(() => {
     const fetchArticle = async () => {
-      setIsLoading(true);
+      if (!id) return;
+      
       try {
-        // For now, use simulated data
-        // In production, this would be a database query
-        setTimeout(() => {
-          const simulatedArticle: WikiArticleType = {
-            id: id || 'default-id',
-            title: "Phenomenology and Existentialism",
-            content: `# Phenomenology and Existentialism
-
-Phenomenology and existentialism are two philosophical movements that emerged in the early 20th century, primarily in continental Europe. While distinct in many ways, they share important connections and have significantly influenced modern philosophy, psychology, and literature.
-
-## Phenomenology
-
-Phenomenology, founded by Edmund Husserl (1859-1938), is the study of structures of consciousness as experienced from the first-person point of view. The central structure of an experience is its intentionality, being directed toward something, as it is an experience of or about some object.
-
-### Key Concepts in Phenomenology:
-
-- **Intentionality**: All consciousness is consciousness of something
-- **Epoché (Bracketing)**: Suspending judgment about the natural world
-- **Eidetic Reduction**: Describing the essential structures of experience
-- **Lifeworld (Lebenswelt)**: The world as immediately experienced in pre-theoretical attitude
-
-### Major Phenomenologists:
-
-- Edmund Husserl
-- Martin Heidegger (who moved phenomenology toward existentialism)
-- Maurice Merleau-Ponty
-- Max Scheler
-
-## Existentialism
-
-Existentialism is a philosophical movement that emerged in the late 19th and 20th centuries, emphasizing individual existence, freedom, and choice. It holds that humans define their own meaning in life, and try to make rational decisions despite existing in an irrational universe.
-
-### Key Concepts in Existentialism:
-
-- **Existence precedes essence**: Humans have no predetermined nature
-- **Authenticity vs. Bad Faith**: Living genuinely vs. self-deception
-- **Angst/Anxiety**: The recognition of one's complete freedom
-- **Absurdity**: The conflict between human search for meaning and the meaningless universe
-
-### Major Existentialists:
-
-- Søren Kierkegaard (proto-existentialist)
-- Friedrich Nietzsche (influential precursor)
-- Jean-Paul Sartre
-- Simone de Beauvoir
-- Albert Camus (associated with absurdism)
-
-## The Connection Between Phenomenology and Existentialism
-
-The connection between phenomenology and existentialism is most evident in the work of Martin Heidegger, who was Husserl's student. Heidegger's phenomenological approach in "Being and Time" (1927) marked a shift toward existential concerns, focusing on the meaning of Being and human existence (Dasein).
-
-Jean-Paul Sartre explicitly brought together existentialism and phenomenology in his work "Being and Nothingness" (1943), using phenomenological methods to analyze human existence and freedom.
-
-Both movements reject abstract theorizing in favor of concrete human experience and emphasize the importance of subjective human perspective.`,
-            description: "An exploration of two influential philosophical movements of the 20th century and their connections.",
-            category: "Philosophy",
-            tags: ["phenomenology", "existentialism", "continental-philosophy", "husserl", "sartre"],
-            user_id: "user-123",
-            author_name: "PhilosophyProfessor",
-            created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            last_updated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            contributors: 3,
-            views: 156,
-            image_url: "https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2787&q=80"
-          };
-          
-          setArticle(simulatedArticle);
-          setIsLoading(false);
-        }, 800);
+        setIsLoading(true);
+        const { article, error } = await fetchWikiArticleById(id);
         
-      } catch (error) {
+        if (error) throw error;
+        
+        if (article) {
+          setArticle(article);
+        } else {
+          setError("Article not found");
+        }
+      } catch (err: any) {
+        console.error('Error fetching wiki article:', err);
+        setError(err.message || "Failed to load article");
         toast({
           title: "Error",
           description: "Failed to load article",
           variant: "destructive"
         });
+      } finally {
         setIsLoading(false);
       }
     };
     
     fetchArticle();
   }, [id, toast]);
-  
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
-  };
-  
-  const renderMarkdown = (content: string) => {
-    // Very basic markdown rendering for demonstration
-    // In production, use a proper markdown library
-    const sections = content.split('\n\n');
-    return sections.map((section, i) => {
-      if (section.startsWith('# ')) {
-        return <h1 key={i} className="text-3xl font-bold mt-6 mb-4">{section.substring(2)}</h1>;
-      } else if (section.startsWith('## ')) {
-        return <h2 key={i} className="text-2xl font-bold mt-5 mb-3">{section.substring(3)}</h2>;
-      } else if (section.startsWith('### ')) {
-        return <h3 key={i} className="text-xl font-bold mt-4 mb-2">{section.substring(4)}</h3>;
-      } else if (section.startsWith('- ')) {
-        const items = section.split('\n').map(item => item.substring(2));
-        return (
-          <ul key={i} className="list-disc pl-6 mb-4 space-y-1">
-            {items.map((item, j) => (
-              <li key={j}>{item}</li>
-            ))}
-          </ul>
-        );
-      } else {
-        return <p key={i} className="mb-4">{section}</p>;
-      }
-    });
-  };
-  
+
   const handleEditArticle = () => {
     if (!user) {
       toast({
@@ -153,10 +69,15 @@ Both movements reject abstract theorizing in favor of concrete human experience 
       return;
     }
     
-    // In a real app, navigate to edit page or open edit dialog
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleUpdateArticle = (updatedArticle: WikiArticle) => {
+    setArticle(updatedArticle);
+    setIsEditDialogOpen(false);
     toast({
-      title: "Edit Mode",
-      description: "Article editing functionality would be implemented here",
+      title: "Article Updated",
+      description: "The article has been updated successfully",
     });
   };
 
@@ -209,12 +130,12 @@ Both movements reject abstract theorizing in favor of concrete human experience 
                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${article.author_name}`} 
                     alt={article.author_name} 
                   />
-                  <AvatarFallback>{article.author_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{article.author_name?.substring(0, 2).toUpperCase() || 'UN'}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{article.author_name}</p>
+                  <p className="font-medium">{article.author_name || 'Anonymous'}</p>
                   <p className="text-sm text-muted-foreground">
-                    Published on {formatDate(new Date(article.created_at))}
+                    Published on {formatDate(article.created_at)}
                   </p>
                 </div>
               </div>
@@ -222,7 +143,7 @@ Both movements reject abstract theorizing in favor of concrete human experience 
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock size={16} />
-                  Updated {formatDate(new Date(article.last_updated))}
+                  Updated {formatDate(article.last_updated)}
                 </span>
                 <span className="flex items-center gap-1">
                   <Eye size={16} />
@@ -248,7 +169,9 @@ Both movements reject abstract theorizing in favor of concrete human experience 
             <Card>
               <CardContent className="p-6">
                 <div className="prose prose-stone dark:prose-invert max-w-none">
-                  {article.content && renderMarkdown(article.content)}
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {article.content || ''}
+                  </ReactMarkdown>
                 </div>
               </CardContent>
             </Card>
@@ -261,6 +184,16 @@ Both movements reject abstract theorizing in favor of concrete human experience 
                 </Badge>
               ))}
             </div>
+
+            {/* Edit Article Dialog */}
+            {article && (
+              <EditWikiArticleDialog
+                isOpen={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                article={article}
+                onSuccess={handleUpdateArticle}
+              />
+            )}
           </>
         ) : (
           <Card>
@@ -280,4 +213,4 @@ Both movements reject abstract theorizing in favor of concrete human experience 
   );
 };
 
-export default WikiArticle;
+export default WikiArticlePage;
