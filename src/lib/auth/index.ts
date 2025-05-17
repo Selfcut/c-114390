@@ -1,5 +1,5 @@
 
-// Re-export the AuthProvider and useAuth from context file
+// Re-export the AuthProvider and useAuth from auth-context file
 export { AuthProvider, useAuth } from './auth-context';
 
 // Export types

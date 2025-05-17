@@ -100,11 +100,12 @@ export const fetchMediaPosts = async ({
     }
     
     // Check if there's more content
-    const { count, error: countError } = await supabase
+    const { data: countData } = await supabase
       .from('media_posts')
-      .count();
-    
-    const hasMore = !countError && count ? offset + posts.length < count : false;
+      .select('id', { count: 'exact', head: true });
+      
+    const count = countData?.length !== undefined ? countData.length : 0;
+    const hasMore = offset + (posts?.length || 0) < count;
     
     return {
       posts,
