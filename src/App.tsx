@@ -5,20 +5,19 @@ import { AppRoutes } from './components/routing/AppRoutes';
 import { ThemeProvider } from './components/providers/ThemeProvider';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
+import { AuthProvider } from './lib/auth';
 import './App.css';
-
-// Remove or comment out the ReactQueryDevtools import if it exists
 
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="app-theme">
-      <Router>
-        <AppRoutes />
-        <Toaster />
-        <Sonner position="top-center" />
-      </Router>
-      
-      {/* Remove or comment out the ReactQueryDevtools component if it exists */}
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+          <Toaster />
+          <Sonner position="top-center" />
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

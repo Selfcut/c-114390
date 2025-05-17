@@ -6,11 +6,13 @@ import { FullHeightChatSidebar } from '@/components/chat/FullHeightChatSidebar';
 interface PageLayoutProps {
   children: React.ReactNode;
   hideHeader?: boolean;
+  allowGuests?: boolean;
 }
 
 export const PageLayout: React.FC<PageLayoutProps> = ({ 
   children,
-  hideHeader = false
+  hideHeader = false,
+  allowGuests = false
 }) => {
   return (
     <div className="page-layout">
