@@ -1,131 +1,124 @@
 
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
-import { validateMediaType } from "@/utils/mediaUtils";
-
-interface MediaPostData {
-  title: string;
-  content?: string;
-  type: string;
-  url?: string;
-  file?: File;
-}
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => void) => {
   const { toast } = useToast();
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Function to upload a file and get its URL
-  const uploadMediaFile = async (file: File): Promise<string> => {
-    if (!userId) throw new Error("User not authenticated");
-    
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${userId}/${uuidv4()}.${fileExt}`;
-    
-    setUploadProgress(10); // Starting upload
-    
-    try {
-      // Create a custom upload function that can track progress
-      const { error: uploadError, data } = await supabase.storage
-        .from('media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      // Simulate progress steps since we can't directly track it
-      setUploadProgress(70);
-      
-      if (uploadError) throw uploadError;
-      
-      setUploadProgress(90);
-      
-      // Get the public URL for the uploaded file
-      const { data: { publicUrl } } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
-      
-      setUploadProgress(100); // Upload completed
-      
-      return publicUrl;
-    } catch (error) {
-      setUploadProgress(0); // Reset on error
-      throw error;
-    }
-  };
-
-  // Create post mutation
   const createPostMutation = useMutation({
-    mutationFn: async (postData: MediaPostData) => {
-      if (!userId) throw new Error("User not authenticated");
-      
-      let url = postData.url;
-      
-      // If a file was provided, upload it
-      if (postData.file) {
-        url = await uploadMediaFile(postData.file);
+    mutationFn: async ({ title, content, url, type, tags }: { 
+      title: string; 
+      content?: string; 
+      url?: string; 
+      type: string;
+      tags?: string[];
+    }) => {
+      if (!userId) {
+        throw new Error('User must be authenticated to create a post');
       }
-      
-      // Validate the media type
-      const validatedType = validateMediaType(postData.type);
-      
-      // Insert the post into the database
+
+      // Create media post in database
       const { data, error } = await supabase
         .from('media_posts')
-        .insert([
-          {
-            title: postData.title,
-            content: postData.content || '',
-            type: validatedType,
-            url: url || null,
-            user_id: userId,
-            likes: 0,
-            comments: 0
-          }
-        ])
+        .insert({
+          title,
+          content,
+          url,
+          type,
+          user_id: userId,
+        })
         .select();
-        
+
       if (error) throw error;
-      
-      return data;
+      return data[0];
     },
-    meta: {
-      onSuccess: () => {
-        toast({
-          title: "Post created",
-          description: "Your media has been shared successfully",
-        });
-        onSuccess();
-        setUploadProgress(0); // Reset progress
-      },
-      onError: (error: Error) => {
-        console.error("Error creating post:", error);
-        toast({
-          title: "Failed to create post",
-          description: error.message || "An error occurred while creating your post",
-          variant: "destructive"
-        });
-        setUploadProgress(0); // Reset progress
-      }
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Your post has been created',
+      });
+      onSuccess(); // Call the success callback
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error creating post',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     }
   });
 
-  // Handle create post function
-  const handleCreatePost = async (postData: MediaPostData) => {
+  // Helper function to handle file uploads and create posts
+  const handleCreatePost = async (data: {
+    title: string;
+    content?: string;
+    file?: File;
+    type: string;
+    tags?: string[];
+  }) => {
     try {
-      await createPostMutation.mutateAsync(postData);
-    } catch (error) {
-      console.error("Error in handleCreatePost:", error);
-      setUploadProgress(0); // Ensure progress is reset on error
+      let url;
+      
+      // If there's a file, upload it first
+      if (data.file && userId) {
+        const fileExt = data.file.name.split('.').pop();
+        const filePath = `${userId}/${Date.now()}.${fileExt}`;
+        
+        // Check if media storage bucket exists, create if not
+        const { data: bucketExists } = await supabase.storage.getBucket('media');
+        
+        if (!bucketExists) {
+          await supabase.storage.createBucket('media', { public: true });
+        }
+        
+        // Upload file to storage
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('media')
+          .upload(filePath, data.file, {
+            cacheControl: '3600',
+            upsert: false,
+            onUploadProgress: (progress) => {
+              setUploadProgress((progress.loaded / progress.total) * 100);
+            },
+          });
+
+        if (uploadError) throw uploadError;
+        
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('media')
+          .getPublicUrl(filePath);
+          
+        url = publicUrlData.publicUrl;
+      }
+      
+      // Create the post with the file URL if applicable
+      await createPostMutation.mutateAsync({
+        title: data.title,
+        content: data.content,
+        url,
+        type: data.type,
+        tags: data.tags
+      });
+      
+    } catch (error: any) {
+      console.error('Error in handleCreatePost:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create post',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadProgress(0);
     }
   };
 
   return {
     createPostMutation,
     handleCreatePost,
-    uploadProgress
+    uploadProgress,
   };
 };

@@ -4,55 +4,25 @@ import { ContentItemType } from '@/components/library/content-items/ContentItemT
 
 export const useContentNavigation = () => {
   const navigate = useNavigate();
-
-  // Navigate to knowledge entry detail page
-  const handleKnowledgeClick = (id: string) => {
-    navigate(`/knowledge/${id}`);
-  };
-
-  // Navigate to wiki article detail page
-  const handleWikiClick = (id: string) => {
-    navigate(`/wiki/${id}`);
-  };
-
-  // Navigate to quote detail page
-  const handleQuoteClick = (id: string) => {
-    navigate(`/quotes/${id}`);
-  };
-
-  // Navigate to media detail page
-  const handleMediaClick = (id: string) => {
-    navigate(`/media/${id}`);
-  };
-
-  // Generic handler that routes based on content type
+  
   const handleContentClick = (id: string, itemType: ContentItemType) => {
-    switch(itemType) {
+    switch (itemType) {
       case 'knowledge':
-        handleKnowledgeClick(id);
+        navigate(`/knowledge/${id}`);
         break;
       case 'media':
-        handleMediaClick(id);
+        navigate(`/media/${id}`);
         break;
       case 'quote':
-        handleQuoteClick(id);
+        navigate(`/quotes/${id}`);
         break;
       case 'ai':
-        handleKnowledgeClick(id); // AI content typically routes to knowledge
-        break;
-      case 'wiki':
-        handleWikiClick(id);
+        navigate(`/ai-content/${id}`);
         break;
       default:
-        console.warn(`Unknown content type: ${itemType}`);
+        console.warn(`No navigation path defined for content type: ${itemType}`);
     }
   };
-
-  return {
-    handleKnowledgeClick,
-    handleWikiClick,
-    handleQuoteClick,
-    handleMediaClick,
-    handleContentClick
-  };
+  
+  return { handleContentClick };
 };

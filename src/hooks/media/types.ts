@@ -16,11 +16,7 @@ export interface MediaQueryResult {
 }
 
 export interface UseMediaPostsReturn {
-  postsData: {
-    posts: MediaPost[];
-    hasMore: boolean;
-    error?: string;
-  } | undefined;
+  postsData: MediaQueryResult | undefined;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -29,18 +25,5 @@ export interface UseMediaPostsReturn {
   page: number;
   createPostMutation: any;
   handleCreatePost: (data: any) => Promise<void>;
-  uploadProgress?: number;
-}
-
-export interface CreateMediaPostData {
-  title: string;
-  content?: string;
-  url?: string;
-  type: string;
-  file?: File;
-}
-
-export interface CreateMediaPostResponse {
-  id: string;
-  error?: string;
+  uploadProgress: number;
 }

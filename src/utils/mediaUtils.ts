@@ -1,57 +1,28 @@
 
-export interface MediaPostAuthor {
-  name: string;
-  avatar_url?: string | null;
-  username?: string | null;
-}
-
-export type MediaPostType = "youtube" | "image" | "document" | "text" | "video";
+export type MediaType = 'image' | 'youtube' | 'document' | 'text' | 'audio' | 'video';
 
 export interface MediaPost {
   id: string;
   title: string;
-  content?: string | null;
-  url?: string | null;
-  type: MediaPostType;
+  content?: string;
+  url?: string;
+  type: MediaType;
   user_id: string;
-  created_at?: string | null;
-  updated_at?: string | null;
-  likes?: number | null;
-  comments?: number | null;
-  author?: MediaPostAuthor;
+  created_at: string;
+  updated_at: string;
+  likes: number;
+  comments: number;
+  author?: {
+    name?: string;
+    avatar_url?: string;
+    username?: string;
+  };
 }
 
-// Function to validate media type
-export const validateMediaType = (type: string): MediaPostType => {
-  const validTypes: MediaPostType[] = ["youtube", "image", "document", "text", "video"];
-  return validTypes.includes(type as MediaPostType) 
-    ? (type as MediaPostType) 
-    : "text";  // Default to "text" if invalid type
-};
-
-// Function to track media views
-export const trackMediaView = async (mediaId: string, userId?: string) => {
-  try {
-    // Implementation would depend on your tracking mechanism
-    console.log(`Media ${mediaId} viewed by user ${userId || 'anonymous'}`);
-    // Here you would typically call an API or update database
-  } catch (error) {
-    console.error("Error tracking media view:", error);
+export function validateMediaType(type: string): MediaType {
+  const validTypes: MediaType[] = ['image', 'youtube', 'document', 'text', 'audio', 'video'];
+  if (validTypes.includes(type as MediaType)) {
+    return type as MediaType;
   }
-};
-
-// Utility function to format a date
-export const formatMediaDate = (dateString?: string | null): string => {
-  if (!dateString) return 'Unknown date';
-  
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  } catch (error) {
-    return 'Invalid date';
-  }
-};
+  return 'text'; // Default to text if invalid type
+}
