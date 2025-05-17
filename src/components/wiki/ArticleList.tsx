@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,10 +51,11 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   }
 
   if (filteredArticles.length === 0) {
+    const BookOpenIcon = BookOpen;
     return (
       <Card className="text-center p-12">
         <div className="mx-auto rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-4">
-          <BookOpen className="h-7 w-7 text-primary" />
+          <BookOpenIcon className="h-7 w-7 text-primary" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No articles found</h3>
         <p className="text-muted-foreground mb-6">

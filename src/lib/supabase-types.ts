@@ -1,4 +1,3 @@
-
 /**
  * Type definitions for Supabase tables to improve type safety in our application
  */
@@ -92,8 +91,12 @@ export interface WikiArticle {
   description: string;
   category: string;
   content?: string;
-  lastUpdated: string;
+  last_updated: Date;
   contributors: number;
   views: number;
-  author?: string;
+  author_name?: string;
+  tags?: string[];
+  image_url?: string;
+  user_id: string;
+  created_at: Date;
 }

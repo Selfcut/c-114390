@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertTriangle, ArrowLeft, Calendar, Heart, MessagesSquare, Pencil, UserCircle, Eye } from "lucide-react";
-import { getCategoryIcon } from "@/components/wiki/WikiUtils";
+import { getCategoryIcon, formatDate } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
 import { fetchWikiArticleById } from "@/utils/wikiUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -168,11 +168,11 @@ const WikiArticlePage = () => {
             <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <UserCircle size={16} />
-                <span>Author: {article.author || 'Unknown'}</span>
+                <span>Author: {article.author_name || 'Unknown'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
-                <span>Last updated: {article.lastUpdated}</span>
+                <span>Last updated: {formatDate(article.last_updated)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Eye size={16} />
@@ -193,10 +193,10 @@ const WikiArticlePage = () => {
             <div className="mt-12 pt-6 border-t flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarFallback>{article.author?.[0] || 'U'}</AvatarFallback>
+                  <AvatarFallback>{article.author_name?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{article.author || 'Unknown'}</p>
+                  <p className="font-medium">{article.author_name || 'Unknown'}</p>
                   <p className="text-xs text-muted-foreground">Contributor</p>
                 </div>
               </div>
