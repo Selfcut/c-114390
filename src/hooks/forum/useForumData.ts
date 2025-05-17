@@ -19,14 +19,13 @@ export const useForumData = () => {
       try {
         setIsLoading(true);
         
-        // Query forums with profiles data
+        // Query forums with profiles data - fixed relationship query
         const { data, error } = await supabase
           .from('forum_posts')
           .select(`
             *,
             profiles:user_id(name, avatar_url, username)
-          `)
-          .order('created_at', { ascending: false });
+          `);
         
         if (error) {
           console.error("Error fetching discussions:", error);
