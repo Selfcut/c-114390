@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { ContentFeedItem } from '@/hooks/useContentFeed';
+import { ContentFeedItem as ContentFeedItemType } from '@/hooks/useContentFeed';
 import { Heart, Bookmark, MessageSquare, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ViewMode } from './ViewSwitcher';
 
 interface ContentFeedItemProps {
-  item: ContentFeedItem;
+  item: ContentFeedItemType;
   userLikes: string[];
   userBookmarks: string[];
   onLike: (contentId: string, contentType: string) => void;

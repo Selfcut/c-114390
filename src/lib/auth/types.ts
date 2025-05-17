@@ -9,6 +9,9 @@ export interface UserProfile {
   username?: string;
   role?: string;
   isAdmin?: boolean;
+  avatar?: string;
+  status?: string;
+  isGhostMode?: boolean;
 }
 
 export interface AuthContextType {

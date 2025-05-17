@@ -34,6 +34,7 @@ export const fetchUserProfile = async (userId: string, session?: Session): Promi
       role: profile.role,
       isAdmin: profile.role === 'admin',
       status: profile.status || 'offline',
+      isGhostMode: profile.is_ghost_mode,
     };
 
     return userProfile;
@@ -53,6 +54,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
     if (updates.avatar) profileUpdates.avatar_url = updates.avatar; // Handle avatar alias
     if (updates.username) profileUpdates.username = updates.username;
     if (updates.status) profileUpdates.status = updates.status;
+    if (updates.isGhostMode !== undefined) profileUpdates.is_ghost_mode = updates.isGhostMode;
     
     const { error } = await supabase
       .from('profiles')
