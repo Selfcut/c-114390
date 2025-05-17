@@ -19,10 +19,21 @@ export const ContentFeedItem: React.FC<ContentFeedItemProps> = ({
   onBookmark,
   onClick
 }) => {
+  // If avatar field exists in author but avatar_url doesn't, map it correctly
+  const normalizedItem = {
+    ...item,
+    author: {
+      ...item.author,
+      // Ensure both avatar and avatar_url are populated if either exists
+      avatar: item.author.avatar || item.author.avatar_url,
+      avatar_url: item.author.avatar_url || item.author.avatar
+    }
+  };
+
   return (
     <UnifiedContentItem
       key={item.id}
-      {...item}
+      {...normalizedItem}
       isLiked={!!userLikes[item.id]}
       isBookmarked={!!userBookmarks[item.id]}
       onLike={(id) => onLike(id, item.type)}

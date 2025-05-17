@@ -74,8 +74,8 @@ export const useFetchMediaPosts = (
             user_id: post.user_id,
             created_at: post.created_at,
             updated_at: post.updated_at,
-            likes: post.likes,
-            comments: post.comments,
+            likes: post.likes || 0,
+            comments: post.comments || 0,
             author: profileData ? {
               name: profileData.name || 'Unknown',
               avatar_url: profileData.avatar_url,
