@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type MediaPostType = 'image' | 'video' | 'document' | 'youtube' | 'text';
@@ -102,24 +101,22 @@ export const fetchMediaPosts = async ({
         }, {});
         
         // Safely transform raw posts into MediaPost objects with author info
-        posts.forEach((post: RawMediaPost) => {
+        posts.forEach((post: any) => {
           const validatedType = validateMediaType(post.type);
+          post.type = validatedType;
           
           // Add author information
           if (profileMap[post.user_id]) {
-            (post as unknown as MediaPost).author = {
+            post.author = {
               name: profileMap[post.user_id].name || 'Unknown',
               avatar_url: profileMap[post.user_id].avatar_url
             };
           } else {
-            (post as unknown as MediaPost).author = {
+            post.author = {
               name: 'Unknown User',
               avatar_url: undefined
             };
           }
-          
-          // Ensure type is valid
-          (post as unknown as MediaPost).type = validatedType;
         });
       }
     }

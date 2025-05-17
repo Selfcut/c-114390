@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { MediaPost, createMediaPost } from "@/utils/mediaUtils";
+import { MediaPost, MediaPostType, createMediaPost } from "@/utils/mediaUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { MediaHeader } from "@/components/media/MediaHeader";
@@ -13,6 +13,14 @@ import { MediaEmptyState } from "@/components/media/MediaEmptyState";
 import { MediaErrorDisplay } from "@/components/media/MediaErrorDisplay";
 import { MediaFeed } from "@/components/media/MediaFeed";
 import { extractYoutubeId, isValidYoutubeUrl } from "@/utils/youtubeUtils";
+
+// Helper function to validate media types
+const validateMediaType = (type: string): MediaPostType => {
+  const validTypes: MediaPostType[] = ['image', 'video', 'document', 'youtube', 'text'];
+  return validTypes.includes(type as MediaPostType) 
+    ? (type as MediaPostType) 
+    : 'text'; // Default to text if invalid
+};
 
 // Improved fetch function with proper typing and caching
 const fetchMediaPostsQuery = async ({ 
@@ -91,8 +99,12 @@ const Media = () => {
           return map;
         }, {}) || {};
         
-        // Attach author info to each post
+        // Attach author info to each post and validate types
         posts.forEach(post => {
+          // Validate and convert the post type to a valid MediaPostType
+          post.type = validateMediaType(post.type);
+          
+          // Add author information as a separate property
           post.author = profileMap[post.user_id] 
             ? {
                 name: profileMap[post.user_id].name || 'Unknown',
@@ -112,8 +124,9 @@ const Media = () => {
         
       const hasMore = offset + (posts?.length || 0) < (count || 0);
       
+      // Cast the response to MediaPost[] since we've validated and transformed the data
       return {
-        posts,
+        posts: posts as unknown as MediaPost[],
         hasMore,
         error: null
       };
