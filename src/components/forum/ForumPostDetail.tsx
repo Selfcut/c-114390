@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -160,12 +159,16 @@ export const ForumPostDetail = () => {
               profileData = comment.profiles as ProfileData;
             }
             
+            // Use null-safe access for properties
+            const name = profileData?.name;
+            const username = profileData?.username;
+            
             return {
               id: comment.id,
               content: comment.comment,
               authorId: comment.user_id,
-              authorName: profileData.name || profileData.username || 'Unknown',
-              authorAvatar: profileData.avatar_url,
+              authorName: name || username || 'Unknown',
+              authorAvatar: profileData?.avatar_url,
               createdAt: new Date(comment.created_at),
               upvotes: 0 // We don't track this in our DB currently
             };
