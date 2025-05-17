@@ -18,6 +18,43 @@ interface TableNames {
   contentIdField: 'post_id' | 'content_id' | 'quote_id';
 }
 
+// Type definitions for different payload types
+interface MediaLikePayload {
+  user_id: string;
+  post_id: string;
+}
+
+interface ContentLikePayload {
+  user_id: string;
+  content_id: string;
+  content_type: string;
+}
+
+interface QuoteLikePayload {
+  user_id: string;
+  quote_id: string;
+}
+
+interface MediaCommentPayload {
+  user_id: string;
+  post_id: string;
+  content: string;
+}
+
+interface ContentCommentPayload {
+  user_id: string;
+  content_id: string;
+  content_type: string;
+  comment: string;
+  content: string;
+}
+
+interface QuoteCommentPayload {
+  user_id: string;
+  quote_id: string;
+  content: string;
+}
+
 export function useContentInteraction(options: InteractionOptions) {
   const { contentType, onSuccess, onError } = options;
   const { user } = useAuth();
@@ -92,7 +129,7 @@ export function useContentInteraction(options: InteractionOptions) {
         .select()
         .eq('user_id', user.id)
         .eq(contentIdField, contentId)
-        .single();
+        .maybeSingle();
       
       if (existingLike) {
         // Unlike
@@ -121,21 +158,33 @@ export function useContentInteraction(options: InteractionOptions) {
         );
       } else {
         // Like
-        const insertPayload: Record<string, any> = {
-          user_id: user.id
-        };
-        insertPayload[contentIdField] = contentId;
+        // We need to create the correct type of payload based on the table
+        let payload;
         
-        // Add content_type if needed
-        if (contentIdField === 'content_id') {
-          insertPayload.content_type = contentType;
+        if (likesTable === 'media_likes') {
+          payload = {
+            user_id: user.id,
+            post_id: contentId
+          } as MediaLikePayload;
+        } else if (likesTable === 'quote_likes') {
+          payload = {
+            user_id: user.id,
+            quote_id: contentId
+          } as QuoteLikePayload;
+        } else {
+          // content_likes table
+          payload = {
+            user_id: user.id,
+            content_id: contentId,
+            content_type: contentType
+          } as ContentLikePayload;
         }
         
         await mutate(
           async () => {
             const result = await supabase
               .from(likesTable)
-              .insert(insertPayload);
+              .insert(payload);
             return result;  
           },
           {},
@@ -159,7 +208,7 @@ export function useContentInteraction(options: InteractionOptions) {
     } finally {
       setIsProcessing(prev => ({ ...prev, [operationKey]: false }));
     }
-  }, [user, toast, mutate, getTableNames, isProcessing, onSuccess, onError]);
+  }, [user, toast, mutate, getTableNames, isProcessing, onSuccess, onError, contentType]);
 
   // Add a comment
   const addComment = useCallback(async (contentId: string, comment: string) => {
@@ -189,28 +238,37 @@ export function useContentInteraction(options: InteractionOptions) {
     try {
       const { commentsTable, contentTable, contentIdField } = getTableNames();
       
-      const insertPayload: Record<string, any> = {
-        user_id: user.id,
-        comment: comment.trim()
-      };
+      // Create the right payload type based on the table
+      let payload;
       
-      insertPayload[contentIdField] = contentId;
-      
-      // Add content_type and content if needed
-      if (contentIdField === 'content_id') {
-        insertPayload.content_type = contentType;
-        insertPayload.content = comment.trim();
-      }
-      
-      if (contentIdField === 'post_id') {
-        insertPayload.content = comment.trim();
+      if (commentsTable === 'media_comments') {
+        payload = {
+          user_id: user.id,
+          post_id: contentId,
+          content: comment.trim()
+        } as MediaCommentPayload;
+      } else if (commentsTable === 'quote_comments') {
+        payload = {
+          user_id: user.id,
+          quote_id: contentId,
+          content: comment.trim()
+        } as QuoteCommentPayload;
+      } else {
+        // content_comments table
+        payload = {
+          user_id: user.id,
+          content_id: contentId,
+          content_type: contentType,
+          comment: comment.trim(),
+          content: comment.trim()
+        } as ContentCommentPayload;
       }
       
       await mutate(
         async () => {
           const result = await supabase
             .from(commentsTable)
-            .insert(insertPayload);
+            .insert(payload);
           return result;
         },
         {},
