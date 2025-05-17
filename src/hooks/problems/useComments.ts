@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Comment {
   id: string;
@@ -21,9 +22,13 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!enabled || !problemId) return;
+    if (!enabled || !problemId) {
+      setIsLoading(false);
+      return;
+    }
 
     const fetchComments = async () => {
       try {
@@ -55,6 +60,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
           
           if (userIds.length === 0) {
             setComments([]);
+            setIsLoading(false);
             return;
           }
 
@@ -66,6 +72,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
             
           if (profilesError) {
             console.error('Error fetching profiles:', profilesError);
+            // Continue with partial data rather than failing completely
           }
           
           // Create a map of user_id to profile data for easy lookup
@@ -92,15 +99,21 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
           setComments(formattedComments);
         }
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error fetching comments'));
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error fetching comments';
+        setError(err instanceof Error ? err : new Error(errorMessage));
         console.error('Error fetching comments:', err);
+        toast({
+          title: "Error loading comments",
+          description: errorMessage,
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchComments();
-  }, [problemId, enabled]);
+  }, [problemId, enabled, toast]);
 
   // Function to add a new comment to the list
   const addComment = (newComment: Comment) => {

@@ -65,46 +65,60 @@ export const CommentForm = ({
       is_pinned: false,
     };
     
-    // Fix: Convert the Supabase query to a Promise that matches the expected type
-    const { data, error } = await mutate(
-      async (variables) => {
-        const response = await supabase.from('forum_posts').insert(variables).select();
-        return { data: response.data, error: response.error };
-      },
-      newPost,
-      {
-        successMessage: {
-          title: "Success",
-          description: "Your input has been added to the discussion."
+    try {
+      // Fix: Convert the Supabase query to a Promise that correctly matches the expected type
+      const result = await mutate(
+        async (variables) => {
+          const response = await supabase.from('forum_posts').insert(variables).select();
+          return { data: response.data, error: response.error };
         },
-        onSuccess: async (data) => {
-          // Fetch the user profile for the newly created post
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('name, username, avatar_url')
-            .eq('id', user.id)
-            .single();
+        newPost,
+        {
+          successMessage: {
+            title: "Success",
+            description: "Your input has been added to the discussion."
+          },
+          onSuccess: async (data) => {
+            // Fetch the user profile for the newly created post
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('name, username, avatar_url')
+              .eq('id', user.id)
+              .maybeSingle();
 
-          // Create new comment object
-          const newComment: Comment = {
-            id: data?.[0]?.id || '',
-            content: comment.trim(),
-            author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
-            authorAvatar: profileData?.avatar_url || user.avatar_url,
-            authorId: user.id,
-            createdAt: new Date(),
-            upvotes: 0
-          };
-          
-          // Call the callback to update parent component
-          onCommentAdded(newComment);
-          setComment('');
+            // Create new comment object
+            const newComment: Comment = {
+              id: data?.[0]?.id || '',
+              content: comment.trim(),
+              author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
+              authorAvatar: profileData?.avatar_url || user.avatar_url,
+              authorId: user.id,
+              createdAt: new Date(),
+              upvotes: 0
+            };
+            
+            // Call the callback to update parent component
+            onCommentAdded(newComment);
+            setComment('');
+          }
         }
+      );
+      
+      if (result.error) {
+        console.error('Error adding comment:', result.error);
+        toast({
+          title: "Error",
+          description: "Failed to add your comment",
+          variant: "destructive"
+        });
       }
-    );
-    
-    if (error) {
+    } catch (error) {
       console.error('Error adding comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add your comment",
+        variant: "destructive"
+      });
     }
   };
 

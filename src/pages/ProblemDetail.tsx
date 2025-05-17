@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { problemsData } from '@/data/problemsData';
+import { useToast } from '@/hooks/use-toast';
 
 // Import our components
 import { ProblemDetailCard } from '@/components/problems/ProblemDetailCard';
@@ -18,10 +19,11 @@ const ProblemDetail = () => {
   const { problemId } = useParams<{ problemId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [problem, setProblem] = useState<any>(null);
   
   // Use our custom hook for comments
-  const { comments, isLoading, addComment } = useComments({
+  const { comments, isLoading, error, addComment } = useComments({
     problemId: problemId ? parseInt(problemId, 10) : 0,
     enabled: !!problemId
   });
@@ -34,13 +36,23 @@ const ProblemDetail = () => {
       
       if (foundProblem) {
         setProblem(foundProblem);
+      } else {
+        toast({
+          title: "Problem not found",
+          description: "The problem you're looking for doesn't exist",
+          variant: "destructive"
+        });
       }
     }
-  }, [problemId]);
+  }, [problemId, toast]);
   
   const handleBack = () => {
     navigate('/problems');
   };
+
+  if (error) {
+    console.error('Error loading comments:', error);
+  }
 
   return (
     <PageLayout>
