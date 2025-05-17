@@ -24,7 +24,8 @@ export const FullHeightChatSidebar = () => {
     messages,
     isLoadingMessages,
     addMessage,
-    fetchMessages
+    fetchMessages,
+    isLoading
   } = useChatMessages();
 
   // Use chat actions for message operations

@@ -37,6 +37,7 @@ export const useRealtimeChatSubscription = ({
         { event: 'INSERT', schema: 'public', table: 'chat_messages' }, 
         (payload) => {
           try {
+            console.log('Received new chat message:', payload);
             const newMessage = payload.new as DbChatMessage;
             const chatMessage: ChatMessage = {
               id: newMessage.id,

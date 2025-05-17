@@ -8,10 +8,12 @@ import { useMessageReactions } from "./chat/useMessageReactions";
 import { useMessageUtils } from "./chat/useMessageUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DbChatMessage } from "@/components/chat/hooks/useChatMessages";
 
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   
   const {
     conversations,
@@ -54,7 +56,7 @@ export const useChatMessages = () => {
 
   // Function to fetch messages from the database
   const fetchMessages = useCallback(async (conversationId: string = 'global') => {
-    setIsLoading(true);
+    setIsLoadingMessages(true);
     try {
       // Fetch messages from Supabase
       const { data, error } = await supabase
@@ -78,7 +80,9 @@ export const useChatMessages = () => {
           senderName: msg.sender_name || 'Unknown',
           userId: msg.user_id || 'unknown',
           createdAt: msg.created_at,
-          isCurrentUser: false // Will be updated in the component
+          isCurrentUser: false, // Will be updated in the component
+          isAdmin: msg.is_admin || false,
+          effectType: msg.effect_type
         }));
         setMessages(formattedMessages);
       } else {
@@ -89,8 +93,20 @@ export const useChatMessages = () => {
       console.error('Error in fetchMessages:', err);
       toast.error('Could not load messages');
     } finally {
+      setIsLoadingMessages(false);
       setIsLoading(false);
     }
+  }, []);
+
+  // Add a message to the state - needed by FullHeightChatSidebar for real-time updates
+  const addMessage = useCallback((message: ChatMessage) => {
+    setMessages(prev => {
+      // Check if message already exists to prevent duplicates
+      if (prev.some(msg => msg.id === message.id)) {
+        return prev;
+      }
+      return [...prev, message];
+    });
   }, []);
 
   // Wrap the original handlers to update input state
@@ -135,7 +151,9 @@ export const useChatMessages = () => {
     message,
     setMessage,
     messages,
+    setMessages,
     isLoading: isLoading || isSendingMessage,
+    isLoadingMessages,
     formatTime,
     handleSendMessage,
     handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => handleKeyDown(e, handleSendMessage),
@@ -147,6 +165,7 @@ export const useChatMessages = () => {
     handleReactionRemove,
     editingMessageId,
     replyingToMessage,
-    fetchMessages
+    fetchMessages,
+    addMessage
   };
 };
