@@ -9,6 +9,7 @@ import { MediaContent } from "@/components/media/MediaContent";
 import { CreatePostDialog } from "@/components/media/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CreatePostData } from "@/hooks/media/types";
 
 export const MediaContainer = () => {
   const { user } = useAuth();
@@ -28,7 +29,8 @@ export const MediaContainer = () => {
     loadMore,
     resetPage,
     createPostMutation,
-    handleCreatePost
+    handleCreatePost,
+    uploadProgress
   } = useMediaPosts(mediaType, sortBy, sortOrder, searchTerm);
 
   // Reset to page 1 whenever filters change
@@ -132,18 +134,22 @@ export const MediaContainer = () => {
           <CreatePostDialog 
             isOpen={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
-            onSubmit={(data) => {
-              const resultPromise = handleCreatePost(data);
-              if (resultPromise && typeof resultPromise.then === 'function') {
-                return resultPromise.then((response) => {
-                  if (response && response.id) {
-                    handlePostCreationSuccess(response.id);
-                  }
-                  return response;
+            onSubmit={async (data: CreatePostData) => {
+              try {
+                const response = await handleCreatePost(data);
+                if (response && response.id) {
+                  handlePostCreationSuccess(response.id);
+                }
+                return response;
+              } catch (err) {
+                console.error("Error handling post creation:", err);
+                toast({
+                  title: "Error",
+                  description: "Failed to create post. Please try again.",
+                  variant: "destructive"
                 });
+                return null;
               }
-              // Return a resolved promise if handleCreatePost doesn't return one
-              return Promise.resolve(null);
             }}
             isSubmitting={createPostMutation?.isPending}
           />

@@ -4,19 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MediaPost } from '@/utils/mediaUtils';
-
-interface CreatePostData {
-  title: string;
-  content?: string;
-  file?: File;
-  type: string;
-  tags?: string[];
-}
-
-interface CreatePostResponse {
-  id: string;
-  [key: string]: any;
-}
+import { CreatePostData, CreatePostResponse } from './types';
 
 export const useCreateMediaPost = (userId: string | undefined, onSuccess: () => void) => {
   const { toast } = useToast();

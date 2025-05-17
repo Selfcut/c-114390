@@ -4,21 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useFetchMediaPosts } from './useFetchMediaPosts';
 import { useCreateMediaPost } from './useCreateMediaPost';
 import { useAuth } from '@/lib/auth';
-
-// Define the type of data that can be passed to handleCreatePost
-interface CreatePostData {
-  title: string;
-  content?: string;
-  file?: File;
-  type: string;
-  tags?: string[];
-}
-
-// Define the response type from handleCreatePost
-interface CreatePostResponse {
-  id: string;
-  [key: string]: any;
-}
+import { CreatePostData, CreatePostResponse } from './types';
 
 export const useMediaPosts = (
   mediaType: string,
