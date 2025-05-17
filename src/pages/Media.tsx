@@ -22,6 +22,21 @@ const validateMediaType = (type: string): MediaPostType => {
     : 'text'; // Default to text if invalid
 };
 
+// Define interface for raw post data
+interface RawPost {
+  id: string;
+  title: string;
+  content?: string;
+  url?: string;
+  type: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  likes: number;
+  comments: number;
+  author?: { name: string; avatar_url?: string };
+}
+
 // Improved fetch function with proper typing and caching
 const fetchMediaPostsQuery = async ({ 
   type = 'all', 
@@ -81,11 +96,12 @@ const Media = () => {
       query = query.range(offset, offset + limit - 1);
       
       // Execute the query
-      const { data: posts, error } = await query;
+      const { data: rawPosts, error } = await query;
       
       if (error) throw error;
       
       // Get user profiles separately
+      const posts = rawPosts as RawPost[];
       if (posts && posts.length > 0) {
         const userIds = [...new Set(posts.map(post => post.user_id))];
         
@@ -94,7 +110,7 @@ const Media = () => {
           .select('id, name, avatar_url')
           .in('id', userIds);
           
-        const profileMap = profiles?.reduce((map, profile) => {
+        const profileMap = profiles?.reduce((map: Record<string, any>, profile: any) => {
           map[profile.id] = profile;
           return map;
         }, {}) || {};
