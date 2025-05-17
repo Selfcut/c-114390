@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 // Function to parse and render message content with markdown, mentions and GIFs
 export function parseMarkdown(content: string): JSX.Element | string {
   if (!content) return "";
