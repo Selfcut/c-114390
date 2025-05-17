@@ -10,6 +10,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -23,7 +24,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    console.error("Uncaught error:", error);
+    console.error("Component stack:", errorInfo.componentStack);
+    
+    this.setState({
+      errorInfo
+    });
   }
 
   public render() {
@@ -48,6 +54,14 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             Refresh page
           </button>
+          {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
+            <details className="mt-4 p-2 border border-red-300 rounded-md bg-red-50/80 dark:bg-red-950/30 dark:border-red-900/30 w-full overflow-auto">
+              <summary className="cursor-pointer font-medium">Error details</summary>
+              <pre className="text-xs mt-2 max-h-[200px] overflow-auto p-2 bg-black/5 dark:bg-white/5 rounded">
+                {this.state.error?.stack}
+              </pre>
+            </details>
+          )}
         </div>
       );
     }

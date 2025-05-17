@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -16,6 +15,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EditWikiArticleDialog } from "@/components/wiki/EditWikiArticleDialog";
 import { formatDate } from "@/components/wiki/WikiUtils";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
@@ -26,14 +26,20 @@ const WikiArticlePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Fetch article data
   useEffect(() => {
     const fetchArticle = async () => {
-      if (!articleId) return;
+      if (!articleId) {
+        setError("Article ID is missing");
+        setIsLoading(false);
+        return;
+      }
       
       try {
         setIsLoading(true);
+        setError(null);
         
         const { article, error } = await fetchWikiArticleById(articleId);
         
@@ -58,10 +64,14 @@ const WikiArticlePage = () => {
     };
     
     fetchArticle();
-  }, [articleId, toast]);
+  }, [articleId, toast, retryCount]);
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleRetry = () => {
+    setRetryCount(count => count + 1);
   };
 
   const handleUpdateArticle = (updatedArticle: WikiArticle) => {
@@ -114,15 +124,17 @@ const WikiArticlePage = () => {
           </Button>
           
           <Card>
-            <CardContent className="p-12 text-center">
-              <AlertTriangle size={48} className="text-destructive mx-auto mb-4" />
-              <CardTitle className="text-xl mb-2">Article Not Found</CardTitle>
-              <p className="text-muted-foreground mb-6">
-                The article you're looking for doesn't exist or has been removed.
-              </p>
-              <Button onClick={handleBack}>
-                Return to Wiki
-              </Button>
+            <CardContent className="p-12">
+              <ErrorMessage
+                title="Article Not Found"
+                message={error || "The article you're looking for doesn't exist or has been removed."}
+                retry={handleRetry}
+                action={
+                  <Button onClick={handleBack}>
+                    Return to Wiki
+                  </Button>
+                }
+              />
             </CardContent>
           </Card>
         </div>

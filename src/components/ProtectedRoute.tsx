@@ -1,8 +1,9 @@
 
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { PageLayout } from "./layouts/PageLayout";
+import { Skeleton } from "./ui/skeleton";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export const ProtectedRoute = ({
   withLayout = true 
 }: ProtectedRouteProps) => {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const location = useLocation();
   const isAdmin = user?.role === "admin" || user?.isAdmin;
 
   if (isLoading) {
@@ -25,7 +27,7 @@ export const ProtectedRoute = ({
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="animate-pulse flex flex-col items-center">
           <div className="w-12 h-12 bg-primary/20 rounded-full mb-4"></div>
-          <div className="h-4 w-24 bg-primary/20 rounded"></div>
+          <Skeleton className="h-4 w-24 bg-primary/20 rounded" />
         </div>
       </div>
     );
@@ -38,7 +40,7 @@ export const ProtectedRoute = ({
 
   // If authentication is required but user is not authenticated
   if (!isAuthenticated && !allowGuests) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // If admin access is required but user is not an admin

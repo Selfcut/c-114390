@@ -10,7 +10,7 @@ import Media from '@/pages/Media';
 import Forum from '@/pages/Forum';
 import ForumPost from '@/pages/ForumPost';
 import Wiki from '@/pages/Wiki';
-import WikiArticle from '@/pages/WikiArticle';
+import WikiArticle from '@/components/wiki/WikiArticlePage';
 import Quotes from '@/pages/Quotes';
 import Library from '@/pages/Library';
 import Chat from '@/pages/Chat';
@@ -19,6 +19,7 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import AdminPanel from '@/pages/AdminPanel';
+import AI from '@/pages/AI';
 import { AuthCallback } from './AuthCallback';
 
 const RouteErrorFallback = () => (
@@ -109,6 +110,11 @@ export const AppRoutes = () => {
           <Route path="/chat" element={
             <ErrorBoundary>
               <Chat />
+            </ErrorBoundary>
+          } />
+          <Route path="/ai" element={
+            <ErrorBoundary>
+              <AI />
             </ErrorBoundary>
           } />
 

@@ -11,13 +11,14 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingScreen } from './components/routing/LoadingScreen';
 import './App.css';
 
-// Create a client
+// Create a client with improved error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000, // 1 minute
       refetchOnWindowFocus: false,
       retry: 1, // Limit retries to avoid infinite loading states
+      useErrorBoundary: true, // Enable error boundaries for all queries
     },
   },
 });
@@ -30,9 +31,7 @@ function App() {
           <AuthProvider>
             <QueryClientProvider client={queryClient}>
               <Router>
-                <ErrorBoundary fallback={<div className="p-4">Something went wrong loading the application. Please refresh.</div>}>
-                  <AppRoutes />
-                </ErrorBoundary>
+                <AppRoutes />
                 <Toaster />
                 <Sonner position="top-center" />
               </Router>
