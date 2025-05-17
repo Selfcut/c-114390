@@ -66,41 +66,10 @@ export const CommentForm = ({
     };
     
     try {
-      // Fix: Convert the Supabase query to a Promise that correctly matches the expected type
       const result = await mutate(
-        async (variables) => {
-          const response = await supabase.from('forum_posts').insert(variables).select();
+        async () => {
+          const response = await supabase.from('forum_posts').insert(newPost).select();
           return { data: response.data, error: response.error };
-        },
-        newPost,
-        {
-          successMessage: {
-            title: "Success",
-            description: "Your input has been added to the discussion."
-          },
-          onSuccess: async (data) => {
-            // Fetch the user profile for the newly created post
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('name, username, avatar_url')
-              .eq('id', user.id)
-              .maybeSingle();
-
-            // Create new comment object
-            const newComment: Comment = {
-              id: data?.[0]?.id || '',
-              content: comment.trim(),
-              author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
-              authorAvatar: profileData?.avatar_url || user.avatar_url,
-              authorId: user.id,
-              createdAt: new Date(),
-              upvotes: 0
-            };
-            
-            // Call the callback to update parent component
-            onCommentAdded(newComment);
-            setComment('');
-          }
         }
       );
       
@@ -110,6 +79,36 @@ export const CommentForm = ({
           title: "Error",
           description: "Failed to add your comment",
           variant: "destructive"
+        });
+        return;
+      }
+      
+      if (result.data) {
+        // Fetch the user profile for the newly created post
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('name, username, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        // Create new comment object
+        const newComment: Comment = {
+          id: result.data[0]?.id || '',
+          content: comment.trim(),
+          author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
+          authorAvatar: profileData?.avatar_url || user.avatar_url,
+          authorId: user.id,
+          createdAt: new Date(),
+          upvotes: 0
+        };
+        
+        // Call the callback to update parent component
+        onCommentAdded(newComment);
+        setComment('');
+        
+        toast({
+          title: "Success",
+          description: "Your input has been added to the discussion."
         });
       }
     } catch (error) {

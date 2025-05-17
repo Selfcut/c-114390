@@ -42,7 +42,10 @@ export const ProblemsFilters = ({
       </div>
       
       <div className="flex gap-3">
-        <Select value={category || 'all'} onValueChange={(value) => setCategory(value === 'all' ? null : value)}>
+        <Select 
+          value={category || 'all'} 
+          onValueChange={(value) => setCategory(value === 'all' ? null : value)}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
