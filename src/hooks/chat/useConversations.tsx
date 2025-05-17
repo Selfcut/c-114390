@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Conversation } from "@/components/chat/types";
 
 // Mock conversations - in a real app, this would come from a database
-const initialConversations = [
+const initialConversations: Conversation[] = [
   {
     id: "1",
     name: "General Chat",

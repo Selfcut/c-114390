@@ -37,3 +37,15 @@ export interface ConversationItem {
   createdAt: string;
   updatedAt: string;
 }
+
+// Add the Conversation interface
+export interface Conversation {
+  id: string;
+  name: string;
+  lastMessage?: string;
+  isGroup?: boolean;
+  isGlobal?: boolean;
+  unread?: number;
+  avatar?: string;
+  updatedAt: string;
+}

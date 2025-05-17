@@ -28,7 +28,8 @@ export const useAutomatedMessages = ({
         senderName: "Neural Network",
         userId: "system",
         createdAt: new Date().toISOString(),
-        isSystem: true
+        isSystem: true,
+        conversationId: 'global'
       };
       
       addMessage(welcomeMessage);

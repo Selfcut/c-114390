@@ -3,7 +3,58 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
-import { KnowledgeEntry, MediaPost, Quote } from '@/lib/supabase-types';
+
+// Define interfaces needed for the content feed
+interface UserProfile {
+  id: string;
+  name?: string;
+  username: string;
+}
+
+interface KnowledgeEntry {
+  id: string;
+  title: string;
+  summary: string;
+  content?: string;
+  cover_image?: string;
+  categories?: string[];
+  created_at: string;
+  likes: number;
+  views: number;
+  comments: number;
+  user_id: string;
+  is_ai_generated: boolean;
+  profiles?: UserProfile | null;
+}
+
+interface MediaPost {
+  id: string;
+  title: string;
+  content?: string;
+  url?: string;
+  type: "video" | "image" | "text" | "document" | "youtube";
+  created_at: string;
+  likes: number;
+  comments: number;
+  views?: number;
+  user_id: string;
+  profiles?: UserProfile | null;
+}
+
+interface Quote {
+  id: string;
+  text: string;
+  author: string;
+  source?: string;
+  created_at: string;
+  category: string;
+  tags?: string[];
+  likes: number;
+  bookmarks: number;
+  comments: number;
+  user_id: string;
+  profiles?: UserProfile | null;
+}
 
 export interface ContentItem {
   id: string;
@@ -60,7 +111,7 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps) =
         }
         
         if (knowledgeData) {
-          const formattedKnowledge: ContentItem[] = knowledgeData.map((item: KnowledgeEntry) => ({
+          const formattedKnowledge: ContentItem[] = knowledgeData.map((item: any) => ({
             id: item.id,
             title: item.title,
             description: item.summary,
@@ -91,7 +142,7 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps) =
         }
         
         if (mediaData) {
-          const formattedMedia: ContentItem[] = mediaData.map((item: MediaPost) => ({
+          const formattedMedia: ContentItem[] = mediaData.map((item: any) => ({
             id: item.id,
             title: item.title,
             description: item.content || '',
@@ -121,7 +172,7 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps) =
         }
         
         if (quotesData) {
-          const formattedQuotes: ContentItem[] = quotesData.map((item: Quote) => ({
+          const formattedQuotes: ContentItem[] = quotesData.map((item: any) => ({
             id: item.id,
             title: item.text,
             description: item.source || '',
@@ -153,7 +204,7 @@ export const useContentFeed = ({ contentType, viewMode }: UseContentFeedProps) =
         }
         
         if (aiData) {
-          const formattedAi: ContentItem[] = aiData.map((item: KnowledgeEntry) => ({
+          const formattedAi: ContentItem[] = aiData.map((item: any) => ({
             id: item.id,
             title: item.title,
             description: item.summary,

@@ -3,7 +3,7 @@ import React from "react";
 
 export const ChatAnimationStyles = () => {
   return (
-    <style jsx global>{`
+    <style dangerouslySetInnerHTML={{ __html: `
       @keyframes rainbow {
         0% { color: #ff0000; }
         16.67% { color: #ff8000; }
@@ -64,6 +64,6 @@ export const ChatAnimationStyles = () => {
         border-left: 4px solid rgb(245, 158, 11);
         font-weight: 500;
       }
-    `}</style>
+    ` }} />
   );
 };

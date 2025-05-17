@@ -8,7 +8,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Neural Network",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-2',
@@ -16,7 +17,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Philosophy Bot",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-3',
@@ -24,7 +26,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Tech Update",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-4',
@@ -32,7 +35,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Science Daily",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-5',
@@ -40,7 +44,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Neural Network",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-6',
@@ -48,7 +53,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Brain Viz",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-7',
@@ -56,7 +62,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Education Hub",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   },
   {
     id: 'auto-8',
@@ -64,7 +71,8 @@ export const consciousnessStemMessages: ChatMessage[] = [
     senderName: "Tech Update",
     userId: "system-auto",
     createdAt: new Date().toISOString(),
-    isSystem: true
+    isSystem: true,
+    conversationId: 'global'
   }
 ];
 
