@@ -50,7 +50,7 @@ const ProblemDetail = () => {
             setIsLoading(true);
             
             // Get forum posts that are specifically about this problem
-            // Modifying the query to correctly fetch the profile data
+            // Fixed query to properly fetch posts with profile information
             const { data, error } = await supabase
               .from('forum_posts')
               .select(`
@@ -60,10 +60,7 @@ const ProblemDetail = () => {
                 tags,
                 upvotes,
                 created_at,
-                user_id,
-                user_id (
-                  profiles (name, username, avatar_url)
-                )
+                user_id
               `)
               .like('tags', `%Problem ${id}%`)
               .order('created_at', { ascending: false });
@@ -79,9 +76,28 @@ const ProblemDetail = () => {
             }
             
             if (data) {
-              // Process the data to extract profile info correctly
+              // Fetch profiles separately for better type safety
+              const userIds = data.map(post => post.user_id);
+              
+              // Get profiles for these users
+              const { data: profilesData, error: profilesError } = await supabase
+                .from('profiles')
+                .select('id, name, username, avatar_url')
+                .in('id', userIds);
+                
+              if (profilesError) {
+                console.error('Error fetching profiles:', profilesError);
+              }
+              
+              // Create a map of user_id to profile data for easy lookup
+              const profilesMap = (profilesData || []).reduce((acc: Record<string, any>, profile) => {
+                acc[profile.id] = profile;
+                return acc;
+              }, {});
+              
+              // Format the comments with profile data from the map
               const formattedComments: Comment[] = data.map(post => {
-                const profile = post.user_id?.profiles || {};
+                const profile = profilesMap[post.user_id] || {};
                 
                 return {
                   id: post.id,
