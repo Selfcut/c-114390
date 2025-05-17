@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useContentFeed, ContentFeedItem } from '@/hooks/useContentFeed';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
@@ -8,19 +8,30 @@ import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
 import { ContentFeedItem as ContentFeedItemComponent } from './ContentFeedItem';
 import { ContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContentFeedProps {
   contentType: ContentType;
   viewMode: ViewMode;
+  lastRefresh?: Date;
 }
 
-export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode }) => {
+export const ContentFeed: React.FC<ContentFeedProps> = ({ 
+  contentType, 
+  viewMode,
+  lastRefresh
+}) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
   const {
     feedItems,
     isLoading,
     error,
     hasMore,
     loadMore,
+    refetch,
     userLikes,
     userBookmarks,
     handleLike,
@@ -28,9 +39,40 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
     handleContentClick
   } = useContentFeed();
 
+  // Refetch when content type changes or manual refresh is triggered
+  useEffect(() => {
+    refetch();
+  }, [contentType, lastRefresh, refetch]);
+  
+  // Filter items based on content type
+  const filteredItems = contentType === 'all' 
+    ? feedItems 
+    : feedItems.filter(item => item.type === contentType);
+    
+  // Handle authentication required actions
+  const handleAuthAction = (action: () => void) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to perform this action",
+        variant: "destructive"
+      });
+      return;
+    }
+    action();
+  };
+  
+  const handleLikeWithAuth = (contentId: string, contentType: string) => {
+    handleAuthAction(() => handleLike(contentId, contentType));
+  };
+  
+  const handleBookmarkWithAuth = (contentId: string, contentType: string) => {
+    handleAuthAction(() => handleBookmark(contentId, contentType));
+  };
+
   // Error state
   if (error) {
-    return <ContentFeedError message={error} />;
+    return <ContentFeedError message={error} onRetry={refetch} />;
   }
 
   // Content container with grid or list layout
@@ -42,34 +84,35 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({ contentType, viewMode 
     <>
       <div className={containerClassName}>
         {/* Initial loading state */}
-        {isLoading && feedItems.length === 0 ? (
+        {isLoading && filteredItems.length === 0 ? (
           <ContentFeedSkeleton viewMode={viewMode} />
-        ) : feedItems.length > 0 ? (
+        ) : filteredItems.length > 0 ? (
           // Content items
-          feedItems.map(item => (
+          filteredItems.map(item => (
             <ContentFeedItemComponent
               key={item.id}
               item={item}
               userLikes={userLikes}
               userBookmarks={userBookmarks}
-              onLike={handleLike}
-              onBookmark={handleBookmark}
+              onLike={handleLikeWithAuth}
+              onBookmark={handleBookmarkWithAuth}
               onClick={handleContentClick}
+              viewMode={viewMode}
             />
           ))
         ) : (
           // Empty state
-          <ContentFeedEmpty onRefresh={() => window.location.reload()} />
+          <ContentFeedEmpty onRefresh={refetch} />
         )}
       </div>
       
       {/* Load more button */}
-      {hasMore && !isLoading && feedItems.length > 0 && (
+      {hasMore && !isLoading && filteredItems.length > 0 && (
         <LoadMoreButton isLoading={false} onClick={loadMore} />
       )}
       
       {/* Loading more indicator */}
-      {isLoading && feedItems.length > 0 && (
+      {isLoading && filteredItems.length > 0 && (
         <ContentFeedLoading />
       )}
     </>

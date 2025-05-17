@@ -10,23 +10,29 @@ import { ViewSwitcher, ViewMode } from "@/components/library/ViewSwitcher";
 import { UnifiedContentFeed } from "@/components/library/UnifiedContentFeed";
 import { ContentSubmissionModal } from "@/components/library/ContentSubmissionModal";
 import { PageLayout } from "@/components/layouts/PageLayout";
+import { useContentNavigation } from "@/hooks/useContentNavigation";
+import { LibrarySearchBar } from "@/components/library/LibrarySearchBar";
+import { LibraryHeader } from "@/components/library/LibraryHeader";
 
 const Library = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const { handleContentClick } = useContentNavigation();
   
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [activeContentType, setActiveContentType] = useState<ContentType>('all');
   const [activeViewMode, setActiveViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<'knowledge' | 'media' | 'quote' | 'ai'>('knowledge');
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Parse URL parameters to set initial state
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const viewParam = params.get('view');
     const modeParam = params.get('mode') as ViewMode | null;
+    const searchParam = params.get('search');
     
     // Set content type based on URL parameter
     if (viewParam) {
@@ -56,6 +62,11 @@ const Library = () => {
     if (modeParam && ['grid', 'list', 'feed'].includes(modeParam)) {
       setActiveViewMode(modeParam as ViewMode);
     }
+    
+    // Set search term based on URL parameter
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
   }, [location]);
   
   // Update URL when filters change
@@ -70,11 +81,15 @@ const Library = () => {
       params.set('mode', activeViewMode);
     }
     
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    }
+    
     const search = params.toString();
     const newUrl = search ? `${location.pathname}?${search}` : location.pathname;
     
     navigate(newUrl, { replace: true });
-  }, [activeContentType, activeViewMode, location.pathname, navigate]);
+  }, [activeContentType, activeViewMode, searchTerm, location.pathname, navigate]);
   
   // Handle content type change
   const handleContentTypeChange = (type: ContentType) => {
@@ -104,6 +119,11 @@ const Library = () => {
     setActiveViewMode(mode);
   };
   
+  // Handle search term change
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+  };
+  
   // Handle content creation button click
   const handleCreateContent = () => {
     if (!isAuthenticated) {
@@ -124,39 +144,31 @@ const Library = () => {
       title: "Content published",
       description: "Your contribution has been published successfully!",
     });
-    
-    // Refresh the content feed
-    // This will happen automatically when the component is unmounted and remounted
   };
   
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <BookOpen className="h-8 w-8" />
-              Knowledge Hub
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Discover, learn and contribute to our growing library of knowledge
-            </p>
+        <div className="space-y-6">
+          {/* Header with title and create button */}
+          <LibraryHeader onCreateEntry={handleCreateContent} />
+          
+          {/* Search bar */}
+          <div className="w-full max-w-md mx-auto">
+            <LibrarySearchBar 
+              searchTerm={searchTerm}
+              onSearchChange={handleSearchChange}
+            />
           </div>
           
-          <Button 
-            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
-            onClick={handleCreateContent}
-          >
-            <PenSquare size={18} />
-            <span>Contribute</span>
-          </Button>
+          {/* Content feed */}
+          <UnifiedContentFeed 
+            defaultContentType={activeContentType} 
+            defaultViewMode={activeViewMode}
+          />
         </div>
         
-        <UnifiedContentFeed 
-          defaultContentType={activeContentType} 
-          defaultViewMode={activeViewMode}
-        />
-        
+        {/* Content submission modal */}
         <ContentSubmissionModal
           isOpen={isSubmitModalOpen}
           onOpenChange={setIsSubmitModalOpen}

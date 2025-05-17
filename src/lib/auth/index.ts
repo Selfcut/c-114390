@@ -1,6 +1,6 @@
 
-// Re-export everything from the auth context
-export { AuthProvider, useAuth } from './auth-context';
-export type { UserProfile, AuthContextType } from './types';
-export { fetchUserProfile, updateUserProfile } from './utils';
-export { signIn, signOut, signUp } from './auth-methods';
+// Export all auth-related types and components
+export * from './types';
+export * from './auth-context';
+export * from './utils';
+export * from './auth-methods';

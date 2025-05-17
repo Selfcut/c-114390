@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, Library } from 'lucide-react';
 
 interface ContentFeedEmptyProps {
   onRefresh: () => void;
@@ -9,32 +10,18 @@ interface ContentFeedEmptyProps {
 
 export const ContentFeedEmpty: React.FC<ContentFeedEmptyProps> = ({ onRefresh }) => {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-      <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="32" 
-          height="32" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          className="text-muted-foreground"
-        >
-          <rect width="18" height="18" x="3" y="3" rx="2" />
-          <path d="M9 8h7" />
-          <path d="M8 12h8" />
-          <path d="M11 16h5" />
-        </svg>
-      </div>
-      <h3 className="text-xl font-medium mb-1">No content found</h3>
-      <p className="text-muted-foreground mb-4">Try selecting a different content type or check back later.</p>
-      <Button variant="outline" onClick={onRefresh} className="gap-2">
-        <RefreshCw size={16} />
-        Refresh
-      </Button>
-    </div>
+    <Card className="col-span-full w-full">
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <Library className="h-16 w-16 text-muted-foreground mb-4" />
+        <h3 className="text-xl font-medium mb-2">No content found</h3>
+        <p className="text-muted-foreground text-center max-w-md mx-auto mb-6">
+          There's no content matching your current filters. Try changing your filters or refresh to check for new content.
+        </p>
+        <Button onClick={onRefresh} className="flex items-center gap-2">
+          <RefreshCw size={16} />
+          <span>Refresh Content</span>
+        </Button>
+      </CardContent>
+    </Card>
   );
 };

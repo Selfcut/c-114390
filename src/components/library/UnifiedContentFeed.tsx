@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ContentFeedControls } from './ContentFeedControls';
 import { ContentFeed } from './ContentFeed';
 import { ContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
+import { useToast } from '@/hooks/use-toast';
 
 interface UnifiedContentFeedProps {
   defaultContentType?: ContentType;
@@ -16,6 +17,25 @@ export const UnifiedContentFeed = ({
 }: UnifiedContentFeedProps) => {
   const [contentType, setContentType] = useState<ContentType>(defaultContentType);
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
+  const { toast } = useToast();
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  
+  // Reset content type and view mode when props change
+  useEffect(() => {
+    setContentType(defaultContentType);
+  }, [defaultContentType]);
+  
+  useEffect(() => {
+    setViewMode(defaultViewMode);
+  }, [defaultViewMode]);
+  
+  // Handle refresh
+  const handleRefresh = () => {
+    setLastRefresh(new Date());
+    toast({
+      description: "Content refreshed",
+    });
+  };
   
   return (
     <div className="space-y-6">
@@ -24,11 +44,13 @@ export const UnifiedContentFeed = ({
         viewMode={viewMode}
         onContentTypeChange={setContentType}
         onViewModeChange={setViewMode}
+        onRefresh={handleRefresh}
       />
       
       <ContentFeed
         contentType={contentType}
         viewMode={viewMode}
+        lastRefresh={lastRefresh}
       />
     </div>
   );

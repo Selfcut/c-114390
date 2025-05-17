@@ -5,12 +5,10 @@ export interface UserProfile {
   id: string;
   email?: string;
   name: string;
-  avatar_url?: string;  // This is the property from Supabase profiles table
+  avatar_url?: string;
   username?: string;
   role?: string;
   isAdmin?: boolean;
-  status?: string;
-  avatar?: string;   // Adding this as an alias for avatar_url for backward compatibility
 }
 
 export interface AuthContextType {
