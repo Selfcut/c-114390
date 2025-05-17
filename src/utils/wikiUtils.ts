@@ -44,7 +44,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
     }
 
     // Process data to conform to WikiArticle type
-    const articles: WikiArticle[] = data.map(article => ({
+    const articles: WikiArticle[] = data ? data.map(article => ({
       id: article.id,
       title: article.title,
       description: article.description,
@@ -58,7 +58,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
       user_id: article.user_id,
       created_at: new Date(article.created_at),
       author_name: article.profiles?.name || 'Anonymous'
-    }));
+    })) : [];
 
     return { 
       articles, 
@@ -97,7 +97,7 @@ export const fetchWikiArticleById = async (id: string) => {
       return { article: null };
     }
 
-    // Process data to conform to WikiArticle type
+    // Process data to conform to WikiArticle type with safe access to properties
     const article: WikiArticle = {
       id: data.id,
       title: data.title,
@@ -123,9 +123,16 @@ export const fetchWikiArticleById = async (id: string) => {
 
 export const createWikiArticle = async (articleData: Partial<WikiArticle>) => {
   try {
+    // Convert Date objects to ISO strings for database storage
+    const dataForDb = {
+      ...articleData,
+      created_at: articleData.created_at instanceof Date ? articleData.created_at.toISOString() : undefined,
+      last_updated: articleData.last_updated instanceof Date ? articleData.last_updated.toISOString() : undefined
+    };
+
     const { data, error } = await supabase
       .from('wiki_articles')
-      .insert(articleData)
+      .insert(dataForDb)
       .select();
       
     if (error) {
@@ -150,12 +157,16 @@ export const updateWikiArticle = async (id: string, updates: Partial<WikiArticle
       });
     }
     
-    // Always update last_updated timestamp
-    updates.last_updated = new Date();
+    // Convert Date objects to strings for database updates
+    const dataForDb = {
+      ...updates,
+      created_at: updates.created_at instanceof Date ? updates.created_at.toISOString() : undefined,
+      last_updated: new Date().toISOString() // Always update last_updated timestamp
+    };
     
     const { data, error } = await supabase
       .from('wiki_articles')
-      .update(updates)
+      .update(dataForDb)
       .eq('id', id)
       .select();
       

@@ -86,12 +86,14 @@ const Forum = () => {
       try {
         setIsLoading(true);
         
-        // Check if forum_posts table exists
-        const { error: tableCheckError } = await supabase
+        // Check if the forum_posts table exists by making a direct query
+        const { data: tableInfo, error: tableCheckError } = await supabase
           .from('forum_posts')
           .select('id')
-          .limit(1);
+          .limit(1)
+          .single();
         
+        // If there's an error, the table might not exist
         if (tableCheckError) {
           console.error('Forum posts table not available:', tableCheckError);
           setIsLoading(false);
@@ -99,14 +101,14 @@ const Forum = () => {
           
           toast({
             title: "Database Configuration",
-            description: "Forum posts table not available. Please set up the database schema.",
+            description: "Forum posts table not available or empty. Please set up the database schema.",
             variant: "destructive"
           });
           
           return;
         }
         
-        // Use raw query to access forum_posts securely
+        // Use the forum_posts table now that we've confirmed it exists
         const { data, error } = await supabase
           .from('forum_posts')
           .select(`
@@ -120,7 +122,7 @@ const Forum = () => {
             comments, 
             is_pinned,
             user_id,
-            profiles(name, avatar_url)
+            profiles:user_id (name, avatar_url)
           `)
           .order('is_pinned', { ascending: false })
           .order('created_at', { ascending: false });
@@ -128,7 +130,6 @@ const Forum = () => {
         if (error) throw error;
         
         // Transform data to match the DiscussionTopic interface
-        // Check if data actually exists and is an array before processing
         if (data && Array.isArray(data)) {
           const formattedData: DiscussionTopic[] = data.map((post: ForumPost) => ({
             id: post.id,
@@ -266,8 +267,7 @@ const Forum = () => {
         ? newDiscussion.tags.split(',').map(tag => tag.trim()).filter(Boolean) 
         : [];
 
-      // Insert new post to database
-      // Using modified query to check for table existence
+      // Insert new post to database with proper error handling
       const { data, error } = await supabase
         .from('forum_posts')
         .insert({

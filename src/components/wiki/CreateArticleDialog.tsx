@@ -71,7 +71,7 @@ export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
         ? formData.tagsInput.split(',').map(tag => tag.trim().toLowerCase())
         : [];
       
-      // Create article - Fixed the property name from userId to user_id
+      // Create article - Fixed the property name from imageUrl to image_url
       const { article, error } = await createWikiArticle({
         title: formData.title,
         description: formData.description,
@@ -79,7 +79,7 @@ export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
         category: formData.category,
         tags,
         user_id: user.id,
-        imageUrl: formData.imageUrl || undefined
+        image_url: formData.imageUrl || undefined
       });
       
       if (error) throw error;

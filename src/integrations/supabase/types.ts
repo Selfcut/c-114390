@@ -147,6 +147,45 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_posts: {
+        Row: {
+          comments: number | null
+          content: string
+          created_at: string | null
+          id: string
+          is_pinned: boolean | null
+          tags: string[] | null
+          title: string
+          upvotes: number | null
+          user_id: string
+          views: number | null
+        }
+        Insert: {
+          comments?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          tags?: string[] | null
+          title: string
+          upvotes?: number | null
+          user_id: string
+          views?: number | null
+        }
+        Update: {
+          comments?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          tags?: string[] | null
+          title?: string
+          upvotes?: number | null
+          user_id?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
       knowledge_entries: {
         Row: {
           categories: string[] | null

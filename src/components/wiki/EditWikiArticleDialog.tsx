@@ -67,7 +67,7 @@ export const EditWikiArticleDialog = ({
           content,
           category,
           tags: article.tags,
-          user_id: user.id  // Added user_id properly
+          user_id: user.id
         }
       );
       
