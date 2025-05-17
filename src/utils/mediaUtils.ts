@@ -17,6 +17,7 @@ export interface MediaPost {
   author?: {
     name: string;
     avatar_url?: string;
+    username?: string;
   };
 }
 
