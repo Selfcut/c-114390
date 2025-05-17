@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { WikiArticle } from "@/components/wiki/types";
 
@@ -24,7 +23,7 @@ interface WikiArticleDbResponse {
   user_id: string;
   created_at: string;
   author_name?: string;
-  likes?: number;  // Make this optional since it might not be in all responses
+  likes?: number;  // Make sure this is defined here
 }
 
 export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
@@ -125,7 +124,7 @@ export const fetchWikiArticleById = async (id: string) => {
       user_id: data.user_id,
       created_at: new Date(data.created_at),
       author_name: data.author_name || 'Anonymous',
-      likes: (data as any).likes || 0  // Use type assertion to avoid TypeScript error
+      likes: data.likes || 0  // Make sure to include likes with a default of 0
     };
 
     return { article };

@@ -9,7 +9,7 @@ interface TableNames {
   likesTable: string;
   contentTable: string;
   contentIdField: string;
-  commentsTable: string;  // Add this property
+  commentsTable: string;  // Added this property to fix the error
 }
 
 export const useContentTables = (options: ContentTypeOptions) => {
