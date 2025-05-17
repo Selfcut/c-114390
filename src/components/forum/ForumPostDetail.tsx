@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -152,6 +151,7 @@ export const ForumPostDetail = () => {
             };
             
             // Only assign if profiles exists and is not an error object
+            // Fix: Add null check for comment.profiles
             if (comment.profiles && typeof comment.profiles === 'object' && !('code' in comment.profiles)) {
               profileData = comment.profiles as ProfileData;
             }
