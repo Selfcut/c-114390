@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -143,8 +144,18 @@ export const ForumPostDetail = () => {
         } else if (commentsData) {
           // Map comments data to our Comment interface
           const mappedComments: Comment[] = commentsData.map(comment => {
-            // Ensure profileData is properly typed or use a default empty object with defined properties
-            const profileData: ProfileData = comment.profiles || { name: undefined, username: undefined, avatar_url: undefined };
+            // Safely handle profiles data, ensuring it's the correct type
+            let profileData: ProfileData = { 
+              name: undefined, 
+              username: undefined, 
+              avatar_url: undefined 
+            };
+            
+            // Only assign if profiles exists and is not an error object
+            if (comment.profiles && typeof comment.profiles === 'object' && !('code' in comment.profiles)) {
+              profileData = comment.profiles as ProfileData;
+            }
+            
             return {
               id: comment.id,
               content: comment.comment,
