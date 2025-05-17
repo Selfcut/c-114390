@@ -19,14 +19,14 @@ export const ContentFeedItem: React.FC<ContentFeedItemProps> = ({
   onBookmark,
   onClick
 }) => {
-  // If avatar field exists in author but avatar_url doesn't, map it correctly
+  // Normalize the author object to ensure avatar is consistently available
   const normalizedItem = {
     ...item,
     author: {
       ...item.author,
-      // Ensure both avatar and avatar_url are populated if either exists
-      avatar: item.author.avatar || item.author.avatar_url,
-      avatar_url: item.author.avatar_url || item.author.avatar
+      // Ensure the avatar field is populated by using any available avatar source
+      // The ContentItemAuthor type only has 'avatar', not 'avatar_url'
+      avatar: item.author.avatar || (item.author as any).avatar_url
     }
   };
 
