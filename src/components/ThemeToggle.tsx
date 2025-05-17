@@ -21,6 +21,7 @@ export function ThemeToggle() {
       size="icon" 
       onClick={toggleTheme}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} 
+      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
       className="w-9 h-9 relative"
     >
       <Sun

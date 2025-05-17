@@ -1,6 +1,26 @@
 
 import { useState, useEffect } from 'react';
-import { subscribeToChatSidebarToggle, publishChatSidebarToggle } from "@/lib/utils/event-utils";
+
+// Simple event system for cross-component communication
+const eventTarget = new EventTarget();
+const TOGGLE_EVENT = 'chatSidebarToggle';
+
+// Publish toggle event
+export const publishChatSidebarToggle = (state: boolean | ((prev: boolean) => boolean)) => {
+  const event = new CustomEvent(TOGGLE_EVENT, { detail: state });
+  eventTarget.dispatchEvent(event);
+};
+
+// Subscribe to toggle events
+export const subscribeToChatSidebarToggle = (callback: (state: boolean | ((prev: boolean) => boolean)) => void) => {
+  const handler = (event: Event) => {
+    const customEvent = event as CustomEvent;
+    callback(customEvent.detail);
+  };
+  
+  eventTarget.addEventListener(TOGGLE_EVENT, handler);
+  return () => eventTarget.removeEventListener(TOGGLE_EVENT, handler);
+};
 
 export const useChatSidebarToggle = () => {
   const [isOpen, setIsOpen] = useState(() => {

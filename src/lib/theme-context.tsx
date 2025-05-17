@@ -27,9 +27,21 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Check localStorage first
+    const storedTheme = localStorage.getItem(storageKey) as Theme | null;
+    if (storedTheme) return storedTheme;
+    
+    // If no stored preference, check system preference
+    if (typeof window !== 'undefined') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    }
+    
+    // Fallback to default
+    return defaultTheme;
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;

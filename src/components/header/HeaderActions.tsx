@@ -40,12 +40,22 @@ export const HeaderActions = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-popover border-border">
-          <DropdownMenuItem>Getting Started</DropdownMenuItem>
-          <DropdownMenuItem>Documentation</DropdownMenuItem>
-          <DropdownMenuItem>Keyboard Shortcuts</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/help/getting-started">Getting Started</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/help/documentation">Documentation</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/help/shortcuts">Keyboard Shortcuts</Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Report an Issue</DropdownMenuItem>
-          <DropdownMenuItem>Contact Support</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/help/issue">Report an Issue</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/help/support">Contact Support</Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       

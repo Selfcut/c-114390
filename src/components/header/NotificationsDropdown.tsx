@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock notifications
+// Mock notifications - in a real app, these would come from an API or database
 const mockNotifications = [
   {
     id: 'notif1',
@@ -57,6 +57,10 @@ export const NotificationsDropdown = () => {
         isRead: true
       }))
     );
+    
+    toast({
+      description: "All notifications marked as read",
+    });
   };
 
   const formatNotificationTime = (timestamp: Date) => {

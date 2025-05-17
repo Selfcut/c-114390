@@ -1,30 +1,34 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, X, Minimize, Maximize } from "lucide-react";
-import { ChatInterface } from "./ChatInterface";
+import { MessageSquare, X, Minimize, Maximize, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/auth";
 
-// Define type for conversation type
-type ConversationType = "direct" | "group" | "global";
+type Message = {
+  id: string;
+  content: string;
+  sender: string;
+  timestamp: Date;
+  isUser: boolean;
+};
 
-export const FloatingChatWidget = ({ currentUser }) => {
+export const FloatingChatWidget = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [conversationType, setConversationType] = useState<ConversationType>('direct');
-
-  // Default conversation (for demo purposes - normally this would be the last active conversation)
-  useEffect(() => {
-    setSelectedConversation({
-      id: 'direct-user1',
-      name: 'Jane Smith',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-      status: 'online',
-      isOnline: true
-    });
-    setConversationType('direct');
-  }, []);
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      content: "Hello! How can I help you today?",
+      sender: "Assistant",
+      timestamp: new Date(),
+      isUser: false
+    }
+  ]);
 
   const toggleChat = () => {
     if (isOpen && isMinimized) {
@@ -45,6 +49,38 @@ export const FloatingChatWidget = ({ currentUser }) => {
 
   const handleClose = () => {
     setIsOpen(false);
+  };
+
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    
+    // Add user message
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      content: message,
+      sender: user?.name || "You",
+      timestamp: new Date(),
+      isUser: true
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setMessage("");
+    
+    // Simulate response (in a real app, this would be an API call)
+    setTimeout(() => {
+      const botMessage: Message = {
+        id: `bot-${Date.now()}`,
+        content: "Thanks for your message! This is a demo chat widget. In a real implementation, this would connect to your backend services.",
+        sender: "Assistant",
+        timestamp: new Date(),
+        isUser: false
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }, 1000);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -73,13 +109,7 @@ export const FloatingChatWidget = ({ currentUser }) => {
             <div className="bg-primary/10 p-2 flex justify-between items-center border-b">
               <div className="flex items-center">
                 <MessageSquare size={18} className="mr-2 text-primary" />
-                <h3 className="font-medium text-sm">
-                  {isMinimized 
-                    ? "Chat" 
-                    : selectedConversation 
-                      ? `Chat with ${selectedConversation.name}` 
-                      : "Select a conversation"}
-                </h3>
+                <h3 className="font-medium text-sm">Chat</h3>
               </div>
               <div className="flex items-center space-x-1">
                 {isMinimized ? (
@@ -112,24 +142,55 @@ export const FloatingChatWidget = ({ currentUser }) => {
               </div>
             </div>
             
-            {!isMinimized && selectedConversation && (
-              <ChatInterface
-                chatType={conversationType}
-                recipientId={conversationType === 'direct' ? selectedConversation.id : undefined}
-                recipientName={conversationType === 'direct' ? selectedConversation.name : undefined}
-                recipientAvatar={conversationType === 'direct' ? selectedConversation.avatar : undefined}
-                recipientStatus={conversationType === 'direct' ? selectedConversation.status : undefined}
-                groupId={conversationType === 'group' ? selectedConversation.id : undefined}
-                groupName={conversationType === 'group' ? selectedConversation.name : undefined}
-                groupAvatar={conversationType === 'group' ? selectedConversation.avatar : undefined}
-                groupMembers={conversationType === 'group' && selectedConversation.members ? 
-                  selectedConversation.members.map(member => ({
-                    ...member,
-                    // Add a default status for each member
-                    status: member.status || 'offline'
-                  })) : 
-                  undefined}
-              />
+            {!isMinimized && (
+              <>
+                <div className="flex flex-col h-[380px] overflow-y-auto p-3 gap-3">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex ${msg.isUser ? 'flex-row-reverse' : 'flex-row'} gap-2 max-w-[80%]`}>
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          {msg.isUser ? (
+                            user?.avatar_url ? (
+                              <AvatarImage src={user.avatar_url} alt="User" />
+                            ) : (
+                              <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                            )
+                          ) : (
+                            <AvatarFallback>A</AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className={`${msg.isUser ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-lg p-3`}>
+                          <p className="text-sm">{msg.content}</p>
+                          <p className="text-xs opacity-70 mt-1">{formatTime(msg.timestamp)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-3 border-t">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="resize-none h-10 min-h-0 py-2"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <Button
+                      size="icon"
+                      onClick={handleSendMessage}
+                      disabled={!message.trim()}
+                    >
+                      <Send size={16} />
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </motion.div>
         )}
