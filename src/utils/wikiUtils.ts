@@ -2,267 +2,229 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WikiArticle } from "@/components/wiki/types";
 
-/**
- * Fetch wiki articles with filtering options
- */
-export async function fetchWikiArticles({
-  category = undefined,
-  page = 0,
-  pageSize = 9,
-  sortBy = 'created_at',
-  sortOrder = 'desc',
-  searchQuery = ''
-}: {
+interface FetchArticlesOptions {
   category?: string;
   page?: number;
   pageSize?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
   searchQuery?: string;
-}) {
+}
+
+export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
   try {
-    // Start building the query
+    const {
+      category,
+      page = 0,
+      pageSize = 9,
+      searchQuery = ""
+    } = options;
+    
+    const startIndex = page * pageSize;
+    
     let query = supabase
       .from('wiki_articles')
       .select(`
         *,
-        profiles:user_id(name, username, avatar_url)
-      `)
-      .range(page * pageSize, (page + 1) * pageSize - 1);
-      
-    // Apply category filter
+        profiles:user_id (name, avatar_url)
+      `, { count: 'exact' });
+
     if (category) {
       query = query.eq('category', category);
     }
     
-    // Apply search filter if provided
     if (searchQuery) {
-      query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
     }
-    
-    // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-    
-    const { data, error } = await query;
-
+      
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(startIndex, startIndex + pageSize - 1);
+      
     if (error) {
-      console.error('Error fetching wiki articles:', error);
       throw error;
     }
-    
-    // Transform to match the expected format with proper type safety
-    const articles: WikiArticle[] = data?.map(article => {
-      const profileData = article.profiles as any;
-      
-      return {
-        ...article,
-        author_name: profileData?.name || profileData?.username || 'Anonymous',
-        created_at: new Date(article.created_at),
-        last_updated: new Date(article.last_updated)
-      };
-    }) || [];
 
-    return {
-      articles,
-      hasMore: articles.length === pageSize,
-      error: null
+    // Process data to conform to WikiArticle type
+    const articles: WikiArticle[] = data.map(article => ({
+      id: article.id,
+      title: article.title,
+      description: article.description,
+      category: article.category,
+      content: article.content,
+      last_updated: new Date(article.last_updated),
+      contributors: article.contributors || 1,
+      views: article.views || 0,
+      tags: article.tags,
+      image_url: article.image_url,
+      user_id: article.user_id,
+      created_at: new Date(article.created_at),
+      author_name: article.profiles?.name || 'Anonymous'
+    }));
+
+    return { 
+      articles, 
+      hasMore: count !== null ? startIndex + pageSize < count : false,
+      total: count || 0 
     };
   } catch (error) {
-    console.error('Error in fetchWikiArticles:', error);
-    
-    // For development purposes, provide simulated data
-    // This should be removed in production
-    const simulatedArticles: WikiArticle[] = [
-      {
-        id: "1",
-        title: "Phenomenology and Existentialism",
-        description: "An exploration of two influential philosophical movements of the 20th century and their connections.",
-        content: "Phenomenology, founded by Edmund Husserl, is the study of structures of consciousness as experienced from the first-person point of view...",
-        category: "Philosophy",
-        tags: ["phenomenology", "existentialism", "continental-philosophy"],
-        user_id: "user-123",
-        author_name: "PhilosophyProfessor",
-        created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        last_updated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        contributors: 3,
-        views: 156,
-        image_url: "https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&auto=format&fit=crop&w=2787&q=80"
-      },
-      {
-        id: "2",
-        title: "Understanding Stoicism",
-        description: "A comprehensive guide to Stoic philosophy and its practical applications in modern life.",
-        content: "Stoicism is a school of Hellenistic philosophy founded by Zeno of Citium in Athens in the early 3rd century BC...",
-        category: "Philosophy",
-        tags: ["stoicism", "ethics", "virtue"],
-        user_id: "user-456",
-        author_name: "StoicMind",
-        created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-        last_updated: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        contributors: 2,
-        views: 98,
-        image_url: "https://images.unsplash.com/photo-1618477461853-cf177663d8d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2940&q=80"
-      },
-      {
-        id: "3",
-        title: "The Philosophy of Mind",
-        description: "Exploring consciousness, mental states, and the mind-body problem.",
-        content: "Philosophy of mind is a branch of philosophy that studies the ontology and nature of the mind and its relationship with the body...",
-        category: "Philosophy",
-        tags: ["mind", "consciousness", "dualism", "materialism"],
-        user_id: "user-789",
-        author_name: "ConsciousThinker",
-        created_at: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
-        last_updated: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-        contributors: 5,
-        views: 210,
-        image_url: "https://images.unsplash.com/photo-1544984243-ec57ea16fe25?ixlib=rb-4.0.3&auto=format&fit=crop&w=774&q=80"
-      }
-    ];
-    
-    return {
-      articles: simulatedArticles,
-      hasMore: false,
-      error
-    };
+    console.error('Error fetching wiki articles:', error);
+    return { articles: [], hasMore: false, error };
   }
-}
+};
 
-/**
- * Get a specific wiki article by ID
- */
-export async function fetchWikiArticleById(id: string) {
+export const fetchWikiArticleById = async (id: string) => {
   try {
+    // Update views counter
+    await supabase.rpc('increment_counter_fn', {
+      row_id: id,
+      column_name: 'views',
+      table_name: 'wiki_articles'
+    });
+    
     const { data, error } = await supabase
       .from('wiki_articles')
       .select(`
         *,
-        profiles:user_id(name, username, avatar_url)
+        profiles:user_id (name, avatar_url)
       `)
       .eq('id', id)
       .single();
       
-    if (error) throw error;
-    
-    // Handle profiles data safely
-    const profileData = data.profiles as any;
-    
-    // Transform to match the expected format
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return { article: null };
+    }
+
+    // Process data to conform to WikiArticle type
     const article: WikiArticle = {
-      ...data,
-      author_name: profileData?.name || profileData?.username || 'Anonymous',
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      content: data.content,
+      last_updated: new Date(data.last_updated),
+      contributors: data.contributors || 1,
+      views: data.views || 0,
+      tags: data.tags,
+      image_url: data.image_url,
+      user_id: data.user_id,
       created_at: new Date(data.created_at),
-      last_updated: new Date(data.last_updated)
+      author_name: data.profiles?.name || 'Anonymous'
     };
-    
-    return { article, error: null };
+
+    return { article };
   } catch (error) {
-    console.error('Error fetching wiki article:', error);
+    console.error('Error fetching wiki article by ID:', error);
     return { article: null, error };
   }
-}
+};
 
-/**
- * Create a new wiki article
- */
-export async function createWikiArticle({
-  title,
-  description,
-  content,
-  category,
-  tags = [],
-  userId,
-  imageUrl
-}: {
-  title: string;
-  description: string;
-  content: string;
-  category: string;
-  tags?: string[];
-  userId: string;
-  imageUrl?: string;
-}) {
+export const createWikiArticle = async (articleData: Partial<WikiArticle>) => {
   try {
     const { data, error } = await supabase
       .from('wiki_articles')
-      .insert({
-        title,
-        description,
-        content,
-        category,
-        tags,
-        user_id: userId,
-        image_url: imageUrl,
-        contributors: 1,
-        views: 0
-      })
+      .insert(articleData)
       .select();
       
-    if (error) throw error;
-    
-    return { article: data?.[0], error: null };
+    if (error) {
+      throw error;
+    }
+
+    return { article: data[0] };
   } catch (error) {
     console.error('Error creating wiki article:', error);
     return { article: null, error };
   }
-}
+};
 
-/**
- * Update an existing wiki article
- */
-export async function updateWikiArticle(
-  articleId: string,
-  {
-    title,
-    description,
-    content,
-    category,
-    tags = []
-  }: {
-    title: string;
-    description: string;
-    content: string;
-    category: string;
-    tags?: string[];
-  },
-  userId: string
-) {
+export const updateWikiArticle = async (id: string, updates: Partial<WikiArticle>) => {
   try {
-    // First, increment contributors if this is a new contributor
-    const { data: existingArticle, error: fetchError } = await supabase
-      .from('wiki_articles')
-      .select('user_id, contributors')
-      .eq('id', articleId)
-      .single();
-    
-    if (fetchError) throw fetchError;
-    
-    let incrementContributors = false;
-    // Check if the current user is not the original author
-    if (existingArticle && existingArticle.user_id !== userId) {
-      incrementContributors = true;
+    // Increment contributors if the content was updated
+    if (updates.content) {
+      await supabase.rpc('increment_counter_fn', {
+        row_id: id,
+        column_name: 'contributors',
+        table_name: 'wiki_articles'
+      });
     }
     
-    // Update the article
+    // Always update last_updated timestamp
+    updates.last_updated = new Date();
+    
     const { data, error } = await supabase
       .from('wiki_articles')
-      .update({
-        title,
-        description,
-        content,
-        category,
-        tags,
-        contributors: incrementContributors ? existingArticle.contributors + 1 : existingArticle.contributors,
-        last_updated: new Date().toISOString() // Convert Date to ISO string for database compatibility
-      })
-      .eq('id', articleId)
+      .update(updates)
+      .eq('id', id)
       .select();
       
-    if (error) throw error;
-    
-    return { article: data?.[0], error: null };
+    if (error) {
+      throw error;
+    }
+
+    return { article: data[0] };
   } catch (error) {
     console.error('Error updating wiki article:', error);
     return { article: null, error };
   }
-}
+};
+
+export const deleteWikiArticle = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('wiki_articles')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      throw error;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting wiki article:', error);
+    return { success: false, error };
+  }
+};
+
+// Format date helper
+export const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// Get category icon
+export const getCategoryIcon = (category: string) => {
+  const foundCategory = categories.find(c => c.id.toLowerCase() === category.toLowerCase());
+  return foundCategory ? foundCategory.icon : BookIcon;
+};
+
+// Filter articles by search query and category
+export const filterArticles = (
+  articles: WikiArticle[],
+  searchQuery: string,
+  selectedCategory: string | null
+) => {
+  return articles.filter(article => {
+    const matchesSearch = searchQuery
+      ? article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.description.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+        
+    const matchesCategory = selectedCategory
+      ? article.category === selectedCategory
+      : true;
+        
+    return matchesSearch && matchesCategory;
+  });
+};
+
+// Placeholder for BookIcon if needed
+import { BookOpen as BookIcon } from 'lucide-react';
+
+// Import categories from CategorySidebar for consistency
+import { categories } from '@/components/wiki/CategorySidebar';

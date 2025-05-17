@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
-  Home, Library, MessageSquare, User, Settings, 
+  Home, Library, MessageSquare, User, 
   BookOpen, FileText, Image, Shield, Menu, X 
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -47,12 +47,6 @@ export const CollapsibleSidebar = () => {
   if (user?.isAdmin) {
     navItems.push({ path: "/admin", icon: Shield, label: "Admin" });
   }
-
-  // User routes
-  navItems.push(
-    { path: "/profile", icon: User, label: "Profile" },
-    { path: "/settings", icon: Settings, label: "Settings" }
-  );
 
   return (
     <aside 

@@ -9,6 +9,7 @@ import { ContentTypeFilter, ContentType } from "@/components/library/ContentType
 import { ViewSwitcher, ViewMode } from "@/components/library/ViewSwitcher";
 import { UnifiedContentFeed } from "@/components/library/UnifiedContentFeed";
 import { ContentSubmissionModal } from "@/components/library/ContentSubmissionModal";
+import { PageLayout } from "@/components/layouts/PageLayout";
 
 const Library = () => {
   const { isAuthenticated } = useAuth();
@@ -129,39 +130,41 @@ const Library = () => {
   };
   
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <BookOpen className="h-8 w-8" />
-            Knowledge Hub
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Discover, learn and contribute to our growing library of knowledge
-          </p>
+    <PageLayout>
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <BookOpen className="h-8 w-8" />
+              Knowledge Hub
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Discover, learn and contribute to our growing library of knowledge
+            </p>
+          </div>
+          
+          <Button 
+            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
+            onClick={handleCreateContent}
+          >
+            <PenSquare size={18} />
+            <span>Contribute</span>
+          </Button>
         </div>
         
-        <Button 
-          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors hover-lift"
-          onClick={handleCreateContent}
-        >
-          <PenSquare size={18} />
-          <span>Contribute</span>
-        </Button>
+        <UnifiedContentFeed 
+          defaultContentType={activeContentType} 
+          defaultViewMode={activeViewMode}
+        />
+        
+        <ContentSubmissionModal
+          isOpen={isSubmitModalOpen}
+          onOpenChange={setIsSubmitModalOpen}
+          defaultTab={activeTab}
+          onSubmitSuccess={handleSubmitSuccess}
+        />
       </div>
-      
-      <UnifiedContentFeed 
-        defaultContentType={activeContentType} 
-        defaultViewMode={activeViewMode}
-      />
-      
-      <ContentSubmissionModal
-        isOpen={isSubmitModalOpen}
-        onOpenChange={setIsSubmitModalOpen}
-        defaultTab={activeTab}
-        onSubmitSuccess={handleSubmitSuccess}
-      />
-    </div>
+    </PageLayout>
   );
 };
 

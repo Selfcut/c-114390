@@ -21,7 +21,7 @@ export function ThemeToggle() {
       <div className="relative w-full h-full flex items-center justify-center">
         <Sun
           size={20}
-          className="h-[1.2rem] w-[1.2rem] transition-all rotate-0 scale-100 dark:-rotate-90 dark:scale-0"
+          className="absolute h-[1.2rem] w-[1.2rem] transition-all rotate-0 scale-100 dark:-rotate-90 dark:scale-0"
         />
         <Moon
           size={20}

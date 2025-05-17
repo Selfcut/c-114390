@@ -17,6 +17,7 @@ import AdminPanel from '@/pages/AdminPanel';
 import Quotes from '@/pages/Quotes';
 import Library from '@/pages/Library';
 import Chat from '@/pages/Chat';
+import Landing from '@/pages/Landing';
 
 export const AppRoutes = () => {
   const { user, isLoading } = useAuth();
@@ -33,10 +34,12 @@ export const AppRoutes = () => {
   
   return (
     <Routes>
+      {/* Landing and Auth Routes */}
+      <Route path="/" element={user ? <Dashboard /> : <Landing />} />
       <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
       
       {/* Public Routes */}
-      <Route path="/" element={<Dashboard />} />
+      <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/auth" />} />
       <Route path="/media" element={<Media />} />
       <Route path="/forum" element={<Forum />} />
       <Route path="/forum/:id" element={<ForumPost />} />
@@ -49,7 +52,7 @@ export const AppRoutes = () => {
       {/* Protected Routes */}
       <Route path="/profile" element={user ? <Profile /> : <Navigate to="/auth" />} />
       <Route path="/settings" element={user ? <Settings /> : <Navigate to="/auth" />} />
-      <Route path="/admin" element={user ? <AdminPanel /> : <Navigate to="/auth" />} />
+      <Route path="/admin" element={user?.isAdmin ? <AdminPanel /> : <Navigate to="/" />} />
       
       {/* Not Found */}
       <Route path="*" element={<NotFound />} />
