@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -124,7 +125,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         return "bg-green-500";
       case "away":
         return "bg-yellow-500";
-      case "dnd":
+      case "do-not-disturb":
         return "bg-red-500";
       case "invisible":
       case "offline":

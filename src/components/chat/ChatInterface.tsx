@@ -417,7 +417,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         return "bg-green-500";
       case "away":
         return "bg-yellow-500";
-      case "dnd":
+      case "do-not-disturb":
         return "bg-red-500";
       case "invisible":
       case "offline":
@@ -429,7 +429,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Format status text
   const formatStatus = (status: UserStatus) => {
     switch (status) {
-      case "dnd":
+      case "do-not-disturb":
         return "Do Not Disturb";
       default:
         return status.charAt(0).toUpperCase() + status.slice(1);
