@@ -18,7 +18,8 @@ const queryClient = new QueryClient({
       staleTime: 60 * 1000, // 1 minute
       refetchOnWindowFocus: false,
       retry: 1, // Limit retries to avoid infinite loading states
-      useErrorBoundary: true, // Enable error boundaries for all queries
+      // Using throwOnError for error handling which is the proper API in latest TanStack Query
+      throwOnError: true, // This will propagate errors to error boundaries
     },
   },
 });
