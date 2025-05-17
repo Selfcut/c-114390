@@ -9,6 +9,24 @@ interface FetchArticlesOptions {
   searchQuery?: string;
 }
 
+// Define the database response type to match what Supabase returns
+interface WikiArticleDbResponse {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  content?: string;
+  last_updated: string;
+  contributors: number;
+  views: number;
+  tags?: string[];
+  image_url?: string;
+  user_id: string;
+  created_at: string;
+  author_name?: string;
+  likes?: number;  // Make this optional since it might not be in all responses
+}
+
 export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
   try {
     const {
@@ -41,7 +59,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
     }
 
     // Process data to conform to WikiArticle type
-    const articles: WikiArticle[] = data ? data.map(article => ({
+    const articles: WikiArticle[] = data ? data.map((article: WikiArticleDbResponse) => ({
       id: article.id,
       title: article.title,
       description: article.description,
@@ -55,7 +73,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
       user_id: article.user_id,
       created_at: new Date(article.created_at),
       author_name: article.author_name || 'Anonymous',
-      likes: article.likes || 0  // Make sure likes is included
+      likes: article.likes || 0  // Ensure likes is included with a default of 0
     })) : [];
 
     return { 
@@ -107,7 +125,7 @@ export const fetchWikiArticleById = async (id: string) => {
       user_id: data.user_id,
       created_at: new Date(data.created_at),
       author_name: data.author_name || 'Anonymous',
-      likes: data.likes || 0  // Make sure likes is included
+      likes: (data as any).likes || 0  // Use type assertion to avoid TypeScript error
     };
 
     return { article };
