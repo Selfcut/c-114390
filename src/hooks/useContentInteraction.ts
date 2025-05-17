@@ -124,19 +124,23 @@ export function useContentInteraction(options: InteractionOptions) {
       const { likesTable, contentTable, contentIdField } = getTableNames();
       
       // Check if already liked
-      const { data: existingLike } = await supabase
-        .from(likesTable)
+      const { data: existingLike, error: fetchError } = await supabase
+        .from(likesTable as any)
         .select()
         .eq('user_id', user.id)
         .eq(contentIdField, contentId)
         .maybeSingle();
+      
+      if (fetchError) {
+        throw fetchError;
+      }
       
       if (existingLike) {
         // Unlike
         await mutate(
           async () => {
             const result = await supabase
-              .from(likesTable)
+              .from(likesTable as any)
               .delete()
               .eq('user_id', user.id)
               .eq(contentIdField, contentId);
@@ -183,7 +187,7 @@ export function useContentInteraction(options: InteractionOptions) {
         await mutate(
           async () => {
             const result = await supabase
-              .from(likesTable)
+              .from(likesTable as any)
               .insert(payload);
             return result;  
           },
@@ -267,7 +271,7 @@ export function useContentInteraction(options: InteractionOptions) {
       await mutate(
         async () => {
           const result = await supabase
-            .from(commentsTable)
+            .from(commentsTable as any)
             .insert(payload);
           return result;
         },
@@ -303,7 +307,7 @@ export function useContentInteraction(options: InteractionOptions) {
     const { likesTable, contentIdField } = getTableNames();
     
     const { data } = await supabase
-      .from(likesTable)
+      .from(likesTable as any)
       .select()
       .eq('user_id', user.id)
       .eq(contentIdField, contentId)
@@ -327,7 +331,7 @@ export function useContentInteraction(options: InteractionOptions) {
       await mutate(
         async () => {
           const result = await supabase
-            .from(commentsTable)
+            .from(commentsTable as any)
             .delete()
             .eq('id', commentId)
             .eq('user_id', user.id);
