@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ChatMessage } from "../types";
@@ -24,12 +24,13 @@ export const useChatMessages = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // Fetch messages function
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async (conversationId: string = 'global') => {
     setIsLoadingMessages(true);
     try {
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
+        .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .limit(50);
       
@@ -54,12 +55,18 @@ export const useChatMessages = () => {
     } finally {
       setIsLoadingMessages(false);
     }
-  };
+  }, [user]);
 
   // Add a message to the state
-  const addMessage = (message: ChatMessage) => {
-    setMessages(prev => [...prev, message]);
-  };
+  const addMessage = useCallback((message: ChatMessage) => {
+    setMessages(prev => {
+      // Check if message already exists to prevent duplicates
+      if (prev.some(msg => msg.id === message.id)) {
+        return prev;
+      }
+      return [...prev, message];
+    });
+  }, []);
 
   return { 
     messages,

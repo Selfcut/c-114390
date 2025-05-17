@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ChatMessage } from "@/components/chat/types";
 import { useConversations } from "./chat/useConversations";
 import { useMessageInput } from "./chat/useMessageInput";
@@ -7,9 +7,9 @@ import { useMessageHandlers } from "./chat/useMessageHandlers";
 import { useMessageReactions } from "./chat/useMessageReactions";
 import { useMessageUtils } from "./chat/useMessageUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const useChatMessages = () => {
-  // Use real data from component hook instead of mock data
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -17,7 +17,7 @@ export const useChatMessages = () => {
     conversations,
     selectedConversation,
     setSelectedConversation,
-    handleSelectConversation: selectConversationFromHook, // Rename to avoid conflict
+    handleSelectConversation: selectConversationFromHook,
     updateConversationLastMessage
   } = useConversations();
   
@@ -53,7 +53,7 @@ export const useChatMessages = () => {
   const { formatTime } = useMessageUtils();
 
   // Function to fetch messages from the database
-  const fetchMessages = async (conversationId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string = 'global') => {
     setIsLoading(true);
     try {
       // Fetch messages from Supabase
@@ -65,6 +65,7 @@ export const useChatMessages = () => {
       
       if (error) {
         console.error('Error fetching messages:', error);
+        toast.error('Could not load messages');
         return;
       }
       
@@ -81,22 +82,16 @@ export const useChatMessages = () => {
         }));
         setMessages(formattedMessages);
       } else {
-        // If no messages, show a welcome message
-        setMessages([{
-          id: crypto.randomUUID(),
-          conversationId: conversationId,
-          content: `Welcome to the conversation!`,
-          senderName: "System",
-          userId: "system",
-          createdAt: new Date().toISOString(),
-        }]);
+        // If no messages, show an empty state
+        setMessages([]);
       }
     } catch (err) {
       console.error('Error in fetchMessages:', err);
+      toast.error('Could not load messages');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Wrap the original handlers to update input state
   const handleMessageEdit = (messageId: string) => {
@@ -120,7 +115,7 @@ export const useChatMessages = () => {
   };
 
   // Select conversation wrapper
-  const handleSelectConversation = (conversationId: string) => {
+  const handleSelectConversation = useCallback((conversationId: string) => {
     // Use the renamed function from the hook
     const conversation = selectConversationFromHook(conversationId);
     
@@ -132,7 +127,7 @@ export const useChatMessages = () => {
     setReplyingToMessage(null);
     
     return conversation;
-  };
+  }, [selectConversationFromHook, fetchMessages, setEditingMessageId, setReplyingToMessage]);
 
   return {
     conversations,

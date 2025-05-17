@@ -12,30 +12,37 @@ import { ChatSidebarContainer } from "./ChatSidebarContainer";
 import { ChatSidebarHeader } from "./ChatSidebarHeader";
 import { ChatContent } from "./ChatContent";
 import { ChatAnimationStyles } from "./ChatAnimationStyles";
+import { useChatActions } from "./hooks/useChatActions";
 
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
   const { user } = useAuth();
   const { isAdmin } = useAdminStatus();
   
-  // Use the existing useChatMessages hook with all its functionality
+  // Use the chat messages hook for loading messages
   const {
     messages,
-    isLoading,
-    message,
-    setMessage,
+    isLoadingMessages,
+    addMessage,
+    fetchMessages
+  } = useChatMessages();
+
+  // Use chat actions for message operations
+  const {
+    isLoading: isSendingMessage,
+    inputMessage,
+    setInputMessage,
     replyingToMessage,
     editingMessageId,
     handleSendMessage,
-    handleMessageEdit,
-    handleMessageDelete,
-    handleMessageReply,
-    handleReactionAdd,
-    handleReactionRemove,
-    handleKeyDown,
-    fetchMessages,
-    selectedConversation
-  } = useChatMessages();
+    handleAdminEffectSelect,
+    handleEditMessage,
+    handleDeleteMessage,
+    handleReplyToMessage,
+    cancelEdit,
+    cancelReply,
+    handleKeyDown
+  } = useChatActions();
   
   const { handleSpecialEffect } = useSpecialEffects();
   
@@ -44,14 +51,7 @@ export const FullHeightChatSidebar = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Real functionality to add a message
-  const addMessage = (message: any) => {
-    // In a real app, this would insert into the database
-    // For now, we'll just scroll to bottom
-    scrollToBottom();
-  };
-
-  // Use our custom hooks
+  // Use our custom hooks for realtime functionality
   useRealtimeChatSubscription({ 
     isOpen, 
     addMessage, 
@@ -66,40 +66,33 @@ export const FullHeightChatSidebar = () => {
     scrollToBottom 
   });
 
-  // Fetch messages when the sidebar is opened or conversation changes
+  // Fetch messages when the sidebar is opened
   useEffect(() => {
-    if (isOpen && selectedConversation) {
-      fetchMessages(selectedConversation);
+    if (isOpen) {
+      fetchMessages();
     }
-  }, [isOpen, selectedConversation, fetchMessages]);
+  }, [isOpen, fetchMessages]);
 
   // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
-    setMessage(message + emoji);
+    setInputMessage(prev => prev + emoji);
   };
 
   // Handle GIF selection
   const handleGifSelect = (gif: { url: string; alt: string }) => {
     const gifMarkdown = `![${gif.alt}](${gif.url})`;
-    setMessage(message + " " + gifMarkdown);
+    setInputMessage(prev => prev + " " + gifMarkdown);
   };
 
-  // Handle admin effect selection
-  const handleAdminEffectSelect = (effectType: string, content?: string) => {
-    // This would be implemented if we had admin functionality
-    console.log("Admin effect selected:", effectType, content);
-  };
-
-  const cancelEdit = () => {
-    if (editingMessageId) {
-      setMessage("");
-      // Additional logic would be here in a real implementation
-    }
-  };
-
-  const cancelReply = () => {
-    if (replyingToMessage) {
-      // Additional logic would be here in a real implementation
+  // Format time helper function
+  const formatTime = (timestamp: string) => {
+    try {
+      return new Date(timestamp).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch (e) {
+      return 'Invalid time';
     }
   };
 
@@ -111,23 +104,17 @@ export const FullHeightChatSidebar = () => {
         <ChatSidebarHeader toggleSidebar={toggleSidebar} />
         
         <ChatContent
-          isLoadingMessages={isLoading}
+          isLoadingMessages={isLoadingMessages}
           messages={messages}
-          isLoading={isLoading}
-          formatTime={(timestamp) => {
-            try {
-              return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } catch (e) {
-              return 'Invalid time';
-            }
-          }}
-          onMessageEdit={handleMessageEdit}
-          onMessageDelete={handleMessageDelete}
-          onMessageReply={handleMessageReply}
-          onReactionAdd={handleReactionAdd}
-          onReactionRemove={handleReactionRemove}
-          inputMessage={message}
-          setInputMessage={setMessage}
+          isLoading={isLoadingMessages || isSendingMessage}
+          formatTime={formatTime}
+          onMessageEdit={handleEditMessage}
+          onMessageDelete={handleDeleteMessage}
+          onMessageReply={handleReplyToMessage}
+          onReactionAdd={() => {}} // Not implemented yet
+          onReactionRemove={() => {}} // Not implemented yet
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
           handleSendMessage={handleSendMessage}
           handleKeyDown={handleKeyDown}
           editingMessageId={editingMessageId}

@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage } from "../types";
 import { DbChatMessage } from "./useChatMessages";
@@ -20,10 +20,13 @@ export const useRealtimeChatSubscription = ({
   handleSpecialEffect
 }: UseRealtimeChatSubscriptionProps) => {
   const { user } = useAuth();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const channelRef = useRef<any>(null);
 
   // Set up real-time subscription for chat messages
   useEffect(() => {
-    if (!isOpen) return;
+    // Only set up subscription when sidebar is open and we're not already subscribed
+    if (!isOpen || isSubscribed) return;
 
     console.log('Setting up realtime chat subscription');
 
@@ -64,15 +67,22 @@ export const useRealtimeChatSubscription = ({
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.log('Successfully subscribed to chat messages');
+          setIsSubscribed(true);
+          channelRef.current = channel;
         } else if (status === 'CHANNEL_ERROR') {
           console.error('Error subscribing to chat messages');
           toast.error('Could not connect to chat. Please try again later.');
+          setIsSubscribed(false);
         }
       });
 
     return () => {
-      console.log('Cleaning up realtime chat subscription');
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        console.log('Cleaning up realtime chat subscription');
+        supabase.removeChannel(channelRef.current);
+        setIsSubscribed(false);
+        channelRef.current = null;
+      }
     };
-  }, [isOpen, user, addMessage, scrollToBottom, handleSpecialEffect]);
+  }, [isOpen, user, addMessage, scrollToBottom, handleSpecialEffect, isSubscribed]);
 };
