@@ -2,16 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, ThumbsUp, Tag, Clock, ArrowLeft, Eye, Send } from 'lucide-react';
+import { ArrowLeft, Send } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { ForumSkeleton } from '@/components/forum/post/ForumSkeleton';
+import { ForumPostDetails } from '@/components/forum/post/ForumPostDetails';
+import { ForumPostStats } from '@/components/forum/post/ForumPostStats';
+import { CommentsList } from '@/components/forum/comments/CommentsList';
+import { NotFoundCard } from '@/components/forum/post/NotFoundCard';
 
 interface Comment {
   id: string;
@@ -190,65 +191,21 @@ const ForumPost = () => {
         </Button>
         
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-3/4" />
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-40 w-full" />
-          </div>
+          <ForumSkeleton />
         ) : discussion ? (
           <>
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold mb-4">{discussion.title}</h1>
-              
-              <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={discussion.authorAvatar} alt={discussion.author} />
-                  <AvatarFallback>{discussion.author.substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                
-                <div>
-                  <p className="font-medium">{discussion.author}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Posted {formatTimeAgo(discussion.createdAt)}
-                  </p>
-                </div>
-              </div>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="prose prose-stone dark:prose-invert max-w-none">
-                    {discussion.content.split('\n\n').map((paragraph: string, idx: number) => (
-                      <p key={idx}>{paragraph}</p>
-                    ))}
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mt-6">
-                    {discussion.tags.map((tag: string) => (
-                      <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                        <Tag size={12} />
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <ForumPostDetails 
+              discussion={discussion} 
+              formatTimeAgo={formatTimeAgo} 
+            />
             
-            {/* Stats */}
-            <div className="flex items-center gap-6 text-muted-foreground mb-6">
-              <span className="flex items-center gap-1">
-                <Eye size={18} /> {discussion.views} views
-              </span>
-              <span className="flex items-center gap-1">
-                <MessageSquare size={18} /> {comments.length} replies
-              </span>
-              <span className="flex items-center gap-1">
-                <ThumbsUp size={18} /> {discussion.upvotes} upvotes
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock size={18} /> {formatTimeAgo(discussion.createdAt)}
-              </span>
-            </div>
+            <ForumPostStats
+              views={discussion.views}
+              comments={comments.length}
+              upvotes={discussion.upvotes}
+              createdAt={discussion.createdAt}
+              formatTimeAgo={formatTimeAgo}
+            />
             
             {/* Add comment */}
             <Card className="mb-8">
@@ -280,68 +237,13 @@ const ForumPost = () => {
             
             {/* Comments */}
             <h2 className="text-2xl font-semibold mb-4">Replies</h2>
-            {comments.length > 0 ? (
-              <div className="space-y-4">
-                {comments.map((comment) => (
-                  <Card key={comment.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={comment.authorAvatar} alt={comment.author} />
-                          <AvatarFallback>{comment.author.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{comment.author}</span>
-                              {comment.isAuthor && (
-                                <Badge variant="outline" className="text-xs">Author</Badge>
-                              )}
-                            </div>
-                            <span className="text-sm text-muted-foreground">
-                              {formatTimeAgo(comment.createdAt)}
-                            </span>
-                          </div>
-                          
-                          <p className="mt-2">{comment.content}</p>
-                          
-                          <div className="flex items-center gap-4 mt-4">
-                            <Button variant="ghost" size="sm" className="text-muted-foreground flex items-center gap-1">
-                              <ThumbsUp size={14} />
-                              Like
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground flex items-center gap-1">
-                              <MessageSquare size={14} />
-                              Reply
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <p className="text-muted-foreground">No replies yet. Be the first to respond!</p>
-                </CardContent>
-              </Card>
-            )}
+            <CommentsList 
+              comments={comments}
+              formatTimeAgo={formatTimeAgo}
+            />
           </>
         ) : (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-red-500">Discussion not found or has been removed.</p>
-              <Button 
-                className="mt-4"
-                onClick={() => navigate('/forum')}
-              >
-                Back to Forum
-              </Button>
-            </CardContent>
-          </Card>
+          <NotFoundCard onNavigateBack={() => navigate('/forum')} />
         )}
       </div>
     </PageLayout>
