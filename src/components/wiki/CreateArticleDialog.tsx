@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { createWikiArticle } from '@/utils/wikiUtils';
 import { WikiArticle } from './types';
 import { Loader2 } from 'lucide-react';
+import { categories } from './CategorySidebar';
 
 interface CreateArticleDialogProps {
   isOpen: boolean;
@@ -71,7 +72,7 @@ export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
         ? formData.tagsInput.split(',').map(tag => tag.trim().toLowerCase())
         : [];
       
-      // Create article - Fixed the property name from imageUrl to image_url
+      // Create article - Fixed: renamed imageUrl to image_url
       const { article, error } = await createWikiArticle({
         title: formData.title,
         description: formData.description,
@@ -87,7 +88,7 @@ export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
       if (article) {
         toast({
           title: "Article Created",
-          description: "Your article has been published successfully",
+          description: "Your article has been published successfully!",
         });
         
         // Convert the returned article to the expected format

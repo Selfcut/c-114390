@@ -22,10 +22,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
     
     let query = supabase
       .from('wiki_articles')
-      .select(`
-        *,
-        profiles:user_id (name, avatar_url)
-      `, { count: 'exact' });
+      .select('*', { count: 'exact' });
 
     if (category) {
       query = query.eq('category', category);
@@ -57,7 +54,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
       image_url: article.image_url,
       user_id: article.user_id,
       created_at: new Date(article.created_at),
-      author_name: article.profiles?.name || 'Anonymous'
+      author_name: article.author_name || 'Anonymous'
     })) : [];
 
     return { 
@@ -82,10 +79,7 @@ export const fetchWikiArticleById = async (id: string) => {
     
     const { data, error } = await supabase
       .from('wiki_articles')
-      .select(`
-        *,
-        profiles:user_id (name, avatar_url)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
       
@@ -111,7 +105,7 @@ export const fetchWikiArticleById = async (id: string) => {
       image_url: data.image_url,
       user_id: data.user_id,
       created_at: new Date(data.created_at),
-      author_name: data.profiles?.name || 'Anonymous'
+      author_name: data.author_name || 'Anonymous'
     };
 
     return { article };
@@ -123,11 +117,22 @@ export const fetchWikiArticleById = async (id: string) => {
 
 export const createWikiArticle = async (articleData: Partial<WikiArticle>) => {
   try {
+    // Ensure required fields are present
+    if (!articleData.title || !articleData.description || !articleData.category || !articleData.user_id) {
+      throw new Error("Missing required fields for article creation");
+    }
+    
     // Convert Date objects to ISO strings for database storage
     const dataForDb = {
-      ...articleData,
-      created_at: articleData.created_at instanceof Date ? articleData.created_at.toISOString() : undefined,
-      last_updated: articleData.last_updated instanceof Date ? articleData.last_updated.toISOString() : undefined
+      title: articleData.title,
+      description: articleData.description,
+      category: articleData.category,
+      user_id: articleData.user_id,
+      content: articleData.content,
+      tags: articleData.tags,
+      image_url: articleData.image_url,
+      created_at: articleData.created_at instanceof Date ? articleData.created_at.toISOString() : new Date().toISOString(),
+      last_updated: articleData.last_updated instanceof Date ? articleData.last_updated.toISOString() : new Date().toISOString()
     };
 
     const { data, error } = await supabase

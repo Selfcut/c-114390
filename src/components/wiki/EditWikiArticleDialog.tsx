@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,6 @@ export const EditWikiArticleDialog = ({
     try {
       setIsSubmitting(true);
       
-      // Fixed: removed the third parameter as updateWikiArticle only expects 2 parameters
       const { article: updatedArticle, error } = await updateWikiArticle(
         article.id, 
         {

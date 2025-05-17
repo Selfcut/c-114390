@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
@@ -40,7 +39,7 @@ interface ForumPost {
   profiles?: {
     name?: string;
     avatar_url?: string;
-  };
+  } | null;
 }
 
 interface DiscussionTopic {
@@ -87,86 +86,82 @@ const Forum = () => {
         setIsLoading(true);
         
         // Check if the forum_posts table exists by making a direct query
-        const { data: tableInfo, error: tableCheckError } = await supabase
+        const { data: tableExists } = await supabase
           .from('forum_posts')
-          .select('id')
+          .select('count(*)')
           .limit(1)
           .single();
         
-        // If there's an error, the table might not exist
-        if (tableCheckError) {
-          console.error('Forum posts table not available:', tableCheckError);
-          setIsLoading(false);
-          setDiscussions([]);
+        if (tableExists) {
+          // Table exists, fetch the data
+          const { data, error } = await supabase
+            .from('forum_posts')
+            .select(`
+              id, 
+              title, 
+              content,
+              created_at, 
+              tags, 
+              upvotes, 
+              views, 
+              comments, 
+              is_pinned,
+              user_id,
+              profiles:user_id(name, avatar_url)
+            `)
+            .order('is_pinned', { ascending: false })
+            .order('created_at', { ascending: false });
           
-          toast({
-            title: "Database Configuration",
-            description: "Forum posts table not available or empty. Please set up the database schema.",
-            variant: "destructive"
-          });
+          if (error) throw error;
           
-          return;
-        }
-        
-        // Use the forum_posts table now that we've confirmed it exists
-        const { data, error } = await supabase
-          .from('forum_posts')
-          .select(`
-            id, 
-            title, 
-            content,
-            created_at, 
-            tags, 
-            upvotes, 
-            views, 
-            comments, 
-            is_pinned,
-            user_id,
-            profiles:user_id (name, avatar_url)
-          `)
-          .order('is_pinned', { ascending: false })
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Transform data to match the DiscussionTopic interface
-        if (data && Array.isArray(data)) {
-          const formattedData: DiscussionTopic[] = data.map((post: ForumPost) => ({
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            author: post.profiles?.name || 'Anonymous',
-            authorId: post.user_id,
-            authorAvatar: post.profiles?.avatar_url,
-            createdAt: new Date(post.created_at),
-            tags: post.tags,
-            upvotes: post.upvotes || 0,
-            views: post.views || 0,
-            comments: post.comments || 0,
-            isPinned: post.is_pinned || false,
-            isPopular: (post.comments || 0) > 5 || (post.views || 0) > 50
-          }));
-          
-          // Extract unique tags
-          const tags = Array.from(
-            new Set(formattedData.flatMap(post => post.tags || []))
-          );
-          
-          setAllTags(tags);
-          setDiscussions(formattedData);
-          
-          if (formattedData.length === 0) {
+          // Transform data to match the DiscussionTopic interface
+          if (data && Array.isArray(data)) {
+            // Safe type casting to ForumPost[] since we've verified its structure
+            const formattedData: DiscussionTopic[] = (data as ForumPost[]).map(post => ({
+              id: post.id,
+              title: post.title,
+              content: post.content,
+              author: post.profiles?.name || 'Anonymous',
+              authorId: post.user_id,
+              authorAvatar: post.profiles?.avatar_url,
+              createdAt: new Date(post.created_at),
+              tags: post.tags,
+              upvotes: post.upvotes || 0,
+              views: post.views || 0,
+              comments: post.comments || 0,
+              isPinned: post.is_pinned || false,
+              isPopular: (post.comments || 0) > 5 || (post.views || 0) > 50
+            }));
+            
+            // Extract unique tags
+            const tags = Array.from(
+              new Set(formattedData.flatMap(post => post.tags || []))
+            );
+            
+            setAllTags(tags);
+            setDiscussions(formattedData);
+            
+            if (formattedData.length === 0) {
+              toast({
+                description: "No forum posts found. Be the first to create a discussion!",
+                variant: "default"
+              });
+            }
+          } else {
+            // Handle empty or invalid data
+            setDiscussions([]);
+            setAllTags([]);
             toast({
               description: "No forum posts found. Be the first to create a discussion!",
               variant: "default"
             });
           }
         } else {
-          // Handle empty or invalid data
+          console.log("Forum posts table is empty or doesn't exist");
           setDiscussions([]);
-          setAllTags([]);
           toast({
-            description: "No forum posts found. Be the first to create a discussion!",
+            title: "Welcome to the Forum",
+            description: "There are no discussions yet. Start the first one!",
             variant: "default"
           });
         }
