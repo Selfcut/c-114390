@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -16,6 +17,7 @@ import remarkGfm from 'remark-gfm';
 import { EditWikiArticleDialog } from "@/components/wiki/EditWikiArticleDialog";
 import { formatDate } from "@/components/wiki/WikiUtils";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useContentLikes } from "@/hooks/content/useContentLikes";
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
@@ -27,6 +29,12 @@ const WikiArticlePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Use content likes hook for wiki articles
+  const { toggleLike, checkUserLike, isProcessing, isAuthenticated } = useContentLikes({
+    contentType: 'wiki'
+  });
 
   // Fetch article data
   useEffect(() => {
@@ -47,6 +55,12 @@ const WikiArticlePage = () => {
         
         if (article) {
           setArticle(article);
+          
+          // Check if the user has liked this article
+          if (isAuthenticated) {
+            const hasLiked = await checkUserLike(article.id);
+            setIsLiked(hasLiked);
+          }
         } else {
           setError("Article not found");
         }
@@ -64,7 +78,7 @@ const WikiArticlePage = () => {
     };
     
     fetchArticle();
-  }, [articleId, toast, retryCount]);
+  }, [articleId, toast, retryCount, checkUserLike, isAuthenticated]);
 
   const handleBack = () => {
     navigate(-1);
@@ -81,6 +95,47 @@ const WikiArticlePage = () => {
       title: "Article Updated",
       description: "The article has been updated successfully",
     });
+  };
+
+  const handleLikeToggle = async () => {
+    if (!articleId || !article) return;
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to like articles",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await toggleLike(
+        article.id, 
+        () => {
+          // On success
+          setIsLiked(prev => !prev);
+          setArticle(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              likes: prev.likes ? (isLiked ? prev.likes - 1 : prev.likes + 1) : (isLiked ? 0 : 1)
+            };
+          });
+        },
+        (error) => {
+          // On error
+          console.error('Error toggling like:', error);
+          toast({
+            title: "Error",
+            description: "Failed to update like status",
+            variant: "destructive"
+          });
+        }
+      );
+    } catch (error) {
+      console.error('Exception in handleLikeToggle:', error);
+    }
   };
 
   // Loading state
@@ -195,6 +250,12 @@ const WikiArticlePage = () => {
                 <UserCircle size={16} />
                 <span>{article.contributors} contributors</span>
               </div>
+              {article.likes !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  <Heart size={16} className={isLiked ? "fill-red-500 text-red-500" : ""} />
+                  <span>{article.likes || 0} likes</span>
+                </div>
+              )}
             </div>
             
             <div className="prose prose-stone dark:prose-invert max-w-none">
@@ -215,9 +276,18 @@ const WikiArticlePage = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-                  <Heart size={14} />
-                  <span>Like</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`flex items-center gap-1.5 ${isLiked ? 'bg-red-50 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800' : ''}`}
+                  onClick={handleLikeToggle}
+                  disabled={isProcessing[`like_${article.id}`]}
+                >
+                  <Heart 
+                    size={14} 
+                    className={isLiked ? "fill-red-500 text-red-500" : ""} 
+                  />
+                  <span>{isLiked ? 'Liked' : 'Like'}</span>
                 </Button>
                 <Button variant="outline" size="sm" className="flex items-center gap-1.5">
                   <MessagesSquare size={14} />
