@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { LoadingScreen } from './LoadingScreen';
@@ -18,6 +18,7 @@ import Quotes from '@/pages/Quotes';
 import Library from '@/pages/Library';
 import Chat from '@/pages/Chat';
 import Landing from '@/pages/Landing';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 export const AppRoutes = () => {
   const { user, isLoading } = useAuth();
@@ -33,29 +34,81 @@ export const AppRoutes = () => {
   }
   
   return (
-    <Routes>
-      {/* Landing and Auth Routes */}
-      <Route path="/" element={user ? <Dashboard /> : <Landing />} />
-      <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
-      
-      {/* Public Routes */}
-      <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/auth" />} />
-      <Route path="/media" element={<Media />} />
-      <Route path="/forum" element={<Forum />} />
-      <Route path="/forum/:id" element={<ForumPost />} />
-      <Route path="/wiki" element={<Wiki />} />
-      <Route path="/wiki/:id" element={<WikiArticle />} />
-      <Route path="/quotes" element={<Quotes />} />
-      <Route path="/library" element={<Library />} />
-      <Route path="/chat" element={<Chat />} />
-      
-      {/* Protected Routes */}
-      <Route path="/profile" element={user ? <Profile /> : <Navigate to="/auth" />} />
-      <Route path="/settings" element={user ? <Settings /> : <Navigate to="/auth" />} />
-      <Route path="/admin" element={user?.isAdmin ? <AdminPanel /> : <Navigate to="/" />} />
-      
-      {/* Not Found */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          {/* Landing and Auth Routes */}
+          <Route path="/" element={user ? <Dashboard /> : <Landing />} />
+          <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
+          
+          {/* Public Routes */}
+          <Route path="/dashboard" element={
+            <ErrorBoundary>
+              {user ? <Dashboard /> : <Navigate to="/auth" />}
+            </ErrorBoundary>
+          } />
+          <Route path="/media" element={
+            <ErrorBoundary>
+              <Media />
+            </ErrorBoundary>
+          } />
+          <Route path="/forum" element={
+            <ErrorBoundary>
+              <Forum />
+            </ErrorBoundary>
+          } />
+          <Route path="/forum/:id" element={
+            <ErrorBoundary>
+              <ForumPost />
+            </ErrorBoundary>
+          } />
+          <Route path="/wiki" element={
+            <ErrorBoundary>
+              <Wiki />
+            </ErrorBoundary>
+          } />
+          <Route path="/wiki/:id" element={
+            <ErrorBoundary>
+              <WikiArticle />
+            </ErrorBoundary>
+          } />
+          <Route path="/quotes" element={
+            <ErrorBoundary>
+              <Quotes />
+            </ErrorBoundary>
+          } />
+          <Route path="/library" element={
+            <ErrorBoundary>
+              <Library />
+            </ErrorBoundary>
+          } />
+          <Route path="/chat" element={
+            <ErrorBoundary>
+              <Chat />
+            </ErrorBoundary>
+          } />
+          
+          {/* Protected Routes */}
+          <Route path="/profile" element={
+            <ErrorBoundary>
+              {user ? <Profile /> : <Navigate to="/auth" />}
+            </ErrorBoundary>
+          } />
+          <Route path="/settings" element={
+            <ErrorBoundary>
+              {user ? <Settings /> : <Navigate to="/auth" />}
+            </ErrorBoundary>
+          } />
+          <Route path="/admin" element={
+            <ErrorBoundary>
+              {user?.isAdmin ? <AdminPanel /> : <Navigate to="/" />}
+            </ErrorBoundary>
+          } />
+          
+          {/* Not Found */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 };

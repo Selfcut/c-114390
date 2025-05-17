@@ -8,6 +8,20 @@ import App from './App.tsx'
 // Set document title
 document.title = "Polymath - Intellectual Science Community";
 
+// Initialize theme as early as possible to avoid flash of wrong theme
+const initTheme = () => {
+  const storedTheme = localStorage.getItem('app-theme') || 'dark';
+  if (storedTheme === 'system') {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.add(isDark ? 'dark' : 'light');
+  } else {
+    document.documentElement.classList.add(storedTheme);
+  }
+};
+
+// Execute theme initialization immediately
+initTheme();
+
 // Add a small animation to the body when the app loads
 document.body.classList.add('fade-in');
 
@@ -31,23 +45,6 @@ const initScrollAnimations = () => {
   });
 };
 
-// Execute after initial render
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    initScrollAnimations();
-    console.log('Styles loaded: Tailwind and CSS initialized');
-    
-    // Set theme class on document
-    const storedTheme = localStorage.getItem('polymath-ui-theme') || 'dark';
-    if (storedTheme === 'system') {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.add(isDark ? 'dark' : 'light');
-    } else {
-      document.documentElement.classList.add(storedTheme);
-    }
-  }, 100);
-});
-
 // Create root and render app
 const root = document.getElementById('root');
 if (!root) {
@@ -58,4 +55,12 @@ if (!root) {
       <App />
     </React.StrictMode>
   );
+  
+  // Execute after initial render
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      initScrollAnimations();
+      console.log('Styles loaded: Tailwind and CSS initialized');
+    }, 100);
+  });
 }
