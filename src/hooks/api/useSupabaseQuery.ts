@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { useToast } from '@/hooks/use-toast';
 
 interface QueryOptions<T> {

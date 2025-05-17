@@ -9,7 +9,7 @@ export interface ErrorMessageProps {
   message: string;
   retry?: () => void;
   isRetrying?: boolean;
-  variant?: 'default' | 'destructive' | 'subtle';
+  variant?: 'default' | 'destructive'; // Removed 'subtle' as it's not supported
   className?: string;
 }
 

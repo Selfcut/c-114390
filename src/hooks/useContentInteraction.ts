@@ -11,6 +11,13 @@ export interface InteractionOptions {
   onError?: (error: any) => void;
 }
 
+interface TableNames {
+  likesTable: 'media_likes' | 'content_likes' | 'quote_likes';
+  commentsTable: 'media_comments' | 'content_comments' | 'quote_comments';
+  contentTable: 'media_posts' | 'forum_posts' | 'wiki_articles' | 'quotes';
+  contentIdField: 'post_id' | 'content_id' | 'quote_id';
+}
+
 export function useContentInteraction(options: InteractionOptions) {
   const { contentType, onSuccess, onError } = options;
   const { user } = useAuth();
@@ -19,7 +26,7 @@ export function useContentInteraction(options: InteractionOptions) {
   const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
 
   // Helper to get the right table names based on content type
-  const getTableNames = useCallback(() => {
+  const getTableNames = useCallback((): TableNames => {
     switch (contentType) {
       case 'media':
         return {
@@ -53,7 +60,7 @@ export function useContentInteraction(options: InteractionOptions) {
         return {
           likesTable: 'content_likes',
           commentsTable: 'content_comments',
-          contentTable: '',
+          contentTable: 'forum_posts',
           contentIdField: 'content_id',
         };
     }
@@ -204,7 +211,7 @@ export function useContentInteraction(options: InteractionOptions) {
   }, [user, toast, mutate, getTableNames, isProcessing, onSuccess, onError]);
 
   // Check if user has liked content
-  const checkUserLike = useCallback(async (contentId: string) => {
+  const checkUserLike = useCallback(async (contentId: string): Promise<boolean> => {
     if (!user) return false;
     
     const { likesTable, contentIdField } = getTableNames();
