@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -49,7 +50,7 @@ const ProblemDetail = () => {
             setIsLoading(true);
             
             // Get forum posts that are specifically about this problem
-            // Using proper join syntax with the user_id foreign key
+            // Modifying the query to correctly fetch the profile data
             const { data, error } = await supabase
               .from('forum_posts')
               .select(`
@@ -60,7 +61,9 @@ const ProblemDetail = () => {
                 upvotes,
                 created_at,
                 user_id,
-                profiles:profiles(name, username, avatar_url)
+                user_id (
+                  profiles (name, username, avatar_url)
+                )
               `)
               .like('tags', `%Problem ${id}%`)
               .order('created_at', { ascending: false });
@@ -76,15 +79,20 @@ const ProblemDetail = () => {
             }
             
             if (data) {
-              const formattedComments: Comment[] = data.map(post => ({
-                id: post.id,
-                content: post.content,
-                author: post.profiles?.name || post.profiles?.username || 'Unknown User',
-                authorAvatar: post.profiles?.avatar_url,
-                authorId: post.user_id,
-                createdAt: new Date(post.created_at),
-                upvotes: post.upvotes || 0
-              }));
+              // Process the data to extract profile info correctly
+              const formattedComments: Comment[] = data.map(post => {
+                const profile = post.user_id?.profiles || {};
+                
+                return {
+                  id: post.id,
+                  content: post.content,
+                  author: profile.name || profile.username || 'Unknown User',
+                  authorAvatar: profile.avatar_url,
+                  authorId: post.user_id,
+                  createdAt: new Date(post.created_at),
+                  upvotes: post.upvotes || 0
+                };
+              });
               
               setComments(formattedComments);
             }
