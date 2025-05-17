@@ -133,15 +133,16 @@ export const MediaContainer = () => {
             isOpen={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
             onSubmit={(data) => {
-              const result = handleCreatePost(data);
-              if (result) {
-                return result.then((response) => {
+              const resultPromise = handleCreatePost(data);
+              if (resultPromise && typeof resultPromise.then === 'function') {
+                return resultPromise.then((response) => {
                   if (response && response.id) {
                     handlePostCreationSuccess(response.id);
                   }
                   return response;
                 });
               }
+              // Return a resolved promise if handleCreatePost doesn't return one
               return Promise.resolve(null);
             }}
             isSubmitting={createPostMutation?.isPending}
