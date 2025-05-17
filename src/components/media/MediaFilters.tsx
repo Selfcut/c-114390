@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
@@ -6,17 +7,13 @@ import { SlidersHorizontal } from "lucide-react";
 interface MediaFiltersProps {
   filterType: string;
   setFilterType: (type: string) => void;
-  sortBy: "newest" | "oldest" | "popular";
-  setSortBy: (value: "newest" | "oldest" | "popular") => void;
+  sortBy: string;
+  setSortBy: (value: any) => void;
 }
 
 export const MediaFilters = ({ filterType, setFilterType, sortBy, setSortBy }: MediaFiltersProps) => {
-  const handleSortChange = (value: string) => {
-    setSortBy(value as "newest" | "oldest" | "popular");
-  };
-
   return (
-    <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+    <>
       <div className="flex flex-wrap gap-2">
         <Button 
           variant={filterType === "all" ? "default" : "outline"}
@@ -64,17 +61,17 @@ export const MediaFilters = ({ filterType, setFilterType, sortBy, setSortBy }: M
       
       <div className="flex items-center gap-2">
         <SlidersHorizontal size={16} className="text-muted-foreground" />
-        <Select value={sortBy} onValueChange={handleSortChange}>
+        <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-36 h-9">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="popular">Most Popular</SelectItem>
+            <SelectItem value="created_at">Newest</SelectItem>
+            <SelectItem value="likes">Most Popular</SelectItem>
+            <SelectItem value="title">Alphabetical</SelectItem>
           </SelectContent>
         </Select>
       </div>
-    </div>
+    </>
   );
 };

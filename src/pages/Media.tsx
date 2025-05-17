@@ -3,17 +3,19 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { MediaPost, fetchMediaPosts, createMediaPost } from "@/utils/mediaUtils";
 import { MediaFeed } from "@/components/media/MediaFeed";
-import { Plus, Image as ImageIcon, FileText, Loader2, Upload, Youtube, AlertTriangle } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layouts/PageLayout";
+import { MediaHeader } from "@/components/media/MediaHeader";
+import { MediaFilters } from "@/components/media/MediaFilters";
+import { MediaSearchBar } from "@/components/media/MediaSearchBar";
+import { CreatePostDialog } from "@/components/media/CreatePostDialog";
+import { MediaEmptyState } from "@/components/media/MediaEmptyState";
+import { MediaErrorDisplay } from "@/components/media/MediaErrorDisplay";
 
 const Media = () => {
   const { user } = useAuth();
@@ -27,10 +29,6 @@ const Media = () => {
   
   // Create post states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [postTitle, setPostTitle] = useState("");
-  const [postContent, setPostContent] = useState("");
-  const [postUrl, setPostUrl] = useState("");
-  const [postType, setPostType] = useState<'image' | 'video' | 'document' | 'youtube' | 'text'>('text');
 
   // Fetch media posts using react-query with better error handling
   const { data: postsData, isLoading, isError, error, refetch } = useQuery({
@@ -72,7 +70,6 @@ const Media = () => {
         description: "Your post has been published successfully",
       });
       setIsCreateDialogOpen(false);
-      resetForm();
       setPage(0);
     },
     onError: (error: any) => {
@@ -84,7 +81,7 @@ const Media = () => {
     }
   });
 
-  // Process YouTube URL to extract video ID
+  // Extract YouTube video ID
   const extractYoutubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -92,7 +89,7 @@ const Media = () => {
   };
 
   // Handle post creation
-  const handleCreatePost = async () => {
+  const handleCreatePost = async (postData: any) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -102,30 +99,11 @@ const Media = () => {
       return;
     }
 
-    if (!postTitle) {
-      toast({
-        title: "Title Required",
-        description: "Please add a title for your post",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Additional validation based on post type
-    if (postType === 'youtube' && !postUrl) {
-      toast({
-        title: "URL Required",
-        description: "Please enter a YouTube URL",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       // Process YouTube URL if applicable
-      let finalUrl = postUrl;
-      if (postType === 'youtube') {
-        const videoId = extractYoutubeId(postUrl);
+      let finalUrl = postData.youtubeUrl || '';
+      if (postData.type === 'youtube') {
+        const videoId = extractYoutubeId(finalUrl);
         if (!videoId) {
           toast({
             title: "Invalid YouTube URL",
@@ -139,10 +117,10 @@ const Media = () => {
       
       // Create post
       createPostMutation.mutate({
-        title: postTitle,
-        content: postContent,
+        title: postData.title,
+        content: postData.content,
         url: finalUrl,
-        type: postType,
+        type: postData.type,
         userId: user.id
       });
     } catch (error: any) {
@@ -155,14 +133,6 @@ const Media = () => {
     }
   };
 
-  // Reset form after submission
-  const resetForm = () => {
-    setPostTitle("");
-    setPostContent("");
-    setPostUrl("");
-    setPostType("text");
-  };
-
   // Load more posts
   const loadMore = () => {
     if (!isLoading) {
@@ -170,103 +140,34 @@ const Media = () => {
     }
   };
 
-  // Create empty state components for better UX
-  const EmptyState = () => (
-    <div className="text-center py-10">
-      <div className="mx-auto w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
-        <ImageIcon className="h-8 w-8 text-primary" />
-      </div>
-      <h3 className="text-lg font-medium mb-2">No media posts yet</h3>
-      <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-        Be the first to share content with the community
-      </p>
-      <Button onClick={() => setIsCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        Create Post
-      </Button>
-    </div>
-  );
-
-  // Error display component
-  const ErrorDisplay = ({ message }: { message: string }) => (
-    <Card className="w-full">
-      <CardContent className="p-6 flex flex-col items-center text-center">
-        <div className="bg-destructive/10 p-4 rounded-full mb-4">
-          <AlertTriangle className="h-8 w-8 text-destructive" />
-        </div>
-        <h3 className="text-xl font-medium mb-2">Connection Error</h3>
-        <p className="text-muted-foreground mb-4">{message}</p>
-        <Button onClick={() => refetch()} className="flex items-center gap-2">
-          <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Try Again
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <PageLayout>
       <div className="container mx-auto py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <ImageIcon size={28} className="text-primary" />
-              Media Feed
-            </h1>
-            <p className="text-muted-foreground">Share and discover videos, images, and more</p>
-          </div>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2 hover-lift"
-          >
-            <Plus size={16} />
-            <span>Create Post</span>
-          </Button>
-        </div>
-
-        <div className="mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Input
-                    type="search"
-                    placeholder="Search media..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                
-                <Select value={mediaType} onValueChange={setMediaType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="image">Images</SelectItem>
-                    <SelectItem value="document">Documents</SelectItem>
-                    <SelectItem value="text">Text Posts</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="created_at">Newest First</SelectItem>
-                    <SelectItem value="likes">Most Popular</SelectItem>
-                    <SelectItem value="title">Alphabetical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <MediaHeader onCreatePost={() => setIsCreateDialogOpen(true)} />
+        
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <MediaSearchBar 
+                searchTerm={searchTerm} 
+                setSearchTerm={setSearchTerm} 
+              />
+              
+              <MediaFilters 
+                filterType={mediaType}
+                setFilterType={setMediaType}
+                sortBy={sortBy as any}
+                setSortBy={(value) => setSortBy(value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
         
         {isError ? (
-          <ErrorDisplay message={error instanceof Error ? error.message : "Failed to load media posts"} />
+          <MediaErrorDisplay 
+            message={error instanceof Error ? error.message : "Failed to load media posts"} 
+            onRetry={refetch}
+          />
         ) : (
           <MediaFeed 
             posts={postsData?.posts || []}
@@ -278,144 +179,12 @@ const Media = () => {
           />
         )}
         
-        {/* Create Post Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New Post</DialogTitle>
-              <DialogDescription>
-                Share videos, documents, images or text with your community
-              </DialogDescription>
-            </DialogHeader>
-            
-            <Tabs defaultValue="text" value={postType} onValueChange={(v) => setPostType(v as any)}>
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="text" className="flex items-center gap-1">
-                  <FileText size={14} />
-                  Text
-                </TabsTrigger>
-                <TabsTrigger value="youtube" className="flex items-center gap-1">
-                  <Youtube size={14} />
-                  YouTube
-                </TabsTrigger>
-                <TabsTrigger value="image" className="flex items-center gap-1">
-                  <ImageIcon size={14} />
-                  Image
-                </TabsTrigger>
-                <TabsTrigger value="document" className="flex items-center gap-1">
-                  <FileText size={14} />
-                  Document
-                </TabsTrigger>
-              </TabsList>
-              
-              <div className="space-y-4 mt-4">
-                <div>
-                  <label htmlFor="title" className="text-sm font-medium block mb-1">
-                    Title<span className="text-red-500">*</span>
-                  </label>
-                  <Input 
-                    id="title"
-                    placeholder="Enter post title" 
-                    value={postTitle}
-                    onChange={(e) => setPostTitle(e.target.value)}
-                  />
-                </div>
-                
-                <TabsContent value="text">
-                  <div>
-                    <label htmlFor="content" className="text-sm font-medium block mb-1">
-                      Content<span className="text-red-500">*</span>
-                    </label>
-                    <Textarea
-                      id="content"
-                      placeholder="Write your post..."
-                      rows={6}
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="youtube">
-                  <div>
-                    <label htmlFor="youtube-url" className="text-sm font-medium block mb-1">
-                      YouTube URL<span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      id="youtube-url"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      value={postUrl}
-                      onChange={(e) => setPostUrl(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Paste the full YouTube video URL
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <label htmlFor="youtube-description" className="text-sm font-medium block mb-1">
-                      Description (Optional)
-                    </label>
-                    <Textarea
-                      id="youtube-description"
-                      placeholder="Add a description for this video..."
-                      rows={3}
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="image">
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                    <ImageIcon size={32} className="mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">Image uploads coming soon</p>
-                    <p className="text-xs text-muted-foreground">For now, please use a URL for your image</p>
-                    <Input
-                      className="mt-4"
-                      placeholder="Image URL"
-                      value={postUrl}
-                      onChange={(e) => setPostUrl(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Textarea
-                      placeholder="Add an image description..."
-                      rows={3}
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="document">
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                    <Upload size={32} className="mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">Document uploads coming soon</p>
-                    <p className="text-xs text-muted-foreground">For now, please use a URL for your document</p>
-                    <Input
-                      className="mt-4"
-                      placeholder="Document URL"
-                      value={postUrl}
-                      onChange={(e) => setPostUrl(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-              </div>
-            </Tabs>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={createPostMutation.isPending}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreatePost} disabled={createPostMutation.isPending} className="flex items-center gap-2">
-                {createPostMutation.isPending && <Loader2 size={16} className="animate-spin" />}
-                {createPostMutation.isPending ? "Creating..." : "Create Post"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CreatePostDialog 
+          isOpen={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleCreatePost}
+          isSubmitting={createPostMutation.isPending}
+        />
       </div>
     </PageLayout>
   );

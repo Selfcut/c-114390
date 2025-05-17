@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Film, Upload, Plus } from "lucide-react";
+import { Image, Upload, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,16 +28,19 @@ export const MediaHeader = ({ onCreatePost }: MediaHeaderProps) => {
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-      <h1 className="text-3xl font-bold flex items-center gap-3">
-        <Film size={28} className="text-primary" />
-        Media Hub
-      </h1>
+      <div>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Image size={28} className="text-primary" />
+          Media Feed
+        </h1>
+        <p className="text-muted-foreground">Share and discover videos, images, and more</p>
+      </div>
       <Button 
-        className="flex items-center gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto"
         onClick={handleCreatePost}
+        className="flex items-center gap-2 hover-lift"
       >
-        <Upload size={18} />
-        <span>Share Media</span>
+        <Plus size={16} />
+        <span>Create Post</span>
       </Button>
     </div>
   );
