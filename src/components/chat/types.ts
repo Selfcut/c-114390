@@ -38,7 +38,7 @@ export interface ConversationItem {
   updatedAt: string;
 }
 
-// Add the Conversation interface
+// Add the Conversation interface that was missing
 export interface Conversation {
   id: string;
   name: string;
