@@ -28,8 +28,8 @@ export const FullHeightChatSidebar = () => {
   const {
     messages,
     isLoading,
-    message: inputMessage,
-    setMessage: setInputMessage,
+    message,
+    setMessage,
     replyingToMessage,
     editingMessageId,
     handleSendMessage,
@@ -76,13 +76,13 @@ export const FullHeightChatSidebar = () => {
 
   // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
-    setInputMessage(inputMessage + emoji);
+    setMessage(message + emoji);
   };
 
   // Handle GIF selection
   const handleGifSelect = (gif: { url: string; alt: string }) => {
     const gifMarkdown = `![${gif.alt}](${gif.url})`;
-    setInputMessage(inputMessage + " " + gifMarkdown);
+    setMessage(message + " " + gifMarkdown);
   };
 
   // Handle admin effect selection
@@ -92,7 +92,7 @@ export const FullHeightChatSidebar = () => {
   };
 
   const cancelEdit = () => {
-    // This would be implemented if we had edit functionality
+    // This would be implemented if we had edit functionality  
   };
 
   const cancelReply = () => {
@@ -116,8 +116,8 @@ export const FullHeightChatSidebar = () => {
           onMessageReply={handleMessageReply}
           onReactionAdd={handleReactionAdd}
           onReactionRemove={handleReactionRemove}
-          inputMessage={inputMessage || ""}
-          setInputMessage={setInputMessage}
+          inputMessage={message}
+          setInputMessage={setMessage}
           handleSendMessage={handleSendMessage}
           handleKeyDown={handleKeyDown}
           editingMessageId={editingMessageId}

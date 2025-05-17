@@ -141,13 +141,15 @@ export const useChatMessages = () => {
     // Clear any editing or replying state
     setEditingMessageId(null);
     setReplyingToMessage(null);
+    
+    return conversation; // Return the conversation
   };
 
   return {
     conversations,
     selectedConversation,
-    message,
-    setMessage,
+    message, // Keep using 'message' for consistency with hooks
+    setMessage, // Keep using 'setMessage' for consistency with hooks
     messages,
     isLoading,
     formatTime,
