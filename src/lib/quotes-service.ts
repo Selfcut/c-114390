@@ -379,7 +379,7 @@ export const createQuote = async (
 };
 
 // Utility function to handle incrementing a counter with RPC
-const incrementCounter = async (rpcName: string, params: Record<string, any>) => {
+const incrementCounter = async (rpcName: string, params: { row_id: string; column_name: string; table_name: string }) => {
   try {
     await supabase.rpc('increment_counter', params);
     return true;
@@ -390,7 +390,7 @@ const incrementCounter = async (rpcName: string, params: Record<string, any>) =>
 };
 
 // Utility function to handle decrementing a counter with RPC
-const decrementCounter = async (rpcName: string, params: Record<string, any>) => {
+const decrementCounter = async (rpcName: string, params: { row_id: string; column_name: string; table_name: string }) => {
   try {
     await supabase.rpc('decrement_counter', params);
     return true;
