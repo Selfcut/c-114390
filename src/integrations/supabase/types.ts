@@ -977,6 +977,7 @@ export type Database = {
         | "do-not-disturb"
         | "invisible"
         | "offline"
+        | "busy"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1093,7 +1094,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      user_status: ["online", "away", "do-not-disturb", "invisible", "offline"],
+      user_status: [
+        "online",
+        "away",
+        "do-not-disturb",
+        "invisible",
+        "offline",
+        "busy",
+      ],
     },
   },
 } as const

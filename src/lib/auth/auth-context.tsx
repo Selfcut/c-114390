@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           username: profileData?.username,
           role: profileData?.role || 'user',
           isAdmin: profileData?.role === 'admin',
-          status: (profileData?.status as UserStatus) || 'online',
+          status: profileData?.status as UserStatus || 'online',
           isGhostMode: profileData?.is_ghost_mode || false,
           bio: profileData?.bio || '',
           website: profileData?.website || '',
