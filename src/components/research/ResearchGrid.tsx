@@ -19,56 +19,12 @@ interface ResearchItem {
 interface ResearchGridProps {
   searchQuery: string;
   selectedCategory: string | null;
+  researchPapers: ResearchItem[]; // Add this line to accept research papers as a prop
 }
 
-// Sample data for UI presentation - replace with real data fetching
-const sampleResearchData: ResearchItem[] = [
-  {
-    id: '1',
-    title: 'Quantum Computing Advances in Neural Networks',
-    summary: 'Recent advances in quantum computing applied to neural networks show promising results for AI acceleration.',
-    author: 'Dr. Emma Roberts',
-    date: new Date('2025-03-15'),
-    views: 342,
-    likes: 78,
-    category: 'physics',
-    imageUrl: '/placeholder.svg',
-  },
-  {
-    id: '2',
-    title: 'Mathematical Models of Consciousness',
-    summary: 'New mathematical frameworks to model aspects of consciousness and cognitive processes.',
-    author: 'Prof. James Liu',
-    date: new Date('2025-04-20'),
-    views: 245,
-    likes: 53,
-    category: 'mathematics',
-  },
-  {
-    id: '3',
-    title: 'CRISPR Applications in Neurological Disorders',
-    summary: 'Novel applications of CRISPR gene editing technology for treating complex neurological disorders.',
-    author: 'Dr. Sarah Johnson',
-    date: new Date('2025-05-01'),
-    views: 189,
-    likes: 41,
-    category: 'biology',
-  },
-  {
-    id: '4',
-    title: 'Philosophical Implications of Artificial General Intelligence',
-    summary: 'Exploring the philosophical questions raised by the development of artificial general intelligence.',
-    author: 'Dr. Michael Chen',
-    date: new Date('2025-04-10'),
-    views: 278,
-    likes: 62,
-    category: 'philosophy',
-  },
-];
-
-export const ResearchGrid = ({ searchQuery, selectedCategory }: ResearchGridProps) => {
+export const ResearchGrid = ({ searchQuery, selectedCategory, researchPapers }: ResearchGridProps) => {
   // Filter research items based on search query and selected category
-  const filteredResearch = sampleResearchData.filter(item => {
+  const filteredResearch = researchPapers.filter(item => {
     const matchesSearch = searchQuery 
       ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         item.summary.toLowerCase().includes(searchQuery.toLowerCase())
