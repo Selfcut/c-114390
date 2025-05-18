@@ -1,205 +1,71 @@
 
 import React, { Suspense } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { LoadingScreen } from './LoadingScreen';
-import { ErrorBoundary } from '../ErrorBoundary';
-import Auth from '@/pages/Auth';
-import Landing from '@/pages/Landing';
-import Media from '@/pages/Media';
-import MediaDetail from '@/pages/MediaDetail';
-import Forum from '@/pages/Forum';
-import ForumPost from '@/pages/ForumPost';
-import Wiki from '@/pages/Wiki';
-import WikiArticle from '@/components/wiki/WikiArticlePage';
-import Quotes from '@/pages/Quotes';
-import Library from '@/pages/Library';
-import Chat from '@/pages/Chat';
-import NotFound from '@/pages/NotFound';
-import Dashboard from '@/pages/Dashboard';
-import Profile from '@/pages/Profile';
-import Settings from '@/pages/Settings';
-import AdminPanel from '@/pages/AdminPanel';
-import AI from '@/pages/AI';
-import Problems from '@/pages/Problems';
-import ProblemDetail from '@/pages/ProblemDetail';
-import Research from '@/pages/Research';
-import ResearchDetail from '@/pages/ResearchDetail';
-import BookReviews from '@/pages/BookReviews';
-import Events from '@/pages/Events';
-import Notifications from '@/pages/Notifications';
-import { AuthCallback } from './AuthCallback';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { PageLayout } from '@/components/layouts/PageLayout';
+import { Loader2 } from 'lucide-react';
 
-const RouteErrorFallback = () => (
-  <div className="flex flex-col items-center justify-center p-6 min-h-[50vh]">
-    <h2 className="text-xl font-semibold mb-2">Page Failed to Load</h2>
-    <p className="text-muted-foreground text-center mb-4">
-      There was a problem loading this page
-    </p>
-    <a href="/" className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-      Return to Home
-    </a>
+// Lazy loaded pages
+const Auth = React.lazy(() => import('@/pages/Auth'));
+const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
+const Profile = React.lazy(() => import('@/pages/Profile'));
+const Settings = React.lazy(() => import('@/pages/Settings'));
+const AdminPanel = React.lazy(() => import('@/pages/AdminPanel'));
+const Forum = React.lazy(() => import('@/pages/Forum'));
+const ForumPost = React.lazy(() => import('@/pages/ForumPost'));
+const Chat = React.lazy(() => import('@/pages/Chat'));
+const Library = React.lazy(() => import('@/pages/Library'));
+const Wiki = React.lazy(() => import('@/pages/Wiki'));
+const Quotes = React.lazy(() => import('@/pages/Quotes'));
+const Events = React.lazy(() => import('@/pages/Events'));
+const NotFound = React.lazy(() => import('@/pages/NotFound'));
+const Welcome = React.lazy(() => import('@/pages/Welcome'));
+
+// Loading fallback
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="flex flex-col items-center">
+      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
   </div>
 );
 
 export const AppRoutes = () => {
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
-  const isAdmin = user?.isAdmin || false;
-  
-  // Scroll to top on route change
-  React.useEffect(() => {
-    window.scrollTo(0, 0);
-    console.log(`Route changed to: ${location.pathname}`);
-  }, [location.pathname]);
-  
-  // Show application-wide loading screen during auth check
+
+  // Show loading state while authentication is being determined
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingFallback />;
   }
-  
+
   return (
-    <ErrorBoundary fallback={<RouteErrorFallback />}>
-      <Suspense fallback={<LoadingScreen />}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={
-            <ErrorBoundary>
-              <Landing />
-            </ErrorBoundary>
-          } />
-          <Route path="/auth" element={
-            <ErrorBoundary>
-              <Auth />
-            </ErrorBoundary>
-          } />
-          <Route path="/auth/callback" element={
-            <ErrorBoundary>
-              <AuthCallback />
-            </ErrorBoundary>
-          } />
-          
-          {/* Feature Routes */}
-          <Route path="/media" element={
-            <ErrorBoundary>
-              <Media />
-            </ErrorBoundary>
-          } />
-          <Route path="/media/:id" element={
-            <ErrorBoundary>
-              <MediaDetail />
-            </ErrorBoundary>
-          } />
-          <Route path="/forum" element={
-            <ErrorBoundary>
-              <Forum />
-            </ErrorBoundary>
-          } />
-          <Route path="/forum/:id" element={
-            <ErrorBoundary>
-              <ForumPost />
-            </ErrorBoundary>
-          } />
-          <Route path="/wiki" element={
-            <ErrorBoundary>
-              <Wiki />
-            </ErrorBoundary>
-          } />
-          <Route path="/wiki/:id" element={
-            <ErrorBoundary>
-              <WikiArticle />
-            </ErrorBoundary>
-          } />
-          <Route path="/quotes" element={
-            <ErrorBoundary>
-              <Quotes />
-            </ErrorBoundary>
-          } />
-          <Route path="/library" element={
-            <ErrorBoundary>
-              <Library />
-            </ErrorBoundary>
-          } />
-          <Route path="/chat" element={
-            <ErrorBoundary>
-              <Chat />
-            </ErrorBoundary>
-          } />
-          <Route path="/ai" element={
-            <ErrorBoundary>
-              <AI />
-            </ErrorBoundary>
-          } />
-          <Route path="/notifications" element={
-            <ErrorBoundary>
-              <Notifications />
-            </ErrorBoundary>
-          } />
-          
-          {/* Research Routes */}
-          <Route path="/research" element={
-            <ErrorBoundary>
-              <Research />
-            </ErrorBoundary>
-          } />
-          <Route path="/research/:id" element={
-            <ErrorBoundary>
-              <ResearchDetail />
-            </ErrorBoundary>
-          } />
-          
-          {/* Other Pages */}
-          <Route path="/book-reviews" element={
-            <ErrorBoundary>
-              <BookReviews />
-            </ErrorBoundary>
-          } />
-          <Route path="/events" element={
-            <ErrorBoundary>
-              <Events />
-            </ErrorBoundary>
-          } />
-          
-          {/* Problems Routes */}
-          <Route path="/problems" element={
-            <ErrorBoundary>
-              <Problems />
-            </ErrorBoundary>
-          } />
-          <Route path="/problems/:problemId" element={
-            <ErrorBoundary>
-              <ProblemDetail />
-            </ErrorBoundary>
-          } />
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Welcome />} />
+        <Route path="/auth" element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />
+        } />
 
-          {/* User Routes */}
-          <Route path="/dashboard" element={
-            <ErrorBoundary>
-              <Dashboard />
-            </ErrorBoundary>
-          } />
-          <Route path="/profile" element={
-            <ErrorBoundary>
-              <Profile />
-            </ErrorBoundary>
-          } />
-          <Route path="/settings" element={
-            <ErrorBoundary>
-              <Settings />
-            </ErrorBoundary>
-          } />
+        {/* Protected routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
+        <Route path="/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
+        <Route path="/forum/:id" element={<ProtectedRoute><ForumPost /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
+        <Route path="/wiki" element={<ProtectedRoute><Wiki /></ProtectedRoute>} />
+        <Route path="/quotes" element={<ProtectedRoute><Quotes /></ProtectedRoute>} />
+        <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={
-            <ErrorBoundary>
-              {isAdmin ? <AdminPanel /> : <Navigate to="/" />}
-            </ErrorBoundary>
-          } />
-          
-          {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </ErrorBoundary>
+        {/* Catch all */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };

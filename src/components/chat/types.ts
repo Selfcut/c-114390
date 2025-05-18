@@ -29,8 +29,8 @@ export interface ConversationItem {
   id: string;
   name: string;
   lastMessage?: string;
-  lastActivityAt?: string;
-  unreadCount?: number;
+  lastActivityAt: string;
+  unreadCount: number;
   participants?: Array<{
     id: string;
     name: string;
@@ -41,25 +41,17 @@ export interface ConversationItem {
   avatar?: string;
   isGlobal?: boolean;
   isGroup?: boolean;
-  unread?: number;
   updatedAt?: string;
-  lastActivityTime?: string;
 }
 
 export interface Conversation {
   id: string;
-  messages: ChatMessage[];
-  participants: string[];
-  createdAt: string;
-  updatedAt: string;
-  
-  // Adding all properties that are used in the code
   name?: string;
-  last_message?: string;
+  messages?: ChatMessage[];
+  participants?: string[];
+  createdAt?: string;
+  updatedAt?: string;
   lastMessage?: string;
-  is_global?: boolean;
   isGlobal?: boolean;
-  is_group?: boolean;
   isGroup?: boolean;
-  updated_at?: string;
 }

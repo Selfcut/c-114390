@@ -1,3 +1,4 @@
+
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import {
@@ -20,7 +21,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export const Sidebar = () => {
   const { user, signOut } = useAuth();
   
-  const isAdmin = user?.role === 'admin' || user?.isAdmin;
+  const isAdmin = user?.isAdmin || user?.role === 'admin';
   
   const navItems = [
     {

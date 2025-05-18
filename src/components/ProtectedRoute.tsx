@@ -20,7 +20,7 @@ export const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
-  const isAdmin = user?.role === "admin" || user?.isAdmin;
+  const isAdmin = user?.isAdmin || user?.role === "admin";
 
   if (isLoading) {
     return (

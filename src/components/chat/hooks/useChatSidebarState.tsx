@@ -1,21 +1,28 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile } from "@/lib/auth/types";
+import { useAuth } from "@/lib/auth"; 
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { ChatMessage, ConversationItem } from "../types";
+import { useChatMessages } from "@/hooks/chat/useChatMessages";
+import { useChatActions } from "@/hooks/chat/useChatActions";
+import { useSpecialEffects } from "@/hooks/chat/useSpecialEffects";
+import { useMessageUtils } from "@/hooks/chat/useMessageUtils";
+import { useRealtimeChatSubscription } from "@/hooks/chat/useRealtimeChatSubscription";
+import { useAutomatedMessages } from "@/hooks/chat/useAutomatedMessages";
 
 export interface UseChatSidebarStateProps {
   isOpen: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
-  user?: UserProfile | null;
+  user?: any;
 }
 
 // Implementation of the hook
 export const useChatSidebarState = ({ 
   isOpen,
-  messagesEndRef,
-  user
+  messagesEndRef
 }: UseChatSidebarStateProps) => {
-  const { user: authUser } = useAuth();
+  const { user } = useAuth();
   const { isAdmin } = useAdminStatus();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
@@ -48,11 +55,11 @@ export const useChatSidebarState = ({
             id: conv.id,
             name: conv.name,
             lastMessage: conv.last_message || '',
+            lastActivityAt: conv.updated_at || new Date().toISOString(),
+            unreadCount: 0, // We'll implement unread counts separately
             isGlobal: conv.is_global || false,
             isGroup: conv.is_group || false,
-            lastActivityAt: conv.updated_at || new Date().toISOString(),
-            updatedAt: conv.updated_at || new Date().toISOString(),
-            unread: 0 // We'll implement unread counts separately
+            updatedAt: conv.updated_at || new Date().toISOString()
           }));
 
           setConversations(formattedConversations);
@@ -95,10 +102,10 @@ export const useChatSidebarState = ({
         name: 'Global Chat',
         lastMessage: 'Welcome to the community!',
         lastActivityAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        unreadCount: 0,
         isGlobal: true,
         isGroup: true,
-        unread: 0
+        updatedAt: new Date().toISOString()
       }]);
     } catch (error) {
       console.error('Error creating global conversation:', error);
@@ -178,7 +185,7 @@ export const useChatSidebarState = ({
     // Mark conversation as read
     setConversations(prevConversations => 
       prevConversations.map(conv => 
-        conv.id === conversationId ? { ...conv, unread: 0 } : conv
+        conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
       )
     );
     
@@ -248,7 +255,6 @@ export const useChatSidebarState = ({
     onGifSelect: handleGifSelect,
     onAdminEffectSelect: handleAdminEffectSelect,
     onSelectConversation: handleSelectConversation,
-    updateConversationLastMessage,
-    user
+    updateConversationLastMessage
   };
 };

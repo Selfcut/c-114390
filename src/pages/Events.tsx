@@ -5,14 +5,16 @@ import { EventsHeader } from "@/components/events/EventsHeader";
 import { EventsFilters } from "@/components/events/EventsFilters";
 import { EventsList } from "@/components/events/EventsList";
 import { useAuth } from "@/lib/auth";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 const Events = () => {
   const { user } = useAuth();
+  const { isAdmin, isModerator } = useAdminStatus();
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
   // Check if user is an admin or moderator
-  const canCreateEvent = user && (user.isAdmin || user.role === "moderator");
+  const canCreateEvent = user && (isAdmin || isModerator);
   
   const handleCreateEvent = () => {
     console.log("Creating new event");

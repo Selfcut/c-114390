@@ -69,9 +69,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
               <Users className="inline ml-1" size={14} />
             )}
           </span>
-          {conversation.unread && conversation.unread > 0 ? (
+          {conversation.unreadCount && conversation.unreadCount > 0 ? (
             <Badge variant="default" className="ml-2">
-              {conversation.unread}
+              {conversation.unreadCount}
             </Badge>
           ) : (
             <span className="text-xs text-muted-foreground flex items-center">

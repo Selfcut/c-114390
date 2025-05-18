@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { 
   BookOpen, 
   MessageSquare, 
@@ -26,103 +26,17 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    discussions: 0,
-    contributions: 0,
-    readingList: 0,
-    events: 0,
-    streak: 0,
-    karma: 0,
-    completedChallenges: 0
-  });
-  const [activities, setActivities] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        
-        if (!user) return;
-        
-        // Fetch user stats
-        const { data: statsData, error: statsError } = await supabase
-          .from('user_stats')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (statsError && statsError.code !== 'PGRST116') {
-          console.error('Error fetching stats:', statsError);
-        }
-        
-        if (statsData) {
-          setStats({
-            discussions: statsData.discussions_count || 0,
-            contributions: statsData.contributions_count || 0,
-            readingList: statsData.reading_list_count || 0,
-            events: statsData.events_count || 0,
-            streak: statsData.streak || 0,
-            karma: statsData.karma || 0,
-            completedChallenges: statsData.completed_challenges || 0
-          });
-        }
-        
-        // Fetch recent activities
-        const { data: activitiesData, error: activitiesError } = await supabase
-          .from('user_activities')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-          
-        if (activitiesError) {
-          console.error('Error fetching activities:', activitiesError);
-        } else {
-          setActivities(activitiesData || []);
-        }
-        
-        // Fetch notifications
-        const { data: notificationsData, error: notificationsError } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('read', false)
-          .order('created_at', { ascending: false })
-          .limit(5);
-          
-        if (notificationsError) {
-          console.error('Error fetching notifications:', notificationsError);
-        } else {
-          setNotifications(notificationsData || []);
-        }
-        
-        // Fetch recommendations
-        const { data: recommendationsData, error: recommendationsError } = await supabase
-          .from('recommendations')
-          .select('*')
-          .eq('user_id', user.id)
-          .limit(3);
-          
-        if (recommendationsError) {
-          console.error('Error fetching recommendations:', recommendationsError);
-        } else {
-          setRecommendations(recommendationsData || []);
-        }
-      } catch (error) {
-        console.error('Dashboard data fetch error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, [user]);
+  const { 
+    isLoading, 
+    stats, 
+    activities, 
+    notifications, 
+    recommendations 
+  } = useDashboardStats();
 
   // Example of how to render user avatar correctly
   const renderUserAvatar = () => {
@@ -132,7 +46,7 @@ const Dashboard = () => {
       <Avatar>
         <AvatarImage src={user.avatar_url || user.avatar} />
         <AvatarFallback>
-          {user.name?.charAt(0) || 'U'}
+          {user?.name?.charAt(0) || 'U'}
         </AvatarFallback>
       </Avatar>
     );
@@ -169,7 +83,7 @@ const Dashboard = () => {
           <CardTitle className="text-sm font-medium">Discussions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.discussions}</div>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.discussions_count}</div>
           <p className="text-xs text-muted-foreground mt-1">
             <MessageSquare className="inline h-3 w-3 mr-1" />
             Forum contributions
@@ -182,7 +96,7 @@ const Dashboard = () => {
           <CardTitle className="text-sm font-medium">Contributions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.contributions}</div>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.contributions_count}</div>
           <p className="text-xs text-muted-foreground mt-1">
             <FileText className="inline h-3 w-3 mr-1" />
             Wiki edits & notes
@@ -195,7 +109,7 @@ const Dashboard = () => {
           <CardTitle className="text-sm font-medium">Reading List</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.readingList}</div>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.reading_list_count}</div>
           <p className="text-xs text-muted-foreground mt-1">
             <BookOpen className="inline h-3 w-3 mr-1" />
             Books & articles
@@ -208,7 +122,7 @@ const Dashboard = () => {
           <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.events}</div>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.events_count}</div>
           <p className="text-xs text-muted-foreground mt-1">
             <Calendar className="inline h-3 w-3 mr-1" />
             In the next 30 days
@@ -253,9 +167,9 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-sm font-medium">Challenges</span>
-              <span className="text-sm text-muted-foreground">{stats.completedChallenges}/10 completed</span>
+              <span className="text-sm text-muted-foreground">{stats.completed_challenges}/10 completed</span>
             </div>
-            <Progress value={(stats.completedChallenges / 10) * 100} className="h-2" />
+            <Progress value={(stats.completed_challenges / 10) * 100} className="h-2" />
             <p className="text-xs text-muted-foreground">
               <Award className="inline h-3 w-3 mr-1" />
               Complete intellectual challenges to earn badges
