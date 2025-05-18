@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -59,7 +58,7 @@ const WikiArticlePage = () => {
           
           // Fix for checking user like
           if (isAuthenticated) {
-            // Store the result and then update state
+            // Get the like status and update state separately
             const hasLiked = await checkUserLike(article.id);
             setIsLiked(hasLiked);
           }
@@ -80,7 +79,7 @@ const WikiArticlePage = () => {
     };
     
     fetchArticle();
-  }, [articleId, toast, retryCount, checkUserLike, isAuthenticated]);
+  }, [articleId, toast, checkUserLike, isAuthenticated]);
 
   const handleBack = () => {
     navigate(-1);

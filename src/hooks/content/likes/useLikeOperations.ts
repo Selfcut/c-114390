@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -132,10 +131,9 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     
     try {
       await toggleLikeMutation.mutateAsync(contentId);
-      // This explicitly returns nothing for void Promise
+      // No need to return anything, void function
     } catch (error) {
       console.error('Error in toggleLike:', error);
-      // Still return void
     }
   };
 
