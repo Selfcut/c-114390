@@ -5,6 +5,11 @@ export const useMessageUtils = () => {
   // Format time for display
   const formatTime = (timestamp: string) => {
     try {
+      // Handle undefined, null or empty string case
+      if (!timestamp) {
+        return "Just now";
+      }
+      
       const date = new Date(timestamp);
       
       // Check if date is valid
@@ -24,7 +29,7 @@ export const useMessageUtils = () => {
       }
     } catch (error) {
       console.error("Error formatting time:", error);
-      return "Invalid time";
+      return "Just now";
     }
   };
 
@@ -32,6 +37,15 @@ export const useMessageUtils = () => {
   const groupMessagesByDate = <T extends { createdAt: string }>(messages: T[]) => {
     return messages.reduce((groups: Record<string, T[]>, message) => {
       try {
+        // Handle potentially null or undefined createdAt
+        if (!message.createdAt) {
+          if (!groups['Recent']) {
+            groups['Recent'] = [];
+          }
+          groups['Recent'].push(message);
+          return groups;
+        }
+        
         const date = new Date(message.createdAt);
         
         // Skip invalid dates
@@ -39,10 +53,10 @@ export const useMessageUtils = () => {
           console.warn("Invalid date in groupMessagesByDate:", message.createdAt);
           
           // Group invalid dates together
-          if (!groups['Invalid Date']) {
-            groups['Invalid Date'] = [];
+          if (!groups['Recent']) {
+            groups['Recent'] = [];
           }
-          groups['Invalid Date'].push(message);
+          groups['Recent'].push(message);
           return groups;
         }
         
@@ -55,10 +69,10 @@ export const useMessageUtils = () => {
         console.error("Error grouping message by date:", error);
         
         // Default grouping for errors
-        if (!groups['Error']) {
-          groups['Error'] = [];
+        if (!groups['Recent']) {
+          groups['Recent'] = [];
         }
-        groups['Error'].push(message);
+        groups['Recent'].push(message);
       }
       return groups;
     }, {});

@@ -26,7 +26,7 @@ export const ChatInputTools = ({
   onAdminEffectSelect = () => {}
 }: ChatInputToolsProps) => {
   return (
-    <div className="absolute right-2 bottom-1.5 flex items-center">
+    <div className="flex items-center">
       <Button
         variant="ghost"
         size="icon"

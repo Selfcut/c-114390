@@ -135,17 +135,15 @@ export const ChatInputArea = ({
           
         {/* Controls positioned below textarea */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <ChatInputTools
-              onEmojiPickerToggle={handleEmojiPickerToggle}
-              onGifPickerToggle={handleGifPickerToggle}
-              onFileUpload={handleFileUpload}
-              showEmojiPicker={showEmojiPicker}
-              showGifPicker={showGifPicker}
-              isAdmin={isAdmin}
-              onAdminEffectSelect={onAdminEffectSelect}
-            />
-          </div>
+          <ChatInputTools
+            onEmojiPickerToggle={handleEmojiPickerToggle}
+            onGifPickerToggle={handleGifPickerToggle}
+            onFileUpload={handleFileUpload}
+            showEmojiPicker={showEmojiPicker}
+            showGifPicker={showGifPicker}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={onAdminEffectSelect}
+          />
 
           {/* Send button */}
           <Button 
