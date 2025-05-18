@@ -27,7 +27,7 @@ export const HeaderActions = () => {
         size="icon" 
         className="mr-1" 
         aria-label="Discord"
-        onClick={() => window.open('https://discord.gg/polymath', '_blank')}
+        onClick={() => window.open('https://disboard.org/server/discord-server-id', '_blank')}
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
