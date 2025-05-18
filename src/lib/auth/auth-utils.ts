@@ -24,7 +24,6 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       email: userSession?.user?.email || "",
       name: profile?.name || userSession?.user?.user_metadata?.name || "User",
       username: profile?.username || userSession?.user?.user_metadata?.username || "user",
-      avatar_url: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       avatar: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: profile?.bio || "",
       website: profile?.website || "",
@@ -56,7 +55,6 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       email: userSession?.user?.email || "",
       name: userSession?.user?.user_metadata?.name || "User",
       username: userSession?.user?.user_metadata?.username || "user",
-      avatar_url: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: "",
       website: "",
@@ -76,7 +74,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
       .update({
         name: updates.name,
         username: updates.username,
-        avatar_url: updates.avatar_url || updates.avatar,
+        avatar_url: updates.avatar, // Map 'avatar' from our type to 'avatar_url' in DB
         bio: updates.bio,
         website: updates.website,
         status: updates.status,
@@ -164,3 +162,4 @@ export const signOut = async () => {
 export const clearUserData = (): void => {
   // Clear any additional user data from localStorage if needed
 };
+
