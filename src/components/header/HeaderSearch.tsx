@@ -14,7 +14,7 @@ export const HeaderSearch = () => {
         <GlobalSearch />
       </div>
       
-      {/* Mobile search trigger */}
+      {/* Mobile search trigger - only show on mobile */}
       <Button 
         variant="ghost" 
         size="icon" 

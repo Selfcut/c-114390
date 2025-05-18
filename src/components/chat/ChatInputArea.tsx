@@ -48,7 +48,7 @@ export const ChatInputArea = ({
     message,
     isEditing: !!editingMessage,
     minHeight: 40,
-    maxHeight: 80 // Reduced from 120 to 80
+    maxHeight: 120
   });
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -91,7 +91,6 @@ export const ChatInputArea = ({
     if (onEmojiSelect) {
       onEmojiSelect(emoji);
     } else {
-      // Fix: using string concatenation instead of function updater
       setMessage(message + emoji);
     }
     setShowEmojiPicker(false);
@@ -102,14 +101,13 @@ export const ChatInputArea = ({
       onGifSelect(gif);
     } else {
       const gifMarkdown = `![${gif.alt}](${gif.url})`;
-      // Fix: using string concatenation instead of function updater
       setMessage(message + " " + gifMarkdown);
     }
     setShowGifPicker(false);
   };
 
   return (
-    <div className="border-t border-border p-2 bg-background"> {/* Reduced padding from p-3 to p-2 */}
+    <div className="border-t border-border p-2 bg-background sticky bottom-0">
       {/* Editing indicator */}
       {editingMessage && onCancelEdit && (
         <MessageEditingIndicator onCancelEdit={onCancelEdit} />
@@ -131,7 +129,7 @@ export const ChatInputArea = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-            className="min-h-[40px] max-h-[80px] resize-none pr-24 py-2 text-sm" // Added text-sm to make text smaller
+            className="min-h-[40px] max-h-[120px] resize-none pr-24 py-2"
             style={{ height: `${textareaHeight}px` }}
           />
           <ChatInputTools

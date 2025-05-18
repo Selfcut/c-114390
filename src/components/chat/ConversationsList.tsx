@@ -17,25 +17,23 @@ export const ConversationsList = ({
   onSelectConversation
 }: ConversationsListProps) => {
   return (
-    <div className="border-b p-2">
-      <ScrollArea className="h-[120px]">
-        <div className="space-y-2">
-          {conversations.length > 0 ? (
-            conversations.map((convo) => (
-              <ConversationItem 
-                key={convo.id}
-                conversation={convo}
-                isSelected={selectedConversation === convo.id}
-                onSelect={onSelectConversation}
-              />
-            ))
-          ) : (
-            <div className="flex justify-center items-center h-20">
-              <Skeleton className="h-16 w-full" />
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
+    <ScrollArea className="h-[240px]">
+      <div className="space-y-2 p-2">
+        {conversations.length > 0 ? (
+          conversations.map((convo) => (
+            <ConversationItem 
+              key={convo.id}
+              conversation={convo}
+              isSelected={selectedConversation === convo.id}
+              onSelect={onSelectConversation}
+            />
+          ))
+        ) : (
+          <div className="flex justify-center items-center h-20">
+            <Skeleton className="h-16 w-full" />
+          </div>
+        )}
+      </div>
+    </ScrollArea>
   );
 };

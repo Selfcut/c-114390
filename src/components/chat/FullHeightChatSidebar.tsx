@@ -14,14 +14,12 @@ import { ChatContent } from "./ChatContent";
 import { ChatAnimationStyles } from "./ChatAnimationStyles";
 import { useChatActions } from "./hooks/useChatActions";
 import { ConversationsList } from "./ConversationsList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConversationItem } from "./types";
 
 export const FullHeightChatSidebar = () => {
   const { isOpen, toggleSidebar } = useChatSidebarToggle();
   const { user } = useAuth();
   const { isAdmin } = useAdminStatus();
-  const [activeTab, setActiveTab] = useState<string>("chats");
   
   // Mock conversations for demo - ensure all have the required updatedAt property
   const [conversations, setConversations] = useState<ConversationItem[]>([
@@ -201,52 +199,39 @@ export const FullHeightChatSidebar = () => {
         <ChatSidebarHeader toggleSidebar={toggleSidebar} />
         
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-2 w-full mx-auto my-2 px-2">
-              <TabsTrigger value="chats">Chat Rooms</TabsTrigger>
-              <TabsTrigger value="messages">Messages</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="chats" className="flex-1 overflow-hidden flex flex-col">
-              <ConversationsList 
-                conversations={conversations}
-                selectedConversation={selectedConversation}
-                onSelectConversation={handleSelectConversation}
-              />
-            </TabsContent>
-            
-            <TabsContent value="messages" className="flex-1 overflow-hidden flex flex-col">
-              <ChatContent
-                isLoadingMessages={isLoadingMessages}
-                messages={messages}
-                isLoading={isLoadingMessages || isSendingMessage}
-                formatTime={formatTime}
-                onMessageEdit={handleEditMessage}
-                onMessageDelete={handleDeleteMessage}
-                onMessageReply={handleReplyToMessage}
-                onReactionAdd={handleReactionAdd}
-                onReactionRemove={handleReactionRemove}
-                inputMessage={inputMessage}
-                setInputMessage={setInputMessage}
-                handleSendMessage={handleSendMessage}
-                handleKeyDown={handleKeyDown}
-                editingMessageId={editingMessageId}
-                replyingToMessage={replyingToMessage}
-                onCancelEdit={cancelEdit}
-                onCancelReply={cancelReply}
-                onEmojiSelect={handleEmojiSelect}
-                onGifSelect={handleGifSelect}
-                isAdmin={isAdmin}
-                onAdminEffectSelect={handleAdminEffectSelect}
-                messagesEndRef={messagesEndRef}
-                currentUserId={user?.id || null}
-              />
-            </TabsContent>
-          </Tabs>
+          <div className="border-b p-2">
+            <ConversationsList 
+              conversations={conversations}
+              selectedConversation={selectedConversation}
+              onSelectConversation={handleSelectConversation}
+            />
+          </div>
+          
+          <ChatContent
+            isLoadingMessages={isLoadingMessages}
+            messages={messages}
+            isLoading={isLoadingMessages || isSendingMessage}
+            formatTime={formatTime}
+            onMessageEdit={handleEditMessage}
+            onMessageDelete={handleDeleteMessage}
+            onMessageReply={handleReplyToMessage}
+            onReactionAdd={handleReactionAdd}
+            onReactionRemove={handleReactionRemove}
+            inputMessage={inputMessage}
+            setInputMessage={setInputMessage}
+            handleSendMessage={handleSendMessage}
+            handleKeyDown={handleKeyDown}
+            editingMessageId={editingMessageId}
+            replyingToMessage={replyingToMessage}
+            onCancelEdit={cancelEdit}
+            onCancelReply={cancelReply}
+            onEmojiSelect={handleEmojiSelect}
+            onGifSelect={handleGifSelect}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={handleAdminEffectSelect}
+            messagesEndRef={messagesEndRef}
+            currentUserId={user?.id || null}
+          />
         </div>
         
         <ChatAnimationStyles />
