@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -70,7 +69,7 @@ export const UserMenu = () => {
             </Link>
           </DropdownMenuItem>
           
-          {(user.isAdmin || user.role === 'admin') && (
+          {(user?.isAdmin || user?.role === 'admin') && (
             <DropdownMenuItem asChild>
               <Link to="/admin" className="flex items-center cursor-pointer">
                 <Crown className="mr-2 h-4 w-4" />

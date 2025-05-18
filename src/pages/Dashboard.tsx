@@ -1,4 +1,3 @@
-
 import React from "react";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,7 +43,7 @@ const Dashboard = () => {
     
     return (
       <Avatar>
-        <AvatarImage src={user.avatar_url || user.avatar} />
+        <AvatarImage src={user.avatar_url || user.avatar_url} />
         <AvatarFallback>
           {user?.name?.charAt(0) || 'U'}
         </AvatarFallback>

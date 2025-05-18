@@ -85,10 +85,10 @@ const Auth = () => {
     try {
       if (activeTab === "login") {
         console.log("Attempting sign in with email:", email);
-        const result = await signIn(email, password);
-        if (result && result.error) {
-          console.error("Sign in failed:", result.error);
-          setError(result.error.message || 'Failed to sign in.');
+        const { error: signInError } = await signIn(email, password);
+        if (signInError) {
+          console.error("Sign in failed:", signInError);
+          setError(signInError.message || 'Failed to sign in.');
         } else {
           toast({
             title: "Sign in successful",
@@ -102,10 +102,10 @@ const Auth = () => {
         };
         
         console.log("Attempting sign up with email:", email);
-        const result = await signUp(email, password, userData);
-        if (result && result.error) {
-          console.error("Sign up failed:", result.error);
-          setError(result.error.message || 'Failed to sign up.');
+        const { error: signUpError } = await signUp(email, password, userData);
+        if (signUpError) {
+          console.error("Sign up failed:", signUpError);
+          setError(signUpError.message || 'Failed to sign up.');
         } else {
           toast({
             title: "Sign up successful",

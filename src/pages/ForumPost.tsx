@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -126,7 +126,7 @@ const ForumPost = () => {
   // Handle upvoting the post
   const handleUpvotePost = async () => {
     if (discussion && user) {
-      await handleUpvote(user, discussion);
+      await handleUpvote({...user, name: user.name || ''}, discussion);
       // The hook handles updating the state
     }
   };
@@ -134,7 +134,7 @@ const ForumPost = () => {
   // Handle adding a new comment
   const handleAddComment = async (comment: string) => {
     if (!user) return;
-    await handleSubmitComment(user, comment, discussion, setComments);
+    await handleSubmitComment({...user, name: user.name || ''}, comment, discussion, setComments);
   };
 
   return (

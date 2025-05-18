@@ -20,8 +20,9 @@ export const useRealtimeChatSubscription = ({
     if (!isOpen) return;
 
     // Subscribe to new chat messages
-    const subscription = supabase
-      .channel('public:chat_messages')
+    const channel = supabase.channel('public:chat_messages');
+    
+    channel
       .on('INSERT', (payload) => {
         console.log('New message received:', payload);
         
@@ -51,7 +52,7 @@ export const useRealtimeChatSubscription = ({
       .subscribe();
       
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [isOpen, addMessage, scrollToBottom, handleSpecialEffect]);
 };

@@ -46,8 +46,9 @@ export const useConversations = () => {
     fetchConversations();
 
     // Set up real-time subscription
-    const subscription = supabase
-      .channel('public:conversations')
+    const channelA = supabase.channel('public:conversations')
+    
+    channelA
       .on('INSERT', (payload) => {
         const newConversation: Conversation = {
           id: payload.new.id,
@@ -87,7 +88,7 @@ export const useConversations = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(channelA);
     };
   }, []);
 
