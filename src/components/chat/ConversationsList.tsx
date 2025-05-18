@@ -21,6 +21,7 @@ export const ConversationsList = ({
   const [isExpanded, setIsExpanded] = useState(false);
   
   const toggleExpand = () => {
+    console.log("Toggling conversation list expand state:", !isExpanded);
     setIsExpanded(!isExpanded);
   };
   

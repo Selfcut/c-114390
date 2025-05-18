@@ -23,6 +23,8 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
+  console.log("Auth page - isAuthenticated:", isAuthenticated);
+  
   // Check for error param in URL
   useEffect(() => {
     const errorParam = searchParams.get('error');
@@ -34,7 +36,8 @@ const Auth = () => {
   // Redirect authenticated users
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      console.log("User is authenticated, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -81,15 +84,17 @@ const Auth = () => {
 
     try {
       if (activeTab === "login") {
+        console.log("Attempting sign in with email:", email);
         const { error: signInError } = await signIn(email, password);
         if (signInError) {
+          console.error("Sign in failed:", signInError);
           setError(signInError.message || 'Failed to sign in.');
         } else {
           toast({
             title: "Sign in successful",
             description: "Welcome back!"
           });
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
       } else {
         const userData = {
@@ -97,8 +102,10 @@ const Auth = () => {
           username: email.split('@')[0],
         };
         
+        console.log("Attempting sign up with email:", email);
         const { error: signUpError } = await signUp(email, password, userData);
         if (signUpError) {
+          console.error("Sign up failed:", signUpError);
           setError(signUpError.message || 'Failed to sign up.');
         } else {
           toast({
@@ -109,6 +116,7 @@ const Auth = () => {
         }
       }
     } catch (err: any) {
+      console.error("Auth error:", err);
       setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
@@ -119,6 +127,18 @@ const Auth = () => {
     setError(null);
     setActiveTab(value as "login" | "signup");
   };
+
+  // Already showing loading state during redirect
+  if (isAuthenticated) {
+    return (
+      <div className="container relative h-screen w-full flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container relative h-screen w-full flex items-center justify-center">

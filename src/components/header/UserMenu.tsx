@@ -23,6 +23,8 @@ import { useAuth } from '@/lib/auth';
 export const UserMenu = () => {
   const { user, signOut, isAuthenticated } = useAuth();
   
+  console.log("UserMenu render - isAuthenticated:", isAuthenticated, "user:", user?.name);
+  
   if (!isAuthenticated || !user) {
     return (
       <Button variant="default" asChild>
@@ -39,7 +41,7 @@ export const UserMenu = () => {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatar_url} alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

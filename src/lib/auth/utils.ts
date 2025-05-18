@@ -1,103 +1,94 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { UserProfile } from './types';
-import { UserStatus } from '@/types/user';
+import { supabase } from "@/integrations/supabase/client";
+import { UserProfile } from "./types";
+import { Session } from "@supabase/supabase-js";
 
-/**
- * Fetches user profile data from Supabase
- */
-export async function fetchUserProfile(userId: string) {
+// Function to fetch user profile from Supabase
+export const fetchUserProfile = async (userId: string, session?: Session): Promise<UserProfile | null> => {
   try {
-    const { data, error } = await supabase
+    console.log("Fetching profile for user:", userId);
+    // Fetch profile data
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
-    
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+
+    if (!profile) {
+      console.warn("No profile found for user:", userId);
+      
+      // Try to create a profile for the user if it doesn't exist
+      try {
+        // Get the user data from auth
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              name: userData.user.email?.split('@')[0] || 'New User',
+              username: userData.user.email?.split('@')[0] || `user_${userId.substring(0, 8)}`,
+              avatar_url: null
+            })
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error("Error creating user profile:", createError);
+            return null;
+          }
+          
+          console.log("Created new profile for user:", newProfile);
+          return newProfile as UserProfile;
+        }
+      } catch (createErr) {
+        console.error("Failed to create profile:", createErr);
+      }
+      
+      return null;
+    }
+
+    // Build user profile object
+    const userProfile: UserProfile = {
+      id: userId,
+      email: session?.user?.email,
+      name: profile.name || 'Anonymous User',
+      avatar_url: profile.avatar_url,
+      username: profile.username,
+      role: profile.role,
+      isAdmin: profile.role === 'admin',
+    };
+
+    return userProfile;
+  } catch (err) {
+    console.error("Exception in fetchUserProfile:", err);
     return null;
   }
-}
+};
 
-/**
- * Maps Supabase user and profile data to UserProfile type
- */
-export function mapUserProfile(user: any, profile: any): UserProfile {
-  return {
-    id: user.id,
-    email: user.email,
-    name: profile?.name || user.user_metadata?.name || 'Unnamed User',
-    avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
-    username: profile?.username || user.user_metadata?.username,
-    role: profile?.role || 'user',
-    isAdmin: profile?.role === 'admin',
-    avatar: profile?.avatar_url || user.user_metadata?.avatar_url,
-    status: (profile?.status as UserStatus) || 'online',
-    isGhostMode: profile?.is_ghost_mode || false
-  };
-}
-
-/**
- * Updates user profile in Supabase
- */
-export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+// Function to update user profile
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
   try {
-    // Remove any fields that shouldn't be sent to the profiles table
-    const { id, email, isAdmin, ...profileUpdates } = updates;
+    console.log("Updating profile for user:", userId, updates);
+    // Map UserProfile fields to profile table fields
+    const profileUpdates: any = {};
+    if (updates.name) profileUpdates.name = updates.name;
+    if (updates.avatar_url) profileUpdates.avatar_url = updates.avatar_url;
+    if (updates.username) profileUpdates.username = updates.username;
     
-    // Map avatar to avatar_url if it exists
-    if (profileUpdates.avatar && !profileUpdates.avatar_url) {
-      profileUpdates.avatar_url = profileUpdates.avatar;
-      delete profileUpdates.avatar;
-    }
+    const { error } = await supabase
+      .from('profiles')
+      .update(profileUpdates)
+      .eq('id', userId);
     
-    // Ensure status is a valid user_status enum value
-    let updatedStatus: UserStatus | undefined;
-    if (profileUpdates.status) {
-      // Cast the status to the enum or use a safe default
-      const status = profileUpdates.status as string;
-      updatedStatus = ['online', 'away', 'offline', 'invisible', 'do-not-disturb'].includes(status)
-        ? status as UserStatus
-        : 'online';
-    }
-    
-    // Map isGhostMode to is_ghost_mode
-    if ('isGhostMode' in profileUpdates) {
-      const { isGhostMode, ...rest } = profileUpdates;
-      const updatedData = {
-        ...rest,
-        is_ghost_mode: isGhostMode,
-        status: updatedStatus
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updatedData)
-        .eq('id', userId);
-      
-      if (error) throw error;
-    } else {
-      // Regular update without ghost mode change
-      const updatedData = {
-        ...profileUpdates,
-        status: updatedStatus
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updatedData)
-        .eq('id', userId);
-      
-      if (error) throw error;
-    }
-    
+    if (error) return { error };
     return { error: null };
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    return { error };
+  } catch (err) {
+    return { error: err };
   }
-}
+};
