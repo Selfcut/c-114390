@@ -19,6 +19,19 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Define the ResearchItem interface that was missing
+interface ResearchItem {
+  id: string;
+  title: string;
+  summary: string;
+  author: string;
+  date: Date;
+  views: number;
+  likes: number;
+  category: string;
+  imageUrl?: string;
+}
+
 // Define a mapping function to convert ResearchPaper to ResearchItem
 const mapResearchPaperToItem = (paper: ResearchPaper): ResearchItem => ({
   id: paper.id,
