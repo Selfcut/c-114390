@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -23,7 +22,8 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
   // For demonstration, simulating a network request with a delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Example research papers - in a real app, this data would come from the API
+  // example research papers generation logic
+  
   const topics = [
     "Quantum Computing", "Neural Networks", "Dark Matter", 
     "Consciousness", "Gene Editing", "Climate Modeling", 
@@ -92,13 +92,15 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
     queryKey: ['research-papers'],
     queryFn: fetchResearchPapers,
     refetchInterval: 60 * 60 * 1000, // Auto-refresh every hour
-    refetchOnWindowFocus: false,
-    onSettled: (data, error) => {
-      if (data && !error) {
-        setLastUpdateTime(new Date());
-      }
-    }
+    refetchOnWindowFocus: false
   });
+  
+  // Update lastUpdateTime whenever data is successfully fetched
+  React.useEffect(() => {
+    if (researchPapers.length > 0) {
+      setLastUpdateTime(new Date());
+    }
+  }, [researchPapers]);
   
   // Filter research items based on search query and selected category
   const filteredPapers = researchPapers.filter(item => {
