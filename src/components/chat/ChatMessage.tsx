@@ -2,9 +2,11 @@
 import React from "react";
 import { ChatMessage as ChatMessageType } from "./types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Reply } from "lucide-react";
 import { MessageReactions } from "./MessageReactions";
+import { MessageHeader } from "./message/MessageHeader";
+import { MessageContent } from "./message/MessageContent";
+import { MessageActions } from "./message/MessageActions";
+import { MessageReplyReference } from "./message/MessageReplyReference";
 
 export interface ChatMessageProps {
   message: ChatMessageType;
@@ -29,67 +31,6 @@ export const ChatMessage = ({
   isCurrentUser,
   currentUserId
 }: ChatMessageProps) => {
-  // Function to check if message contains markdown image
-  const containsImage = (content: string) => {
-    return /!\[.*?\]\(.*?\)/.test(content);
-  };
-
-  // Function to render markdown content
-  const renderContent = (content: string) => {
-    // Check for GIF or image markdown format: ![alt](url)
-    const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = imgRegex.exec(content)) !== null) {
-      // Add text before the image
-      if (match.index > lastIndex) {
-        parts.push(<span key={`text-${lastIndex}`}>{content.substring(lastIndex, match.index)}</span>);
-      }
-
-      // Add the image
-      const alt = match[1];
-      const url = match[2];
-      parts.push(
-        <img 
-          key={`img-${match.index}`} 
-          src={url} 
-          alt={alt} 
-          className="max-w-full rounded-md my-1 max-h-60 object-contain" 
-        />
-      );
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    // Add remaining text
-    if (lastIndex < content.length) {
-      parts.push(<span key={`text-${lastIndex}`}>{content.substring(lastIndex)}</span>);
-    }
-
-    return parts.length > 0 ? parts : content;
-  };
-
-  // Handle message actions
-  const handleEdit = () => {
-    if (onEdit) {
-      onEdit(message.id);
-    }
-  };
-
-  const handleDelete = () => {
-    if (onDelete) {
-      onDelete(message.id);
-    }
-  };
-
-  const handleReply = () => {
-    if (onReply) {
-      onReply(message.id);
-    }
-  };
-
   // Apply special styles based on effect type
   const getMessageStyles = () => {
     const baseStyles = "p-3 rounded-lg max-w-[80%] break-words";
@@ -134,13 +75,7 @@ export const ChatMessage = ({
   return (
     <div className={`flex flex-col mb-4 group ${message.isSystem ? 'px-4' : ''}`}>
       {/* Reply reference */}
-      {message.replyTo && (
-        <div className="flex items-center text-xs text-muted-foreground mb-1 ml-12">
-          <Reply size={12} className="mr-1" />
-          Replying to <span className="font-medium ml-1">{message.replyTo.sender.name}</span>:
-          <span className="ml-1 truncate max-w-[150px]">"{message.replyTo.content}"</span>
-        </div>
-      )}
+      {message.replyTo && <MessageReplyReference replyTo={message.replyTo} />}
       
       <div className="flex items-start gap-2 relative">
         {/* Avatar - don't show for system messages */}
@@ -155,26 +90,20 @@ export const ChatMessage = ({
         <div className="flex flex-col flex-grow">
           {/* Message header - don't show for system messages */}
           {!message.isSystem && (
-            <div className="flex items-center mb-1">
-              <span className="font-medium text-sm">
-                {message.senderName}
-                {message.isAdmin && (
-                  <span className="ml-1 text-xs bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full">
-                    Admin
-                  </span>
-                )}
-              </span>
-              <span className="text-xs text-muted-foreground ml-2">
-                {formatTime(message.createdAt)}
-                {message.isEdited && <span className="ml-1">(edited)</span>}
-              </span>
-            </div>
+            <MessageHeader 
+              senderName={message.senderName}
+              isAdmin={message.isAdmin || false}
+              formatTime={formatTime}
+              createdAt={message.createdAt}
+              isEdited={message.isEdited}
+            />
           )}
           
           {/* Message content */}
-          <div className={`${getMessageStyles()} ${getEffectClasses()}`}>
-            {renderContent(message.content)}
-          </div>
+          <MessageContent 
+            content={message.content} 
+            className={`${getMessageStyles()} ${getEffectClasses()}`} 
+          />
           
           {/* Reaction display area - displays existing reactions */}
           {message.reactions && message.reactions.length > 0 && (
@@ -190,30 +119,15 @@ export const ChatMessage = ({
           )}
         </div>
         
-        {/* Message actions - now positioned absolutely and only visible on hover */}
+        {/* Message actions - positioned absolutely and only visible on hover */}
         {!message.isSystem && (
-          <div className="absolute -right-12 top-3 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-            {isCurrentUser && onEdit && (
-              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleEdit}>
-                <Edit size={14} />
-                <span className="sr-only">Edit</span>
-              </Button>
-            )}
-            
-            {isCurrentUser && onDelete && (
-              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleDelete}>
-                <Trash2 size={14} />
-                <span className="sr-only">Delete</span>
-              </Button>
-            )}
-            
-            {onReply && (
-              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleReply}>
-                <Reply size={14} />
-                <span className="sr-only">Reply</span>
-              </Button>
-            )}
-          </div>
+          <MessageActions 
+            isCurrentUser={isCurrentUser || false}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onReply={onReply}
+            messageId={message.id}
+          />
         )}
       </div>
     </div>
