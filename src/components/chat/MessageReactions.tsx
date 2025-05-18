@@ -27,7 +27,6 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   const commonEmojis = ["👍", "👎", "😄", "🎉", "❤️", "🔥"];
   
   const handleReactionClick = (emoji: string) => {
-    console.log("Reaction clicked:", emoji, "for message:", messageId);
     const reaction = reactions.find(r => r.emoji === emoji);
     const userIdToUse = currentUserId || 'anonymous';
     
@@ -39,7 +38,6 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
     }
     
     const hasReacted = reaction.users.includes(userIdToUse);
-    console.log("Has reacted:", hasReacted, "currentUserId:", currentUserId);
     
     if (hasReacted && onReactionRemove) {
       onReactionRemove(messageId, emoji);
@@ -49,9 +47,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   };
 
   return (
-    <div className="relative message-reactions group" 
-         onMouseEnter={() => setShowReactionPicker(true)}
-         onMouseLeave={() => setShowReactionPicker(false)}>
+    <div className="relative message-reactions group">
       {/* Display existing reactions */}
       {reactions && reactions.length > 0 && (
         <div className="flex flex-wrap gap-1 existing-reactions">
@@ -75,7 +71,17 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
         </div>
       )}
       
-      {/* Reaction picker that shows on hover */}
+      {/* Add reaction button that shows on message hover */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 py-0 text-xs rounded-full"
+        onClick={() => setShowReactionPicker(!showReactionPicker)}
+      >
+        +
+      </Button>
+      
+      {/* Reaction picker that shows when add reaction is clicked */}
       {showReactionPicker && (
         <div className="absolute bottom-full mb-1 bg-background border rounded-md shadow-md p-1 flex z-10 animate-fade-in">
           {commonEmojis.map(emoji => (
@@ -84,7 +90,10 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => handleReactionClick(emoji)}
+              onClick={() => {
+                handleReactionClick(emoji);
+                setShowReactionPicker(false);
+              }}
             >
               {emoji}
             </Button>

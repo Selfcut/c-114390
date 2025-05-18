@@ -1,24 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 
 // Components
 import { ResearchHeader } from "@/components/research/ResearchHeader";
-import { ResearchFilters } from "@/components/research/ResearchFilters";
-import { ResearchGrid } from "@/components/research/ResearchGrid";
 import { ResearchSemanticSearch } from "@/components/research/ResearchSemanticSearch";
-import { ResearchDiscoveryNotice } from "@/components/research/ResearchDiscoveryNotice";
+import { ResearchGrid } from "@/components/research/ResearchGrid";
 import { ResearchLoadingIndicator } from "@/components/research/ResearchLoadingIndicator";
 import { CreateResearchDialog } from "@/components/research/CreateResearchDialog";
-
-// Hooks
-import { useResearchData } from "@/hooks/useResearchData";
-import { useSemanticSearch } from "@/hooks/useSemanticSearch";
 
 // Types
 import { ResearchPaper } from "@/lib/supabase-types";
@@ -28,31 +22,94 @@ const Research = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [semanticQuery, setSemanticQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+  const [researchPapers, setResearchPapers] = useState<ResearchItem[]>([]);
+  
+  // Semantic search state
   const [isSemanticSearchActive, setIsSemanticSearchActive] = useState(false);
+  const [isSemanticSearchLoading, setIsSemanticSearchLoading] = useState(false);
+  const [semanticSearchError, setSemanticSearchError] = useState<string | null>(null);
+  const [semanticResults, setSemanticResults] = useState<ResearchPaper[]>([]);
   
-  // Use our custom hook for real-time research data
-  const { researchPapers, isLoading, lastUpdateTime, refetch } = useResearchData(searchQuery, selectedCategory);
+  // Fetch research papers on component mount
+  useEffect(() => {
+    fetchResearchPapers();
+  }, []);
+
+  // Fetch all research papers
+  const fetchResearchPapers = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('research_papers')
+        .select('*');
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        const mappedPapers = data.map(mapResearchPaperToItem);
+        setResearchPapers(mappedPapers);
+        setLastUpdateTime(new Date());
+      }
+    } catch (error: any) {
+      console.error('Error fetching research papers:', error);
+      toast.error(`Failed to load research papers: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  // Use semantic search for advanced queries
-  const { 
-    results: semanticResults, 
-    isLoading: isSemanticSearchLoading,
-    error: semanticSearchError,
-    performSearch: doSemanticSearch
-  } = useSemanticSearch<ResearchPaper>({ contentType: 'research' });
+  // Handle semantic search
+  const performSemanticSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setIsSemanticSearchLoading(true);
+    setIsSemanticSearchActive(true);
+    setSemanticSearchError(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('semantic-search', {
+        body: { 
+          query: searchQuery,
+          contentType: 'research',
+          limit: 20,
+          threshold: 0.65
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data && data.results) {
+        setSemanticResults(data.results);
+      } else {
+        setSemanticResults([]);
+      }
+    } catch (error: any) {
+      console.error('Semantic search error:', error);
+      setSemanticSearchError(`Search failed: ${error.message}`);
+      setSemanticResults([]);
+    } finally {
+      setIsSemanticSearchLoading(false);
+    }
+  };
+  
+  // Clear semantic search
+  const clearSemanticSearch = () => {
+    setIsSemanticSearchActive(false);
+    setSearchQuery("");
+    setSemanticResults([]);
+  };
   
   // Handle creating new research
   const handleCreateResearch = () => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to create research entries.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      toast.error("Please sign in to create research entries");
       return;
     }
     
@@ -60,12 +117,8 @@ const Research = () => {
   };
   
   const handleResearchCreated = async (id: string) => {
-    refetch();
-    toast({
-      title: "Research Published",
-      description: "Your research paper has been published successfully.",
-      duration: 3000,
-    });
+    fetchResearchPapers();
+    toast.success("Research paper published successfully");
     
     // Generate embeddings for the new research paper
     try {
@@ -77,25 +130,27 @@ const Research = () => {
     }
   };
   
-  const handleSemanticSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (semanticQuery.trim()) {
-      setIsSemanticSearchActive(true);
-      await doSemanticSearch(semanticQuery);
+  // Filter papers based on category if selected
+  const filteredPapers = researchPapers.filter(paper => {
+    if (selectedCategory) {
+      return paper.category === selectedCategory;
+    }
+    return true;
+  });
+  
+  // Determine which papers to display
+  const displayPapers = isSemanticSearchActive 
+    ? semanticResults.map(mapResearchPaperToItem)
+    : filteredPapers;
+    
+  // Handle category selection
+  const handleCategoryChange = (category: string | null) => {
+    setSelectedCategory(category);
+    // Clear semantic search if active
+    if (isSemanticSearchActive) {
+      clearSemanticSearch();
     }
   };
-  
-  const handleClearSemanticSearch = () => {
-    setIsSemanticSearchActive(false);
-    setSemanticQuery("");
-  };
-  
-  // Determine which papers to display and map to ResearchItem type
-  const displayPapers: ResearchItem[] = isSemanticSearchActive 
-    ? semanticResults.map(mapResearchPaperToItem)
-    : researchPapers;
-    
-  const isDisplayLoading = isSemanticSearchActive ? isSemanticSearchLoading : isLoading;
   
   return (
     <PageLayout>
@@ -108,34 +163,41 @@ const Research = () => {
           </div>
         </div>
         
-        {/* Traditional filters */}
-        <ResearchFilters 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          disabled={isSemanticSearchActive}
-        />
-        
-        {/* Semantic search bar */}
+        {/* Single Search Bar for Research Papers */}
         <ResearchSemanticSearch
-          semanticQuery={semanticQuery}
-          onSemanticQueryChange={setSemanticQuery}
+          semanticQuery={searchQuery}
+          onSemanticQueryChange={setSearchQuery}
           isSemanticSearchLoading={isSemanticSearchLoading}
           isSemanticSearchActive={isSemanticSearchActive}
           semanticSearchError={semanticSearchError}
           semanticResultsCount={semanticResults.length}
-          onSemanticSearch={handleSemanticSearch}
-          onClearSemanticSearch={handleClearSemanticSearch}
+          onSemanticSearch={performSemanticSearch}
+          onClearSemanticSearch={clearSemanticSearch}
         />
         
-        <ResearchDiscoveryNotice />
+        {/* Category filter dropdown */}
+        <div className="mb-6">
+          <select
+            className="border border-input bg-background px-3 py-2 rounded-md text-sm"
+            value={selectedCategory || ''}
+            onChange={(e) => handleCategoryChange(e.target.value || null)}
+            disabled={isSemanticSearchActive}
+          >
+            <option value="">All Categories</option>
+            <option value="Machine Learning">Machine Learning</option>
+            <option value="Artificial Intelligence">Artificial Intelligence</option>
+            <option value="Natural Language Processing">Natural Language Processing</option>
+            <option value="Computer Vision">Computer Vision</option>
+            <option value="Neuroscience">Neuroscience</option>
+            <option value="Ethics">Ethics</option>
+          </select>
+        </div>
         
-        {isDisplayLoading ? (
+        {isLoading || isSemanticSearchLoading ? (
           <ResearchLoadingIndicator />
         ) : (
           <ResearchGrid 
-            searchQuery={isSemanticSearchActive ? semanticQuery : searchQuery}
+            searchQuery={searchQuery}
             selectedCategory={selectedCategory}
             researchPapers={displayPapers}
           />

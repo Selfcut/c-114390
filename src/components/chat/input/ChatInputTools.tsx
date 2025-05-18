@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PaperclipIcon, Image, Smile } from 'lucide-react';
+import { Smile, Image } from 'lucide-react';
 import { AdminEffects } from '../AdminEffects';
 import { 
   Tooltip, 
@@ -13,7 +13,6 @@ import {
 interface ChatInputToolsProps {
   onEmojiPickerToggle: () => void;
   onGifPickerToggle: () => void;
-  onFileUpload: () => void;
   showEmojiPicker?: boolean;
   showGifPicker?: boolean;
   isAdmin?: boolean;
@@ -23,7 +22,6 @@ interface ChatInputToolsProps {
 export const ChatInputTools = ({
   onEmojiPickerToggle,
   onGifPickerToggle,
-  onFileUpload,
   showEmojiPicker,
   showGifPicker,
   isAdmin = false,
@@ -64,22 +62,6 @@ export const ChatInputTools = ({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">Insert GIF</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onFileUpload}
-              className="h-7 w-7 rounded-full flex-shrink-0"
-              aria-label="Attach file"
-              type="button"
-            >
-              <PaperclipIcon size={16} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">Attach file</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 

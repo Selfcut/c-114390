@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Image } from "lucide-react";
@@ -30,20 +30,14 @@ const SAMPLE_GIFS = [
 ];
 
 export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = React.useState("");
   
-  const handleGifClick = (gif: { url: string; alt: string }) => {
-    onGifSelect(gif);
-    setIsOpen(false);
-  };
-
   const filteredGifs = searchTerm
     ? SAMPLE_GIFS.filter(gif => gif.alt.toLowerCase().includes(searchTerm.toLowerCase()))
     : SAMPLE_GIFS;
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover>
       <PopoverTrigger asChild>
         <Button 
           variant="ghost" 
@@ -54,7 +48,7 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
           <span className="sr-only">Add GIF</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-3" align="end" alignOffset={-40}>
+      <PopoverContent className="w-72 p-3" align="end" sideOffset={5}>
         <div className="space-y-3">
           <Input 
             placeholder="Search GIFs..." 
@@ -67,7 +61,7 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
               <button
                 key={index}
                 className="w-full h-24 overflow-hidden rounded border border-border hover:border-primary/50 transition-colors"
-                onClick={() => handleGifClick(gif)}
+                onClick={() => onGifSelect(gif)}
               >
                 <img 
                   src={gif.url} 
