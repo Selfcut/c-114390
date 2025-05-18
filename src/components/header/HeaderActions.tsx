@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { HelpCircle, Crown, Bell } from "lucide-react";
+import { HelpCircle, Crown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
