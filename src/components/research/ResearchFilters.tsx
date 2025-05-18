@@ -56,15 +56,15 @@ export const ResearchFilters: React.FC<ResearchFiltersProps> = ({
       </div>
       
       <Select 
-        value={selectedCategory || ""} 
-        onValueChange={(value) => onCategoryChange(value || null)}
+        value={selectedCategory || "all"} 
+        onValueChange={(value) => onCategoryChange(value === "all" ? null : value)}
         disabled={disabled}
       >
         <SelectTrigger className="w-[200px]">
           <SelectValue placeholder="All Categories" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Categories</SelectItem>
+          <SelectItem value="all">All Categories</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category} value={category}>
               {category}
