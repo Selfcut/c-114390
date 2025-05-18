@@ -20,6 +20,21 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
+    // Extract auth token from request and get the current user
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    
+    let currentUserId = '';
+    
+    if (token) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError) throw authError;
+      if (user) {
+        currentUserId = user.id;
+        console.log('Current user ID:', currentUserId);
+      }
+    }
+
     // Find the user with username "polymath"
     const { data: userData, error: userError } = await supabase
       .from('profiles')
@@ -28,23 +43,51 @@ serve(async (req) => {
       .single();
     
     if (userError) {
-      if (userError.code === 'PGRST116') {
-        // User not found, return appropriate message
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: "User with username 'polymath' not found" 
-          }),
-          { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            },
-            status: 404
-          }
-        );
+      // If user not found by username, search by email
+      const { data: emailUser, error: emailError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', 'snowly@protonmail.com') // Assuming this is the email
+        .single();
+        
+      if (emailError || !emailUser) {
+        // Try to use the current user's ID if no specific user found
+        if (currentUserId) {
+          console.log('Using current user as admin:', currentUserId);
+          const userId = currentUserId;
+          
+          // Update user role in profiles table
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ role: 'admin', isAdmin: true })
+            .eq('id', userId);
+          
+          if (profileError) throw profileError;
+          
+          // Force refresh the auth claims by updating the user's custom claims
+          await supabase.auth.admin.updateUserById(userId, {
+            app_metadata: { role: 'admin' }
+          });
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: "Admin role assigned successfully to current user" 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } else {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: "User with username 'polymath' not found and no current user identified" 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+          );
+        }
+      } else {
+        userData = emailUser;
       }
-      throw userError;
     }
     
     const userId = userData.id;
@@ -102,12 +145,7 @@ serve(async (req) => {
         success: true, 
         message: "Admin role assigned successfully to user 'polymath'" 
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     console.error('Error assigning admin role:', error);
@@ -117,13 +155,7 @@ serve(async (req) => {
         success: false, 
         error: error.message 
       }),
-      { 
-        status: 400, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

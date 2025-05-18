@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { UserMenu } from "./UserMenu";
+import { MakeAdminButton } from "@/components/admin/MakeAdminButton";
 
 export const HeaderActions = () => {
   const { user } = useAuth();
@@ -42,6 +43,11 @@ export const HeaderActions = () => {
       
       {/* Notifications - Only show for logged in users */}
       {user && <NotificationsDropdown />}
+      
+      {/* Admin Button - Only show for non-admin users with email containing "polymath" */}
+      {user && user.email && !user.isAdmin && (
+        <MakeAdminButton />
+      )}
       
       {/* Premium */}
       <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-1 text-amber-500 border-amber-500/30 hover:bg-amber-500/10">

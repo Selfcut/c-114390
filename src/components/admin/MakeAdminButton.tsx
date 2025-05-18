@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Crown, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 export const MakeAdminButton = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const makeUserAdmin = async () => {
     setIsLoading(true);
@@ -32,6 +34,11 @@ export const MakeAdminButton = () => {
           title: "Success",
           description: data.message || "Admin role assigned successfully",
         });
+        
+        // Reload the page to refresh the auth state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         toast({
           title: "Operation failed",
@@ -51,18 +58,24 @@ export const MakeAdminButton = () => {
     }
   };
 
+  // Don't show button if user is already admin
+  if (user?.isAdmin) {
+    return null;
+  }
+
   return (
     <Button 
       onClick={makeUserAdmin}
       disabled={isLoading}
       className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600"
+      size={window.innerWidth < 640 ? "sm" : "default"}
     >
       {isLoading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <Crown className="h-4 w-4" />
       )}
-      <span>Make "polymath" Admin</span>
+      <span>Make Admin</span>
     </Button>
   );
 };
