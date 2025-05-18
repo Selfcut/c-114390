@@ -1,5 +1,6 @@
 
 import { User } from '@supabase/supabase-js';
+import { UserStatus, UserRole } from '@/types/user';
 
 export interface UserProfile {
   id: string;
@@ -11,10 +12,10 @@ export interface UserProfile {
   avatar?: string;
   avatar_url?: string;
   name?: string; // Add name field to match the UserProfile in user.ts
-  role?: 'user' | 'moderator' | 'admin' | string; // Allow string for compatibility
+  role?: UserRole | string; // Allow string for compatibility
   created_at?: string;
   updated_at?: string;
-  status?: string;
+  status?: UserStatus;
   isGhostMode?: boolean;
   isAdmin?: boolean;
 }
@@ -34,17 +35,18 @@ export interface AuthContextValue extends AuthState {
   deleteAccount: () => Promise<{ error: Error | null }>;
 }
 
-// Add AuthContextType for auth-context.tsx
+// Auth context type for auth-context.tsx
 export interface AuthContextType {
   user: UserProfile | null;
   session: any;
   isLoading: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any } | null>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: any } | null>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
-  updateUserStatus?: (status: string) => Promise<void>;
+  updateUserProfile?: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
+  updateUserStatus?: (status: UserStatus) => Promise<void>;
   toggleGhostMode?: () => Promise<void>;
   toggleDoNotDisturb?: () => Promise<void>;
   loading?: boolean;

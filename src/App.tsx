@@ -33,7 +33,7 @@ function App() {
                 <Route path="/" element={<PageLayout><Index /></PageLayout>} />
                 <Route path="/dashboard" element={<PageLayout><Dashboard /></PageLayout>} />
                 <Route path="/forum" element={<Forum />} />
-                <Route path="/forum/:id" element={<PageLayout><ForumPost /></PageLayout>} />
+                <Route path="/forum/:id" element={<ForumPost />} />
                 <Route path="/library" element={<PageLayout><Library /></PageLayout>} />
                 <Route path="/research" element={<PageLayout><Research /></PageLayout>} />
                 <Route path="/book-reviews" element={<PageLayout><BookReviews /></PageLayout>} />
@@ -41,10 +41,10 @@ function App() {
                 <Route path="/chat" element={<PageLayout><Chat /></PageLayout>} />
                 <Route path="/media" element={<PageLayout><Media /></PageLayout>} />
                 <Route path="/problems" element={<PageLayout><Problems /></PageLayout>} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/quotes" element={<Quotes />} />
-                <Route path="/wiki" element={<Wiki />} />
-                <Route path="/wiki/:id" element={<WikiArticle />} />
+                <Route path="/events" element={<PageLayout><Events /></PageLayout>} />
+                <Route path="/quotes" element={<PageLayout><Quotes /></PageLayout>} />
+                <Route path="/wiki" element={<PageLayout><Wiki /></PageLayout>} />
+                <Route path="/wiki/:id" element={<PageLayout><WikiArticle /></PageLayout>} />
                 <Route path="*" element={<PageLayout><Index /></PageLayout>} />
               </Routes>
               <Toaster />

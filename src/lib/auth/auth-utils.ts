@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile, UserStatus } from "@/types/user";
+import { UserProfile } from "./types";
+import { UserStatus } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
 
 // Fetch user profile from Supabase
@@ -34,7 +35,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       website: profile?.website || "",
       role: profile?.role || "user",
       isAdmin: profile?.role === "admin",
-      status: profile?.status as UserStatus || "online",
+      status: (profile?.status as UserStatus) || "online",
       isGhostMode: profile?.is_ghost_mode || false,
     };
 
@@ -168,4 +169,3 @@ export const signOut = async () => {
 export const clearUserData = (): void => {
   // Clear any additional user data from localStorage if needed
 };
-

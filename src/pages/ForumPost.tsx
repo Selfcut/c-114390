@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { useForumPost } from '@/hooks/forum/useForumPost';
 import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
-import { UserProfile } from '@/lib/auth/types';
+import { UserProfile } from '@/lib/auth/types';  // Import from auth/types
 
 // Placeholder components - in a real project, these would be in separate files
 const ForumSkeleton = () => (

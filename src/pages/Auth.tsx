@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -104,7 +103,7 @@ const Auth = () => {
         });
       } else {
         console.log("Signing up with email:", email);
-        const result = await signUp(email, password, username || email.split('@')[0], name);
+        const result = await signUp(email, password, username, name);
         
         if (result?.error) {
           console.error("Sign up error:", result.error);
