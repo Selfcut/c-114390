@@ -1,49 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { CollapsibleSidebar } from "@/components/CollapsibleSidebar";
-import Header from "@/components/Header";
+
+import React, { useState } from 'react';
+import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import { PageLayout } from "@/components/layouts/PageLayout";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+
+// Components
 import { ResearchHeader } from "@/components/research/ResearchHeader";
 import { ResearchFilters } from "@/components/research/ResearchFilters";
 import { ResearchGrid } from "@/components/research/ResearchGrid";
-import { Microscope, Search, Loader2, Database } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { useResearchData } from "@/hooks/useResearchData";
-import { format } from "date-fns";
-import { PageLayout } from "@/components/layouts/PageLayout";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
+import { ResearchSemanticSearch } from "@/components/research/ResearchSemanticSearch";
+import { ResearchDiscoveryNotice } from "@/components/research/ResearchDiscoveryNotice";
+import { ResearchLoadingIndicator } from "@/components/research/ResearchLoadingIndicator";
 import { CreateResearchDialog } from "@/components/research/CreateResearchDialog";
+
+// Hooks
+import { useResearchData } from "@/hooks/useResearchData";
 import { useSemanticSearch } from "@/hooks/useSemanticSearch";
+
+// Types
 import { ResearchPaper } from "@/lib/supabase-types";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-// Define the ResearchItem interface that was missing
-interface ResearchItem {
-  id: string;
-  title: string;
-  summary: string;
-  author: string;
-  date: Date;
-  views: number;
-  likes: number;
-  category: string;
-  imageUrl?: string;
-}
-
-// Define a mapping function to convert ResearchPaper to ResearchItem
-const mapResearchPaperToItem = (paper: ResearchPaper): ResearchItem => ({
-  id: paper.id,
-  title: paper.title,
-  summary: paper.summary || 'No summary available',
-  author: paper.author || 'Unknown Author',
-  date: new Date(paper.created_at || Date.now()),
-  views: paper.views || 0,
-  likes: paper.likes || 0,
-  category: paper.category || 'general',
-  imageUrl: paper.image_url
-});
+import { ResearchItem, mapResearchPaperToItem } from "@/components/research/types";
 
 const Research = () => {
   const navigate = useNavigate();
@@ -112,9 +91,10 @@ const Research = () => {
   };
   
   // Determine which papers to display and map to ResearchItem type
-  const displayPapers = isSemanticSearchActive 
+  const displayPapers: ResearchItem[] = isSemanticSearchActive 
     ? semanticResults.map(mapResearchPaperToItem)
     : researchPapers;
+    
   const isDisplayLoading = isSemanticSearchActive ? isSemanticSearchLoading : isLoading;
   
   return (
@@ -138,74 +118,21 @@ const Research = () => {
         />
         
         {/* Semantic search bar */}
-        <div className="mb-6">
-          <form onSubmit={handleSemanticSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="search"
-                placeholder="Ask a question or describe what you're looking for..."
-                value={semanticQuery}
-                onChange={(e) => setSemanticQuery(e.target.value)}
-                className="pl-10"
-                disabled={isSemanticSearchLoading}
-              />
-            </div>
-            <Button 
-              type="submit" 
-              disabled={!semanticQuery.trim() || isSemanticSearchLoading}
-            >
-              {isSemanticSearchLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Database className="h-4 w-4 mr-2" />
-              )}
-              Semantic Search
-            </Button>
-            {isSemanticSearchActive && (
-              <Button 
-                variant="outline" 
-                onClick={handleClearSemanticSearch}
-                disabled={isSemanticSearchLoading}
-              >
-                Clear
-              </Button>
-            )}
-          </form>
-          {semanticSearchError && (
-            <p className="text-sm text-destructive mt-1">{semanticSearchError}</p>
-          )}
-          {isSemanticSearchActive && semanticResults.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Found {semanticResults.length} papers using semantic search
-            </p>
-          )}
-        </div>
+        <ResearchSemanticSearch
+          semanticQuery={semanticQuery}
+          onSemanticQueryChange={setSemanticQuery}
+          isSemanticSearchLoading={isSemanticSearchLoading}
+          isSemanticSearchActive={isSemanticSearchActive}
+          semanticSearchError={semanticSearchError}
+          semanticResultsCount={semanticResults.length}
+          onSemanticSearch={handleSemanticSearch}
+          onClearSemanticSearch={handleClearSemanticSearch}
+        />
         
-        <div className="mb-4 p-3 bg-primary/10 rounded-md border border-primary/20 text-sm flex items-start gap-3">
-          <Microscope className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">Research Auto-Discovery Active</p>
-            <p className="text-muted-foreground">The system is automatically searching for new research papers every hour from arXiv.</p>
-          </div>
-        </div>
-        
-        {/* Show a tip about semantic search */}
-        <Alert className="mb-4">
-          <Database className="h-4 w-4" />
-          <AlertTitle>Semantic Search Available</AlertTitle>
-          <AlertDescription>
-            Try asking questions like "papers about large language models" or "research on explainable AI" to find semantically related content.
-          </AlertDescription>
-        </Alert>
+        <ResearchDiscoveryNotice />
         
         {isDisplayLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-              <p className="mt-4 text-muted-foreground">Fetching research papers...</p>
-            </div>
-          </div>
+          <ResearchLoadingIndicator />
         ) : (
           <ResearchGrid 
             searchQuery={isSemanticSearchActive ? semanticQuery : searchQuery}

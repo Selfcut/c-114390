@@ -2,19 +2,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ResearchItem, mapResearchPaperToItem } from "@/components/research/types";
 import { ResearchPaper } from "@/lib/supabase-types";
-
-interface ResearchItem {
-  id: string;
-  title: string;
-  summary: string;
-  author: string;
-  date: Date;
-  views: number;
-  likes: number;
-  category: string;
-  imageUrl?: string;
-}
 
 // Function to fetch real research papers from Supabase
 const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
@@ -34,17 +23,7 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
     }
     
     // Transform Supabase data to match ResearchItem interface
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      summary: item.summary || 'No summary available',
-      author: item.author || 'Unknown Author',
-      date: new Date(item.created_at),
-      views: item.views || 0,
-      likes: item.likes || 0,
-      category: item.category || 'general',
-      imageUrl: item.image_url
-    }));
+    return data.map(mapResearchPaperToItem);
   } catch (error) {
     console.error('Error in fetchResearchPapers:', error);
     return [];

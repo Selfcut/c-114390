@@ -4,18 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Microscope, Eye, ThumbsUp, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-interface ResearchItem {
-  id: string;
-  title: string;
-  summary: string;
-  author: string;
-  date: Date;
-  views: number;
-  likes: number;
-  category: string;
-  imageUrl?: string;
-}
+import { ResearchItem } from './types';
 
 interface ResearchGridProps {
   searchQuery: string;
