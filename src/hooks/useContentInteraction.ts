@@ -47,9 +47,9 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
     if (!user) return;
     setIsLoading(true);
     
-    const tableName = `content_${interactionType}s`;
-    
     try {
+      const tableName = `content_${interactionType}s`;
+      
       if (hasInteracted) {
         // Remove interaction
         const { error } = await supabase
@@ -90,11 +90,9 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
   // Get interaction count
   const fetchInteractionCount = async (contentId: string): Promise<void> => {
     setIsLoading(true);
-    const tableName = `content_${interactionType}s`;
-    
     try {
       const { count, error } = await supabase
-        .from(tableName)
+        .from(`content_${interactionType}s`)
         .select('*', { count: 'exact' })
         .eq('content_id', contentId)
         .eq('content_type', contentType);

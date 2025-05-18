@@ -1,5 +1,5 @@
 
-import { MediaPost } from "@/utils/mediaUtils";
+import { MediaPost, MediaType } from "@/utils/mediaUtils";
 
 export interface MediaQueryParams {
   mediaType: string;
@@ -21,6 +21,7 @@ export interface CreatePostData {
   file?: File;
   type: string;
   tags?: string[];
+  user_id: string;
 }
 
 export interface CreatePostResponse {

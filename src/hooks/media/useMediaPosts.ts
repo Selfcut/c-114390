@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { MediaPost } from '@/utils/mediaUtils';
+import { MediaPost, validateMediaType } from '@/utils/mediaUtils';
 import { CreatePostData } from './types';
 import { MediaPosts } from './useFetchMediaPosts';
 
@@ -81,7 +81,7 @@ export const useMediaPosts = (
         title: post.title,
         content: post.content || '',
         url: post.url || '',
-        type: post.type,
+        type: validateMediaType(post.type),
         user_id: post.user_id,
         created_at: post.created_at,
         updated_at: post.updated_at,
@@ -141,8 +141,10 @@ export const useMediaPosts = (
           .upload(filePath, postData.file, {
             upsert: false,
             onUploadProgress: (progress) => {
-              const percentage = (progress.loaded / progress.total) * 100;
-              setUploadProgress(Math.floor(percentage));
+              if (progress && progress.total) {
+                const percentage = (progress.loaded / progress.total) * 100;
+                setUploadProgress(Math.floor(percentage));
+              }
             },
           });
         
@@ -159,8 +161,8 @@ export const useMediaPosts = (
           title: postData.title,
           content: postData.content,
           type: postData.type,
-          url: postData.type === 'image' || postData.type === 'document' ? fileUrl : postData.url,
-          user_id: postData.userId,
+          url: fileUrl || null,
+          user_id: postData.user_id,
         })
         .select()
         .single();
@@ -179,7 +181,13 @@ export const useMediaPosts = (
   });
   
   const handleCreatePost = async (data: CreatePostData) => {
-    return await createPostMutation.mutateAsync(data);
+    // Make sure we have the correct user_id property
+    const postDataWithUserId = {
+      ...data,
+      user_id: data.user_id
+    };
+    
+    return await createPostMutation.mutateAsync(postDataWithUserId);
   };
   
   const loadMore = useCallback(() => {

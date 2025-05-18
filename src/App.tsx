@@ -5,6 +5,10 @@ import { AppRoutes } from './components/routing/AppRoutes';
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -18,12 +22,14 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider defaultTheme="light" storageKey="vite-theme">
-          <AppRoutes />
-          <Toaster />
-        </ThemeProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider defaultTheme="light" storageKey="vite-theme">
+            <AppRoutes />
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

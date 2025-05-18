@@ -62,8 +62,9 @@ export const MediaContainer = () => {
   const mediaData = {
     postsData,
     isLoading,
-    isError: isError || false, // Ensure isError is always boolean
-    error: error instanceof Error ? error : String(error || ''), // Convert error to string if necessary
+    isError,
+    // Convert error to Error type if it's a string
+    error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,
     loadMore
   };

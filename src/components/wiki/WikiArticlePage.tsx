@@ -60,7 +60,7 @@ const WikiArticlePage = () => {
           // Check if the user has liked this article
           if (isAuthenticated) {
             const hasLiked = await checkUserLike(article.id);
-            setIsLiked(!!hasLiked);
+            setIsLiked(hasLiked);
           }
         } else {
           setError("Article not found");

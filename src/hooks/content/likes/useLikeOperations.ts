@@ -129,7 +129,14 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       return;
     }
     
-    await toggleLikeMutation.mutateAsync(contentId);
+    try {
+      await toggleLikeMutation.mutateAsync(contentId);
+      // We explicitly don't need to return anything here for void return type
+    } catch (error) {
+      console.error('Error in toggleLike:', error);
+      // Rethrow to propagate the error if needed
+      throw error;
+    }
   };
 
   return {
