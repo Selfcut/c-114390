@@ -1,5 +1,27 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { UserProfile } from "@/types/user";
+
+// Define the QuoteWithUser interface to be exported
+export interface QuoteWithUser {
+  id: string;
+  text: string;
+  author: string;
+  source?: string;
+  category: string;
+  tags?: string[];
+  likes: number;
+  bookmarks: number;
+  comments: number;
+  created_at: string;
+  user?: {
+    id: string;
+    name: string;
+    username: string;
+    avatar_url?: string;
+    status?: string;
+  };
+}
 
 // Function to like a quote
 export const likeQuote = async (quoteId: string): Promise<boolean> => {
@@ -25,8 +47,12 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       
       if (deleteError) throw deleteError;
       
-      // Update quote likes count
-      await supabase.rpc('decrement_quote_likes', { quote_id: quoteId }).single();
+      // Update quote likes count using decrement_counter instead of specific RPC
+      await supabase.rpc('decrement_counter', { 
+        row_id: quoteId, 
+        column_name: 'likes', 
+        table_name: 'quotes' 
+      });
       
       return false;
     }
@@ -41,8 +67,12 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
     
     if (error) throw error;
     
-    // Update quote likes count
-    await supabase.rpc('increment_quote_likes', { quote_id: quoteId }).single();
+    // Update quote likes count using increment_counter
+    await supabase.rpc('increment_counter', { 
+      row_id: quoteId, 
+      column_name: 'likes', 
+      table_name: 'quotes' 
+    });
     
     return true;
   } catch (error) {
@@ -75,8 +105,12 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       
       if (deleteError) throw deleteError;
       
-      // Update quote bookmarks count
-      await supabase.rpc('decrement_quote_bookmarks', { quote_id: quoteId }).single();
+      // Update quote bookmarks count using decrement_counter
+      await supabase.rpc('decrement_counter', { 
+        row_id: quoteId, 
+        column_name: 'bookmarks', 
+        table_name: 'quotes' 
+      });
       
       return false;
     }
@@ -91,8 +125,12 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
     
     if (error) throw error;
     
-    // Update quote bookmarks count
-    await supabase.rpc('increment_quote_bookmarks', { quote_id: quoteId }).single();
+    // Update quote bookmarks count using increment_counter
+    await supabase.rpc('increment_counter', { 
+      row_id: quoteId, 
+      column_name: 'bookmarks', 
+      table_name: 'quotes' 
+    });
     
     return true;
   } catch (error) {
@@ -165,9 +203,13 @@ export const addCommentToQuote = async (quoteId: string, content: string): Promi
     
     if (error) throw error;
     
-    // Update quote comments count
+    // Update quote comments count using increment_counter
     try {
-      await supabase.rpc('increment_quote_comments', { quote_id: quoteId });
+      await supabase.rpc('increment_counter', { 
+        row_id: quoteId, 
+        column_name: 'comments', 
+        table_name: 'quotes'
+      });
     } catch (error) {
       console.error("Error incrementing comments count:", error);
     }
@@ -236,10 +278,110 @@ export const getQuotesByFilter = async (filterType: 'category' | 'tag', filterVa
   }
 };
 
+// Add the missing fetchQuotes function
+export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('quotes')
+      .select(`
+        *,
+        profiles:user_id (
+          name,
+          avatar_url,
+          username,
+          status
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching quotes:", error);
+    return [];
+  }
+};
+
+// Add the missing fetchQuotesWithFilters function
+export const fetchQuotesWithFilters = async (filters: {
+  category?: string;
+  tag?: string;
+  search?: string;
+}): Promise<QuoteWithUser[]> => {
+  try {
+    let query = supabase
+      .from('quotes')
+      .select(`
+        *,
+        profiles:user_id (
+          name,
+          avatar_url,
+          username,
+          status
+        )
+      `);
+    
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    
+    if (filters.tag) {
+      query = query.contains('tags', [filters.tag]);
+    }
+    
+    if (filters.search) {
+      query = query.or(`text.ilike.%${filters.search}%,author.ilike.%${filters.search}%`);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching quotes with filters:", error);
+    return [];
+  }
+};
+
+// Add the missing createQuote function
+export const createQuote = async (
+  text: string,
+  author: string,
+  source: string = "",
+  category: string = "Philosophy",
+  tags: string[] = []
+): Promise<boolean> => {
+  try {
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
+    const { error } = await supabase
+      .from('quotes')
+      .insert({
+        text,
+        author,
+        source,
+        category,
+        tags,
+        user_id: user.id
+      });
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error("Error creating quote:", error);
+    return false;
+  }
+};
+
 // Utility function to handle incrementing a counter with RPC
 const incrementCounter = async (rpcName: string, params: Record<string, any>) => {
   try {
-    await supabase.rpc(rpcName, params);
+    await supabase.rpc('increment_counter', params);
     return true;
   } catch (error) {
     console.error(`Error calling RPC ${rpcName}:`, error);
@@ -250,7 +392,7 @@ const incrementCounter = async (rpcName: string, params: Record<string, any>) =>
 // Utility function to handle decrementing a counter with RPC
 const decrementCounter = async (rpcName: string, params: Record<string, any>) => {
   try {
-    await supabase.rpc(rpcName, params);
+    await supabase.rpc('decrement_counter', params);
     return true;
   } catch (error) {
     console.error(`Error calling RPC ${rpcName}:`, error);

@@ -118,7 +118,7 @@ export const getUserActivityStats = async (userId: string) => {
   }
 };
 
-// Calculate activity streak for a user
+// Calculate activity streak for a user - add the missing export
 export const calculateActivityStreak = async (userId: string): Promise<number> => {
   try {
     const stats = await getUserActivityStats(userId);
