@@ -119,7 +119,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
   });
 
-  // Fixed toggleLike function to properly return Promise<void>
+  // Modified toggleLike function to properly return Promise<void>
   const toggleLike = async (contentId: string): Promise<void> => {
     if (!user) {
       toast({
@@ -131,11 +131,12 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
     
     try {
-      // Execute the mutation and explicitly discard the result
+      // Execute the mutation and explicitly void the result
       await toggleLikeMutation.mutateAsync(contentId);
-      // No explicit return here makes it return void
+      // No return statement, which defaults to void
     } catch (error) {
       console.error('Error in toggleLike:', error);
+      // No return here either
     }
   };
 
