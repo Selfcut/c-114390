@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check active session on load
@@ -117,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
@@ -128,17 +129,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       toast.success("Signed in successfully");
+      return { error: null };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      throw error;
+      return { error };
     } finally {
       setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, username: string, name?: string) => {
+  const signUp = async (email: string, password: string, username: string, name?: string): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
       const { error, data } = await supabase.auth.signUp({
@@ -155,11 +157,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       toast.success("Account created! Check your email to confirm your account.");
+      return { error: null };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sign up';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      throw error;
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -212,6 +215,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Alias for updateUserProfile to match the interface
+  const handleUpdateProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
+    return updateUserProfile(updates);
   };
   
   const value = {
