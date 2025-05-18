@@ -1,4 +1,3 @@
-
 export interface Reaction {
   emoji: string;
   count: number;
@@ -35,19 +34,12 @@ export interface ConversationItem {
   isGroup?: boolean;
   isGlobal?: boolean;
   createdAt?: string;
-  updatedAt?: string;
+  updatedAt: string; // Make this required to match Conversation interface
   unread?: number;
   avatar?: string;
 }
 
-// Add the Conversation interface that was missing
-export interface Conversation {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  isGroup?: boolean;
-  isGlobal?: boolean;
-  unread?: number;
-  avatar?: string;
-  updatedAt: string;
+// Keep Conversation interface for backwards compatibility
+export interface Conversation extends ConversationItem {
+  // All properties are now inherited from ConversationItem
 }

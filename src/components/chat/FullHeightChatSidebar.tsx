@@ -23,12 +23,12 @@ export const FullHeightChatSidebar = () => {
   const { isAdmin } = useAdminStatus();
   const [activeTab, setActiveTab] = useState<string>("chats");
   
-  // Mock conversations for demo
+  // Mock conversations for demo - ensure all have the required updatedAt property
   const [conversations, setConversations] = useState<ConversationItem[]>([
-    { id: 'global', name: 'Global Chat', lastMessage: 'Welcome to the community!', unread: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'philosophy', name: 'Philosophy', lastMessage: 'What is consciousness?', unread: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'science', name: 'Science', lastMessage: 'New discoveries in quantum physics', unread: 3, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'art', name: 'Art & Literature', lastMessage: 'Discussing modern art movements', unread: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    { id: 'global', name: 'Global Chat', lastMessage: 'Welcome to the community!', unread: 2, updatedAt: new Date().toISOString() },
+    { id: 'philosophy', name: 'Philosophy', lastMessage: 'What is consciousness?', unread: 0, updatedAt: new Date().toISOString() },
+    { id: 'science', name: 'Science', lastMessage: 'New discoveries in quantum physics', unread: 3, updatedAt: new Date().toISOString() },
+    { id: 'art', name: 'Art & Literature', lastMessage: 'Discussing modern art movements', unread: 1, updatedAt: new Date().toISOString() }
   ]);
   
   const [selectedConversation, setSelectedConversation] = useState<string>("global");

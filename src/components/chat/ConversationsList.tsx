@@ -3,10 +3,10 @@ import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConversationItem } from "./ConversationItem";
-import { Conversation } from "./types";
+import { ConversationItem as ConversationType } from "./types";
 
 interface ConversationsListProps {
-  conversations: Conversation[];
+  conversations: ConversationType[];
   selectedConversation: string;
   onSelectConversation: (id: string) => void;
 }
