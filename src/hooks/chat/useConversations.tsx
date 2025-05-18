@@ -49,7 +49,7 @@ export const useConversations = () => {
     const channelA = supabase.channel('public:conversations')
     
     channelA
-      .on('INSERT', (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations' }, (payload) => {
         const newConversation: Conversation = {
           id: payload.new.id,
           name: payload.new.name,
@@ -64,7 +64,7 @@ export const useConversations = () => {
         
         setConversations(prev => [newConversation, ...prev]);
       })
-      .on('UPDATE', (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations' }, (payload) => {
         setConversations(prev => 
           prev.map(conv => 
             conv.id === payload.new.id 
@@ -80,7 +80,7 @@ export const useConversations = () => {
           )
         );
       })
-      .on('DELETE', (payload) => {
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'conversations' }, (payload) => {
         setConversations(prev => 
           prev.filter(conv => conv.id !== payload.old.id)
         );

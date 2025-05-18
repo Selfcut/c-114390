@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,7 +35,6 @@ const Auth = () => {
   // Redirect authenticated users
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("User is authenticated, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
@@ -84,11 +82,9 @@ const Auth = () => {
 
     try {
       if (activeTab === "login") {
-        console.log("Attempting sign in with email:", email);
-        const { error: signInError } = await signIn(email, password);
-        if (signInError) {
-          console.error("Sign in failed:", signInError);
-          setError(signInError.message || 'Failed to sign in.');
+        const result = await signIn(email, password);
+        if (result?.error) {
+          setError(result.error.message || 'Failed to sign in.');
         } else {
           toast({
             title: "Sign in successful",
@@ -101,11 +97,9 @@ const Auth = () => {
           username: email.split('@')[0]
         };
         
-        console.log("Attempting sign up with email:", email);
-        const { error: signUpError } = await signUp(email, password, userData);
-        if (signUpError) {
-          console.error("Sign up failed:", signUpError);
-          setError(signUpError.message || 'Failed to sign up.');
+        const result = await signUp(email, password, userData);
+        if (result?.error) {
+          setError(result.error.message || 'Failed to sign up.');
         } else {
           toast({
             title: "Sign up successful",

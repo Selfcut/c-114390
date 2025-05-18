@@ -126,15 +126,24 @@ const ForumPost = () => {
   // Handle upvoting the post
   const handleUpvotePost = async () => {
     if (discussion && user) {
-      await handleUpvote({...user, name: user.name || ''}, discussion);
-      // The hook handles updating the state
+      const userWithRequiredFields = {
+        ...user,
+        name: user.name || '',
+        role: user.role || 'user'
+      };
+      await handleUpvote(userWithRequiredFields, discussion);
     }
   };
   
   // Handle adding a new comment
   const handleAddComment = async (comment: string) => {
-    if (!user) return;
-    await handleSubmitComment({...user, name: user.name || ''}, comment, discussion, setComments);
+    if (!user || !discussion) return;
+    const userWithRequiredFields = {
+      ...user,
+      name: user.name || '',
+      role: user.role || 'user'
+    };
+    await handleSubmitComment(userWithRequiredFields, comment, discussion, setComments);
   };
 
   return (

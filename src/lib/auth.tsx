@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -152,6 +151,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) {
+      return { error: new Error("User not authenticated") };
+    }
+    
+    const result = await updateUserProfile(user.id, updates);
+    
+    if (!result.error) {
+      // Update local user state
+      setUser(prev => prev ? { ...prev, ...updates } : null);
+    }
+    
+    return result;
+  };
+
   const authValue: AuthContextType = {
     user,
     session,
@@ -160,20 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signIn: handleSignIn,
     signUp: handleSignUp,
     signOut: handleSignOut,
-    updateProfile: async (updates: Partial<UserProfile>) => {
-      if (!user) {
-        return { error: new Error("User not authenticated") };
-      }
-      
-      const result = await updateUserProfile(user.id, updates);
-      
-      if (!result.error) {
-        // Update local user state
-        setUser(prev => prev ? { ...prev, ...updates } : null);
-      }
-      
-      return result;
-    }
+    updateProfile: handleUpdateProfile
   };
 
   return (

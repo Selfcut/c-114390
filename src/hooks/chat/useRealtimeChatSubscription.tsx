@@ -23,7 +23,7 @@ export const useRealtimeChatSubscription = ({
     const channel = supabase.channel('public:chat_messages');
     
     channel
-      .on('INSERT', (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         console.log('New message received:', payload);
         
         const message: ChatMessage = {
