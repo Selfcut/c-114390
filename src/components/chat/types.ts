@@ -34,8 +34,10 @@ export interface ConversationItem {
   lastMessage?: string;
   isGroup?: boolean;
   isGlobal?: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+  unread?: number;
+  avatar?: string;
 }
 
 // Add the Conversation interface that was missing

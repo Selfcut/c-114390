@@ -25,10 +25,10 @@ export const FullHeightChatSidebar = () => {
   
   // Mock conversations for demo
   const [conversations, setConversations] = useState<ConversationItem[]>([
-    { id: 'global', name: 'Global Chat', lastMessage: 'Welcome to the community!', unread: 2 },
-    { id: 'philosophy', name: 'Philosophy', lastMessage: 'What is consciousness?', unread: 0 },
-    { id: 'science', name: 'Science', lastMessage: 'New discoveries in quantum physics', unread: 3 },
-    { id: 'art', name: 'Art & Literature', lastMessage: 'Discussing modern art movements', unread: 1 }
+    { id: 'global', name: 'Global Chat', lastMessage: 'Welcome to the community!', unread: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'philosophy', name: 'Philosophy', lastMessage: 'What is consciousness?', unread: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'science', name: 'Science', lastMessage: 'New discoveries in quantum physics', unread: 3, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'art', name: 'Art & Literature', lastMessage: 'Discussing modern art movements', unread: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
   ]);
   
   const [selectedConversation, setSelectedConversation] = useState<string>("global");
@@ -214,7 +214,7 @@ export const FullHeightChatSidebar = () => {
             <TabsContent value="chats" className="flex-1 overflow-hidden flex flex-col">
               <ConversationsList 
                 conversations={conversations}
-                selectedConversationId={selectedConversation}
+                selectedConversation={selectedConversation}
                 onSelectConversation={handleSelectConversation}
               />
             </TabsContent>

@@ -3,10 +3,10 @@ import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Conversation } from "./types";
+import { ConversationItem as ConversationType } from "./types";
 
 interface ConversationItemProps {
-  conversation: Conversation;
+  conversation: ConversationType;
   isSelected: boolean;
   onSelect: (id: string) => void;
 }

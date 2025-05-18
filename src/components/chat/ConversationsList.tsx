@@ -8,13 +8,13 @@ import { Conversation } from "./types";
 interface ConversationsListProps {
   conversations: Conversation[];
   selectedConversation: string;
-  handleSelectConversation: (id: string) => void;
+  onSelectConversation: (id: string) => void;
 }
 
 export const ConversationsList = ({
   conversations,
   selectedConversation,
-  handleSelectConversation
+  onSelectConversation
 }: ConversationsListProps) => {
   return (
     <div className="border-b p-2">
@@ -26,7 +26,7 @@ export const ConversationsList = ({
                 key={convo.id}
                 conversation={convo}
                 isSelected={selectedConversation === convo.id}
-                onSelect={handleSelectConversation}
+                onSelect={onSelectConversation}
               />
             ))
           ) : (
