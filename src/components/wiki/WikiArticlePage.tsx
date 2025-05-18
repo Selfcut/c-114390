@@ -31,9 +31,11 @@ const WikiArticlePage = () => {
   const [isLiked, setIsLiked] = useState(false);
 
   // Use content likes hook for wiki articles
-  const { toggleLike, checkUserLike, isProcessing, isAuthenticated } = useContentLikes({
+  const { toggleLike, checkUserLike, isLoading: isProcessing } = useContentLikes({
     contentType: 'wiki'
   });
+
+  const isAuthenticated = !!user;
 
   // Fetch article data
   useEffect(() => {
@@ -58,7 +60,7 @@ const WikiArticlePage = () => {
           // Check if the user has liked this article
           if (isAuthenticated) {
             const hasLiked = await checkUserLike(article.id);
-            setIsLiked(hasLiked);
+            setIsLiked(!!hasLiked);
           }
         } else {
           setError("Article not found");
@@ -109,31 +111,24 @@ const WikiArticlePage = () => {
     }
     
     try {
-      await toggleLike(
-        article.id, 
-        () => {
-          // On success
-          setIsLiked(prev => !prev);
-          setArticle(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              likes: prev.likes !== undefined ? (isLiked ? prev.likes - 1 : prev.likes + 1) : (isLiked ? 0 : 1)
-            };
-          });
-        },
-        (error) => {
-          // On error
-          console.error('Error toggling like:', error);
-          toast({
-            title: "Error",
-            description: "Failed to update like status",
-            variant: "destructive"
-          });
-        }
-      );
+      await toggleLike(article.id);
+      
+      // Update local state
+      setIsLiked(prev => !prev);
+      setArticle(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          likes: prev.likes !== undefined ? (isLiked ? prev.likes - 1 : prev.likes + 1) : (isLiked ? 0 : 1)
+        };
+      });
     } catch (error) {
       console.error('Exception in handleLikeToggle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive"
+      });
     }
   };
 
@@ -192,7 +187,7 @@ const WikiArticlePage = () => {
             <WikiArticleActions
               authorName={article.author_name}
               isLiked={isLiked}
-              isProcessingLike={!!isProcessing[`like_${article.id}`]}
+              isProcessingLike={isProcessing}
               onLikeToggle={handleLikeToggle}
             />
           </CardContent>

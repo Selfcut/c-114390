@@ -12,10 +12,12 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Check if user has liked the content
-  const checkUserLike = async (contentId: string) => {
-    if (!user) return;
+  const checkUserLike = async (contentId: string): Promise<boolean> => {
+    if (!user) return false;
+    setIsLoading(true);
     
     try {
       const { data, error } = await supabase
@@ -28,14 +30,19 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
         
       if (!error) {
         setIsLiked(!!data);
+        return !!data;
       }
     } catch (err) {
       console.error('Error checking like status:', err);
+    } finally {
+      setIsLoading(false);
     }
+    return false;
   };
 
   // Get content likes count
   const fetchLikesCount = async (contentId: string) => {
+    setIsLoading(true);
     try {
       const { count, error } = await supabase
         .from('content_likes')
@@ -48,17 +55,20 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       }
     } catch (err) {
       console.error('Error fetching likes count:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Toggle like status
   const toggleLikeMutation = useMutation({
-    mutationFn: async ({ contentId }: { contentId: string }) => {
+    mutationFn: async (contentId: string) => {
       if (!user) {
         throw new Error('User must be logged in to like content');
       }
       
       try {
+        setIsLoading(true);
         if (isLiked) {
           // Unlike
           const { error } = await supabase
@@ -96,6 +106,8 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       } catch (err) {
         console.error('Error toggling like:', err);
         throw err;
+      } finally {
+        setIsLoading(false);
       }
     },
     onError: (error) => {
@@ -117,7 +129,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       return;
     }
     
-    toggleLikeMutation.mutate({ contentId });
+    toggleLikeMutation.mutate(contentId);
   };
 
   return {
@@ -126,6 +138,6 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     toggleLike,
     checkUserLike,
     fetchLikesCount,
-    isLoading: toggleLikeMutation.isPending
+    isLoading: isLoading || toggleLikeMutation.isPending
   };
 };
