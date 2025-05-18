@@ -8,6 +8,7 @@ import { useAutomatedMessages } from "./useAutomatedMessages";
 import { useChatActions } from "./useChatActions";
 import { ConversationItem } from "../types";
 import { useMessageUtils } from "@/hooks/chat/useMessageUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseChatSidebarStateProps {
   user: any;
@@ -21,15 +22,8 @@ export const useChatSidebarState = ({
   messagesEndRef
 }: UseChatSidebarStateProps) => {
   const { isAdmin } = useAdminStatus();
-  
-  // Mock conversations for demo - ensure all have the required updatedAt property
-  const [conversations, setConversations] = useState<ConversationItem[]>([
-    { id: 'global', name: 'Global Chat', lastMessage: 'Welcome to the community!', unread: 2, updatedAt: new Date().toISOString() },
-    { id: 'philosophy', name: 'Philosophy', lastMessage: 'What is consciousness?', unread: 0, updatedAt: new Date().toISOString() },
-    { id: 'science', name: 'Science', lastMessage: 'New discoveries in quantum physics', unread: 3, updatedAt: new Date().toISOString() },
-    { id: 'art', name: 'Art & Literature', lastMessage: 'Discussing modern art movements', unread: 1, updatedAt: new Date().toISOString() }
-  ]);
-  
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<string>("global");
   
   // Use the chat messages hook for loading messages
@@ -39,6 +33,80 @@ export const useChatSidebarState = ({
     addMessage,
     fetchMessages
   } = useChatMessages();
+
+  // Fetch conversations from Supabase
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchConversations = async () => {
+      setIsLoadingConversations(true);
+      try {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data) {
+          const formattedConversations: ConversationItem[] = data.map(conv => ({
+            id: conv.id,
+            name: conv.name,
+            lastMessage: conv.last_message || '',
+            isGlobal: conv.is_global || false,
+            isGroup: conv.is_group || false,
+            updatedAt: conv.updated_at || new Date().toISOString(),
+            unread: 0 // We'll implement unread counts separately
+          }));
+
+          setConversations(formattedConversations);
+          
+          // If no conversations exist, create a global one
+          if (formattedConversations.length === 0) {
+            createGlobalConversation();
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+
+    fetchConversations();
+  }, [isOpen]);
+
+  // Create a global conversation if none exist
+  const createGlobalConversation = async () => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .insert({
+          id: 'global',
+          name: 'Global Chat',
+          is_global: true,
+          is_group: true,
+          last_message: 'Welcome to the community!',
+          updated_at: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Add the global conversation to state
+      setConversations([{
+        id: 'global',
+        name: 'Global Chat',
+        lastMessage: 'Welcome to the community!',
+        isGlobal: true,
+        isGroup: true,
+        updatedAt: new Date().toISOString(),
+        unread: 0
+      }]);
+    } catch (error) {
+      console.error('Error creating global conversation:', error);
+    }
+  };
 
   // Use chat actions for message operations
   const {
@@ -123,13 +191,40 @@ export const useChatSidebarState = ({
     fetchMessages(conversationId);
   };
 
+  // Update conversation's last message
+  const updateConversationLastMessage = async (conversationId: string, message: string) => {
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('conversations')
+        .update({
+          last_message: message,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversationId);
+        
+      if (error) throw error;
+        
+      // Update locally
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, lastMessage: message, updatedAt: new Date().toISOString() } 
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('Error updating conversation:', error);
+    }
+  };
+
   return {
     isAdmin,
     conversations,
     selectedConversation,
     messages,
     isLoadingMessages,
-    isLoading: isLoadingMessages || isSendingMessage,
+    isLoading: isLoadingMessages || isSendingMessage || isLoadingConversations,
     inputMessage,
     setInputMessage,
     replyingToMessage,
@@ -157,6 +252,7 @@ export const useChatSidebarState = ({
     onEmojiSelect: handleEmojiSelect,
     onGifSelect: handleGifSelect,
     onAdminEffectSelect: handleAdminEffectSelect,
-    onSelectConversation: handleSelectConversation
+    onSelectConversation: handleSelectConversation,
+    updateConversationLastMessage
   };
 };

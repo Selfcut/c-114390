@@ -10,6 +10,7 @@ import { MessageEditingIndicator } from "./input/MessageEditingIndicator";
 import { MessageReplyIndicator } from "./input/MessageReplyIndicator";
 import { ChatInputTools } from "./input/ChatInputTools";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface ChatInputAreaProps {
   message: string;
@@ -109,106 +110,108 @@ export const ChatInputArea = ({
   const isMessageEmpty = !message.trim();
 
   return (
-    <div className="border-t border-border p-2 bg-background sticky bottom-0">
-      {/* Editing indicator */}
-      {editingMessage && onCancelEdit && (
-        <MessageEditingIndicator onCancelEdit={onCancelEdit} />
-      )}
+    <TooltipProvider>
+      <div className="border-t border-border p-2 bg-background sticky bottom-0">
+        {/* Editing indicator */}
+        {editingMessage && onCancelEdit && (
+          <MessageEditingIndicator onCancelEdit={onCancelEdit} />
+        )}
 
-      {/* Reply indicator */}
-      {replyingToMessage && onCancelReply && (
-        <MessageReplyIndicator 
-          replyingToMessage={replyingToMessage} 
-          onCancelReply={onCancelReply} 
-        />
-      )}
-
-      <div className="flex flex-col space-y-2">
-        {/* Text area for input */}
-        <Textarea
-          ref={textareaRef}
-          value={message}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-          className="min-h-[40px] max-h-[120px] resize-none py-2 overflow-hidden"
-          style={{ height: `${textareaHeight}px` }}
-        />
-          
-        {/* Controls positioned below textarea */}
-        <div className="flex items-center justify-between">
-          <ChatInputTools
-            onEmojiPickerToggle={handleEmojiPickerToggle}
-            onGifPickerToggle={handleGifPickerToggle}
-            onFileUpload={handleFileUpload}
-            showEmojiPicker={showEmojiPicker}
-            showGifPicker={showGifPicker}
-            isAdmin={isAdmin}
-            onAdminEffectSelect={onAdminEffectSelect}
+        {/* Reply indicator */}
+        {replyingToMessage && onCancelReply && (
+          <MessageReplyIndicator 
+            replyingToMessage={replyingToMessage} 
+            onCancelReply={onCancelReply} 
           />
+        )}
 
-          {/* Send button */}
-          <Button 
-            onClick={handleSendMessage}
-            disabled={isMessageEmpty}
-            size="sm"
-            className={`flex-shrink-0 ml-2 ${isMessageEmpty ? 'opacity-50' : 'opacity-100'}`}
-            title={editingMessage ? "Save" : "Send"}
-            type="button"
-          >
-            <Send size={16} className="mr-1" />
-            <span>{editingMessage ? "Save" : "Send"}</span>
-          </Button>
+        <div className="flex flex-col space-y-2">
+          {/* Text area for input */}
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
+            className="min-h-[40px] max-h-[120px] resize-none py-2 overflow-hidden"
+            style={{ height: `${textareaHeight}px` }}
+          />
+            
+          {/* Controls positioned below textarea */}
+          <div className="flex items-center justify-between">
+            <ChatInputTools
+              onEmojiPickerToggle={handleEmojiPickerToggle}
+              onGifPickerToggle={handleGifPickerToggle}
+              onFileUpload={handleFileUpload}
+              showEmojiPicker={showEmojiPicker}
+              showGifPicker={showGifPicker}
+              isAdmin={isAdmin}
+              onAdminEffectSelect={onAdminEffectSelect}
+            />
+
+            {/* Send button */}
+            <Button 
+              onClick={handleSendMessage}
+              disabled={isMessageEmpty}
+              size="sm"
+              className={`flex-shrink-0 ml-2 ${isMessageEmpty ? 'opacity-50' : 'opacity-100'}`}
+              title={editingMessage ? "Save" : "Send"}
+              type="button"
+            >
+              <Send size={16} className="mr-1" />
+              <span>{editingMessage ? "Save" : "Send"}</span>
+            </Button>
+          </div>
         </div>
+        
+        {/* Emoji picker */}
+        {showEmojiPicker && (
+          <div className="relative z-10">
+            <div className="absolute bottom-16 left-0 z-50">
+              <Popover open={true} onOpenChange={setShowEmojiPicker}>
+                <PopoverTrigger className="hidden">Open</PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="start" side="top">
+                  <div className="relative">
+                    <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
+                      onClick={() => setShowEmojiPicker(false)}
+                    >
+                      <XCircle size={14} />
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
+        
+        {/* GIF picker */}
+        {showGifPicker && (
+          <div className="relative z-10">
+            <div className="absolute bottom-16 left-0 z-50">
+              <Popover open={true} onOpenChange={setShowGifPicker}>
+                <PopoverTrigger className="hidden">Open</PopoverTrigger>
+                <PopoverContent className="w-72 p-2" align="start" side="top">
+                  <div className="relative">
+                    <GifPicker onGifSelect={handleInternalGifSelect} />
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
+                      onClick={() => setShowGifPicker(false)}
+                    >
+                      <XCircle size={14} />
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
       </div>
-      
-      {/* Emoji picker */}
-      {showEmojiPicker && (
-        <div className="relative z-10">
-          <div className="absolute bottom-16 left-0 z-50">
-            <Popover open={true} onOpenChange={setShowEmojiPicker}>
-              <PopoverTrigger className="hidden">Open</PopoverTrigger>
-              <PopoverContent className="w-64 p-0" align="start" side="top">
-                <div className="relative">
-                  <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
-                    onClick={() => setShowEmojiPicker(false)}
-                  >
-                    <XCircle size={14} />
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-      )}
-      
-      {/* GIF picker */}
-      {showGifPicker && (
-        <div className="relative z-10">
-          <div className="absolute bottom-16 left-0 z-50">
-            <Popover open={true} onOpenChange={setShowGifPicker}>
-              <PopoverTrigger className="hidden">Open</PopoverTrigger>
-              <PopoverContent className="w-72 p-2" align="start" side="top">
-                <div className="relative">
-                  <GifPicker onGifSelect={handleInternalGifSelect} />
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
-                    onClick={() => setShowGifPicker(false)}
-                  >
-                    <XCircle size={14} />
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-      )}
-    </div>
+    </TooltipProvider>
   );
 };

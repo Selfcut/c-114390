@@ -1,118 +1,132 @@
 
-import { useState, useCallback } from "react";
-import { ChatMessage } from "@/components/chat/types";
-import { useConversations } from "./chat/useConversations";
-import { useMessageInput } from "./chat/useMessageInput";
-import { useMessageHandlers } from "./chat/useMessageHandlers";
-import { useMessageReactions } from "./chat/useMessageReactions";
-import { useMessageUtils } from "./chat/useMessageUtils";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { ChatMessage } from "@/components/chat/types";
 
-// Define an interface for the database message shape that matches the Supabase schema
+// Define the DB message type
 export interface DbChatMessage {
   id: string;
   content: string;
+  user_id: string | null;
+  sender_name: string | null;
   created_at: string;
   conversation_id: string;
-  user_id?: string;
-  sender_name?: string;
   is_admin?: boolean;
   effect_type?: string;
   reply_to?: string;
-  updated_at?: string;
 }
 
 export const useChatMessages = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  
-  const {
-    conversations,
-    selectedConversation,
-    setSelectedConversation,
-    handleSelectConversation: selectConversationFromHook,
-    updateConversationLastMessage
-  } = useConversations();
-  
-  const {
-    message,
-    setMessage,
-    editingMessageId,
-    setEditingMessageId,
-    replyingToMessage,
-    setReplyingToMessage,
-    handleKeyDown,
-    clearInputState
-  } = useMessageInput();
-  
-  const {
-    isLoading: isSendingMessage,
-    handleSendMessage: sendMessage,
-    handleMessageEdit: editMessage,
-    handleMessageDelete,
-    handleMessageReply: replyToMessage
-  } = useMessageHandlers({
-    messages,
-    setMessages,
-    message,
-    clearInputState,
-    editingMessageId,
-    replyingToMessage,
-    selectedConversation,
-    updateConversationLastMessage
-  });
-  
-  const { handleReactionAdd, handleReactionRemove } = useMessageReactions(messages);
-  const { formatTime } = useMessageUtils();
 
-  // Function to fetch messages from the database
+  // Subscribe to new messages when the component mounts
+  useEffect(() => {
+    const subscription = supabase
+      .channel('public:chat_messages')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'chat_messages' 
+      }, (payload) => {
+        const newMessage = payload.new as DbChatMessage;
+        
+        const formattedMessage: ChatMessage = {
+          id: newMessage.id,
+          content: newMessage.content,
+          createdAt: newMessage.created_at,
+          conversationId: newMessage.conversation_id || 'global',
+          userId: newMessage.user_id || 'anonymous',
+          senderName: newMessage.sender_name || 'Anonymous',
+          isCurrentUser: newMessage.user_id === user?.id,
+          isAdmin: newMessage.is_admin || false,
+          effectType: newMessage.effect_type,
+        };
+        
+        addMessage(formattedMessage);
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user?.id]);
+
+  // Fetch messages function
   const fetchMessages = useCallback(async (conversationId: string = 'global') => {
     setIsLoadingMessages(true);
     try {
-      // Fetch messages from Supabase
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(50);
       
-      if (error) {
-        console.error('Error fetching messages:', error);
-        toast.error('Could not load messages');
-        return;
-      }
+      if (error) throw error;
       
-      if (data && data.length > 0) {
-        // Convert DB messages to the ChatMessage format
-        const formattedMessages: ChatMessage[] = data.map((msg: DbChatMessage) => ({
-          id: msg.id,
-          conversationId: msg.conversation_id,
-          content: msg.content,
-          senderName: msg.sender_name || 'Unknown',
-          userId: msg.user_id || 'unknown',
-          createdAt: msg.created_at,
-          isCurrentUser: false, // Will be updated in the component
-          // Handle potentially missing properties
-          isAdmin: msg.is_admin || false,
-          effectType: msg.effect_type || undefined
-        }));
-        setMessages(formattedMessages);
-      } else {
-        // If no messages, show an empty state
-        setMessages([]);
-      }
-    } catch (err) {
-      console.error('Error in fetchMessages:', err);
-      toast.error('Could not load messages');
+      const formattedMessages: ChatMessage[] = data?.map((msg: DbChatMessage) => ({
+        id: msg.id,
+        content: msg.content,
+        createdAt: msg.created_at,
+        conversationId: msg.conversation_id || 'global',
+        userId: msg.user_id || 'anonymous',
+        senderName: msg.sender_name || 'Anonymous',
+        isCurrentUser: msg.user_id === user?.id,
+        isAdmin: msg.is_admin || false,
+        effectType: msg.effect_type
+      })) || [];
+      
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('Failed to load messages');
     } finally {
       setIsLoadingMessages(false);
-      setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  // Add a message to the state - needed by FullHeightChatSidebar for real-time updates
+  // Send a message
+  const sendMessage = useCallback(async (
+    content: string, 
+    conversationId: string = 'global',
+    replyTo?: string
+  ) => {
+    if (!content.trim()) return null;
+    if (!user) {
+      toast.error('You need to be logged in to send messages');
+      return null;
+    }
+
+    try {
+      const newMessage = {
+        content,
+        conversation_id: conversationId,
+        user_id: user.id,
+        sender_name: user.name || user.email?.split('@')[0] || 'Anonymous',
+        is_admin: user.isAdmin || false,
+        ...(replyTo ? { reply_to: replyTo } : {})
+      };
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert(newMessage)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+      return null;
+    }
+  }, [user]);
+
+  // Add a message to the state
   const addMessage = useCallback((message: ChatMessage) => {
     setMessages(prev => {
       // Check if message already exists to prevent duplicates
@@ -123,63 +137,12 @@ export const useChatMessages = () => {
     });
   }, []);
 
-  // Wrap the original handlers to update input state
-  const handleMessageEdit = (messageId: string) => {
-    const result = editMessage(messageId);
-    if (result) {
-      setEditingMessageId(result.messageId);
-      setMessage(result.content);
-    }
-  };
-  
-  const handleMessageReply = (messageId: string) => {
-    const result = replyToMessage(messageId);
-    if (result) {
-      setReplyingToMessage(result);
-    }
-  };
-
-  // Handle sending a message
-  const handleSendMessage = () => {
-    sendMessage();
-  };
-
-  // Select conversation wrapper
-  const handleSelectConversation = useCallback((conversationId: string) => {
-    // Use the renamed function from the hook
-    const conversation = selectConversationFromHook(conversationId);
-    
-    // Fetch real messages for this conversation
-    fetchMessages(conversationId);
-    
-    // Clear any editing or replying state
-    setEditingMessageId(null);
-    setReplyingToMessage(null);
-    
-    return conversation;
-  }, [selectConversationFromHook, fetchMessages, setEditingMessageId, setReplyingToMessage]);
-
-  return {
-    conversations,
-    selectedConversation,
-    message,
-    setMessage,
+  return { 
     messages,
     setMessages,
-    isLoading: isLoading || isSendingMessage,
     isLoadingMessages,
-    formatTime,
-    handleSendMessage,
-    handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => handleKeyDown(e, handleSendMessage),
-    handleSelectConversation,
-    handleMessageEdit,
-    handleMessageDelete,
-    handleMessageReply,
-    handleReactionAdd,
-    handleReactionRemove,
-    editingMessageId,
-    replyingToMessage,
     fetchMessages,
+    sendMessage,
     addMessage
   };
 };
