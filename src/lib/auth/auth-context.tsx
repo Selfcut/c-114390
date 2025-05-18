@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,7 +19,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  updateUserProfile: (updates: Partial<UserProfile>): Promise<{ error: any } | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -179,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
       
@@ -201,10 +200,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(prev => prev ? { ...prev, ...updates } : null);
       
       toast.success("Profile updated successfully");
+      return { error: null };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update profile';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
+      return { error };
     } finally {
       setLoading(false);
     }

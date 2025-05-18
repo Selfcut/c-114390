@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -83,32 +82,38 @@ const Auth = () => {
 
     try {
       if (activeTab === "login") {
+        console.log("Signing in with email:", email);
         const result = await signIn(email, password);
+        
         if (result?.error) {
-          setError(result.error.message || 'Failed to sign in.');
-        } else {
-          toast({
-            title: "Sign in successful",
-            description: "Welcome back!"
-          });
+          console.error("Sign in error:", error);
+          return { error: result.error };
         }
+        
+        toast({
+          title: "Signed in successfully",
+          description: "Welcome back!"
+        });
+        
+        return { error: null };
       } else {
-        const userData = {
+        console.log("Signing up with email:", email);
+        const result = await signUp(email, password, {
           name,
           username: email.split('@')[0]
-        };
+        });
         
-        // Fix the call to signUp by passing correct parameters
-        const result = await signUp(email, password, userData);
         if (result?.error) {
-          setError(result.error.message || 'Failed to sign up.');
-        } else {
-          toast({
-            title: "Sign up successful",
-            description: "Please check your email to verify your account."
-          });
-          setActiveTab("login");
+          console.error("Sign up error:", error);
+          return { error: result.error };
         }
+        
+        toast({
+          title: "Sign up successful",
+          description: "Please check your email to verify your account."
+        });
+        
+        return { error: null };
       }
     } catch (err: any) {
       console.error("Auth error:", err);

@@ -20,8 +20,8 @@ export interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any } | null>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
 }
