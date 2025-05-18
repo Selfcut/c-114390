@@ -3,67 +3,90 @@ import React from "react";
 
 export const ChatAnimationStyles = () => {
   return (
-    <style dangerouslySetInnerHTML={{ __html: `
+    <style jsx global>{`
+      /* Add base animation styles */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes slideIn {
+        from { transform: translateY(10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      
+      @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(5px); }
+        50% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+        100% { transform: translateX(0); }
+      }
+      
       @keyframes rainbow {
         0% { color: #ff0000; }
-        16.67% { color: #ff8000; }
-        33.33% { color: #ffff00; }
-        50% { color: #00ff00; }
-        66.67% { color: #0000ff; }
-        83.33% { color: #8000ff; }
+        14% { color: #ff7f00; }
+        28% { color: #ffff00; }
+        42% { color: #00ff00; }
+        57% { color: #0000ff; }
+        71% { color: #4b0082; }
+        85% { color: #9400d3; }
         100% { color: #ff0000; }
       }
-
-      .rainbow-text {
-        animation: rainbow 3s infinite;
+      
+      @keyframes confetti {
+        0% { background-position: 0 0; }
+        100% { background-position: 100% 100%; }
       }
-
-      @keyframes glow {
-        0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.6); }
-        50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
-        100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.6); }
+      
+      /* Message reaction styles */
+      .message-reactions:hover .reaction-picker {
+        display: flex;
+        animation: fadeIn 0.2s ease-in-out;
       }
-
-      .highlight-glow {
-        background-color: rgba(255, 215, 0, 0.1);
-        animation: glow 2s infinite;
+      
+      .message-reactions .existing-reactions {
+        transition: all 0.2s ease;
       }
-
-      @keyframes shake {
-        0% { transform: translate(0, 0); }
-        10% { transform: translate(-2px, -2px); }
-        20% { transform: translate(2px, -2px); }
-        30% { transform: translate(-2px, 2px); }
-        40% { transform: translate(2px, 2px); }
-        50% { transform: translate(-2px, -2px); }
-        60% { transform: translate(2px, -2px); }
-        70% { transform: translate(-2px, 2px); }
-        80% { transform: translate(2px, 2px); }
-        90% { transform: translate(-2px, -2px); }
-        100% { transform: translate(0, 0); }
+      
+      :root {
+        --chat-sidebar-width: 350px;
       }
-
-      .shake-animation {
+      
+      /* Add specific animation classes */
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      
+      .animate-slide-in {
+        animation: slideIn 0.3s ease-in-out;
+      }
+      
+      .animate-pulse {
+        animation: pulse 2s infinite;
+      }
+      
+      .animate-shake {
         animation: shake 0.5s;
       }
-
-      .announcement-message {
-        background-color: rgba(59, 130, 246, 0.2);
-        border-left: 4px solid rgb(59, 130, 246);
-        font-weight: 500;
+      
+      .animate-rainbow {
+        animation: rainbow 3s infinite;
       }
-
-      .system-alert-message {
-        background-color: rgba(239, 68, 68, 0.2);
-        border-left: 4px solid rgb(239, 68, 68);
-        font-weight: 500;
+      
+      .hover-lift {
+        transition: transform 0.2s ease;
       }
-
-      .pinned-message {
-        background-color: rgba(245, 158, 11, 0.2);
-        border-left: 4px solid rgb(245, 158, 11);
-        font-weight: 500;
+      
+      .hover-lift:hover {
+        transform: translateY(-3px);
       }
-    ` }} />
+    `}</style>
   );
 };

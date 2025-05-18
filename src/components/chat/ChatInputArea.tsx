@@ -121,19 +121,19 @@ export const ChatInputArea = ({
         />
       )}
 
-      <div className="flex items-end gap-1">
-        <div className="flex-1 relative rounded-md border overflow-hidden">
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-            className="min-h-[40px] max-h-[120px] resize-none border-0 focus-visible:ring-0 pr-20 py-2"
-            style={{ height: `${textareaHeight}px` }}
-          />
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          value={message}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
+          className="min-h-[40px] max-h-[120px] resize-none pr-20 py-2 overflow-hidden"
+          style={{ height: `${textareaHeight}px` }}
+        />
           
-          {/* Tools positioned absolutely over textarea */}
+        {/* Tools positioned absolutely over textarea */}
+        <div className="absolute right-2 bottom-2 flex items-center gap-1">
           <ChatInputTools
             onEmojiPickerToggle={handleEmojiPickerToggle}
             onGifPickerToggle={handleGifPickerToggle}
@@ -143,19 +143,19 @@ export const ChatInputArea = ({
             isAdmin={isAdmin}
             onAdminEffectSelect={onAdminEffectSelect}
           />
+          
+          {/* Send button - made smaller */}
+          <Button 
+            onClick={handleSendMessage}
+            disabled={!message.trim()}
+            size="sm"
+            className="flex-shrink-0 h-6 w-6 p-0 rounded-full"
+            title={editingMessage ? "Save" : "Send"}
+          >
+            <Send size={12} />
+            <span className="sr-only">{editingMessage ? "Save" : "Send"}</span>
+          </Button>
         </div>
-        
-        {/* Send button - made smaller */}
-        <Button 
-          onClick={handleSendMessage}
-          disabled={!message.trim()}
-          size="sm"
-          className="flex-shrink-0 h-8 w-8 p-0 ml-1"
-          title={editingMessage ? "Save" : "Send"}
-        >
-          <Send size={14} />
-          <span className="sr-only">{editingMessage ? "Save" : "Send"}</span>
-        </Button>
       </div>
       
       {/* Emoji picker */}

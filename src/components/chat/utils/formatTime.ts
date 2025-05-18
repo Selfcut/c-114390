@@ -18,8 +18,20 @@ export const formatTime = (timestamp: string | Date) => {
       return 'Just now';
     }
     
-    // Format the date as a time string (hours and minutes)
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Check if the date is today
+    const now = new Date();
+    const today = now.toDateString() === date.toDateString();
+    
+    // Format the date as a time string
+    if (today) {
+      // For today's messages, just show the time
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+      // For older messages, include the date
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + 
+             ' ' + 
+             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
   } catch (error) {
     console.error("Error formatting time:", error, timestamp);
     return 'Just now';

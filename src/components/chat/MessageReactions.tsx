@@ -23,7 +23,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   onReactionAdd,
   onReactionRemove
 }) => {
-  const [showReactions, setShowReactions] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   const commonEmojis = ["👍", "👎", "😄", "🎉", "❤️", "🔥"];
   
   const handleReactionClick = (emoji: string) => {
@@ -49,12 +49,12 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   };
 
   return (
-    <div className="relative"
-         onMouseEnter={() => setShowReactions(true)}
-         onMouseLeave={() => setShowReactions(false)}>
+    <div className="relative message-reactions" 
+         onMouseEnter={() => setShowReactionPicker(true)}
+         onMouseLeave={() => setShowReactionPicker(false)}>
       {/* Display existing reactions */}
       <div className="flex flex-wrap gap-1 mt-1">
-        {reactions.map((reaction, index) => {
+        {reactions && reactions.length > 0 ? reactions.map((reaction, index) => {
           const userIdToUse = currentUserId || 'anonymous';
           const hasReacted = reaction.users.includes(userIdToUse);
           
@@ -70,12 +70,12 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               <span>{reaction.count}</span>
             </Button>
           );
-        })}
+        }) : null}
       </div>
       
       {/* Reaction picker that shows on hover */}
-      {showReactions && (
-        <div className="absolute bottom-full mb-1 bg-background border rounded-md shadow-md p-1 flex">
+      {showReactionPicker && (
+        <div className="absolute bottom-full mb-1 bg-background border rounded-md shadow-md p-1 flex z-10">
           {commonEmojis.map(emoji => (
             <Button
               key={emoji}
@@ -87,6 +87,13 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               {emoji}
             </Button>
           ))}
+        </div>
+      )}
+
+      {/* Add a subtle hint if no reactions yet */}
+      {(!reactions || reactions.length === 0) && showReactionPicker && (
+        <div className="text-xs text-muted-foreground mt-1">
+          Add reaction...
         </div>
       )}
     </div>

@@ -29,23 +29,11 @@ export const HeaderActions = () => {
         aria-label="Discord"
         onClick={() => window.open('https://disboard.org/server/discord-server-id', '_blank')}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide"
-        >
-          <circle cx="9" cy="12" r="1"></circle>
-          <circle cx="15" cy="12" r="1"></circle>
-          <path d="M7.5 7.2A4.2 4.2 0 0 1 11.7 3h.6a4.2 4.2 0 0 1 4.2 4.2v.6a9 9 0 0 1-.9 3.9 9 9 0 0 1-2.6 2.7c-.5.3-.7.7-.8 1.1a1 1 0 0 1-.5.6.7.7 0 0 1-.7 0 1 1 0 0 1-.5-.6c-.1-.4-.3-.8-.8-1.1a9 9 0 0 1-2.6-2.7 9 9 0 0 1-.9-3.9v-.6z"></path>
-          <path d="M8 15h8a4 4 0 0 1 4 4v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a4 4 0 0 1 4-4zm8 0v4.8"></path>
-        </svg>
+        <img 
+          src="/lovable-uploads/de52f1ad-3a44-4bde-8e0c-19b2e6964456.png" 
+          alt="Discord" 
+          className="w-5 h-5" 
+        />
         <span className="sr-only">Discord</span>
       </Button>
       
