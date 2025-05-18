@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shield, Bell } from "lucide-react";
+import { MakeAdminButton } from "@/components/admin/MakeAdminButton";
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -139,6 +140,9 @@ const AdminPanel = () => {
             <CardContent className="p-8 text-center">
               <p className="text-red-500 font-medium text-lg mb-2">You do not have permission to access the admin panel.</p>
               <p className="text-muted-foreground">Please contact an administrator if you believe this is an error.</p>
+              <div className="mt-6">
+                <MakeAdminButton />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -149,9 +153,12 @@ const AdminPanel = () => {
   return (
     <PageLayout>
       <div className="container mx-auto py-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Shield className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
+        <div className="flex items-center justify-between gap-2 mb-6">
+          <div className="flex items-center gap-2">
+            <Shield className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Admin Panel</h1>
+          </div>
+          <MakeAdminButton />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-in fade-in slide-in-from-bottom duration-300">

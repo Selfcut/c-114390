@@ -20,38 +20,74 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const ADMIN_USER_ID = 'dc7bedf3-14c3-4376-adfb-de5ac8207adc';
+    // Find the user with username "polymath"
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', 'polymath')
+      .single();
+    
+    if (userError) {
+      if (userError.code === 'PGRST116') {
+        // User not found, return appropriate message
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: "User with username 'polymath' not found" 
+          }),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            },
+            status: 404
+          }
+        );
+      }
+      throw userError;
+    }
+    
+    const userId = userData.id;
     
     // Update user role in profiles table
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({ role: 'admin' })
-      .eq('id', ADMIN_USER_ID);
+      .update({ role: 'admin', isAdmin: true })
+      .eq('id', userId);
     
     if (profileError) throw profileError;
     
-    // Check if user exists in user_roles table
-    const { data: existingRole, error: checkError } = await supabase
+    // Check if user_roles table exists
+    const { data: tableExists, error: tableCheckError } = await supabase
       .from('user_roles')
       .select('*')
-      .eq('user_id', ADMIN_USER_ID)
-      .eq('role', 'admin');
-      
-    if (checkError) throw checkError;
+      .limit(1);
     
-    // If not exists, insert new role
-    if (!existingRole || existingRole.length === 0) {
-      const { error: roleError } = await supabase
+    // If user_roles table exists, add user to admin role
+    if (tableExists !== null) {
+      // Check if user already has admin role
+      const { data: existingRole, error: checkError } = await supabase
         .from('user_roles')
-        .insert({ user_id: ADMIN_USER_ID, role: 'admin' });
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
         
-      if (roleError) throw roleError;
+      if (checkError) throw checkError;
+      
+      // If not exists, insert new role
+      if (!existingRole || existingRole.length === 0) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'admin' });
+          
+        if (roleError) throw roleError;
+      }
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Admin role assigned successfully" 
+        message: "Admin role assigned successfully to user 'polymath'" 
       }),
       { 
         headers: { 
