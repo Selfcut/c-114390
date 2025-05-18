@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ConversationItem, Conversation } from "@/components/chat/types";
 import { toast } from "sonner";
@@ -25,11 +26,10 @@ export const useConversations = () => {
         const formattedConversations: Conversation[] = data.map(conv => ({
           id: conv.id,
           name: conv.name,
-          lastMessage: conv.last_message || '',
-          updatedAt: conv.updated_at,
-          isGlobal: conv.is_global || false,
-          isGroup: conv.is_group || false,
-          unread: 0 // We'll implement unread counts later
+          last_message: conv.last_message || '',
+          updated_at: conv.updated_at,
+          is_global: conv.is_global || false,
+          is_group: conv.is_group || false
         }));
 
         setConversations(formattedConversations);
@@ -68,11 +68,11 @@ export const useConversations = () => {
       setConversations([{
         id: 'global',
         name: 'Global Chat',
-        lastMessage: 'Welcome to the community!',
-        isGlobal: true,
-        isGroup: true,
-        updatedAt: new Date().toISOString(),
-        unread: 0
+        last_message: 'Welcome to the community!',
+        is_global: true,
+        is_group: true,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       }]);
       
       setSelectedConversation('global');
@@ -116,11 +116,11 @@ export const useConversations = () => {
       const newConversation: Conversation = {
         id: roomId,
         name: name.trim(),
-        lastMessage: `${user.name || 'Someone'} created this chat room`,
-        isGlobal: false,
-        isGroup: true,
-        updatedAt: new Date().toISOString(),
-        unread: 0
+        last_message: `${user.name || 'Someone'} created this chat room`,
+        is_global: false,
+        is_group: true,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       };
       
       setConversations(prev => [newConversation, ...prev]);
@@ -166,7 +166,7 @@ export const useConversations = () => {
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, lastMessage: message, updatedAt: new Date().toISOString() } 
+            ? { ...conv, last_message: message, updated_at: new Date().toISOString() } 
             : conv
         )
       );

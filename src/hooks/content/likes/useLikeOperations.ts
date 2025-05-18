@@ -18,21 +18,23 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     if (!user?.id) return false;
     
     try {
-      // Use generic query to avoid type errors
-      const { data, error } = await supabase
-        .from(tables.likesTable)
-        .select('id')
-        .eq('content_id', contentId)
-        .eq('user_id', user.id)
-        .eq('content_type', options.contentType)
-        .maybeSingle();
+      // Use a raw query approach instead of typed to avoid type errors
+      const query = `
+        SELECT id FROM "${tables.likesTable}"
+        WHERE content_id = '${contentId}'
+        AND user_id = '${user.id}'
+        AND content_type = '${options.contentType}'
+        LIMIT 1
+      `;
+      
+      const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
         
       if (error) {
         console.error('Error checking like status:', error);
         return false;
       }
       
-      return !!data;
+      return data && data.length > 0;
     } catch (error) {
       console.error('Exception in checkUserLike:', error);
       return false;
@@ -53,13 +55,15 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       const hasLiked = await checkUserLike(contentId);
       
       if (hasLiked) {
-        // Remove the like - use generic query
-        const { error: deleteError } = await supabase
-          .from(tables.likesTable)
-          .delete()
-          .eq('content_id', contentId)
-          .eq('user_id', user.id)
-          .eq('content_type', options.contentType);
+        // Remove the like using raw SQL approach
+        const deleteQuery = `
+          DELETE FROM "${tables.likesTable}"
+          WHERE content_id = '${contentId}'
+          AND user_id = '${user.id}'
+          AND content_type = '${options.contentType}'
+        `;
+        
+        const { error: deleteError } = await supabase.rpc('execute_sql', { sql_query: deleteQuery });
           
         if (deleteError) throw deleteError;
         
@@ -75,14 +79,13 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
         
         return false;
       } else {
-        // Add the like - use generic query
-        const { error: insertError } = await supabase
-          .from(tables.likesTable)
-          .insert({
-            content_id: contentId,
-            user_id: user.id,
-            content_type: options.contentType
-          });
+        // Add the like using raw SQL approach
+        const insertQuery = `
+          INSERT INTO "${tables.likesTable}" (content_id, user_id, content_type)
+          VALUES ('${contentId}', '${user.id}', '${options.contentType}')
+        `;
+        
+        const { error: insertError } = await supabase.rpc('execute_sql', { sql_query: insertQuery });
           
         if (insertError) throw insertError;
         

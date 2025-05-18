@@ -315,7 +315,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setReplyingTo({
         id: messageToReply.id,
         content: messageToReply.content,
-        sender: { name: messageToReply.senderName }
+        senderName: messageToReply.senderName
       });
       textareaRef.current?.focus();
     }
