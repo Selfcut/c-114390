@@ -98,6 +98,7 @@ const Auth = () => {
           username: email.split('@')[0]
         };
         
+        // Fix the call to signUp by passing correct parameters
         const result = await signUp(email, password, userData);
         if (result?.error) {
           setError(result.error.message || 'Failed to sign up.');
