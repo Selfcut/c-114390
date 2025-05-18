@@ -1,3 +1,4 @@
+
 import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -26,6 +27,7 @@ import Research from '@/pages/Research';
 import ResearchDetail from '@/pages/ResearchDetail';
 import BookReviews from '@/pages/BookReviews';
 import Events from '@/pages/Events';
+import Notifications from '@/pages/Notifications';
 import { AuthCallback } from './AuthCallback';
 
 const RouteErrorFallback = () => (
@@ -126,6 +128,11 @@ export const AppRoutes = () => {
           <Route path="/ai" element={
             <ErrorBoundary>
               <AI />
+            </ErrorBoundary>
+          } />
+          <Route path="/notifications" element={
+            <ErrorBoundary>
+              <Notifications />
             </ErrorBoundary>
           } />
           
