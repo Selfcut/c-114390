@@ -59,8 +59,9 @@ const WikiArticlePage = () => {
           
           // Check if the user has liked this article
           if (isAuthenticated) {
-            const hasLiked = await checkUserLike(article.id);
-            setIsLiked(hasLiked || false); // Convert to boolean to avoid void type issue
+            // Use a variable to store the result instead of directly testing truthiness of void
+            const result = await checkUserLike(article.id);
+            setIsLiked(result);
           }
         } else {
           setError("Article not found");

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/media/useMediaPosts";
@@ -60,12 +59,8 @@ export const MediaContainer = () => {
   }, [user?.id, mediaType, sortBy, sortOrder, searchTerm]);
 
   const mediaData = {
-    // Format the data to match what MediaContent expects
-    postsData: {
-      posts: postsData || [],
-      hasMore: postsData?.hasMore || false,
-      error: error ? (error instanceof Error ? error.message : String(error)) : null
-    },
+    // Correct the postsData structure to match what MediaContent expects
+    postsData: postsData || { posts: [], hasMore: false, total: 0, error: null },
     isLoading,
     isError,
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,

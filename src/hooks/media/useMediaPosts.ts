@@ -108,7 +108,7 @@ export const useMediaPosts = (
         posts: mappedPosts,
         hasMore: hasMorePosts,
         total: count || 0,
-        error: '',
+        error: null,
       };
     } catch (error: any) {
       console.error('Error fetching media posts:', error);
@@ -136,12 +136,11 @@ export const useMediaPosts = (
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `media/${fileName}`;
         
-        // Using the correct option for tracking upload progress
-        // Create a wrapper for tracking progress since onUploadProgress doesn't exist
+        // Use the upload method without onUploadProgress as it's not supported
         const { error: uploadError } = await supabase.storage
           .from('content')
           .upload(filePath, postData.file, {
-            upsert: false,
+            upsert: false
           });
         
         if (uploadError) throw new Error(uploadError.message);
@@ -177,13 +176,7 @@ export const useMediaPosts = (
   });
   
   const handleCreatePost = async (data: CreatePostData) => {
-    // Make sure we have the correct user_id property
-    const postDataWithUserId = {
-      ...data,
-      user_id: data.user_id
-    };
-    
-    return await createPostMutation.mutateAsync(postDataWithUserId);
+    return await createPostMutation.mutateAsync(data);
   };
   
   const loadMore = useCallback(() => {

@@ -119,7 +119,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
   });
 
-  // Fix the return type to match the expected Promise<void>
+  // Fix the toggleLike function to properly return Promise<void>
   const toggleLike = async (contentId: string): Promise<void> => {
     if (!user) {
       toast({

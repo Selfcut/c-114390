@@ -14,20 +14,17 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
   const [hasInteracted, setHasInteracted] = useState(false);
   const [interactionCount, setInteractionCount] = useState(0);
 
-  // Get the correct table name
-  const getTableName = (): string => {
-    // These are the actual tables in the database
-    return `content_${interactionType}s`;
-  };
-
   // Check if user has interacted with content
   const checkInteraction = async (contentId: string): Promise<boolean> => {
     if (!user) return false;
     setIsLoading(true);
     
     try {
-      const tableName = getTableName();
-      // Use the from method with a literal string that matches a valid table name
+      // Use literal table names to avoid type errors with dynamic table names
+      const tableName = interactionType === 'like' ? 'content_likes' :
+                         interactionType === 'bookmark' ? 'content_bookmarks' :
+                         interactionType === 'view' ? 'content_views' : 'content_likes';
+      
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
@@ -55,7 +52,10 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
     setIsLoading(true);
     
     try {
-      const tableName = getTableName();
+      // Use literal table names to avoid type errors with dynamic table names
+      const tableName = interactionType === 'like' ? 'content_likes' :
+                         interactionType === 'bookmark' ? 'content_bookmarks' :
+                         interactionType === 'view' ? 'content_views' : 'content_likes';
       
       if (hasInteracted) {
         // Remove interaction
@@ -98,7 +98,10 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
   const fetchInteractionCount = async (contentId: string): Promise<void> => {
     setIsLoading(true);
     try {
-      const tableName = getTableName();
+      // Use literal table names to avoid type errors with dynamic table names
+      const tableName = interactionType === 'like' ? 'content_likes' :
+                         interactionType === 'bookmark' ? 'content_bookmarks' :
+                         interactionType === 'view' ? 'content_views' : 'content_likes';
       
       const { count, error } = await supabase
         .from(tableName)
