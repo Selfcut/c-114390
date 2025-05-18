@@ -86,34 +86,29 @@ const Auth = () => {
         const result = await signIn(email, password);
         
         if (result?.error) {
-          console.error("Sign in error:", error);
-          return { error: result.error };
+          console.error("Sign in error:", result.error);
+          setError(result.error.message || 'Failed to sign in.');
+          return;
         }
         
         toast({
           title: "Signed in successfully",
           description: "Welcome back!"
         });
-        
-        return { error: null };
       } else {
         console.log("Signing up with email:", email);
-        const result = await signUp(email, password, {
-          name,
-          username: email.split('@')[0]
-        });
+        const result = await signUp(email, password, email.split('@')[0], name);
         
         if (result?.error) {
-          console.error("Sign up error:", error);
-          return { error: result.error };
+          console.error("Sign up error:", result.error);
+          setError(result.error.message || 'Failed to sign up.');
+          return;
         }
         
         toast({
           title: "Sign up successful",
           description: "Please check your email to verify your account."
         });
-        
-        return { error: null };
       }
     } catch (err: any) {
       console.error("Auth error:", err);

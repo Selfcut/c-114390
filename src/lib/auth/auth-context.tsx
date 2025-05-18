@@ -9,6 +9,7 @@ export interface UserProfile {
   avatar_url?: string;
   username?: string;
   isAdmin?: boolean;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -16,10 +17,12 @@ interface AuthContextType {
   loading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<void>;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: any } | null>;
   signOut: () => Promise<void>;
-  updateUserProfile: (updates: Partial<UserProfile>): Promise<{ error: any } | null>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -216,10 +219,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     error,
     isAuthenticated,
+    isLoading,
     signIn,
     signUp,
     signOut,
-    updateUserProfile
+    updateUserProfile,
+    updateProfile: handleUpdateProfile
   };
 
   return (
