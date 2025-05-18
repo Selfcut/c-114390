@@ -86,7 +86,7 @@ export const useMessageOperations = () => {
   const addReaction = useCallback(async (messageId: string, emoji: string, userId: string) => {
     setIsLoading(true);
     try {
-      // First, check if the reaction already exists
+      // Use the raw supabase client with generic types for the new table
       const { data: existingReaction, error: checkError } = await supabase
         .from('message_reactions')
         .select('*')
@@ -109,7 +109,7 @@ export const useMessageOperations = () => {
         
         if (error) throw error;
         
-        // Update the reactions count on the message
+        // Update the reactions count on the message using RPC
         await incrementReactionCount(messageId);
       }
     } catch (error) {
@@ -144,7 +144,7 @@ export const useMessageOperations = () => {
   
   const incrementReactionCount = async (messageId: string) => {
     try {
-      // Use the PostgreSQL function we have for counter operations
+      // Use the RPC function we created in the SQL migration
       await supabase.rpc('increment_counter', {
         row_id: messageId,
         column_name: 'reactions_count',
@@ -157,7 +157,7 @@ export const useMessageOperations = () => {
   
   const decrementReactionCount = async (messageId: string) => {
     try {
-      // Use the PostgreSQL function we have for counter operations
+      // Use the RPC function we created in the SQL migration
       await supabase.rpc('decrement_counter', {
         row_id: messageId,
         column_name: 'reactions_count',

@@ -54,6 +54,7 @@ export type Database = {
           conversation_id: string
           created_at: string | null
           id: string
+          reactions_count: number | null
           sender_name: string | null
           updated_at: string | null
           user_id: string | null
@@ -63,6 +64,7 @@ export type Database = {
           conversation_id: string
           created_at?: string | null
           id?: string
+          reactions_count?: number | null
           sender_name?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string | null
           id?: string
+          reactions_count?: number | null
           sender_name?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -405,6 +408,38 @@ export type Database = {
           views?: number | null
         }
         Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -801,6 +836,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      decrement_counter: {
+        Args: { row_id: string; column_name: string; table_name: string }
+        Returns: undefined
+      }
       decrement_counter_fn: {
         Args: { row_id: string; column_name: string; table_name: string }
         Returns: undefined
@@ -840,6 +879,10 @@ export type Database = {
       hnswhandler: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      increment_counter: {
+        Args: { row_id: string; column_name: string; table_name: string }
+        Returns: undefined
       }
       increment_counter_fn: {
         Args: { row_id: string; column_name: string; table_name: string }

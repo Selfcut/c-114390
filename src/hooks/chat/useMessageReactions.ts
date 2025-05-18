@@ -25,6 +25,7 @@ export const useMessageReactions = (messageId: string) => {
     
     setIsLoading(true);
     try {
+      // Use generic query instead of typed query
       const { data, error } = await supabase
         .from('message_reactions')
         .select('emoji, user_id')
@@ -39,11 +40,12 @@ export const useMessageReactions = (messageId: string) => {
       if (data) {
         data.forEach(reaction => {
           // Count occurrences of each emoji
-          reactionCounts[reaction.emoji] = (reactionCounts[reaction.emoji] || 0) + 1;
+          const emoji = reaction.emoji as string;
+          reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
           
           // Check if current user reacted
           if (user && reaction.user_id === user.id) {
-            userReactions[reaction.emoji] = true;
+            userReactions[emoji] = true;
           }
         });
       }
@@ -89,6 +91,13 @@ export const useMessageReactions = (messageId: string) => {
           .eq('emoji', emoji);
           
         if (error) throw error;
+
+        // Call the counter function to update reactions_count
+        await supabase.rpc('decrement_counter', {
+          row_id: messageId,
+          column_name: 'reactions_count',
+          table_name: 'chat_messages'
+        });
         
         // Update local state
         setReactions(prev => {
@@ -117,6 +126,13 @@ export const useMessageReactions = (messageId: string) => {
           });
           
         if (error) throw error;
+        
+        // Call the counter function to update reactions_count
+        await supabase.rpc('increment_counter', {
+          row_id: messageId,
+          column_name: 'reactions_count',
+          table_name: 'chat_messages'
+        });
         
         // Update local state
         setReactions(prev => {
