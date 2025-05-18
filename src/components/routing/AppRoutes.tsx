@@ -23,6 +23,9 @@ import AdminPanel from '@/pages/AdminPanel';
 import AI from '@/pages/AI';
 import Problems from '@/pages/Problems';
 import ProblemDetail from '@/pages/ProblemDetail';
+import Research from '@/pages/Research';
+import BookReviews from '@/pages/BookReviews';
+import Events from '@/pages/Events';
 import { AuthCallback } from './AuthCallback';
 
 const RouteErrorFallback = () => (
@@ -125,7 +128,25 @@ export const AppRoutes = () => {
               <AI />
             </ErrorBoundary>
           } />
-          {/* New Problems Routes */}
+          
+          {/* New Pages */}
+          <Route path="/research" element={
+            <ErrorBoundary>
+              <Research />
+            </ErrorBoundary>
+          } />
+          <Route path="/book-reviews" element={
+            <ErrorBoundary>
+              <BookReviews />
+            </ErrorBoundary>
+          } />
+          <Route path="/events" element={
+            <ErrorBoundary>
+              <Events />
+            </ErrorBoundary>
+          } />
+          
+          {/* Problems Routes */}
           <Route path="/problems" element={
             <ErrorBoundary>
               <Problems />

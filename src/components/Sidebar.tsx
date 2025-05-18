@@ -11,7 +11,11 @@ import {
   GraduationCap,
   Quote,
   Library,
-  AlertTriangle
+  AlertTriangle,
+  Microscope,
+  BookText,
+  CalendarDays,
+  Discord
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -50,6 +54,21 @@ export const Sidebar = () => {
       icon: <Quote className="h-5 w-5" />,
       label: "Quotes",
       path: "/quotes",
+    },
+    {
+      icon: <Microscope className="h-5 w-5" />,
+      label: "Research",
+      path: "/research",
+    },
+    {
+      icon: <BookText className="h-5 w-5" />,
+      label: "Book Reviews",
+      path: "/book-reviews",
+    },
+    {
+      icon: <CalendarDays className="h-5 w-5" />,
+      label: "Events",
+      path: "/events",
     },
     {
       icon: <AlertTriangle className="h-5 w-5" />,

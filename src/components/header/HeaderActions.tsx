@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { HelpCircle, Crown } from "lucide-react";
+import { HelpCircle, Crown, Discord } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,19 @@ export const HeaderActions = () => {
 
   return (
     <div className="flex items-center gap-2">
+      {/* Discord Icon */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hover:bg-accent hover:text-accent-foreground"
+        aria-label="Discord Community"
+        asChild
+      >
+        <a href="https://discord.gg/community" target="_blank" rel="noopener noreferrer">
+          <Discord size={20} />
+        </a>
+      </Button>
+      
       {/* Theme Toggle */}
       <ThemeToggle />
       

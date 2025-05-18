@@ -73,7 +73,7 @@ export const fetchWikiArticles = async (options: FetchArticlesOptions = {}) => {
       user_id: article.user_id,
       created_at: new Date(article.created_at),
       author_name: article.author_name || 'Anonymous',
-      likes: article.likes || 0  // Ensure likes is included with a default of 0
+      likes: article.likes || 0
     })) : [];
 
     return { 
