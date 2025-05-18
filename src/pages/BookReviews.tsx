@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookReviewsHeader } from "@/components/bookreviews/BookReviewsHeader";
 import { BookReviewsFilters } from "@/components/bookreviews/BookReviewsFilters";
 import { BookReviewsList } from "@/components/bookreviews/BookReviewsList";
-import { PageLayout } from "@/components/layouts/PageLayout";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Book } from '../components/bookreviews/types';
@@ -139,23 +137,21 @@ const BookReviews = () => {
   const genres = Array.from(new Set(books.map(book => book.genre))).filter(Boolean) as string[];
   
   return (
-    <PageLayout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <BookReviewsHeader onCreateReview={handleCreateReview} />
-        <BookReviewsFilters 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedGenre={selectedGenre}
-          onGenreChange={setSelectedGenre}
-          genres={genres}
-        />
-        <BookReviewsList 
-          books={filteredBooks}
-          isLoading={isLoading}
-          onBookClick={handleBookClick}
-        />
-      </div>
-    </PageLayout>
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <BookReviewsHeader onCreateReview={handleCreateReview} />
+      <BookReviewsFilters 
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedGenre={selectedGenre}
+        onGenreChange={setSelectedGenre}
+        genres={genres}
+      />
+      <BookReviewsList 
+        books={filteredBooks}
+        isLoading={isLoading}
+        onBookClick={handleBookClick}
+      />
+    </div>
   );
 };
 
