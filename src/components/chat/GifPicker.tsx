@@ -1,40 +1,65 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Image } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 
 interface GifPickerProps {
   onGifSelect: (gif: { url: string; alt: string }) => void;
 }
 
-// Sample GIFs for demo purposes - in a real app you would use a GIF API
-const SAMPLE_GIFS = [
+// Demo GIF collection - in a production app, this would come from Giphy/Tenor API
+const DEMO_GIFS = [
   {
-    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGJuYWgwejZhdmZ6enFrdDI5ZzFzN2ZhNzZzdzVvdnAwYzA2bWFlZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26FxsQwgJyU4me9ig/giphy.gif",
-    alt: "Thumbs up"
+    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGNhMDhubGpjcmYyaHQwMWE5NTVmOXVpdjlxajNnYnp5eWw3MnlyayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lqM3SXMEfUj7vSf05I/giphy.gif",
+    alt: "thinking"
   },
   {
-    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHlwaXg0cDh0bjY1YXZ3dXBkdHN5Mm9tb3ZpNDY0aWJ4djEyeXo2bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0MYJnJQ4EiYLR9de/giphy.gif",
-    alt: "Hello"
+    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGVpaTY2djlyenoxcWpneGo0YXozZDAwcHYzem5ncHZrMG5zOWl4NCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/bAplZhiLAsNnG/giphy.gif",
+    alt: "thumbs up"
   },
   {
-    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3hmYnZxeWVkdzZuaTV3eHJ2Z3M0eWZlYXdyZXhvaHl3emJpMG91dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKoWXm3okO1kgHC/giphy.gif",
-    alt: "Thanks"
+    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYXN2eTFzcDlkaDF0NzNlYTBwdDl4ZTU3M2U0eGZoMXI4azBoMDNueSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gJuTwM3m5vF2o/giphy.gif",
+    alt: "clapping"
   },
   {
-    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWlna3J3MXc3YnpsNXNpbWYyZTgwM295eTQwN3JnMDhodHE1dWVrOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DRsN032KfVl19CCnqK/giphy.gif",
-    alt: "LOL"
+    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzFjOGI1M21raGhqdjZid3g5Mnl4ZGZpbmtsN21rajBkbWJjdzE1MCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2A75RyXVzzSI2bx4Gj/giphy.gif",
+    alt: "wow"
+  },
+  {
+    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnhlaHBvMWdxZmVubDRpYWVmN3p2aHR3YTNnNDRkc2dsamxuZ2FwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SXgvqZ4kYrMHVRPCeZ/giphy.gif",
+    alt: "typing"
+  },
+  {
+    url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWJucGp3a3c2ZDF6eWcwMnlmZmFlaG1vYzFkdm42ZzBtZ3FsYnA2eiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/jUwpNzg9IcyrK/giphy.gif",
+    alt: "confused"
   }
 ];
 
 export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
-  const [searchTerm, setSearchTerm] = React.useState("");
-  
-  const filteredGifs = searchTerm
-    ? SAMPLE_GIFS.filter(gif => gif.alt.toLowerCase().includes(searchTerm.toLowerCase()))
-    : SAMPLE_GIFS;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [gifs, setGifs] = useState(DEMO_GIFS);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    // Simulate search - in a real app, this would call a GIF API
+    setTimeout(() => {
+      if (searchTerm.trim()) {
+        const filtered = DEMO_GIFS.filter(gif => 
+          gif.alt.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setGifs(filtered.length ? filtered : DEMO_GIFS);
+      } else {
+        setGifs(DEMO_GIFS);
+      }
+      setIsLoading(false);
+    }, 500);
+  };
 
   return (
     <Popover>
@@ -49,31 +74,43 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="end" sideOffset={5}>
-        <div className="space-y-3">
-          <Input 
-            placeholder="Search GIFs..." 
+        <form onSubmit={handleSearch} className="mb-3 flex gap-2">
+          <Input
+            placeholder="Search GIFs..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
+            onChange={e => setSearchTerm(e.target.value)}
+            className="h-8"
           />
-          <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-            {filteredGifs.map((gif, index) => (
-              <button
-                key={index}
-                className="w-full h-24 overflow-hidden rounded border border-border hover:border-primary/50 transition-colors"
-                onClick={() => onGifSelect(gif)}
-              >
-                <img 
-                  src={gif.url} 
-                  alt={gif.alt}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-          {filteredGifs.length === 0 && (
-            <div className="text-center text-muted-foreground py-4">
-              No GIFs found matching your search
+          <Button type="submit" size="sm" className="px-2 h-8">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+          </Button>
+        </form>
+        
+        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+          {gifs.map((gif, index) => (
+            <Button
+              key={`${gif.url}-${index}`}
+              variant="outline"
+              className="p-0 h-auto aspect-video overflow-hidden"
+              onClick={() => onGifSelect(gif)}
+            >
+              <img 
+                src={gif.url} 
+                alt={gif.alt} 
+                className="w-full h-full object-cover"
+              />
+            </Button>
+          ))}
+          
+          {gifs.length === 0 && !isLoading && (
+            <div className="col-span-2 text-center py-4 text-muted-foreground">
+              No GIFs found. Try another search.
+            </div>
+          )}
+          
+          {isLoading && (
+            <div className="col-span-2 flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
         </div>

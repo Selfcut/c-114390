@@ -1,57 +1,52 @@
 
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface BookReviewsFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedGenre: string | null;
   onGenreChange: (genre: string | null) => void;
+  genres?: string[];
 }
 
-const genres = [
-  { id: 'all', label: 'All Genres' },
-  { id: 'science', label: 'Science' },
-  { id: 'philosophy', label: 'Philosophy' },
-  { id: 'mathematics', label: 'Mathematics' },
-  { id: 'history', label: 'History' },
-  { id: 'psychology', label: 'Psychology' },
-  { id: 'fiction', label: 'Fiction' },
-];
-
-export const BookReviewsFilters = ({ 
-  searchQuery, 
+export const BookReviewsFilters = ({
+  searchQuery,
   onSearchChange,
   selectedGenre,
-  onGenreChange
+  onGenreChange,
+  genres = []
 }: BookReviewsFiltersProps) => {
   return (
-    <div className="mb-6 space-y-4">
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search books..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+    <div className="mb-6 flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Search books by title or author..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10"
+        />
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {genres.map((genre) => (
-          <Button
-            key={genre.id}
-            variant={genre.id === (selectedGenre || 'all') ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => onGenreChange(genre.id === 'all' ? null : genre.id)}
-          >
-            {genre.label}
-          </Button>
-        ))}
-      </div>
+      
+      <Select
+        value={selectedGenre || ''}
+        onValueChange={(value) => onGenreChange(value || null)}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="All Genres" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">All Genres</SelectItem>
+          {genres.map((genre) => (
+            <SelectItem key={genre} value={genre}>
+              {genre}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

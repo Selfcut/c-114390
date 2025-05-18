@@ -82,6 +82,20 @@ export const ChatInputArea = ({
 
   return (
     <div className="border-t border-border p-2 bg-background sticky bottom-0">
+      {/* Emoji picker popup */}
+      {showEmojiPicker && (
+        <div className="absolute bottom-[80px] right-3 z-10">
+          <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+        </div>
+      )}
+      
+      {/* GIF picker popup */}
+      {showGifPicker && (
+        <div className="absolute bottom-[80px] right-3 z-10">
+          <GifPicker onGifSelect={handleGifSelect} />
+        </div>
+      )}
+
       {/* Editing indicator */}
       {editingMessage && onCancelEdit && (
         <MessageEditingIndicator onCancelEdit={onCancelEdit} />

@@ -6,13 +6,15 @@ import { toast } from "sonner";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { Search, Loader2 } from "lucide-react";
 
 // Components
 import { ResearchHeader } from "@/components/research/ResearchHeader";
-import { ResearchSemanticSearch } from "@/components/research/ResearchSemanticSearch";
 import { ResearchGrid } from "@/components/research/ResearchGrid";
 import { ResearchLoadingIndicator } from "@/components/research/ResearchLoadingIndicator";
 import { CreateResearchDialog } from "@/components/research/CreateResearchDialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Types
 import { ResearchPaper } from "@/lib/supabase-types";
@@ -28,11 +30,10 @@ const Research = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
   const [researchPapers, setResearchPapers] = useState<ResearchItem[]>([]);
   
-  // Semantic search state
-  const [isSemanticSearchActive, setIsSemanticSearchActive] = useState(false);
-  const [isSemanticSearchLoading, setIsSemanticSearchLoading] = useState(false);
-  const [semanticSearchError, setSemanticSearchError] = useState<string | null>(null);
-  const [semanticResults, setSemanticResults] = useState<ResearchPaper[]>([]);
+  // Search state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<ResearchPaper[]>([]);
   
   // Fetch research papers on component mount
   useEffect(() => {
@@ -64,46 +65,61 @@ const Research = () => {
     }
   };
   
-  // Handle semantic search
-  const performSemanticSearch = async (e: React.FormEvent) => {
+  // Handle search
+  const performSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      // If search is cleared, show all papers
+      setSearchResults([]);
+      return;
+    }
     
-    setIsSemanticSearchLoading(true);
-    setIsSemanticSearchActive(true);
-    setSemanticSearchError(null);
+    setIsSearching(true);
+    setSearchError(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('semantic-search', {
-        body: { 
-          query: searchQuery,
-          contentType: 'research',
-          limit: 20,
-          threshold: 0.65
+      // Try semantic search if available
+      try {
+        const { data: semanticData, error: semanticError } = await supabase.functions.invoke('semantic-search', {
+          body: { 
+            query: searchQuery,
+            contentType: 'research',
+            limit: 20,
+            threshold: 0.65
+          }
+        });
+        
+        if (!semanticError && semanticData?.results && semanticData.results.length > 0) {
+          setSearchResults(semanticData.results);
+          setIsSearching(false);
+          return;
         }
-      });
+      } catch (semanticError) {
+        console.log('Semantic search not available, falling back to basic search');
+      }
+      
+      // Fallback to basic search
+      const { data, error } = await supabase
+        .from('research_papers')
+        .select('*')
+        .or(`title.ilike.%${searchQuery}%,summary.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
       
       if (error) throw error;
       
-      if (data && data.results) {
-        setSemanticResults(data.results);
-      } else {
-        setSemanticResults([]);
-      }
+      setSearchResults(data || []);
     } catch (error: any) {
-      console.error('Semantic search error:', error);
-      setSemanticSearchError(`Search failed: ${error.message}`);
-      setSemanticResults([]);
+      console.error('Search error:', error);
+      setSearchError(`Search failed: ${error.message}`);
+      setSearchResults([]);
     } finally {
-      setIsSemanticSearchLoading(false);
+      setIsSearching(false);
     }
   };
   
-  // Clear semantic search
-  const clearSemanticSearch = () => {
-    setIsSemanticSearchActive(false);
+  // Clear search
+  const clearSearch = () => {
     setSearchQuery("");
-    setSemanticResults([]);
+    setSearchResults([]);
   };
   
   // Handle creating new research
@@ -139,16 +155,16 @@ const Research = () => {
   });
   
   // Determine which papers to display
-  const displayPapers = isSemanticSearchActive 
-    ? semanticResults.map(mapResearchPaperToItem)
+  const displayPapers = searchResults.length > 0
+    ? searchResults.map(mapResearchPaperToItem)
     : filteredPapers;
     
   // Handle category selection
   const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category);
-    // Clear semantic search if active
-    if (isSemanticSearchActive) {
-      clearSemanticSearch();
+    // Clear search if active
+    if (searchResults.length > 0) {
+      clearSearch();
     }
   };
   
@@ -163,17 +179,50 @@ const Research = () => {
           </div>
         </div>
         
-        {/* Single Search Bar for Research Papers */}
-        <ResearchSemanticSearch
-          semanticQuery={searchQuery}
-          onSemanticQueryChange={setSearchQuery}
-          isSemanticSearchLoading={isSemanticSearchLoading}
-          isSemanticSearchActive={isSemanticSearchActive}
-          semanticSearchError={semanticSearchError}
-          semanticResultsCount={semanticResults.length}
-          onSemanticSearch={performSemanticSearch}
-          onClearSemanticSearch={clearSemanticSearch}
-        />
+        {/* Unified Search Bar */}
+        <div className="mb-6">
+          <form onSubmit={performSearch} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Search for research papers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                disabled={isSearching}
+              />
+            </div>
+            <Button 
+              type="submit" 
+              disabled={!searchQuery.trim() || isSearching}
+            >
+              {isSearching ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Search className="h-4 w-4 mr-2" />
+              )}
+              Search
+            </Button>
+            {searchResults.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={clearSearch}
+                disabled={isSearching}
+              >
+                Clear
+              </Button>
+            )}
+          </form>
+          {searchError && (
+            <p className="text-sm text-destructive mt-1">{searchError}</p>
+          )}
+          {searchResults.length > 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Found {searchResults.length} research papers
+            </p>
+          )}
+        </div>
         
         {/* Category filter dropdown */}
         <div className="mb-6">
@@ -181,7 +230,7 @@ const Research = () => {
             className="border border-input bg-background px-3 py-2 rounded-md text-sm"
             value={selectedCategory || ''}
             onChange={(e) => handleCategoryChange(e.target.value || null)}
-            disabled={isSemanticSearchActive}
+            disabled={searchResults.length > 0}
           >
             <option value="">All Categories</option>
             <option value="Machine Learning">Machine Learning</option>
@@ -193,14 +242,19 @@ const Research = () => {
           </select>
         </div>
         
-        {isLoading || isSemanticSearchLoading ? (
+        {isLoading || isSearching ? (
           <ResearchLoadingIndicator />
-        ) : (
+        ) : displayPapers.length > 0 ? (
           <ResearchGrid 
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
             researchPapers={displayPapers}
           />
+        ) : (
+          <div className="text-center py-10 border rounded-lg bg-muted/20">
+            <p className="text-muted-foreground mb-2">No research papers found</p>
+            <Button onClick={handleCreateResearch}>Create Your First Research Paper</Button>
+          </div>
         )}
       </div>
       

@@ -25,7 +25,7 @@ export const ChatInputTools = ({
   showEmojiPicker,
   showGifPicker,
   isAdmin = false,
-  onAdminEffectSelect = () => {}
+  onAdminEffectSelect
 }: ChatInputToolsProps) => {
   return (
     <div className="flex items-center gap-1">
@@ -65,7 +65,7 @@ export const ChatInputTools = ({
         </Tooltip>
       </TooltipProvider>
 
-      {isAdmin && (
+      {isAdmin && onAdminEffectSelect && (
         <AdminEffects 
           onEffectSelect={onAdminEffectSelect} 
           isAdmin={isAdmin}
