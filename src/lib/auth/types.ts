@@ -1,4 +1,3 @@
-
 import { User } from '@supabase/supabase-js';
 import { UserStatus, UserRole } from '@/types/user';
 
@@ -26,8 +25,7 @@ export interface UserProfile {
 }
 
 export interface AuthState {
-  user: User | null;
-  profile: UserProfile | null;
+  user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -38,22 +36,12 @@ export interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;
-}
-
-// Auth context type for auth-context.tsx
-export interface AuthContextType {
-  user: UserProfile | null;
-  session: any;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: any } | null>;
-  signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
+  session?: any;
   updateUserProfile?: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
   updateUserStatus?: (status: UserStatus) => Promise<void>;
   toggleGhostMode?: () => Promise<void>;
   toggleDoNotDisturb?: () => Promise<void>;
-  loading?: boolean;
-  error?: Error | null;
 }
+
+// This keeps compatibility with the auth-context.tsx file
+export type AuthContextType = AuthContextValue;

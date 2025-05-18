@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { ArrowLeft, Calendar, Eye, ThumbsUp, MessageSquare, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/lib/auth';
 import { useMediaDetails } from '@/hooks/media/useMediaDetails';
 import { ImagePost } from '@/components/media/ImagePost';
@@ -21,6 +21,7 @@ const MediaDetail = () => {
   const { user } = useAuth();
   const { data, isLoading } = useMediaDetails(id);
   const [isLiked, setIsLiked] = useState(false);
+  const { toast } = useToast();
 
   const handleBack = () => {
     navigate('/media');
@@ -168,7 +169,6 @@ const MediaDetail = () => {
               {isLiked ? "Liked" : "Like"}
             </Button>
             
-            {/* Comment button would go here */}
             <Button variant="outline" onClick={() => navigate('/media')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Media

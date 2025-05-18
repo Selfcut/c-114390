@@ -10,13 +10,13 @@ import BookReviews from "./pages/BookReviews";
 import BookReviewDetail from "./pages/BookReviewDetail";
 import Chat from "./pages/Chat";
 import Media from "./pages/Media";
+import MediaDetail from "./pages/MediaDetail";
 import Problems from "./pages/Problems";
 import Events from "./pages/Events";
 import Quotes from "./pages/Quotes";
 import Wiki from "./pages/Wiki";
 import WikiArticle from "./components/wiki/WikiArticlePage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { PageLayout } from "./components/layouts/PageLayout";
 import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { AuthProvider } from "./lib/auth";
@@ -30,22 +30,23 @@ function App() {
           <AuthProvider>
             <Router>
               <Routes>
-                <Route path="/" element={<PageLayout><Index /></PageLayout>} />
-                <Route path="/dashboard" element={<PageLayout><Dashboard /></PageLayout>} />
+                <Route path="/" element={<Index />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/forum" element={<Forum />} />
                 <Route path="/forum/:id" element={<ForumPost />} />
-                <Route path="/library" element={<PageLayout><Library /></PageLayout>} />
-                <Route path="/research" element={<PageLayout><Research /></PageLayout>} />
-                <Route path="/book-reviews" element={<PageLayout><BookReviews /></PageLayout>} />
-                <Route path="/book-reviews/:id" element={<PageLayout><BookReviewDetail /></PageLayout>} />
-                <Route path="/chat" element={<PageLayout><Chat /></PageLayout>} />
+                <Route path="/library" element={<Library />} />
+                <Route path="/research" element={<Research />} />
+                <Route path="/book-reviews" element={<BookReviews />} />
+                <Route path="/book-reviews/:id" element={<BookReviewDetail />} />
+                <Route path="/chat" element={<Chat />} />
                 <Route path="/media" element={<Media />} />
-                <Route path="/problems" element={<PageLayout><Problems /></PageLayout>} />
-                <Route path="/events" element={<PageLayout><Events /></PageLayout>} />
-                <Route path="/quotes" element={<PageLayout><Quotes /></PageLayout>} />
-                <Route path="/wiki" element={<PageLayout><Wiki /></PageLayout>} />
-                <Route path="/wiki/:id" element={<PageLayout><WikiArticle /></PageLayout>} />
-                <Route path="*" element={<PageLayout><Index /></PageLayout>} />
+                <Route path="/media/:id" element={<MediaDetail />} />
+                <Route path="/problems" element={<Problems />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/quotes" element={<Quotes />} />
+                <Route path="/wiki" element={<Wiki />} />
+                <Route path="/wiki/:id" element={<WikiArticle />} />
+                <Route path="*" element={<Index />} />
               </Routes>
               <Toaster />
             </Router>
