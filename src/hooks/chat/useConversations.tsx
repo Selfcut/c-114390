@@ -1,7 +1,6 @@
-
-import { useState, useEffect, useCallback } from "react";
-import { Conversation } from "@/components/chat/types";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ConversationItem, Conversation } from "@/components/chat/types";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 

@@ -11,6 +11,7 @@ export type ChatMessage = {
   isSystem?: boolean;
   isEdited?: boolean;
   effectType?: string;
+  mentions?: string[];
   replyTo?: {
     id: string;
     content: string;
@@ -21,4 +22,25 @@ export type ChatMessage = {
     count: number;
     users: string[];
   }[];
+};
+
+export type ConversationItem = {
+  id: string;
+  name: string;
+  lastMessage?: string;
+  avatar?: string;
+  updatedAt: string;
+  unread?: number;
+  isGroup?: boolean;
+  isGlobal?: boolean;
+};
+
+export type Conversation = {
+  id: string;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+  last_message?: string;
+  is_group?: boolean;
+  is_global?: boolean;
 };

@@ -1,9 +1,7 @@
-
 import React from "react";
 import { ConversationsList } from "./ConversationsList";
 import { ChatContent } from "./ChatContent";
-import { ConversationItem } from "./types";
-import { ChatMessage } from "./types";
+import { ConversationItem, ChatMessage } from "./types";
 
 interface ChatSidebarContentProps {
   isOpen: boolean;

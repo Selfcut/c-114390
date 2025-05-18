@@ -279,8 +279,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         conversationId: messages[0]?.conversationId || "chat1",
         reactions: [],
         isEdited: false,
-        replyTo: replyingTo,
-        mentions: []
+        replyTo: replyingTo ? {
+          id: replyingTo.id,
+          content: replyingTo.content,
+          senderName: replyingTo.sender.name
+        } : undefined
       };
 
       setMessages([...messages, newMessage]);

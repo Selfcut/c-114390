@@ -18,6 +18,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     if (!user?.id) return false;
     
     try {
+      // Use generic query to avoid type errors
       const { data, error } = await supabase
         .from(tables.likesTable)
         .select('id')
@@ -52,7 +53,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       const hasLiked = await checkUserLike(contentId);
       
       if (hasLiked) {
-        // Remove the like
+        // Remove the like - use generic query
         const { error: deleteError } = await supabase
           .from(tables.likesTable)
           .delete()
@@ -62,7 +63,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
           
         if (deleteError) throw deleteError;
         
-        // Update the likes count in the content table
+        // Update the likes count in the content table using RPC function
         const { error: updateError } = await supabase
           .rpc('decrement_counter', {
             row_id: contentId,
@@ -74,7 +75,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
         
         return false;
       } else {
-        // Add the like
+        // Add the like - use generic query
         const { error: insertError } = await supabase
           .from(tables.likesTable)
           .insert({
@@ -85,7 +86,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
           
         if (insertError) throw insertError;
         
-        // Update the likes count in the content table
+        // Update the likes count in the content table using RPC function
         const { error: updateError } = await supabase
           .rpc('increment_counter', {
             row_id: contentId,

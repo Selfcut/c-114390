@@ -71,7 +71,7 @@ export const useMessageHandlers = ({
           ? {
               id: replyingToMessage.id,
               content: replyingToMessage.content,
-              sender: { name: replyingToMessage.senderName }
+              senderName: replyingToMessage.senderName
             } 
           : undefined
       };
