@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,7 +119,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
   });
 
-  // Fix the toggleLike function to properly return Promise<void>
+  // Fixed toggleLike function to properly return Promise<void>
   const toggleLike = async (contentId: string): Promise<void> => {
     if (!user) {
       toast({
@@ -130,8 +131,9 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
     
     try {
+      // Execute the mutation and explicitly discard the result
       await toggleLikeMutation.mutateAsync(contentId);
-      // No need to return anything, void function
+      // No explicit return here makes it return void
     } catch (error) {
       console.error('Error in toggleLike:', error);
     }

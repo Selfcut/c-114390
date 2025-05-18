@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -60,7 +61,8 @@ const WikiArticlePage = () => {
           if (isAuthenticated) {
             // Get the like status and update state separately
             const hasLiked = await checkUserLike(article.id);
-            setIsLiked(hasLiked);
+            // Explicitly use a boolean value with the setter to avoid type mismatch
+            setIsLiked(Boolean(hasLiked));
           }
         } else {
           setError("Article not found");
