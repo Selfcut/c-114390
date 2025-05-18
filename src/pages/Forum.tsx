@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { PageLayout } from "@/components/layouts/PageLayout";
 import { DiscussionFilters } from "../components/DiscussionFilters";
 import { ForumHeader } from "../components/forum/ForumHeader";
 import { ForumContent } from "../components/forum/ForumContent";
@@ -46,35 +45,33 @@ const Forum = () => {
   };
   
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8">
-        <ForumHeader onCreateDiscussion={handleCreateDiscussion} />
-        
-        <DiscussionFilters 
-          onSortChange={setSortOption}
-          onFilterChange={setActiveTag}
-          onSearchChange={setSearchTerm}
-          availableTags={allTags}
-        />
-        
-        <ForumContent
-          isLoading={isLoading}
-          filteredDiscussions={filteredDiscussions}
-          activeTag={activeTag}
-          setActiveTag={setActiveTag}
-          setSearchTerm={setSearchTerm}
-          onDiscussionClick={handleDiscussionClick}
-        />
-        
-        {!isAuthenticated && <GuestPrompt />}
-        
-        <NewDiscussionDialog
-          isOpen={isCreateDialogOpen} 
-          onClose={() => setIsCreateDialogOpen(false)}
-          onSuccess={handleDiscussionCreated}
-        />
-      </div>
-    </PageLayout>
+    <div className="container mx-auto py-8">
+      <ForumHeader onCreateDiscussion={handleCreateDiscussion} />
+      
+      <DiscussionFilters 
+        onSortChange={setSortOption}
+        onFilterChange={setActiveTag}
+        onSearchChange={setSearchTerm}
+        availableTags={allTags}
+      />
+      
+      <ForumContent
+        isLoading={isLoading}
+        filteredDiscussions={filteredDiscussions}
+        activeTag={activeTag}
+        setActiveTag={setActiveTag}
+        setSearchTerm={setSearchTerm}
+        onDiscussionClick={handleDiscussionClick}
+      />
+      
+      {!isAuthenticated && <GuestPrompt />}
+      
+      <NewDiscussionDialog
+        isOpen={isCreateDialogOpen} 
+        onClose={() => setIsCreateDialogOpen(false)}
+        onSuccess={handleDiscussionCreated}
+      />
+    </div>
   );
 };
 
