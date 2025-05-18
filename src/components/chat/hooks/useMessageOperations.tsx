@@ -82,10 +82,98 @@ export const useMessageOperations = () => {
     }
   }, []);
   
+  // New functions for handling message reactions
+  const addReaction = useCallback(async (messageId: string, emoji: string, userId: string) => {
+    setIsLoading(true);
+    try {
+      // First, check if the reaction already exists
+      const { data: existingReaction, error: checkError } = await supabase
+        .from('message_reactions')
+        .select('*')
+        .eq('message_id', messageId)
+        .eq('user_id', userId)
+        .eq('emoji', emoji)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
+      // If the reaction doesn't exist, add it
+      if (!existingReaction) {
+        const { error } = await supabase
+          .from('message_reactions')
+          .insert({
+            message_id: messageId,
+            user_id: userId,
+            emoji: emoji
+          });
+        
+        if (error) throw error;
+        
+        // Update the reactions count on the message
+        await incrementReactionCount(messageId);
+      }
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      toast.error('Failed to add reaction');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
+  const removeReaction = useCallback(async (messageId: string, emoji: string, userId: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('message_reactions')
+        .delete()
+        .eq('message_id', messageId)
+        .eq('user_id', userId)
+        .eq('emoji', emoji);
+      
+      if (error) throw error;
+      
+      // Update the reactions count on the message
+      await decrementReactionCount(messageId);
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      toast.error('Failed to remove reaction');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
+  const incrementReactionCount = async (messageId: string) => {
+    try {
+      // Use the PostgreSQL function we have for counter operations
+      await supabase.rpc('increment_counter', {
+        row_id: messageId,
+        column_name: 'reactions_count',
+        table_name: 'chat_messages'
+      });
+    } catch (error) {
+      console.error('Error incrementing reaction count:', error);
+    }
+  };
+  
+  const decrementReactionCount = async (messageId: string) => {
+    try {
+      // Use the PostgreSQL function we have for counter operations
+      await supabase.rpc('decrement_counter', {
+        row_id: messageId,
+        column_name: 'reactions_count',
+        table_name: 'chat_messages'
+      });
+    } catch (error) {
+      console.error('Error decrementing reaction count:', error);
+    }
+  };
+  
   return {
     isLoading,
     fetchMessageForEdit,
     deleteMessage,
-    fetchMessageForReply
+    fetchMessageForReply,
+    addReaction,
+    removeReaction
   };
 };
