@@ -130,14 +130,8 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       return;
     }
     
-    try {
-      // Execute the mutation and explicitly void the result
-      await toggleLikeMutation.mutateAsync(contentId);
-      // No return statement, which defaults to void
-    } catch (error) {
-      console.error('Error in toggleLike:', error);
-      // No return here either
-    }
+    await toggleLikeMutation.mutateAsync(contentId);
+    // No return statement needed as we've correctly typed the function
   };
 
   return {
