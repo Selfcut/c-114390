@@ -93,8 +93,10 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
     queryFn: fetchResearchPapers,
     refetchInterval: 60 * 60 * 1000, // Auto-refresh every hour
     refetchOnWindowFocus: false,
-    onSuccess: () => {
-      setLastUpdateTime(new Date());
+    onSettled: (data, error) => {
+      if (data && !error) {
+        setLastUpdateTime(new Date());
+      }
     }
   });
   
