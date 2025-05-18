@@ -2,13 +2,12 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from "@/hooks/use-toast";
 import { ResearchPaper } from '@/lib/supabase-types';
 
 export const useResearchActions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
   
   // Create a new research paper
   const createResearchPaper = async (paper: Omit<ResearchPaper, 'id' | 'created_at' | 'updated_at' | 'views' | 'likes'>) => {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Eye, ThumbsUp, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useResearchActions } from '@/hooks/useResearchActions';
@@ -25,7 +26,6 @@ import {
 const ResearchDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
   const { incrementViewCount, toggleLike } = useResearchActions();
   
