@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import {
@@ -14,8 +13,7 @@ import {
   AlertTriangle,
   Microscope,
   BookText,
-  CalendarDays,
-  Discord
+  CalendarDays
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 

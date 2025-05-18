@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { HelpCircle, Crown, Discord } from "lucide-react";
+import { HelpCircle, Crown, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ export const HeaderActions = () => {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Discord Icon */}
+      {/* Discord Icon (using MessageCircle as alternative) */}
       <Button
         variant="ghost"
         size="icon"
@@ -29,7 +29,7 @@ export const HeaderActions = () => {
         asChild
       >
         <a href="https://discord.gg/community" target="_blank" rel="noopener noreferrer">
-          <Discord size={20} />
+          <MessageCircle size={20} />
         </a>
       </Button>
       

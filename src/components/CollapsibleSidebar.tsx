@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Home, Library, MessageSquare, User, 
   BookOpen, FileText, Image, Shield, Menu, X, AlertTriangle,
-  Microscope, BookText, CalendarDays, Discord
+  Microscope, BookText, CalendarDays, MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
