@@ -87,3 +87,9 @@ gcp_jwt_path = "supabase/gcloud.json"
 verify_jwt = false
 [functions.generate-with-ai]
 verify_jwt = false
+[functions.generate-embeddings]
+verify_jwt = false
+[functions.fetch-research]
+verify_jwt = false
+[functions.semantic-search]
+verify_jwt = false

@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      books: {
+        Row: {
+          author: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          genre: string | null
+          id: string
+          isbn: string | null
+          published_year: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          genre?: string | null
+          id?: string
+          isbn?: string | null
+          published_year?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          genre?: string | null
+          id?: string
+          isbn?: string | null
+          published_year?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -90,6 +129,33 @@ export type Database = {
           id?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      content_embeddings: {
+        Row: {
+          content_id: string
+          content_text: string
+          content_type: string
+          created_at: string
+          embedding: string | null
+          id: string
+        }
+        Insert: {
+          content_id: string
+          content_text: string
+          content_type: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+        }
+        Update: {
+          content_id?: string
+          content_text?: string
+          content_type?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
         }
         Relationships: []
       }
@@ -528,7 +594,12 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string | null
+          is_auto_fetched: boolean | null
+          is_embedded: boolean | null
           likes: number | null
+          published_date: string | null
+          source: string | null
+          source_url: string | null
           summary: string
           title: string
           updated_at: string | null
@@ -542,7 +613,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_auto_fetched?: boolean | null
+          is_embedded?: boolean | null
           likes?: number | null
+          published_date?: string | null
+          source?: string | null
+          source_url?: string | null
           summary: string
           title: string
           updated_at?: string | null
@@ -556,7 +632,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_auto_fetched?: boolean | null
+          is_embedded?: boolean | null
           likes?: number | null
+          published_date?: string | null
+          source?: string | null
+          source_url?: string | null
           summary?: string
           title?: string
           updated_at?: string | null
@@ -716,13 +797,49 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       decrement_counter_fn: {
         Args: { row_id: string; column_name: string; table_name: string }
         Returns: undefined
       }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
       has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
       }
       increment_counter_fn: {
         Args: { row_id: string; column_name: string; table_name: string }
@@ -736,9 +853,77 @@ export type Database = {
         Args: { paper_id: string }
         Returns: undefined
       }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
+      semantic_search: {
+        Args: {
+          query_text: string
+          content_type: string
+          match_threshold?: number
+          match_limit?: number
+        }
+        Returns: {
+          content_id: string
+          similarity: number
+        }[]
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
       toggle_research_like: {
         Args: { paper_id: string; user_id: string }
         Returns: boolean
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {

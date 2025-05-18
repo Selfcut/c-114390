@@ -6,11 +6,13 @@ import { Search } from 'lucide-react';
 interface WikiSearchBarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  disabled?: boolean;
 }
 
 export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({ 
   searchQuery, 
-  setSearchQuery 
+  setSearchQuery,
+  disabled = false
 }) => {
   return (
     <div className="relative mb-6">
@@ -21,6 +23,7 @@ export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         className="pl-10"
+        disabled={disabled}
       />
     </div>
   );

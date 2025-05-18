@@ -17,6 +17,7 @@ import { WikiArticleHeader } from "./WikiArticleHeader";
 import { WikiArticleMeta } from "./WikiArticleMeta";
 import { WikiArticleContent } from "./WikiArticleContent";
 import { WikiArticleActions } from "./WikiArticleActions";
+import { supabase } from "@/integrations/supabase/client";
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
@@ -64,6 +65,16 @@ const WikiArticlePage = () => {
             // Explicitly use a boolean value with the setter to avoid type mismatch
             setIsLiked(Boolean(hasLiked));
           }
+
+          // Generate embeddings for this article if needed
+          try {
+            await supabase.functions.invoke('generate-embeddings', {
+              body: { contentType: 'wiki', contentId: articleId }
+            });
+          } catch (err) {
+            console.error('Error generating embeddings:', err);
+            // Non-critical error, don't show to user
+          }
         } else {
           setError("Article not found");
         }
@@ -98,6 +109,15 @@ const WikiArticlePage = () => {
       title: "Article Updated",
       description: "The article has been updated successfully",
     });
+
+    // Generate new embeddings for the updated article
+    try {
+      supabase.functions.invoke('generate-embeddings', {
+        body: { contentType: 'wiki', contentId: updatedArticle.id }
+      });
+    } catch (err) {
+      console.error('Error generating updated embeddings:', err);
+    }
   };
 
   const handleLikeToggle = async () => {
