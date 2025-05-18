@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   HoverCard,
@@ -35,6 +34,7 @@ export function UserHoverCard({
     switch (status) {
       case "online": return "bg-green-500";
       case "away": return "bg-amber-500";
+      case "busy": return "bg-red-500";
       case "do-not-disturb": return "bg-red-500";
       case "invisible":
       case "offline":
@@ -47,6 +47,7 @@ export function UserHoverCard({
     switch (status) {
       case "online": return "Online";
       case "away": return "Away";
+      case "busy": return "Busy";
       case "do-not-disturb": return "Do not disturb";
       case "invisible": return "Invisible";
       default: return "Offline";
