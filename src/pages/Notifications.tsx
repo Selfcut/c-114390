@@ -6,15 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Bell, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Notification {
-  id: string;
-  type: 'mention' | 'reply' | 'like' | 'system';
-  content: string;
-  isRead: boolean;
-  timestamp: Date;
-  linkTo?: string;
-}
+import { getMockNotifications, formatNotificationTime, Notification } from "@/components/header/NotificationsDropdown";
 
 const Notifications = () => {
   const { user } = useAuth();
@@ -29,56 +21,7 @@ const Notifications = () => {
       try {
         // In a real app, we would fetch notifications from Supabase
         // For now, we'll use mock data
-        const mockNotifications = [
-          {
-            id: 'notif1',
-            type: 'mention' as const,
-            content: 'PhilosophyLover mentioned you in Systems Thinking discussion',
-            isRead: false,
-            timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 mins ago
-            linkTo: '/forum/systems-thinking'
-          },
-          {
-            id: 'notif2',
-            type: 'reply' as const,
-            content: 'WisdomSeeker replied to your comment',
-            isRead: false,
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-            linkTo: '/forum/wisdom'
-          },
-          {
-            id: 'notif3',
-            type: 'like' as const,
-            content: 'KnowledgeExplorer liked your quote',
-            isRead: true,
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-            linkTo: '/quotes'
-          },
-          {
-            id: 'notif4',
-            type: 'system' as const,
-            content: 'Welcome to Polymath! Complete your profile to get started.',
-            isRead: true,
-            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-            linkTo: '/profile'
-          },
-          {
-            id: 'notif5',
-            type: 'mention' as const,
-            content: 'AristotleFan mentioned you in Philosophy discussion',
-            isRead: false,
-            timestamp: new Date(Date.now() - 40 * 60 * 1000), // 40 mins ago
-            linkTo: '/forum/philosophy'
-          },
-          {
-            id: 'notif6',
-            type: 'system' as const,
-            content: 'Your weekly learning summary is ready to view',
-            isRead: false,
-            timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-            linkTo: '/dashboard'
-          }
-        ];
+        const mockNotifications = getMockNotifications();
         
         setNotifications(mockNotifications);
       } catch (error) {
@@ -110,19 +53,6 @@ const Notifications = () => {
         notification.id === id ? { ...notification, isRead: true } : notification
       )
     );
-  };
-
-  const formatNotificationTime = (timestamp: Date) => {
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInMinutes < 24 * 60) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`;
-    } else {
-      return `${Math.floor(diffInMinutes / (60 * 24))}d ago`;
-    }
   };
 
   const getNotificationIcon = (type: string) => {

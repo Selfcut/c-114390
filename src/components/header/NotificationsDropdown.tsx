@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Bell, MessageSquare } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-interface Notification {
+export interface Notification {
   id: string;
   type: 'mention' | 'reply' | 'like' | 'system';
   content: string;
@@ -22,6 +22,73 @@ interface Notification {
   timestamp: Date;
   linkTo?: string; // Optional link to navigate to
 }
+
+// Create a shared mock notification data function to ensure consistency
+export const getMockNotifications = (): Notification[] => {
+  return [
+    {
+      id: 'notif1',
+      type: 'mention',
+      content: 'PhilosophyLover mentioned you in Systems Thinking discussion',
+      isRead: false,
+      timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 mins ago
+      linkTo: '/forum/systems-thinking'
+    },
+    {
+      id: 'notif2',
+      type: 'reply',
+      content: 'WisdomSeeker replied to your comment',
+      isRead: false,
+      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+      linkTo: '/forum/wisdom'
+    },
+    {
+      id: 'notif3',
+      type: 'like',
+      content: 'KnowledgeExplorer liked your quote',
+      isRead: true,
+      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+      linkTo: '/quotes'
+    },
+    {
+      id: 'notif4',
+      type: 'system',
+      content: 'Welcome to Polymath! Complete your profile to get started.',
+      isRead: true,
+      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      linkTo: '/profile'
+    },
+    {
+      id: 'notif5',
+      type: 'mention',
+      content: 'AristotleFan mentioned you in Philosophy discussion',
+      isRead: false,
+      timestamp: new Date(Date.now() - 40 * 60 * 1000), // 40 mins ago
+      linkTo: '/forum/philosophy'
+    },
+    {
+      id: 'notif6',
+      type: 'system',
+      content: 'Your weekly learning summary is ready to view',
+      isRead: false,
+      timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+      linkTo: '/dashboard'
+    }
+  ];
+};
+
+export const formatNotificationTime = (timestamp: Date) => {
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  } else if (diffInMinutes < 24 * 60) {
+    return `${Math.floor(diffInMinutes / 60)}h ago`;
+  } else {
+    return `${Math.floor(diffInMinutes / (60 * 24))}d ago`;
+  }
+};
 
 export const NotificationsDropdown = () => {
   const { toast } = useToast();
@@ -37,40 +104,7 @@ export const NotificationsDropdown = () => {
       try {
         // In a real app, we would fetch notifications from Supabase
         // For now, we'll use mock data
-        const mockNotifications = [
-          {
-            id: 'notif1',
-            type: 'mention' as const,
-            content: 'PhilosophyLover mentioned you in Systems Thinking discussion',
-            isRead: false,
-            timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 mins ago
-            linkTo: '/forum/systems-thinking'
-          },
-          {
-            id: 'notif2',
-            type: 'reply' as const,
-            content: 'WisdomSeeker replied to your comment',
-            isRead: false,
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-            linkTo: '/forum/wisdom'
-          },
-          {
-            id: 'notif3',
-            type: 'like' as const,
-            content: 'KnowledgeExplorer liked your quote',
-            isRead: true,
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-            linkTo: '/quotes'
-          },
-          {
-            id: 'notif4',
-            type: 'system' as const,
-            content: 'Welcome to Polymath! Complete your profile to get started.',
-            isRead: true,
-            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-            linkTo: '/profile'
-          }
-        ];
+        const mockNotifications = getMockNotifications().slice(0, 4); // Show fewer in dropdown
         
         setNotifications(mockNotifications);
       } catch (error) {
@@ -156,19 +190,6 @@ export const NotificationsDropdown = () => {
     // Close dropdown (will happen automatically due to clicking)
   };
 
-  const formatNotificationTime = (timestamp: Date) => {
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInMinutes < 24 * 60) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`;
-    } else {
-      return `${Math.floor(diffInMinutes / (60 * 24))}d ago`;
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -224,7 +245,7 @@ export const NotificationsDropdown = () => {
                     )}
                     {notification.type === 'reply' && (
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                        <MessageSquare className="h-3 w-3 text-green-500 dark:text-green-200" />
+                        <span className="text-xs font-medium text-green-500 dark:text-green-200">↩</span>
                       </span>
                     )}
                     {notification.type === 'like' && (

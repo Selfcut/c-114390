@@ -41,7 +41,7 @@ export const HeaderActions = () => {
       {/* Theme Toggle */}
       <ThemeToggle />
       
-      {/* Notifications - Ensure it's always displayed */}
+      {/* Notifications Dropdown */}
       <NotificationsDropdown />
       
       {/* Admin Button - Only show for non-admin users with email containing "polymath" */}
