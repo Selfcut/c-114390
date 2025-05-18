@@ -16,6 +16,21 @@ import {
   Clock
 } from "lucide-react";
 
+export const categories = [
+  { name: "All Categories", icon: BookOpen, value: null },
+  { name: "Computer Science", icon: Code, value: "Computer Science" },
+  { name: "Mathematics", icon: Binary, value: "Mathematics" },
+  { name: "Neuroscience", icon: BrainCircuit, value: "Neuroscience" },
+  { name: "Biology", icon: Dna, value: "Biology" },
+  { name: "Physics", icon: Atom, value: "Physics" },
+  { name: "History", icon: History, value: "History" },
+  { name: "Philosophy", icon: BookOpenCheck, value: "Philosophy" },
+  { name: "Geography", icon: Globe, value: "Geography" },
+  { name: "Education", icon: GraduationCap, value: "Education" },
+  { name: "Environment", icon: TreePine, value: "Environment" },
+  { name: "Future Studies", icon: Clock, value: "Future Studies" }
+];
+
 interface CategorySidebarProps {
   selectedCategory: string | null;
   setSelectedCategory: (category: string | null) => void;
@@ -27,21 +42,6 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
   setSelectedCategory,
   disabled = false
 }) => {
-  const categories = [
-    { name: "All Categories", icon: BookOpen, value: null },
-    { name: "Computer Science", icon: Code, value: "Computer Science" },
-    { name: "Mathematics", icon: Binary, value: "Mathematics" },
-    { name: "Neuroscience", icon: BrainCircuit, value: "Neuroscience" },
-    { name: "Biology", icon: Dna, value: "Biology" },
-    { name: "Physics", icon: Atom, value: "Physics" },
-    { name: "History", icon: History, value: "History" },
-    { name: "Philosophy", icon: BookOpenCheck, value: "Philosophy" },
-    { name: "Geography", icon: Globe, value: "Geography" },
-    { name: "Education", icon: GraduationCap, value: "Education" },
-    { name: "Environment", icon: TreePine, value: "Environment" },
-    { name: "Future Studies", icon: Clock, value: "Future Studies" }
-  ];
-
   return (
     <div className="space-y-1">
       <h3 className="font-medium mb-3">Categories</h3>

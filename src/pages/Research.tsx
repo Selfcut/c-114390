@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from "@/components/CollapsibleSidebar";
 import Header from "@/components/Header";
@@ -19,6 +18,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Define a mapping function to convert ResearchPaper to ResearchItem
+const mapResearchPaperToItem = (paper: ResearchPaper): ResearchItem => ({
+  id: paper.id,
+  title: paper.title,
+  summary: paper.summary || 'No summary available',
+  author: paper.author || 'Unknown Author',
+  date: new Date(paper.created_at || Date.now()),
+  views: paper.views || 0,
+  likes: paper.likes || 0,
+  category: paper.category || 'general',
+  imageUrl: paper.image_url
+});
 
 const Research = () => {
   const navigate = useNavigate();
@@ -86,8 +98,10 @@ const Research = () => {
     setSemanticQuery("");
   };
   
-  // Determine which papers to display
-  const displayPapers = isSemanticSearchActive ? semanticResults : researchPapers;
+  // Determine which papers to display and map to ResearchItem type
+  const displayPapers = isSemanticSearchActive 
+    ? semanticResults.map(mapResearchPaperToItem)
+    : researchPapers;
   const isDisplayLoading = isSemanticSearchActive ? isSemanticSearchLoading : isLoading;
   
   return (

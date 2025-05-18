@@ -1,6 +1,19 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { WikiArticle } from "@/components/wiki/types";
+import {
+  BookOpen as BookIcon,
+  Code,
+  Binary,
+  BrainCircuit,
+  Dna,
+  Atom,
+  History,
+  GraduationCap,
+  Globe,
+  BookOpenCheck,
+  TreePine,
+  Clock
+} from 'lucide-react';
 
 interface FetchArticlesOptions {
   category?: string;
@@ -224,6 +237,27 @@ export const deleteWikiArticle = async (id: string) => {
   }
 };
 
+// Get category icon
+export const getCategoryIcon = (category: string) => {
+  // Replace direct reference to categories with our own mapping
+  const categoryIconMap = {
+    'computer science': Code,
+    'mathematics': Binary,
+    'neuroscience': BrainCircuit,
+    'biology': Dna,
+    'physics': Atom,
+    'history': History,
+    'philosophy': BookOpenCheck,
+    'geography': Globe,
+    'education': GraduationCap,
+    'environment': TreePine,
+    'future studies': Clock
+  };
+  
+  const categoryLower = category.toLowerCase();
+  return categoryIconMap[categoryLower] || BookIcon;
+};
+
 // Format date helper
 export const formatDate = (date: Date) => {
   return new Date(date).toLocaleDateString('en-US', {
@@ -231,12 +265,6 @@ export const formatDate = (date: Date) => {
     month: 'short',
     day: 'numeric'
   });
-};
-
-// Get category icon
-export const getCategoryIcon = (category: string) => {
-  const foundCategory = categories.find(c => c.id.toLowerCase() === category.toLowerCase());
-  return foundCategory ? foundCategory.icon : BookIcon;
 };
 
 // Filter articles by search query and category
@@ -260,7 +288,6 @@ export const filterArticles = (
 };
 
 // Placeholder for BookIcon if needed
-import { BookOpen as BookIcon } from 'lucide-react';
 
 // Import categories from CategorySidebar for consistency
 import { categories } from '@/components/wiki/CategorySidebar';

@@ -167,14 +167,13 @@ export const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Philosophy">Philosophy</SelectItem>
-                <SelectItem value="Science">Science</SelectItem>
-                <SelectItem value="History">History</SelectItem>
-                <SelectItem value="Art">Art</SelectItem>
-                <SelectItem value="Education">Education</SelectItem>
-                <SelectItem value="Mathematics">Mathematics</SelectItem>
-                <SelectItem value="Literature">Literature</SelectItem>
-                <SelectItem value="Ideas">Ideas</SelectItem>
+                {categories
+                  .filter(cat => cat.value !== null) // Filter out "All Categories"
+                  .map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value as string}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
