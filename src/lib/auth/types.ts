@@ -1,35 +1,31 @@
 
-import { UserStatus, UserRole } from '@/types/user';
+import { User } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string;
-  email?: string;
-  name?: string;
-  username?: string;
-  avatar_url?: string; // Add this to match Supabase DB field
-  avatar?: string;     // Keep this for backward compatibility
+  username: string;
+  email: string;
+  full_name?: string;
   bio?: string;
   website?: string;
-  role?: UserRole | string;
-  isAdmin?: boolean;
-  status?: UserStatus;
-  isGhostMode?: boolean;
-  notificationSettings?: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
+  avatar?: string;
+  avatar_url?: string; // Add this property to fix TypeScript errors
+  role?: 'user' | 'moderator' | 'admin';
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface AuthContextType {
-  user: UserProfile | null;
-  loading: boolean;
-  error: Error | null;
-  isAuthenticated: boolean;
+export interface AuthState {
+  user: User | null;
+  profile: UserProfile | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: any } | null>;
+  isAuthenticated: boolean;
+}
+
+export interface AuthContextValue extends AuthState {
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, userData?: Partial<UserProfile>) => Promise<{ error: Error | null; data: any | null }>;
   signOut: () => Promise<void>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
 }
