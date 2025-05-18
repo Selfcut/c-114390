@@ -1,3 +1,5 @@
 
+// Export all auth functionality from a single entry point
 export * from './auth-context';
-export { default as AuthProvider } from './auth-context';
+export * from './types';
+export * from './auth-utils';

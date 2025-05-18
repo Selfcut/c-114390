@@ -3,39 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserStatus } from "@/types/user";
-
-export interface UserProfile {
-  id: string;
-  email?: string;
-  name?: string;
-  avatar_url?: string;
-  username?: string;
-  isAdmin?: boolean;
-  role?: string;
-  avatar?: string;
-  bio?: string;
-  website?: string;
-  status?: UserStatus;
-  isGhostMode?: boolean;
-  notificationSettings?: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
-}
-
-interface AuthContextType {
-  user: UserProfile | null;
-  loading: boolean;
-  error: Error | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: any } | null>;
-  signOut: () => Promise<void>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
-}
+import { AuthContextType, UserProfile } from "./types";
+import { fetchUserProfile, updateUserProfile as updateUserProfileUtil } from "./auth-utils";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -50,6 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check active session on load
     const checkSession = async () => {
       try {
+        setIsLoading(true);
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -57,32 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (data?.session?.user) {
-          const { id, email } = data.session.user;
+          const { id } = data.session.user;
           
-          // Get profile details
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', id)
-            .single();
+          // Get user profile using our utility function
+          const userProfile = await fetchUserProfile(id, data.session);
           
-          // Create user object with profile data
-          const userWithProfile = {
-            id,
-            email: email || undefined,
-            name: profileData?.name,
-            avatar_url: profileData?.avatar_url,
-            username: profileData?.username,
-            role: profileData?.role || 'user',
-            isAdmin: profileData?.role === 'admin',
-            status: (profileData?.status as UserStatus) || 'online',
-            isGhostMode: profileData?.is_ghost_mode || false,
-            bio: profileData?.bio || '',
-            website: profileData?.website || '',
-            avatar: profileData?.avatar_url
-          };
-          
-          setUser(userWithProfile);
+          setUser(userProfile);
           setIsAuthenticated(true);
         } else {
           setUser(null);
@@ -104,32 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Subscribe to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const { id, email } = session.user;
+        const { id } = session.user;
         
-        // Get profile details
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
+        // Get user profile using our utility function
+        const userProfile = await fetchUserProfile(id, session);
         
-        // Create user object with profile data
-        const userWithProfile = {
-          id,
-          email: email || undefined,
-          name: profileData?.name,
-          avatar_url: profileData?.avatar_url,
-          username: profileData?.username,
-          role: profileData?.role || 'user',
-          isAdmin: profileData?.role === 'admin',
-          status: profileData?.status as UserStatus || 'online',
-          isGhostMode: profileData?.is_ghost_mode || false,
-          bio: profileData?.bio || '',
-          website: profileData?.website || '',
-          avatar: profileData?.avatar_url
-        };
-        
-        setUser(userWithProfile);
+        setUser(userProfile);
         setIsAuthenticated(true);
         
       } else if (event === 'SIGNED_OUT') {
@@ -215,27 +145,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
+  const handleUpdateUserProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
       setIsLoading(true);
       
       if (!user) throw new Error('User not authenticated');
       
-      // Update the profile in the database
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updates.name,
-          avatar_url: updates.avatar_url || updates.avatar,
-          username: updates.username,
-          bio: updates.bio,
-          website: updates.website,
-          role: updates.role,
-          status: updates.status,
-          is_ghost_mode: updates.isGhostMode
-        })
-        .eq('id', user.id);
+      // Update the profile using our utility function
+      const { error } = await updateUserProfileUtil(user.id, updates);
         
       if (error) throw error;
       
@@ -255,11 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Alias for updateUserProfile to match the interface
-  const handleUpdateProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
-    return updateUserProfile(updates);
-  };
-  
   const value = {
     user,
     loading,
@@ -269,8 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     signOut,
-    updateUserProfile,
-    updateProfile: handleUpdateProfile
+    updateUserProfile: handleUpdateUserProfile,
+    updateProfile: handleUpdateUserProfile // Alias for backward compatibility
   };
 
   return (

@@ -22,18 +22,19 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
     const fullProfile: UserProfile = {
       id: userId,
       email: userSession?.user?.email || "",
-      name: profile.name || userSession?.user?.user_metadata?.name || "User",
-      username: profile.username || userSession?.user?.user_metadata?.username || "user",
-      avatar: profile.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
-      bio: profile.bio || "",
-      website: profile.website || "",
-      role: profile.role || "user",
-      isAdmin: profile.role === "admin",
-      status: profile.status as UserStatus || "online",
-      isGhostMode: profile.is_ghost_mode || false,
+      name: profile?.name || userSession?.user?.user_metadata?.name || "User",
+      username: profile?.username || userSession?.user?.user_metadata?.username || "user",
+      avatar_url: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      avatar: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      bio: profile?.bio || "",
+      website: profile?.website || "",
+      role: profile?.role || "user",
+      isAdmin: profile?.role === "admin",
+      status: profile?.status as UserStatus || "online",
+      isGhostMode: profile?.is_ghost_mode || false,
     };
 
-    // Special case for the admin user
+    // Special case for the admin user (only in auth-utils.ts version)
     if (userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc") {
       // If this is the user we want to make admin, update their role
       await supabase
@@ -55,6 +56,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       email: userSession?.user?.email || "",
       name: userSession?.user?.user_metadata?.name || "User",
       username: userSession?.user?.user_metadata?.username || "user",
+      avatar_url: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: "",
       website: "",
@@ -74,7 +76,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
       .update({
         name: updates.name,
         username: updates.username,
-        avatar_url: updates.avatar,
+        avatar_url: updates.avatar_url || updates.avatar,
         bio: updates.bio,
         website: updates.website,
         status: updates.status,
@@ -109,6 +111,51 @@ export const updateUserStatus = async (userId: string, status: UserStatus): Prom
     }
   } catch (error) {
     console.error("Error in updateUserStatus:", error);
+    throw error;
+  }
+};
+
+// Authentication methods (from utils.ts)
+export const signIn = async (email: string, password: string) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) return { error };
+    return { data, error: null };
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const signUp = async (email: string, password: string, username: string, name?: string) => {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username,
+          name: name || username
+        }
+      }
+    });
+
+    if (error) return { error };
+    return { data, error: null };
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const signOut = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error signing out:", error);
     throw error;
   }
 };

@@ -1,18 +1,17 @@
 
-import { Session } from "@supabase/supabase-js";
-import { UserStatus } from "@/types/user";
+import { UserStatus, UserRole } from '@/types/user';
 
 export interface UserProfile {
   id: string;
   email?: string;
-  name: string;
-  avatar_url?: string;
+  name?: string;
   username?: string;
-  role?: string;
-  isAdmin?: boolean;
+  avatar_url?: string;
   avatar?: string;
   bio?: string;
   website?: string;
+  role?: UserRole | string;
+  isAdmin?: boolean;
   status?: UserStatus;
   isGhostMode?: boolean;
   notificationSettings?: {
@@ -24,14 +23,13 @@ export interface UserProfile {
 
 export interface AuthContextType {
   user: UserProfile | null;
-  session: Session | null;
-  isLoading: boolean;
   loading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any } | null>;
   signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: any } | null>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
 }
