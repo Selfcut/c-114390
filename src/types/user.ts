@@ -1,5 +1,5 @@
 
-export type UserStatus = "online" | "offline" | "away" | "busy" | "invisible";
+export type UserStatus = "online" | "offline" | "away" | "busy" | "do-not-disturb" | "invisible";
 export type UserRole = "user" | "moderator" | "admin";
 
 export interface UserProfile {

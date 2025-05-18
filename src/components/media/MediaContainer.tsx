@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/media/useMediaPosts";
@@ -9,6 +10,7 @@ import { CreatePostDialog } from "@/components/media/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostData } from "@/hooks/media/types";
+import { UserProfile, UserStatus } from "@/types/user";
 
 export const MediaContainer = () => {
   const { user } = useAuth();
@@ -134,7 +136,14 @@ export const MediaContainer = () => {
           currentUser={user ? {
             ...user,
             name: user.name || "Anonymous",
-            role: user.role || 'user'
+            username: user.username || "user",
+            email: user.email || "",
+            avatar: user.avatar || "",
+            status: user.status || "online" as UserStatus,
+            role: user.role || 'user',
+            isGhostMode: user.isGhostMode || false,
+            isAdmin: user.isAdmin || false,
+            id: user.id
           } : null}
           onCreatePost={handleOpenCreateDialog}
         />

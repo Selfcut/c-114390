@@ -51,7 +51,7 @@ export const useUserInteractions = () => {
   ) => {
     if (!user) return;
     
-    await trackActivity(user.id, 'interaction', {
+    await trackActivity(user.id, 'interaction' as ActivityType, {
       action,
       targetType,
       targetId,
@@ -77,7 +77,7 @@ export const useTrackLearning = () => {
   ) => {
     if (!user) return;
     
-    await trackActivity(user.id, 'learned', {
+    await trackActivity(user.id, 'learned' as ActivityType, {
       topic,
       resourceType,
       resourceId,
@@ -94,7 +94,7 @@ export const useTrackLearning = () => {
   ) => {
     if (!user) return;
     
-    await trackActivity(user.id, 'completed', {
+    await trackActivity(user.id, 'completed' as ActivityType, {
       topic,
       resourceType,
       resourceId,

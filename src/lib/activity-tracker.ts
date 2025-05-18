@@ -1,10 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+export type ActivityType = 'view' | 'create' | 'update' | 'delete' | 'like' | 'bookmark' | 'comment' | 'interaction' | 'learned' | 'completed';
+
 // Track user activity
 export const trackActivity = async (
   userId: string,
-  eventType: 'view' | 'create' | 'update' | 'delete' | 'like' | 'bookmark' | 'comment',
+  eventType: ActivityType,
   metadata: Record<string, any> = {}
 ): Promise<boolean> => {
   try {
@@ -113,6 +115,17 @@ export const getUserActivityStats = async (userId: string) => {
   } catch (error) {
     console.error("Error getting user activity stats:", error);
     throw error;
+  }
+};
+
+// Calculate activity streak for a user
+export const calculateActivityStreak = async (userId: string): Promise<number> => {
+  try {
+    const stats = await getUserActivityStats(userId);
+    return stats.streak;
+  } catch (error) {
+    console.error("Error calculating activity streak:", error);
+    return 0;
   }
 };
 

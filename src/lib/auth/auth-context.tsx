@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserStatus } from "@/types/user";
 
 export interface UserProfile {
   id: string;
@@ -14,7 +15,7 @@ export interface UserProfile {
   avatar?: string;
   bio?: string;
   website?: string;
-  status?: string;
+  status?: UserStatus;
   isGhostMode?: boolean;
   notificationSettings?: {
     desktopNotifications: boolean;
@@ -74,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             username: profileData?.username,
             role: profileData?.role || 'user',
             isAdmin: profileData?.role === 'admin',
-            status: profileData?.status || 'offline',
+            status: (profileData?.status as UserStatus) || 'online',
             isGhostMode: profileData?.is_ghost_mode || false,
             bio: profileData?.bio || '',
             website: profileData?.website || '',
@@ -121,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           username: profileData?.username,
           role: profileData?.role || 'user',
           isAdmin: profileData?.role === 'admin',
-          status: profileData?.status || 'online',
+          status: (profileData?.status as UserStatus) || 'online',
           isGhostMode: profileData?.is_ghost_mode || false,
           bio: profileData?.bio || '',
           website: profileData?.website || '',
@@ -151,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
 
-      if (error) throw error;
+      if (error) return { error };
       
       toast.success("Signed in successfully");
       return { error: null };
@@ -181,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      if (error) throw error;
+      if (error) return { error };
       
       toast.success("Account created! Check your email to confirm your account.");
       return { error: null };

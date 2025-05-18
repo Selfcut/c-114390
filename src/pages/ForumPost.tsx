@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -7,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useForumPost } from '@/hooks/forum/useForumPost';
 import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
+import { UserProfile, UserStatus } from '@/types/user';
 
 // Placeholder components - in a real project, these would be in separate files
 const ForumSkeleton = () => (
@@ -125,10 +127,17 @@ const ForumPost = () => {
   // Handle upvoting the post
   const handleUpvotePost = async () => {
     if (discussion && user) {
-      const userWithRequiredFields = {
+      const userWithRequiredFields: UserProfile = {
         ...user,
         name: user.name || '',
-        role: user.role || 'user'
+        username: user.username || '',
+        email: user.email || '',
+        avatar: user.avatar || '',
+        status: user.status || 'online',
+        role: user.role || 'user',
+        isGhostMode: user.isGhostMode || false,
+        isAdmin: user.isAdmin || false,
+        id: user.id
       };
       await handleUpvote(userWithRequiredFields, discussion);
     }
@@ -137,10 +146,17 @@ const ForumPost = () => {
   // Handle adding a new comment
   const handleAddComment = async (comment: string) => {
     if (!user || !discussion) return;
-    const userWithRequiredFields = {
+    const userWithRequiredFields: UserProfile = {
       ...user,
       name: user.name || '',
-      role: user.role || 'user'
+      username: user.username || '',
+      email: user.email || '',
+      avatar: user.avatar || '',
+      status: user.status || 'online',
+      role: user.role || 'user',
+      isGhostMode: user.isGhostMode || false,
+      isAdmin: user.isAdmin || false,
+      id: user.id
     };
     await handleSubmitComment(userWithRequiredFields, comment, discussion, setComments);
   };

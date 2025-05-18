@@ -20,6 +20,3 @@ export interface AuthContextType {
   toggleGhostMode: () => Promise<void>;
   toggleDoNotDisturb: () => Promise<void>;
 }
-
-// Re-export types from the main user.ts using export type
-export type { UserProfile, UserStatus, UserRole };
