@@ -18,16 +18,14 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     if (!user?.id) return false;
     
     try {
-      // Use a raw query approach instead of typed to avoid type errors
-      const query = `
-        SELECT id FROM "${tables.likesTable}"
-        WHERE content_id = '${contentId}'
-        AND user_id = '${user.id}'
-        AND content_type = '${options.contentType}'
-        LIMIT 1
-      `;
-      
-      const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
+      // Use a direct approach with a generic select query instead of rpc
+      const { data, error } = await supabase
+        .from(tables.likesTable)
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('user_id', user.id)
+        .eq('content_type', options.contentType)
+        .limit(1);
         
       if (error) {
         console.error('Error checking like status:', error);
@@ -55,15 +53,13 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       const hasLiked = await checkUserLike(contentId);
       
       if (hasLiked) {
-        // Remove the like using raw SQL approach
-        const deleteQuery = `
-          DELETE FROM "${tables.likesTable}"
-          WHERE content_id = '${contentId}'
-          AND user_id = '${user.id}'
-          AND content_type = '${options.contentType}'
-        `;
-        
-        const { error: deleteError } = await supabase.rpc('execute_sql', { sql_query: deleteQuery });
+        // Remove the like using direct table access
+        const { error: deleteError } = await supabase
+          .from(tables.likesTable)
+          .delete()
+          .eq('content_id', contentId)
+          .eq('user_id', user.id)
+          .eq('content_type', options.contentType);
           
         if (deleteError) throw deleteError;
         
@@ -79,13 +75,14 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
         
         return false;
       } else {
-        // Add the like using raw SQL approach
-        const insertQuery = `
-          INSERT INTO "${tables.likesTable}" (content_id, user_id, content_type)
-          VALUES ('${contentId}', '${user.id}', '${options.contentType}')
-        `;
-        
-        const { error: insertError } = await supabase.rpc('execute_sql', { sql_query: insertQuery });
+        // Add the like using direct table access
+        const { error: insertError } = await supabase
+          .from(tables.likesTable)
+          .insert({
+            content_id: contentId,
+            user_id: user.id,
+            content_type: options.contentType
+          });
           
         if (insertError) throw insertError;
         

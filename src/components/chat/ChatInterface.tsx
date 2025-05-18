@@ -37,7 +37,7 @@ import {
   Users,
 } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
-import { ChatMessage as ChatMessageType, ConversationItem } from "./types";
+import { ChatMessage as ChatMessageType, Conversation, ConversationItem } from "./types";
 import { UserStatus } from "@/types/user";
 import { format } from "date-fns";
 
@@ -315,7 +315,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setReplyingTo({
         id: messageToReply.id,
         content: messageToReply.content,
-        senderName: messageToReply.senderName
+        sender: {
+          name: messageToReply.senderName
+        }
       });
       textareaRef.current?.focus();
     }
