@@ -1,79 +1,84 @@
 
-import { supabase } from "@/integrations/supabase/client";
-
-export type MediaPostType = 'image' | 'video' | 'youtube' | 'document' | 'text';
-
-export interface MediaAuthor {
-  name: string;
-  avatar_url?: string | null;
-  username?: string | null;
-}
+export type MediaType = 'image' | 'video' | 'document' | 'youtube' | 'text';
 
 export interface MediaPost {
   id: string;
   title: string;
   content?: string;
   url?: string;
-  type: MediaPostType;
+  type: MediaType;
   user_id: string;
   created_at: string;
   updated_at: string;
   likes: number;
   comments: number;
   views: number;
-  author?: MediaAuthor;
+  author?: {
+    name: string;
+    avatar_url?: string | null;
+    username?: string | null;
+  };
 }
 
-// Validate that a string is a valid MediaPostType
-export function validateMediaType(type: string): MediaPostType {
-  const validTypes: MediaPostType[] = ['image', 'video', 'youtube', 'document', 'text'];
-  
-  if (validTypes.includes(type as MediaPostType)) {
-    return type as MediaPostType;
-  }
-  
-  return 'text'; // Default to text if invalid type
-}
+export const validateMediaType = (type: string): MediaType => {
+  const validTypes: MediaType[] = ['image', 'video', 'document', 'youtube', 'text'];
+  return validTypes.includes(type as MediaType) ? type as MediaType : 'text';
+};
 
-// Track media view with proper error handling
-export async function trackMediaView(mediaId: string, userId?: string): Promise<void> {
+export const getMediaPostById = async (id: string): Promise<MediaPost | null> => {
   try {
-    if (!mediaId) {
-      console.error("Cannot track view: Media ID is required");
-      return;
-    }
+    const { supabase } = await import('@/integrations/supabase/client');
     
-    // First increment the views counter in the media_posts table
-    const { error: incrementError } = await supabase.rpc('increment_media_views', {
-      media_id: mediaId
-    });
-    
-    if (incrementError) {
-      console.error("Error incrementing media views:", incrementError);
-    }
-    
-    // If user is logged in, also track the view in user_media_views
-    if (userId) {
-      const { error: upsertError } = await supabase
-        .from('user_media_views')
-        .upsert(
-          {
-            media_id: mediaId,
-            user_id: userId,
-            last_viewed_at: new Date().toISOString(),
-            view_count: 1
-          },
-          {
-            onConflict: 'media_id,user_id',
-            ignoreDuplicates: false
-          }
-        );
+    // Get the post
+    const { data: post, error } = await supabase
+      .from('media_posts')
+      .select('*')
+      .eq('id', id)
+      .single();
       
-      if (upsertError) {
-        console.error("Error updating user media views:", upsertError);
+    if (error || !post) {
+      console.error("Error fetching media post:", error);
+      return null;
+    }
+    
+    // Get the author profile
+    let authorProfile = null;
+    if (post.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, avatar_url, username')
+        .eq('id', post.user_id)
+        .maybeSingle();
+        
+      if (profile) {
+        authorProfile = profile;
       }
     }
+    
+    return {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      url: post.url,
+      type: validateMediaType(post.type),
+      user_id: post.user_id,
+      created_at: post.created_at,
+      updated_at: post.updated_at,
+      likes: post.likes || 0,
+      comments: post.comments || 0,
+      views: post.views || 0,
+      author: authorProfile ? {
+        name: authorProfile.name || 'Unknown',
+        avatar_url: authorProfile.avatar_url,
+        username: authorProfile.username
+      } : {
+        name: 'Unknown',
+        avatar_url: null,
+        username: null
+      }
+    };
   } catch (err) {
-    console.error("Error tracking media view:", err);
+    console.error("Error in getMediaPostById:", err);
+    return null;
   }
-}
+};

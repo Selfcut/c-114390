@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MediaPost, validateMediaType } from "@/utils/mediaUtils";
+import { MediaPost } from "@/utils/mediaUtils";
 import { MediaQueryParams, MediaQueryResult } from "./types";
 
 export const useFetchMediaPosts = (
@@ -21,12 +21,9 @@ export const useFetchMediaPosts = (
         const startIndex = page * pageSize;
         const endIndex = startIndex + pageSize - 1;
         
-        // Build the query - use proper join syntax
+        // Build the query with proper selection
         let query = supabase.from('media_posts')
-          .select(`
-            *,
-            profiles:user_id(name, avatar_url, username)
-          `, { count: 'exact' })
+          .select('*', { count: 'exact' })
           .range(startIndex, endIndex);
         
         // Apply filters
@@ -49,24 +46,37 @@ export const useFetchMediaPosts = (
           throw new Error(error.message);
         }
         
+        // Get user profiles for each post in a separate query
+        const userIds = data.map(post => post.user_id).filter(Boolean);
+        let profiles: Record<string, any> = {};
+        
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, name, username, avatar_url')
+            .in('id', userIds);
+            
+          if (!profilesError && profilesData) {
+            profiles = profilesData.reduce((acc: Record<string, any>, profile) => {
+              acc[profile.id] = profile;
+              return acc;
+            }, {});
+          }
+        }
+        
         // Check if there are more posts
         const hasMore = (startIndex + data.length) < (count || 0);
         
         // Map data to MediaPost type with proper type safety
         const posts: MediaPost[] = data.map(post => {
-          // Type assertion for the profiles object
-          const profileData = post.profiles as {
-            name?: string; 
-            avatar_url?: string; 
-            username?: string;
-          } | null;
+          const profileData = profiles[post.user_id] || null;
           
           return {
             id: post.id,
             title: post.title,
             content: post.content,
             url: post.url,
-            type: validateMediaType(post.type),
+            type: post.type,
             user_id: post.user_id,
             created_at: post.created_at,
             updated_at: post.updated_at,
@@ -100,6 +110,6 @@ export const useFetchMediaPosts = (
       }
     },
     staleTime: 60 * 1000, // 1 minute
-    refetchOnWindowFocus: false // Disable automatic refetch when window gains focus
+    refetchOnWindowFocus: false
   });
 };

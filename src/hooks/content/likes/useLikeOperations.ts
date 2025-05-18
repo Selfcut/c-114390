@@ -1,122 +1,131 @@
 
-import { useState, useCallback } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useSupabaseMutation } from '@/hooks/api/useSupabaseQuery';
-import { useContentTables, ContentTypeOptions } from '../useContentTables';
-import { createLikePayload, incrementLikeCounter, decrementLikeCounter } from './likeUtils';
+import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth';
+import { ContentTypeOptions } from '../useContentTables';
 import { LikesHookResult } from './types';
 
 export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult => {
   const { contentType } = options;
   const { user } = useAuth();
-  const { toast } = useToast();
-  const { mutate } = useSupabaseMutation();
-  const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
-  const { getTableNames } = useContentTables({ contentType });
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
-  // Check if user has liked content
-  const checkUserLike = useCallback(async (contentId: string): Promise<boolean> => {
-    if (!user) return false;
+  // Check if user has liked the content
+  const checkUserLike = async (contentId: string) => {
+    if (!user) return;
     
-    const { likesTable, contentIdField } = getTableNames();
-    
-    const { data } = await supabase
-      .from(likesTable as any)
-      .select()
-      .eq('user_id', user.id)
-      .eq(contentIdField, contentId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('content_likes')
+        .select('*')
+        .eq('content_id', contentId)
+        .eq('user_id', user.id)
+        .eq('content_type', contentType)
+        .maybeSingle();
+        
+      if (!error) {
+        setIsLiked(!!data);
+      }
+    } catch (err) {
+      console.error('Error checking like status:', err);
+    }
+  };
+
+  // Get content likes count
+  const fetchLikesCount = async (contentId: string) => {
+    try {
+      const { count, error } = await supabase
+        .from('content_likes')
+        .select('*', { count: 'exact' })
+        .eq('content_id', contentId)
+        .eq('content_type', contentType);
+        
+      if (!error) {
+        setLikesCount(count || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching likes count:', err);
+    }
+  };
+
+  // Toggle like status
+  const toggleLikeMutation = useMutation({
+    mutationFn: async ({ contentId }: { contentId: string }) => {
+      if (!user) {
+        throw new Error('User must be logged in to like content');
+      }
       
-    return !!data;
-  }, [user, getTableNames]);
+      try {
+        if (isLiked) {
+          // Unlike
+          const { error } = await supabase
+            .from('content_likes')
+            .delete()
+            .eq('content_id', contentId)
+            .eq('user_id', user.id)
+            .eq('content_type', contentType);
+            
+          if (error) throw error;
+          
+          // Update local state
+          setIsLiked(false);
+          setLikesCount(prev => Math.max(0, prev - 1));
+          
+          return { liked: false, contentId };
+        } else {
+          // Like
+          const { error } = await supabase
+            .from('content_likes')
+            .insert({
+              content_id: contentId,
+              user_id: user.id,
+              content_type: contentType
+            });
+            
+          if (error) throw error;
+          
+          // Update local state
+          setIsLiked(true);
+          setLikesCount(prev => prev + 1);
+          
+          return { liked: true, contentId };
+        }
+      } catch (err) {
+        console.error('Error toggling like:', err);
+        throw err;
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update like status',
+        variant: 'destructive'
+      });
+    }
+  });
 
-  // Like/unlike content
-  const toggleLike = useCallback(async (contentId: string, onSuccess?: () => void, onError?: (error: any) => void) => {
+  const toggleLike = (contentId: string) => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to like content",
-        variant: "destructive",
+        title: 'Authentication Required',
+        description: 'Please sign in to like content',
+        variant: 'destructive'
       });
       return;
     }
-
-    // Avoid duplicate requests
-    const operationKey = `like_${contentId}`;
-    if (isProcessing[operationKey]) return;
     
-    setIsProcessing(prev => ({ ...prev, [operationKey]: true }));
-    
-    try {
-      const { likesTable, contentTable, contentIdField } = getTableNames();
-      
-      // Check if already liked
-      const { data: existingLike, error: fetchError } = await supabase
-        .from(likesTable as any)
-        .select()
-        .eq('user_id', user.id)
-        .eq(contentIdField, contentId)
-        .maybeSingle();
-      
-      if (fetchError) {
-        throw fetchError;
-      }
-      
-      if (existingLike) {
-        // Unlike
-        await mutate(
-          async () => {
-            const result = await supabase
-              .from(likesTable as any)
-              .delete()
-              .eq('user_id', user.id)
-              .eq(contentIdField, contentId);
-            return result;
-          },
-          {},
-          { 
-            onSuccess: async () => {
-              await decrementLikeCounter(contentId, contentTable);
-              if (onSuccess) onSuccess();
-            },
-            onError
-          }
-        );
-      } else {
-        // Like
-        const payload = createLikePayload(contentType, user.id, contentId);
-        
-        await mutate(
-          async () => {
-            const result = await supabase
-              .from(likesTable as any)
-              .insert(payload);
-            return result;  
-          },
-          {},
-          { 
-            onSuccess: async () => {
-              await incrementLikeCounter(contentId, contentTable);
-              if (onSuccess) onSuccess();
-            },
-            onError
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      if (onError) onError(error);
-    } finally {
-      setIsProcessing(prev => ({ ...prev, [operationKey]: false }));
-    }
-  }, [user, toast, mutate, getTableNames, isProcessing, contentType]);
+    toggleLikeMutation.mutate({ contentId });
+  };
 
   return {
+    isLiked,
+    likesCount,
     toggleLike,
     checkUserLike,
-    isProcessing,
-    isAuthenticated: !!user
+    fetchLikesCount,
+    isLoading: toggleLikeMutation.isPending
   };
 };

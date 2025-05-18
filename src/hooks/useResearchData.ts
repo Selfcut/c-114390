@@ -21,16 +21,16 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
   try {
     const { data, error } = await supabase
       .from('research_papers')
-      .select('*') as { data: ResearchPaper[] | null, error: any };
+      .select('*');
     
     if (error) {
       console.error('Error fetching research papers:', error);
       throw error;
     }
     
-    // If no data is found, fall back to generated data for demo purposes
+    // If no data is found, return empty array
     if (!data || data.length === 0) {
-      return generateDemoResearchPapers();
+      return [];
     }
     
     // Transform Supabase data to match ResearchItem interface
@@ -47,77 +47,15 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
     }));
   } catch (error) {
     console.error('Error in fetchResearchPapers:', error);
-    // Fall back to generated data if there's an error
-    return generateDemoResearchPapers();
+    return [];
   }
-};
-
-// Generate demo research papers for illustration (only used if real data cannot be fetched)
-const generateDemoResearchPapers = (): ResearchItem[] => {
-  const topics = [
-    "Quantum Computing", "Neural Networks", "Dark Matter", 
-    "Consciousness", "Gene Editing", "Climate Modeling", 
-    "Renewable Energy", "Artificial Intelligence"
-  ];
-  
-  const authors = [
-    "Dr. Emma Roberts", "Prof. James Liu", "Dr. Sarah Johnson", 
-    "Dr. Michael Chen", "Prof. Anita Patel", "Dr. David Kim"
-  ];
-  
-  const categories = ["physics", "mathematics", "biology", "chemistry", "psychology", "philosophy"];
-  const papers: ResearchItem[] = [];
-  
-  // Add some consistent papers
-  papers.push({
-    id: '1',
-    title: 'Quantum Computing Advances in Neural Networks',
-    summary: 'Recent advances in quantum computing applied to neural networks show promising results for AI acceleration.',
-    author: 'Dr. Emma Roberts',
-    date: new Date('2025-03-15'),
-    views: 342,
-    likes: 78,
-    category: 'physics',
-    imageUrl: '/placeholder.svg',
-  });
-  
-  papers.push({
-    id: '2',
-    title: 'Mathematical Models of Consciousness',
-    summary: 'New mathematical frameworks to model aspects of consciousness and cognitive processes.',
-    author: 'Prof. James Liu',
-    date: new Date('2025-04-20'),
-    views: 245,
-    likes: 53,
-    category: 'mathematics',
-  });
-  
-  // Generate some random papers
-  for (let i = 3; i < 10; i++) {
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-    const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
-    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-    
-    papers.push({
-      id: `${i}`,
-      title: `Advances in ${randomTopic}: A New Perspective`,
-      summary: `Recent research in ${randomTopic} shows promising results that could revolutionize our understanding of the field.`,
-      author: randomAuthor,
-      date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000), // Random date within last 30 days
-      views: Math.floor(Math.random() * 200) + 50,
-      likes: Math.floor(Math.random() * 50) + 10,
-      category: randomCategory,
-    });
-  }
-  
-  return papers;
 };
 
 export const useResearchData = (searchQuery: string, selectedCategory: string | null) => {
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
   
   const { data: researchPapers = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['research-papers'],
+    queryKey: ['research-papers', searchQuery, selectedCategory],
     queryFn: fetchResearchPapers,
     refetchInterval: 60 * 60 * 1000, // Auto-refresh every hour
     refetchOnWindowFocus: false

@@ -1,140 +1,97 @@
 
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
-import { MediaPost, validateMediaType, trackMediaView } from "@/utils/mediaUtils";
-import { PageLayout } from "@/components/layouts/PageLayout";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MediaDetailHeader } from "@/components/media/MediaDetailHeader";
-import { MediaDetailContent } from "@/components/media/MediaDetailContent";
-import { MediaDetailFooter } from "@/components/media/MediaDetailFooter";
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { PageLayout } from '@/components/layouts/PageLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { ArrowLeft, Calendar, Eye, ThumbsUp, MessageSquare, AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from '@/lib/auth';
+import { useMediaDetails } from '@/hooks/media/useMediaDetails';
+import { ImagePost } from '@/components/media/ImagePost';
+import { YoutubeEmbed } from '@/components/media/YoutubeEmbed';
+import { DocumentPost } from '@/components/media/DocumentPost';
+import { TextPost } from '@/components/media/TextPost';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const MediaDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Fetch the media post
-  const { data: post, isLoading, isError } = useQuery({
-    queryKey: ["mediaPost", id],
-    queryFn: async () => {
-      if (!id) throw new Error("Media ID is required");
-      
-      // First fetch the media post
-      const { data: postData, error: postError } = await supabase
-        .from("media_posts")
-        .select("*")
-        .eq("id", id)
-        .single();
-        
-      if (postError) throw postError;
-      if (!postData) throw new Error("Media post not found");
-      
-      // Then fetch the author profile separately
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("name, avatar_url, username")
-        .eq("id", postData.user_id)
-        .maybeSingle();
-      
-      // Track view using our fixed trackMediaView function
-      await trackMediaView(id, user?.id);
-      
-      // Create the post object with author information
-      const completePost: MediaPost = {
-        ...postData,
-        // Validate the media type to ensure it's a valid MediaPostType
-        type: validateMediaType(postData.type),
-        author: {
-          name: profileData?.name || "Unknown User",
-          avatar_url: profileData?.avatar_url,
-          username: profileData?.username
-        }
-      };
-      
-      return completePost;
-    },
-    meta: {
-      onError: (err: Error) => {
-        console.error("Error fetching media post:", err);
-        toast({
-          title: "Error",
-          description: "Failed to load the media post",
-          variant: "destructive"
-        });
-      }
-    }
-  });
-  
-  // Handle back button
+  const { data, isLoading } = useMediaDetails(id);
+  const [isLiked, setIsLiked] = useState(false);
+
   const handleBack = () => {
-    navigate(-1);
+    navigate('/media');
+  };
+  
+  const handleLike = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to like content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsLiked(!isLiked);
+    toast({
+      description: isLiked ? "Post unliked" : "Post liked",
+    });
+    // Here we would normally implement the API call to like/unlike
+  };
+  
+  const renderContent = () => {
+    if (!data?.post) return null;
+    
+    switch (data.post.type) {
+      case 'image':
+        return <ImagePost url={data.post.url || ''} alt={data.post.title} />;
+      case 'youtube':
+        return <YoutubeEmbed url={data.post.url || ''} />;
+      case 'document':
+        return <DocumentPost url={data.post.url || ''} title={data.post.title} />;
+      case 'text':
+      default:
+        return <TextPost content={data.post.content || ''} />;
+    }
   };
   
   // Loading state
   if (isLoading) {
     return (
       <PageLayout>
-        <div className="container mx-auto py-8 px-4">
-          <Button variant="ghost" onClick={handleBack} className="mb-4">
-            <ArrowLeft size={16} className="mr-2" /> Back
-          </Button>
-          
-          <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-3/4 mb-4" />
-              <Skeleton className="h-64 w-full mb-4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4 mt-2" />
-            </CardContent>
-            <CardFooter>
-              <Skeleton className="h-10 w-32" />
-            </CardFooter>
-          </Card>
+        <div className="container mx-auto py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-32 bg-muted rounded"></div>
+            <div className="h-14 w-3/4 bg-muted rounded"></div>
+            <div className="h-64 w-full bg-muted rounded"></div>
+            <div className="h-6 w-40 bg-muted rounded"></div>
+          </div>
         </div>
       </PageLayout>
     );
   }
   
   // Error state
-  if (isError || !post) {
+  if (data?.error || !data?.post) {
     return (
       <PageLayout>
-        <div className="container mx-auto py-8 px-4">
-          <Button variant="ghost" onClick={handleBack} className="mb-4">
+        <div className="container mx-auto py-8">
+          <Button variant="ghost" onClick={handleBack} className="mb-6">
             <ArrowLeft size={16} className="mr-2" /> Back to Media
           </Button>
           
-          <Card className="text-center p-8">
-            <CardContent className="pt-6">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-10 w-10 text-red-600" />
-              </div>
-              <h3 className="mt-4 text-xl font-medium">Media Not Found</h3>
-              <p className="mt-2 text-muted-foreground">
-                The media you're looking for doesn't exist or has been removed.
-              </p>
-              <Button onClick={handleBack} className="mt-6">
-                Return to Media
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center text-center py-12">
+            <AlertTriangle className="w-12 h-12 text-muted-foreground mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Media Not Found</h2>
+            <p className="text-muted-foreground mb-6">
+              {data?.error || "The media you're looking for doesn't exist or has been removed."}
+            </p>
+            <Button onClick={handleBack}>Return to Media</Button>
+          </div>
         </div>
       </PageLayout>
     );
@@ -142,18 +99,80 @@ const MediaDetail = () => {
   
   return (
     <PageLayout>
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8">
+        <Button variant="ghost" onClick={handleBack} className="mb-6">
+          <ArrowLeft size={16} className="mr-2" /> Back to Media
+        </Button>
+        
         <Card>
-          <CardHeader>
-            <MediaDetailHeader post={post} handleBack={handleBack} />
+          <CardHeader className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Avatar>
+                <AvatarImage src={data.post.author?.avatar_url || ""} alt={data.post.author?.name} />
+                <AvatarFallback>{data.post.author?.name?.charAt(0) || "U"}</AvatarFallback>
+              </Avatar>
+              
+              <div>
+                <h1 className="text-2xl font-bold">{data.post.title}</h1>
+                <p className="text-muted-foreground">
+                  Posted by {data.post.author?.name || "Unknown"} • {
+                    format(new Date(data.post.created_at), 'MMMM d, yyyy')
+                  }
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 mr-2" />
+                {format(new Date(data.post.created_at), 'MMMM d, yyyy')}
+              </div>
+              
+              <div className="flex items-center">
+                <Eye className="h-4 w-4 mr-2" />
+                {data.post.views} views
+              </div>
+              
+              <div className="flex items-center">
+                <ThumbsUp className="h-4 w-4 mr-2" />
+                {data.post.likes} likes
+              </div>
+              
+              <div className="flex items-center">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                {data.post.comments} comments
+              </div>
+            </div>
           </CardHeader>
           
-          <CardContent>
-            <MediaDetailContent post={post} />
+          <CardContent className="space-y-8">
+            <div className="overflow-hidden rounded-md">
+              {renderContent()}
+            </div>
+            
+            {data.post.content && data.post.type !== 'text' && (
+              <div className="prose max-w-none dark:prose-invert">
+                <h3>Description</h3>
+                <p>{data.post.content}</p>
+              </div>
+            )}
           </CardContent>
           
-          <CardFooter>
-            <MediaDetailFooter post={post} />
+          <CardFooter className="flex justify-between border-t p-6">
+            <Button
+              variant={isLiked ? "default" : "outline"}
+              onClick={handleLike}
+              disabled={!user}
+            >
+              <ThumbsUp className="h-4 w-4 mr-2" />
+              {isLiked ? "Liked" : "Like"}
+            </Button>
+            
+            {/* Comment button would go here */}
+            <Button variant="outline" onClick={() => navigate('/media')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Media
+            </Button>
           </CardFooter>
         </Card>
       </div>
