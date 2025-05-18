@@ -1,0 +1,121 @@
+
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+
+interface ResearchItem {
+  id: string;
+  title: string;
+  summary: string;
+  author: string;
+  date: Date;
+  views: number;
+  likes: number;
+  category: string;
+  imageUrl?: string;
+}
+
+// Simulating API call to fetch research papers
+// In a real app, this would be an actual API call to a research database or service
+const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
+  // This is where you would make a real API call
+  // For example: const response = await fetch('https://api.researchdatabase.com/papers');
+  
+  // For demonstration, simulating a network request with a delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Example research papers - in a real app, this data would come from the API
+  const topics = [
+    "Quantum Computing", "Neural Networks", "Dark Matter", 
+    "Consciousness", "Gene Editing", "Climate Modeling", 
+    "Renewable Energy", "Artificial Intelligence"
+  ];
+  
+  const authors = [
+    "Dr. Emma Roberts", "Prof. James Liu", "Dr. Sarah Johnson", 
+    "Dr. Michael Chen", "Prof. Anita Patel", "Dr. David Kim"
+  ];
+  
+  const categories = ["physics", "mathematics", "biology", "chemistry", "psychology", "philosophy"];
+  
+  // Generate some random research papers
+  const papers: ResearchItem[] = [];
+  
+  // Add some consistent papers
+  papers.push({
+    id: '1',
+    title: 'Quantum Computing Advances in Neural Networks',
+    summary: 'Recent advances in quantum computing applied to neural networks show promising results for AI acceleration.',
+    author: 'Dr. Emma Roberts',
+    date: new Date('2025-03-15'),
+    views: 342,
+    likes: 78,
+    category: 'physics',
+    imageUrl: '/placeholder.svg',
+  });
+  
+  papers.push({
+    id: '2',
+    title: 'Mathematical Models of Consciousness',
+    summary: 'New mathematical frameworks to model aspects of consciousness and cognitive processes.',
+    author: 'Prof. James Liu',
+    date: new Date('2025-04-20'),
+    views: 245,
+    likes: 53,
+    category: 'mathematics',
+  });
+  
+  // Generate some random papers (would be from API in real app)
+  for (let i = 3; i < 10; i++) {
+    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+    const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    
+    papers.push({
+      id: `${i}`,
+      title: `Advances in ${randomTopic}: A New Perspective`,
+      summary: `Recent research in ${randomTopic} shows promising results that could revolutionize our understanding of the field.`,
+      author: randomAuthor,
+      date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000), // Random date within last 30 days
+      views: Math.floor(Math.random() * 200) + 50,
+      likes: Math.floor(Math.random() * 50) + 10,
+      category: randomCategory,
+    });
+  }
+  
+  return papers;
+};
+
+export const useResearchData = (searchQuery: string, selectedCategory: string | null) => {
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+  
+  const { data: researchPapers = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['research-papers'],
+    queryFn: fetchResearchPapers,
+    refetchInterval: 60 * 60 * 1000, // Auto-refresh every hour
+    refetchOnWindowFocus: false,
+    onSuccess: () => {
+      setLastUpdateTime(new Date());
+    }
+  });
+  
+  // Filter research items based on search query and selected category
+  const filteredPapers = researchPapers.filter(item => {
+    const matchesSearch = searchQuery 
+      ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        item.summary.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    
+    const matchesCategory = selectedCategory 
+      ? item.category === selectedCategory
+      : true;
+    
+    return matchesSearch && matchesCategory;
+  });
+  
+  return {
+    researchPapers: filteredPapers,
+    isLoading,
+    error,
+    lastUpdateTime
+  };
+};
