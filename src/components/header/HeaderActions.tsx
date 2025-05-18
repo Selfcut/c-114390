@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { HelpCircle, Crown, Discord } from "lucide-react";
+import { HelpCircle, Crown, MessageSquare } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +29,7 @@ export const HeaderActions = () => {
         asChild
       >
         <a href="https://disboard.org/server/597688497599545364" target="_blank" rel="noopener noreferrer">
-          <Discord size={20} />
+          <MessageSquare size={20} />
         </a>
       </Button>
       
@@ -77,3 +77,4 @@ export const HeaderActions = () => {
     </div>
   );
 };
+
