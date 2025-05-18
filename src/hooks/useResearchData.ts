@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResearchItem {
   id: string;
@@ -14,17 +15,44 @@ interface ResearchItem {
   imageUrl?: string;
 }
 
-// Simulating API call to fetch research papers
-// In a real app, this would be an actual API call to a research database or service
+// Function to fetch real research papers from Supabase
 const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
-  // This is where you would make a real API call
-  // For example: const response = await fetch('https://api.researchdatabase.com/papers');
-  
-  // For demonstration, simulating a network request with a delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // example research papers generation logic
-  
+  try {
+    const { data, error } = await supabase
+      .from('research_papers')
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching research papers:', error);
+      throw error;
+    }
+    
+    // If no data is found, fall back to generated data for demo purposes
+    if (!data || data.length === 0) {
+      return generateDemoResearchPapers();
+    }
+    
+    // Transform Supabase data to match ResearchItem interface
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      summary: item.summary || 'No summary available',
+      author: item.author || 'Unknown Author',
+      date: new Date(item.created_at),
+      views: item.views || 0,
+      likes: item.likes || 0,
+      category: item.category || 'general',
+      imageUrl: item.image_url
+    }));
+  } catch (error) {
+    console.error('Error in fetchResearchPapers:', error);
+    // Fall back to generated data if there's an error
+    return generateDemoResearchPapers();
+  }
+};
+
+// Generate demo research papers for illustration (only used if real data cannot be fetched)
+const generateDemoResearchPapers = (): ResearchItem[] => {
   const topics = [
     "Quantum Computing", "Neural Networks", "Dark Matter", 
     "Consciousness", "Gene Editing", "Climate Modeling", 
@@ -37,8 +65,6 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
   ];
   
   const categories = ["physics", "mathematics", "biology", "chemistry", "psychology", "philosophy"];
-  
-  // Generate some random research papers
   const papers: ResearchItem[] = [];
   
   // Add some consistent papers
@@ -65,7 +91,7 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
     category: 'mathematics',
   });
   
-  // Generate some random papers (would be from API in real app)
+  // Generate some random papers
   for (let i = 3; i < 10; i++) {
     const randomTopic = topics[Math.floor(Math.random() * topics.length)];
     const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
@@ -121,6 +147,7 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
     researchPapers: filteredPapers,
     isLoading,
     error,
+    refetch,
     lastUpdateTime
   };
 };

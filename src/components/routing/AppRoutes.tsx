@@ -1,4 +1,3 @@
-
 import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -24,6 +23,7 @@ import AI from '@/pages/AI';
 import Problems from '@/pages/Problems';
 import ProblemDetail from '@/pages/ProblemDetail';
 import Research from '@/pages/Research';
+import ResearchDetail from '@/pages/ResearchDetail';
 import BookReviews from '@/pages/BookReviews';
 import Events from '@/pages/Events';
 import { AuthCallback } from './AuthCallback';
@@ -129,12 +129,19 @@ export const AppRoutes = () => {
             </ErrorBoundary>
           } />
           
-          {/* New Pages */}
+          {/* Research Routes */}
           <Route path="/research" element={
             <ErrorBoundary>
               <Research />
             </ErrorBoundary>
           } />
+          <Route path="/research/:id" element={
+            <ErrorBoundary>
+              <ResearchDetail />
+            </ErrorBoundary>
+          } />
+          
+          {/* Other Pages */}
           <Route path="/book-reviews" element={
             <ErrorBoundary>
               <BookReviews />
