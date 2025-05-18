@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
 export const useConversations = () => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<string>("global");
   const { user } = useAuth();
@@ -23,16 +23,18 @@ export const useConversations = () => {
       if (error) throw error;
 
       if (data) {
-        const formattedConversations: Conversation[] = data.map(conv => ({
+        const formattedConversations: ConversationItem[] = data.map(conv => ({
           id: conv.id,
           name: conv.name,
           lastMessage: conv.last_message,
-          messages: [],
-          participants: [], // We'll populate this separately if needed
-          createdAt: conv.created_at,
-          updatedAt: conv.updated_at,
+          lastActivityAt: conv.updated_at,
           isGlobal: conv.is_global,
-          isGroup: conv.is_group
+          isGroup: conv.is_group,
+          unreadCount: 0,
+          updatedAt: conv.updated_at,
+          unread: 0,
+          messages: [],
+          participants: [],
         }));
 
         setConversations(formattedConversations);
@@ -72,12 +74,12 @@ export const useConversations = () => {
         id: 'global',
         name: 'Global Chat',
         lastMessage: 'Welcome to the community!',
-        messages: [],
-        participants: [],
-        createdAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         isGlobal: true,
-        isGroup: true
+        isGroup: true,
+        unread: 0,
+        unreadCount: 0
       }]);
       
       setSelectedConversation('global');
@@ -118,16 +120,16 @@ export const useConversations = () => {
       if (error) throw error;
       
       // Update the local state with the new conversation
-      const newConversation: Conversation = {
+      const newConversation: ConversationItem = {
         id: roomId,
         name: name.trim(),
         lastMessage: `${user.name || 'Someone'} created this chat room`,
-        messages: [],
-        participants: [],
-        createdAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         isGlobal: false,
-        isGroup: true
+        isGroup: true,
+        unread: 0,
+        unreadCount: 0
       };
       
       setConversations(prev => [newConversation, ...prev]);
@@ -173,7 +175,7 @@ export const useConversations = () => {
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, last_message: message, updated_at: new Date().toISOString() } 
+            ? { ...conv, lastMessage: message, lastActivityAt: new Date().toISOString(), updatedAt: new Date().toISOString() } 
             : conv
         )
       );

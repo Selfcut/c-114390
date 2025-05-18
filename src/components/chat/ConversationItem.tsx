@@ -1,48 +1,81 @@
 
-import React from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { ConversationItem as ConversationType } from "./types";
+import React from 'react';
+import { Calendar, Globe, Users } from 'lucide-react';
+import { ConversationItem as ConversationItemType } from './types';
+import { Badge } from '../ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 interface ConversationItemProps {
-  conversation: ConversationType;
+  conversation: ConversationItemType;
   isSelected: boolean;
-  onSelect: (id: string) => void;
+  onClick: () => void;
 }
 
-export const ConversationItem = ({ 
-  conversation, 
-  isSelected, 
-  onSelect 
-}: ConversationItemProps) => {
+export const ConversationItem: React.FC<ConversationItemProps> = ({
+  conversation,
+  isSelected,
+  onClick
+}) => {
+  // Format the last activity time
+  const formatLastActivity = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 24) {
+      return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    }
+  };
+
+  const lastActivityTime = conversation.lastActivityAt 
+    ? formatLastActivity(conversation.lastActivityAt)
+    : conversation.updatedAt 
+      ? formatLastActivity(conversation.updatedAt)
+      : '';
+
   return (
-    <Card 
-      className={`p-2 hover:bg-accent/30 cursor-pointer ${isSelected ? 'bg-accent/50' : ''}`}
-      onClick={() => onSelect(conversation.id)}
+    <div 
+      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+        isSelected ? 'bg-accent' : 'hover:bg-accent/50'
+      }`}
+      onClick={onClick}
     >
-      <div className="flex items-center gap-2">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={conversation.avatar} alt={conversation.name} />
-          <AvatarFallback>{conversation.name[0]}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-center">
-            <div className="font-medium text-sm flex items-center">
-              {conversation.name}
-              {conversation.isGlobal && (
-                <Badge variant="secondary" className="ml-2 text-xs">Global</Badge>
-              )}
-              {conversation.isGroup && (
-                <Badge variant="outline" className="ml-2 text-xs">Group</Badge>
-              )}
-            </div>
-            {conversation.unread && conversation.unread > 0 && (
-              <Badge className="bg-primary">{conversation.unread}</Badge>
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={conversation.avatar} />
+        <AvatarFallback>
+          {conversation.name ? conversation.name.charAt(0).toUpperCase() : 'C'}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-center">
+          <span className="font-medium truncate">
+            {conversation.name}
+            {conversation.isGlobal && (
+              <Globe className="inline ml-1" size={14} />
             )}
-          </div>
+            {conversation.isGroup && !conversation.isGlobal && (
+              <Users className="inline ml-1" size={14} />
+            )}
+          </span>
+          {conversation.unread && conversation.unread > 0 ? (
+            <Badge variant="default" className="ml-2">
+              {conversation.unread}
+            </Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground flex items-center">
+              <Calendar size={12} className="mr-1" />
+              {lastActivityTime}
+            </span>
+          )}
         </div>
+        
+        <p className="text-sm text-muted-foreground truncate">
+          {conversation.lastMessage}
+        </p>
       </div>
-    </Card>
+    </div>
   );
 };

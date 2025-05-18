@@ -37,12 +37,13 @@ export interface ConversationItem {
     avatar?: string;
   }>;
   
-  // Adding missing properties that are used in the code
+  // Adding all properties that are used in the code
   avatar?: string;
   isGlobal?: boolean;
   isGroup?: boolean;
   unread?: number;
   updatedAt?: string;
+  lastActivityTime?: string;
 }
 
 export interface Conversation {
@@ -52,7 +53,7 @@ export interface Conversation {
   createdAt: string;
   updatedAt: string;
   
-  // Adding missing properties that are used in the code
+  // Adding all properties that are used in the code
   name?: string;
   last_message?: string;
   lastMessage?: string;

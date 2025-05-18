@@ -14,8 +14,10 @@ interface ChatContentProps {
   onMessageReply: (messageId: string) => void;
   onReactionAdd: (messageId: string, emoji: string) => void;
   onReactionRemove: (messageId: string, emoji: string) => void;
-  message: string;
-  setMessage: (message: string) => void;
+  message?: string;
+  inputMessage?: string;
+  setMessage?: (message: string) => void;
+  setInputMessage?: (message: string) => void;
   handleSendMessage: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   editingMessageId: string | null;
@@ -32,9 +34,6 @@ interface ChatContentProps {
   onAdminEffectSelect: (effectType: string, content?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   currentUserId: string | null;
-  // Alias properties for compatibility
-  inputMessage?: string;
-  setInputMessage?: (message: string) => void;
 }
 
 export const ChatContent = ({

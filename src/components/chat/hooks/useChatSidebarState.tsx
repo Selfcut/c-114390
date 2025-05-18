@@ -9,18 +9,18 @@ import { useChatActions } from "./useChatActions";
 import { ConversationItem } from "../types";
 import { useMessageUtils } from "@/hooks/chat/useMessageUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 interface UseChatSidebarStateProps {
-  user: any;
   isOpen: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
 }
 
 export const useChatSidebarState = ({ 
-  user, 
   isOpen,
   messagesEndRef
 }: UseChatSidebarStateProps) => {
+  const { user } = useAuth();
   const { isAdmin } = useAdminStatus();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
@@ -99,10 +99,10 @@ export const useChatSidebarState = ({
         id: 'global',
         name: 'Global Chat',
         lastMessage: 'Welcome to the community!',
-        isGlobal: true,
-        isGroup: true,
         lastActivityAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        isGlobal: true,
+        isGroup: true,
         unread: 0
       }]);
     } catch (error) {
@@ -169,13 +169,11 @@ export const useChatSidebarState = ({
   const handleReactionAdd = (messageId: string, emoji: string) => {
     console.log(`Adding reaction ${emoji} to message ${messageId}`);
     // Implement reaction add functionality
-    // In a real app, this would call to a backend API
   };
   
   const handleReactionRemove = (messageId: string, emoji: string) => {
     console.log(`Removing reaction ${emoji} from message ${messageId}`);
     // Implement reaction remove functionality
-    // In a real app, this would call to a backend API
   };
 
   // Handle conversation selection
@@ -211,7 +209,7 @@ export const useChatSidebarState = ({
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, lastMessage: message, updatedAt: new Date().toISOString() } 
+            ? { ...conv, lastMessage: message, lastActivityAt: new Date().toISOString(), updatedAt: new Date().toISOString() } 
             : conv
         )
       );
@@ -255,6 +253,7 @@ export const useChatSidebarState = ({
     onGifSelect: handleGifSelect,
     onAdminEffectSelect: handleAdminEffectSelect,
     onSelectConversation: handleSelectConversation,
-    updateConversationLastMessage
+    updateConversationLastMessage,
+    user
   };
 };
