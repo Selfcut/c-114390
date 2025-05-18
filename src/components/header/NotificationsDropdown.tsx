@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface Notification {
   id: string;
@@ -19,6 +20,7 @@ interface Notification {
   content: string;
   isRead: boolean;
   timestamp: Date;
+  linkTo?: string; // Optional link to navigate to
 }
 
 export const NotificationsDropdown = () => {
@@ -26,6 +28,7 @@ export const NotificationsDropdown = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -40,28 +43,32 @@ export const NotificationsDropdown = () => {
             type: 'mention' as const,
             content: 'PhilosophyLover mentioned you in Systems Thinking discussion',
             isRead: false,
-            timestamp: new Date(Date.now() - 15 * 60 * 1000) // 15 mins ago
+            timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 mins ago
+            linkTo: '/forum/systems-thinking'
           },
           {
             id: 'notif2',
             type: 'reply' as const,
             content: 'WisdomSeeker replied to your comment',
             isRead: false,
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
+            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+            linkTo: '/forum/wisdom'
           },
           {
             id: 'notif3',
             type: 'like' as const,
             content: 'KnowledgeExplorer liked your quote',
             isRead: true,
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+            linkTo: '/quotes'
           },
           {
             id: 'notif4',
             type: 'system' as const,
             content: 'Welcome to Polymath! Complete your profile to get started.',
             isRead: true,
-            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+            linkTo: '/profile'
           }
         ];
         
@@ -78,23 +85,46 @@ export const NotificationsDropdown = () => {
     // Set up a realtime subscription for new notifications
     let channel;
     if (user && user.id) {
+      console.log('Setting up notifications channel for user:', user.id);
       channel = supabase
-        .channel('public:notifications')
+        .channel(`notifications-${user.id}`)
         .on('postgres_changes', 
           { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, 
           (payload) => {
-            console.log('New notification:', payload);
-            // In a real app, we would handle new notifications here
+            console.log('New notification received:', payload);
+            
+            // In a real app, we would parse the notification from payload
+            // For this demo, we'll add a mock notification
+            const newNotification: Notification = {
+              id: `notif-${Date.now()}`,
+              type: 'system',
+              content: 'You received a new notification',
+              isRead: false,
+              timestamp: new Date()
+            };
+            
+            setNotifications(prevNotifications => 
+              [newNotification, ...prevNotifications]
+            );
+            
+            // Show a toast notification
+            toast({
+              title: "New notification",
+              description: newNotification.content,
+            });
           })
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Notification channel status:', status);
+        });
     }
     
     return () => {
       if (channel) {
+        console.log('Cleaning up notifications channel');
         supabase.removeChannel(channel);
       }
     };
-  }, [user]);
+  }, [user, toast]);
   
   // Count unread notifications
   const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
@@ -110,6 +140,20 @@ export const NotificationsDropdown = () => {
     toast({
       description: "All notifications marked as read",
     });
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read
+    setNotifications(notifications.map(n => 
+      n.id === notification.id ? { ...n, isRead: true } : n
+    ));
+    
+    // Navigate if there's a link
+    if (notification.linkTo) {
+      navigate(notification.linkTo);
+    }
+    
+    // Close dropdown (will happen automatically due to clicking)
   };
 
   const formatNotificationTime = (timestamp: Date) => {
@@ -169,16 +213,7 @@ export const NotificationsDropdown = () => {
               <div 
                 key={notification.id} 
                 className={`px-4 py-3 hover:bg-accent/50 cursor-pointer ${!notification.isRead ? 'bg-accent/20' : ''}`}
-                onClick={() => {
-                  const updatedNotifications = notifications.map(n => 
-                    n.id === notification.id ? { ...n, isRead: true } : n
-                  );
-                  setNotifications(updatedNotifications);
-                  // Handle notification click
-                  toast({
-                    description: "Navigating to notification content",
-                  });
-                }}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-2">
                   <div className="flex-shrink-0 mt-0.5">
@@ -221,7 +256,7 @@ export const NotificationsDropdown = () => {
         )}
         <DropdownMenuSeparator />
         <div className="p-2">
-          <Button variant="outline" size="sm" className="w-full">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/notifications')}>
             View all notifications
           </Button>
         </div>
