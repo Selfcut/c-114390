@@ -32,14 +32,14 @@ export const BookReviewsFilters = ({
       </div>
       
       <Select
-        value={selectedGenre || ""}
-        onValueChange={(value) => onGenreChange(value || null)}
+        value={selectedGenre || "all"}
+        onValueChange={(value) => onGenreChange(value === "all" ? null : value)}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="All Genres" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Genres</SelectItem>
+          <SelectItem value="all">All Genres</SelectItem>
           {genres.map((genre) => (
             <SelectItem key={genre} value={genre}>
               {genre}
