@@ -60,20 +60,19 @@ export const MediaContainer = () => {
     }
   }, [user?.id, mediaType, sortBy, sortOrder, searchTerm]);
 
-  // Create the mediaData object with the correct structure
-  const mediaData = {
-    postsData: postsData || { 
-      posts: [], 
-      hasMore: false, 
-      total: 0,
-      error: null 
-    },
-    isLoading,
-    isError,
-    error: error instanceof Error ? error : new Error(error || "Unknown error"),
-    refetch,
-    loadMore
-  };
+  // Create a normalized user profile for the media content
+  const normalizedUser = user ? {
+    ...user,
+    name: user.name || "Anonymous",
+    username: user.username || "user",
+    email: user.email || "",
+    avatar: user.avatar || user.avatar_url || "",
+    status: user.status || "online" as UserStatus,
+    role: user.role || 'user',
+    isGhostMode: user.isGhostMode || false,
+    isAdmin: user.isAdmin || false,
+    id: user.id
+  } : null;
 
   const handleOpenCreateDialog = () => {
     if (!user) {
@@ -132,19 +131,20 @@ export const MediaContainer = () => {
         />
         
         <MediaContent
-          mediaData={mediaData}
-          currentUser={user ? {
-            ...user,
-            name: user.name || "Anonymous",
-            username: user.username || "user",
-            email: user.email || "",
-            avatar: user.avatar || "",
-            status: user.status || "online" as UserStatus,
-            role: user.role || 'user',
-            isGhostMode: user.isGhostMode || false,
-            isAdmin: user.isAdmin || false,
-            id: user.id
-          } : null}
+          mediaData={{
+            postsData: postsData || { 
+              posts: [], 
+              hasMore: false, 
+              total: 0,
+              error: null 
+            },
+            isLoading,
+            isError,
+            error: error instanceof Error ? error : new Error(String(error || "Unknown error")),
+            refetch,
+            loadMore
+          }}
+          currentUser={normalizedUser}
           onCreatePost={handleOpenCreateDialog}
         />
         

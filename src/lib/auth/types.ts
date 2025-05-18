@@ -6,8 +6,8 @@ export interface UserProfile {
   email?: string;
   name?: string;
   username?: string;
-  avatar_url?: string;
-  avatar?: string;
+  avatar_url?: string; // Add this to match Supabase DB field
+  avatar?: string;     // Keep this for backward compatibility
   bio?: string;
   website?: string;
   role?: UserRole | string;

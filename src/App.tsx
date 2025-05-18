@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -16,6 +15,7 @@ import { PageLayout } from "./components/layouts/PageLayout";
 import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { AuthProvider } from "./lib/auth";
+import { QueryProvider } from './components/providers/QueryProvider';
 
 function App() {
   return (

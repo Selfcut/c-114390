@@ -18,13 +18,18 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       throw error;
     }
 
+    // Create avatar URL with fallback
+    const avatarUrl = profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || 
+      `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`;
+
     // Create a merged profile with both auth and profile data
     const fullProfile: UserProfile = {
       id: userId,
       email: userSession?.user?.email || "",
       name: profile?.name || userSession?.user?.user_metadata?.name || "User",
       username: profile?.username || userSession?.user?.user_metadata?.username || "user",
-      avatar: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      avatar: avatarUrl,
+      avatar_url: avatarUrl,
       bio: profile?.bio || "",
       website: profile?.website || "",
       role: profile?.role || "user",
@@ -56,6 +61,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       name: userSession?.user?.user_metadata?.name || "User",
       username: userSession?.user?.user_metadata?.username || "user",
       avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      avatar_url: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: "",
       website: "",
       role: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc" ? "admin" : "user",
@@ -74,7 +80,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
       .update({
         name: updates.name,
         username: updates.username,
-        avatar_url: updates.avatar, // Map 'avatar' from our type to 'avatar_url' in DB
+        avatar_url: updates.avatar_url || updates.avatar, // Handle both fields
         bio: updates.bio,
         website: updates.website,
         status: updates.status,

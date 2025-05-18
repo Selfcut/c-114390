@@ -1,44 +1,32 @@
 
-import { MediaPost, MediaType } from "@/utils/mediaUtils";
+import { MediaPost } from '@/utils/mediaUtils';
 
-export interface MediaQueryParams {
-  mediaType: string;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-  searchTerm: string;
-  page: number;
+export interface CreatePostData {
+  title: string;
+  content: string;
+  type: string;
+  user_id: string;
+  file?: File;
 }
 
 export interface MediaQueryResult {
   posts: MediaPost[];
   hasMore: boolean;
+  total: number;
   error: string | null;
 }
 
-export interface CreatePostData {
-  title: string;
-  content?: string;
-  file?: File;
-  type: string;
-  tags?: string[];
-  user_id: string;
-}
-
-export interface CreatePostResponse {
-  id: string;
-  [key: string]: any;
-}
-
 export interface UseMediaPostsReturn {
-  postsData: MediaQueryResult | undefined;
+  postsData: MediaQueryResult;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
-  refetch: () => Promise<any>;
+  refetch: any;
   loadMore: () => void;
+  hasMore: boolean;
+  total: number;
   resetPage: () => void;
-  page: number;
   createPostMutation: any;
-  handleCreatePost: (data: CreatePostData) => Promise<CreatePostResponse | null>;
+  handleCreatePost: (data: CreatePostData) => Promise<any>;
   uploadProgress: number;
 }

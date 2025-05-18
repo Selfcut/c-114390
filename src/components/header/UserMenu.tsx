@@ -35,12 +35,15 @@ export const UserMenu = () => {
     );
   }
   
+  // Use avatar_url or avatar, ensuring we have an image source
+  const avatarSrc = user.avatar_url || user.avatar || "";
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar || user.avatar_url} alt={user.name || 'User'} />
+            <AvatarImage src={avatarSrc} alt={user.name || 'User'} />
             <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
         </Button>
