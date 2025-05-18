@@ -3,7 +3,8 @@ import React from "react";
 
 export const ChatAnimationStyles = () => {
   return (
-    <style jsx="true" global="true">{`
+    <style dangerouslySetInnerHTML={{
+      __html: `
       /* Add base animation styles */
       @keyframes fadeIn {
         from { opacity: 0; }
@@ -87,6 +88,6 @@ export const ChatAnimationStyles = () => {
       .hover-lift:hover {
         transform: translateY(-3px);
       }
-    `}</style>
+    `}}/>
   );
 };
