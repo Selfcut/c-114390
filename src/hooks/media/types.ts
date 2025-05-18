@@ -7,6 +7,18 @@ export interface CreatePostData {
   type: string;
   user_id: string;
   file?: File;
+  tags?: string[]; // Add tags property that was missing
+}
+
+// Add the missing CreatePostResponse interface
+export interface CreatePostResponse {
+  id: string;
+  title: string;
+  content?: string;
+  url?: string;
+  type: string;
+  user_id: string;
+  created_at: string;
 }
 
 export interface MediaQueryResult {
