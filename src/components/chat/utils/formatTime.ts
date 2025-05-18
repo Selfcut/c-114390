@@ -28,9 +28,13 @@ export const formatTime = (timestamp: string | Date) => {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
       // For older messages, include the date
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + 
-             ' ' + 
-             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric' 
+      }) + ' at ' + date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
     }
   } catch (error) {
     console.error("Error formatting time:", error, timestamp);

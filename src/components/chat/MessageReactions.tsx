@@ -49,33 +49,35 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   };
 
   return (
-    <div className="relative message-reactions" 
+    <div className="relative message-reactions group" 
          onMouseEnter={() => setShowReactionPicker(true)}
          onMouseLeave={() => setShowReactionPicker(false)}>
       {/* Display existing reactions */}
-      <div className="flex flex-wrap gap-1 mt-1">
-        {reactions && reactions.length > 0 ? reactions.map((reaction, index) => {
-          const userIdToUse = currentUserId || 'anonymous';
-          const hasReacted = reaction.users.includes(userIdToUse);
-          
-          return (
-            <Button
-              key={`${reaction.emoji}-${index}`}
-              variant={hasReacted ? "secondary" : "outline"}
-              size="sm"
-              className="h-6 px-2 py-0 text-xs rounded-full flex items-center gap-1"
-              onClick={() => handleReactionClick(reaction.emoji)}
-            >
-              <span>{reaction.emoji}</span>
-              <span>{reaction.count}</span>
-            </Button>
-          );
-        }) : null}
-      </div>
+      {reactions && reactions.length > 0 && (
+        <div className="flex flex-wrap gap-1 existing-reactions">
+          {reactions.map((reaction, index) => {
+            const userIdToUse = currentUserId || 'anonymous';
+            const hasReacted = reaction.users.includes(userIdToUse);
+            
+            return (
+              <Button
+                key={`${reaction.emoji}-${index}`}
+                variant={hasReacted ? "secondary" : "outline"}
+                size="sm"
+                className="h-6 px-2 py-0 text-xs rounded-full flex items-center gap-1"
+                onClick={() => handleReactionClick(reaction.emoji)}
+              >
+                <span>{reaction.emoji}</span>
+                <span>{reaction.count}</span>
+              </Button>
+            );
+          })}
+        </div>
+      )}
       
       {/* Reaction picker that shows on hover */}
       {showReactionPicker && (
-        <div className="absolute bottom-full mb-1 bg-background border rounded-md shadow-md p-1 flex z-10">
+        <div className="absolute bottom-full mb-1 bg-background border rounded-md shadow-md p-1 flex z-10 animate-fade-in">
           {commonEmojis.map(emoji => (
             <Button
               key={emoji}
@@ -87,13 +89,6 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               {emoji}
             </Button>
           ))}
-        </div>
-      )}
-
-      {/* Add a subtle hint if no reactions yet */}
-      {(!reactions || reactions.length === 0) && showReactionPicker && (
-        <div className="text-xs text-muted-foreground mt-1">
-          Add reaction...
         </div>
       )}
     </div>

@@ -132,7 +132,7 @@ export const ChatMessage = ({
   };
 
   return (
-    <div className={`flex flex-col mb-4 ${message.isSystem ? 'px-4' : ''}`}>
+    <div className={`flex flex-col mb-4 group ${message.isSystem ? 'px-4' : ''}`}>
       {/* Reply reference */}
       {message.replyTo && (
         <div className="flex items-center text-xs text-muted-foreground mb-1 ml-12">
@@ -142,7 +142,7 @@ export const ChatMessage = ({
         </div>
       )}
       
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 relative">
         {/* Avatar - don't show for system messages */}
         {!message.isSystem && (
           <div className="flex-shrink-0">
@@ -152,7 +152,7 @@ export const ChatMessage = ({
           </div>
         )}
         
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-grow">
           {/* Message header - don't show for system messages */}
           {!message.isSystem && (
             <div className="flex items-center mb-1">
@@ -176,43 +176,45 @@ export const ChatMessage = ({
             {renderContent(message.content)}
           </div>
           
-          {/* Message actions */}
-          {!message.isSystem && (
-            <div className="flex items-center mt-1 gap-1">
-              {isCurrentUser && onEdit && (
-                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleEdit}>
-                  <Edit size={14} />
-                  <span className="sr-only">Edit</span>
-                </Button>
-              )}
-              
-              {isCurrentUser && onDelete && (
-                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleDelete}>
-                  <Trash2 size={14} />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              )}
-              
-              {onReply && (
-                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleReply}>
-                  <Reply size={14} />
-                  <span className="sr-only">Reply</span>
-                </Button>
-              )}
-              
-              {/* Message reactions */}
-              {message.reactions && message.reactions.length > 0 && (
-                <MessageReactions
-                  reactions={message.reactions}
-                  messageId={message.id}
-                  currentUserId={currentUserId || ''}
-                  onReactionAdd={onReactionAdd}
-                  onReactionRemove={onReactionRemove}
-                />
-              )}
+          {/* Reaction display area - displays existing reactions */}
+          {message.reactions && message.reactions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              <MessageReactions
+                reactions={message.reactions}
+                messageId={message.id}
+                currentUserId={currentUserId || ''}
+                onReactionAdd={onReactionAdd}
+                onReactionRemove={onReactionRemove}
+              />
             </div>
           )}
         </div>
+        
+        {/* Message actions - now positioned absolutely and only visible on hover */}
+        {!message.isSystem && (
+          <div className="absolute -right-12 top-3 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {isCurrentUser && onEdit && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleEdit}>
+                <Edit size={14} />
+                <span className="sr-only">Edit</span>
+              </Button>
+            )}
+            
+            {isCurrentUser && onDelete && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleDelete}>
+                <Trash2 size={14} />
+                <span className="sr-only">Delete</span>
+              </Button>
+            )}
+            
+            {onReply && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleReply}>
+                <Reply size={14} />
+                <span className="sr-only">Reply</span>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

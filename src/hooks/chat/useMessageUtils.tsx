@@ -5,8 +5,25 @@ export const useMessageUtils = () => {
   // Format time for display
   const formatTime = (timestamp: string) => {
     try {
-      return format(new Date(timestamp), "h:mm a");
+      const date = new Date(timestamp);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date in formatTime:", timestamp);
+        return "Just now";
+      }
+      
+      // Today's date for comparison
+      const today = new Date();
+      const isToday = today.toDateString() === date.toDateString();
+      
+      if (isToday) {
+        return format(date, "h:mm a");
+      } else {
+        return format(date, "MMM d 'at' h:mm a");
+      }
     } catch (error) {
+      console.error("Error formatting time:", error);
       return "Invalid time";
     }
   };
@@ -14,11 +31,35 @@ export const useMessageUtils = () => {
   // Group messages by date
   const groupMessagesByDate = <T extends { createdAt: string }>(messages: T[]) => {
     return messages.reduce((groups: Record<string, T[]>, message) => {
-      const date = new Date(message.createdAt).toLocaleDateString();
-      if (!groups[date]) {
-        groups[date] = [];
+      try {
+        const date = new Date(message.createdAt);
+        
+        // Skip invalid dates
+        if (isNaN(date.getTime())) {
+          console.warn("Invalid date in groupMessagesByDate:", message.createdAt);
+          
+          // Group invalid dates together
+          if (!groups['Invalid Date']) {
+            groups['Invalid Date'] = [];
+          }
+          groups['Invalid Date'].push(message);
+          return groups;
+        }
+        
+        const dateKey = date.toLocaleDateString();
+        if (!groups[dateKey]) {
+          groups[dateKey] = [];
+        }
+        groups[dateKey].push(message);
+      } catch (error) {
+        console.error("Error grouping message by date:", error);
+        
+        // Default grouping for errors
+        if (!groups['Error']) {
+          groups['Error'] = [];
+        }
+        groups['Error'].push(message);
       }
-      groups[date].push(message);
       return groups;
     }, {});
   };

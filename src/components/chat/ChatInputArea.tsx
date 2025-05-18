@@ -121,39 +121,42 @@ export const ChatInputArea = ({
         />
       )}
 
-      <div className="relative">
+      <div className="flex flex-col space-y-2">
+        {/* Text area for input */}
         <Textarea
           ref={textareaRef}
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-          className="min-h-[40px] max-h-[120px] resize-none pr-20 py-2 overflow-hidden"
+          className="min-h-[40px] max-h-[120px] resize-none py-2 overflow-hidden"
           style={{ height: `${textareaHeight}px` }}
         />
           
-        {/* Tools positioned absolutely over textarea */}
-        <div className="absolute right-2 bottom-2 flex items-center gap-1">
-          <ChatInputTools
-            onEmojiPickerToggle={handleEmojiPickerToggle}
-            onGifPickerToggle={handleGifPickerToggle}
-            onFileUpload={handleFileUpload}
-            showEmojiPicker={showEmojiPicker}
-            showGifPicker={showGifPicker}
-            isAdmin={isAdmin}
-            onAdminEffectSelect={onAdminEffectSelect}
-          />
-          
-          {/* Send button - made smaller */}
+        {/* Controls positioned below textarea */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <ChatInputTools
+              onEmojiPickerToggle={handleEmojiPickerToggle}
+              onGifPickerToggle={handleGifPickerToggle}
+              onFileUpload={handleFileUpload}
+              showEmojiPicker={showEmojiPicker}
+              showGifPicker={showGifPicker}
+              isAdmin={isAdmin}
+              onAdminEffectSelect={onAdminEffectSelect}
+            />
+          </div>
+
+          {/* Send button */}
           <Button 
             onClick={handleSendMessage}
             disabled={!message.trim()}
             size="sm"
-            className="flex-shrink-0 h-6 w-6 p-0 rounded-full"
+            className="flex-shrink-0"
             title={editingMessage ? "Save" : "Send"}
           >
-            <Send size={12} />
-            <span className="sr-only">{editingMessage ? "Save" : "Send"}</span>
+            <Send size={16} className="mr-1" />
+            <span>{editingMessage ? "Save" : "Send"}</span>
           </Button>
         </div>
       </div>
@@ -161,7 +164,7 @@ export const ChatInputArea = ({
       {/* Emoji picker */}
       {showEmojiPicker && (
         <div className="relative">
-          <div className="absolute bottom-2 right-2 z-50">
+          <div className="absolute bottom-16 right-2 z-50">
             <Popover open={true} onOpenChange={setShowEmojiPicker}>
               <PopoverContent className="w-64 p-0" align="end">
                 <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
@@ -182,7 +185,7 @@ export const ChatInputArea = ({
       {/* GIF picker */}
       {showGifPicker && (
         <div className="relative">
-          <div className="absolute bottom-2 right-2 z-50">
+          <div className="absolute bottom-16 right-2 z-50">
             <Popover open={true} onOpenChange={setShowGifPicker}>
               <PopoverContent className="w-72 p-2" align="end">
                 <GifPicker onGifSelect={handleInternalGifSelect} />
