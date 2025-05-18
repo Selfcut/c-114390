@@ -6,6 +6,14 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ActivityMetadata {
+  title?: string;
+  link?: string;
+  section?: string;
+  type?: string;
+  [key: string]: any;
+}
+
 interface ActivityItem {
   id: string;
   type: 'comment' | 'like' | 'bookmark' | 'view';
@@ -54,37 +62,39 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ limit = 5 }) => {
           let title = '';
           let link = undefined;
           
+          const metadata = activity.metadata as ActivityMetadata;
+          
           // Format the activity based on its type
           switch (activity.event_type) {
             case 'comment':
               type = 'comment';
-              title = activity.metadata.title 
-                ? `Commented on "${activity.metadata.title}"`
+              title = metadata?.title 
+                ? `Commented on "${metadata.title}"`
                 : "Added a new comment";
-              link = activity.metadata.link;
+              link = metadata?.link;
               break;
             case 'like':
               type = 'like';
-              title = activity.metadata.title
-                ? `Liked "${activity.metadata.title}"`
+              title = metadata?.title
+                ? `Liked "${metadata.title}"`
                 : "Liked content";
-              link = activity.metadata.link;
+              link = metadata?.link;
               break;
             case 'bookmark':
               type = 'bookmark';
-              title = activity.metadata.title
-                ? `Bookmarked "${activity.metadata.title}"`
+              title = metadata?.title
+                ? `Bookmarked "${metadata.title}"`
                 : "Bookmarked content";
-              link = activity.metadata.link;
+              link = metadata?.link;
               break;
             case 'view':
               type = 'view';
-              title = activity.metadata.title
-                ? `Viewed "${activity.metadata.title}"`
-                : activity.metadata.section
-                  ? `Viewed ${activity.metadata.section}`
+              title = metadata?.title
+                ? `Viewed "${metadata.title}"`
+                : metadata?.section
+                  ? `Viewed ${metadata.section}`
                   : "Viewed content";
-              link = activity.metadata.link;
+              link = metadata?.link;
               break;
             default:
               title = activity.event_type.charAt(0).toUpperCase() + activity.event_type.slice(1);
@@ -174,16 +184,18 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ limit = 5 }) => {
       
       // Transform the activities
       const transformedActivities: ActivityItem[] = data.map(activity => {
+        // Extract metadata safely
+        const metadata = activity.metadata as ActivityMetadata;
+        
         // Similar transformation as above
-        // (Abbreviated for brevity - same logic as in fetchUserActivities)
         let type: 'comment' | 'like' | 'bookmark' | 'view' = 'view';
         let title = activity.event_type;
         
-        if (activity.metadata?.title) {
+        if (metadata?.title) {
           title = `${activity.event_type === 'view' ? 'Viewed' : 
             activity.event_type === 'like' ? 'Liked' :
             activity.event_type === 'bookmark' ? 'Bookmarked' :
-            activity.event_type === 'comment' ? 'Commented on' : 'Interacted with'} "${activity.metadata.title}"`;
+            activity.event_type === 'comment' ? 'Commented on' : 'Interacted with'} "${metadata.title}"`;
         }
         
         const timestamp = formatRelativeTime(new Date(activity.created_at));
@@ -193,7 +205,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ limit = 5 }) => {
           type: activity.event_type as any,
           title,
           timestamp,
-          link: activity.metadata?.link
+          link: metadata?.link
         };
       });
       

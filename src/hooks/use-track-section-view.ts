@@ -51,7 +51,7 @@ export const useUserInteractions = () => {
   ) => {
     if (!user) return;
     
-    await trackActivity(user.id, 'interaction' as ActivityType, {
+    await trackActivity(user.id, 'interaction', {
       action,
       targetType,
       targetId,
@@ -127,7 +127,7 @@ export const useComprehensiveActivityTracker = () => {
       for (const activity of activities) {
         await trackActivity(
           user!.id,
-          activity.type,
+          activity.type as ActivityType,
           activity.metadata
         );
       }

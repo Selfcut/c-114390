@@ -19,6 +19,15 @@ interface UserWelcomeProps {
   avatar?: string;
 }
 
+// Define types for our metadata to avoid type errors
+interface ActivityMetadata {
+  section?: string;
+  type?: string;
+  topic?: string;
+  action?: string;
+  [key: string]: any;
+}
+
 export const UserWelcome = ({
   userName,
   level,
@@ -54,19 +63,21 @@ export const UserWelcome = ({
         }
         
         // Check for article reading
-        const hasReadArticle = data?.some(activity => 
-          activity.event_type === 'view' && 
-          (activity.metadata?.section === 'library' || 
-           activity.metadata?.type === 'article' ||
-           activity.metadata?.topic)
-        );
+        const hasReadArticle = data?.some(activity => {
+          const metadata = activity.metadata as ActivityMetadata;
+          return activity.event_type === 'view' && 
+            (metadata?.section === 'library' || 
+             metadata?.type === 'article' ||
+             metadata?.topic)
+        });
         
         // Check for exercise completion
-        const hasCompletedExercise = data?.some(activity => 
-          activity.event_type === 'complete' || 
-          (activity.metadata?.action === 'exercise' || 
-           activity.metadata?.type === 'exercise')
-        );
+        const hasCompletedExercise = data?.some(activity => {
+          const metadata = activity.metadata as ActivityMetadata;
+          return activity.event_type === 'complete' || 
+            (metadata?.action === 'exercise' || 
+             metadata?.type === 'exercise')
+        });
         
         // Check for discussion participation
         const hasParticipatedInDiscussion = data?.some(activity => 

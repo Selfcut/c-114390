@@ -1,7 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export async function trackActivity(userId: string, eventType: string, metadata: Record<string, any> = {}) {
+export type ActivityType = 'view' | 'interaction' | 'learned' | 'completed' | 'like' | 'comment' | 'bookmark' | 'post';
+
+export async function trackActivity(userId: string, eventType: ActivityType, metadata: Record<string, any> = {}) {
   try {
     const { error } = await supabase
       .from('user_activities')
