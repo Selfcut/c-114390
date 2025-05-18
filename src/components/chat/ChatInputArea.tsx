@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmojiPicker } from "./EmojiPicker";
@@ -135,23 +135,26 @@ export const ChatInputArea = ({
           
         {/* Controls positioned below textarea */}
         <div className="flex items-center justify-between">
-          <ChatInputTools
-            onEmojiPickerToggle={handleEmojiPickerToggle}
-            onGifPickerToggle={handleGifPickerToggle}
-            onFileUpload={handleFileUpload}
-            showEmojiPicker={showEmojiPicker}
-            showGifPicker={showGifPicker}
-            isAdmin={isAdmin}
-            onAdminEffectSelect={onAdminEffectSelect}
-          />
+          <div className="flex-shrink-0">
+            <ChatInputTools
+              onEmojiPickerToggle={handleEmojiPickerToggle}
+              onGifPickerToggle={handleGifPickerToggle}
+              onFileUpload={handleFileUpload}
+              showEmojiPicker={showEmojiPicker}
+              showGifPicker={showGifPicker}
+              isAdmin={isAdmin}
+              onAdminEffectSelect={onAdminEffectSelect}
+            />
+          </div>
 
           {/* Send button */}
           <Button 
             onClick={handleSendMessage}
             disabled={!message.trim()}
             size="sm"
-            className="flex-shrink-0"
+            className="flex-shrink-0 ml-2"
             title={editingMessage ? "Save" : "Send"}
+            type="button"
           >
             <Send size={16} className="mr-1" />
             <span>{editingMessage ? "Save" : "Send"}</span>
@@ -162,9 +165,9 @@ export const ChatInputArea = ({
       {/* Emoji picker */}
       {showEmojiPicker && (
         <div className="relative">
-          <div className="absolute bottom-16 right-2 z-50">
+          <div className="absolute bottom-16 left-0 z-50">
             <Popover open={true} onOpenChange={setShowEmojiPicker}>
-              <PopoverContent className="w-64 p-0" align="end">
+              <PopoverContent className="w-64 p-0" align="start">
                 <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
                 <Button 
                   variant="ghost" 
@@ -183,9 +186,9 @@ export const ChatInputArea = ({
       {/* GIF picker */}
       {showGifPicker && (
         <div className="relative">
-          <div className="absolute bottom-16 right-2 z-50">
+          <div className="absolute bottom-16 left-0 z-50">
             <Popover open={true} onOpenChange={setShowGifPicker}>
-              <PopoverContent className="w-72 p-2" align="end">
+              <PopoverContent className="w-72 p-2" align="start">
                 <GifPicker onGifSelect={handleInternalGifSelect} />
                 <Button 
                   variant="ghost" 

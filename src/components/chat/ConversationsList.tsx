@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConversationItem } from "./ConversationItem";
 import { ConversationItem as ConversationType } from "./types";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 interface ConversationsListProps {
   conversations: ConversationType[];
@@ -22,7 +22,6 @@ export const ConversationsList = ({
   const [isExpanded, setIsExpanded] = useState(false);
   
   const toggleExpand = () => {
-    console.log("Toggling conversation list expand state:", !isExpanded);
     setIsExpanded(!isExpanded);
   };
   
@@ -33,13 +32,25 @@ export const ConversationsList = ({
         onClick={toggleExpand}
       >
         <h3 className="text-sm font-medium">Rooms</h3>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-7 w-7 p-0"
-        >
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </Button>
+        <div className="flex items-center space-x-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 w-7 p-0"
+            title="Create new chat room"
+          >
+            <Plus size={16} />
+            <span className="sr-only">Create new chat room</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 w-7 p-0"
+            title={isExpanded ? "Collapse" : "Expand"}
+          >
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
+        </div>
       </div>
       
       {isExpanded && (
@@ -55,7 +66,8 @@ export const ConversationsList = ({
                 />
               ))
             ) : (
-              <div className="flex justify-center items-center h-20">
+              <div className="flex flex-col items-center justify-center h-20 space-y-2">
+                <p className="text-sm text-muted-foreground">No conversations yet</p>
                 <Skeleton className="h-16 w-full" />
               </div>
             )}

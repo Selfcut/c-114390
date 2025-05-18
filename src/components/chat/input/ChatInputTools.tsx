@@ -2,8 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { PaperclipIcon, Image, Smile } from 'lucide-react';
-import { EmojiPicker } from '../EmojiPicker';
-import { GifPicker } from '../GifPicker';
 import { AdminEffects } from '../AdminEffects';
 
 interface ChatInputToolsProps {
@@ -26,7 +24,7 @@ export const ChatInputTools = ({
   onAdminEffectSelect = () => {}
 }: ChatInputToolsProps) => {
   return (
-    <div className="flex items-center">
+    <div className="flex items-center space-x-1">
       <Button
         variant="ghost"
         size="icon"
@@ -34,6 +32,7 @@ export const ChatInputTools = ({
         className="h-7 w-7 rounded-full"
         aria-pressed={showEmojiPicker}
         aria-label="Insert emoji"
+        type="button"
       >
         <Smile size={16} />
       </Button>
@@ -44,6 +43,7 @@ export const ChatInputTools = ({
         className="h-7 w-7 rounded-full"
         aria-pressed={showGifPicker}
         aria-label="Insert GIF"
+        type="button"
       >
         <Image size={16} />
       </Button>
@@ -53,6 +53,7 @@ export const ChatInputTools = ({
         onClick={onFileUpload}
         className="h-7 w-7 rounded-full"
         aria-label="Attach file"
+        type="button"
       >
         <PaperclipIcon size={16} />
       </Button>
