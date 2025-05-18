@@ -18,16 +18,20 @@ export const UnifiedContentFeed = ({
   const [contentType, setContentType] = useState<ContentType>(defaultContentType);
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
   const { toast } = useToast();
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [lastRefresh, setLastRefresh] = useState<Date | undefined>(undefined);
   
   // Reset content type and view mode when props change
   useEffect(() => {
-    setContentType(defaultContentType);
-  }, [defaultContentType]);
+    if (defaultContentType !== contentType) {
+      setContentType(defaultContentType);
+    }
+  }, [defaultContentType, contentType]);
   
   useEffect(() => {
-    setViewMode(defaultViewMode);
-  }, [defaultViewMode]);
+    if (defaultViewMode !== viewMode) {
+      setViewMode(defaultViewMode);
+    }
+  }, [defaultViewMode, viewMode]);
   
   // Handle refresh
   const handleRefresh = () => {

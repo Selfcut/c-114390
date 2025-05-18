@@ -13,7 +13,7 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch notifications on component mount
+  // Fetch notifications once on component mount
   useEffect(() => {
     const fetchNotifications = async () => {
       setIsLoading(true);
@@ -32,7 +32,7 @@ const Notifications = () => {
     };
     
     fetchNotifications();
-  }, []);
+  }, []); // Empty dependency array ensures this only runs once
 
   const markAllAsRead = useCallback(() => {
     setNotifications(prevNotifications =>

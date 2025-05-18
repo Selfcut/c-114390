@@ -44,13 +44,11 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
 
   // Refetch when content type or manual refresh changes
   useEffect(() => {
-    // Only run refetch when dependencies actually change, not on every render
-    if (contentType || lastRefresh) {
+    // Only refetch if we have explicit triggers to avoid infinite loops
+    if (lastRefresh) {
       refetch();
     }
-    // Add refetch to dependencies to avoid lint warnings, but it won't cause infinite loops
-    // since refetch should be memoized in useContentFeed
-  }, [contentType, lastRefresh, refetch]);
+  }, [lastRefresh, refetch]);
   
   // Filter items based on content type
   const filteredItems = contentType === 'all' 

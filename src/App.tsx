@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './components/routing/AppRoutes';
-import { ThemeProvider } from "./lib/theme-context"; // Use our custom theme provider
+import { ThemeProvider } from "./components/providers/ThemeProvider"; // Use our custom theme provider
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -28,16 +29,18 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ThemeProvider defaultTheme="light" storageKey="vite-theme">
-            <AppRoutes />
-            <Toaster />
-          </ThemeProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemeProvider defaultTheme="light" storageKey="vite-theme">
+              <AppRoutes />
+              <Toaster />
+            </ThemeProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
