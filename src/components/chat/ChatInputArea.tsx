@@ -106,6 +106,8 @@ export const ChatInputArea = ({
     setShowGifPicker(false);
   };
 
+  const isMessageEmpty = !message.trim();
+
   return (
     <div className="border-t border-border p-2 bg-background sticky bottom-0">
       {/* Editing indicator */}
@@ -135,24 +137,22 @@ export const ChatInputArea = ({
           
         {/* Controls positioned below textarea */}
         <div className="flex items-center justify-between">
-          <div className="flex-shrink-0">
-            <ChatInputTools
-              onEmojiPickerToggle={handleEmojiPickerToggle}
-              onGifPickerToggle={handleGifPickerToggle}
-              onFileUpload={handleFileUpload}
-              showEmojiPicker={showEmojiPicker}
-              showGifPicker={showGifPicker}
-              isAdmin={isAdmin}
-              onAdminEffectSelect={onAdminEffectSelect}
-            />
-          </div>
+          <ChatInputTools
+            onEmojiPickerToggle={handleEmojiPickerToggle}
+            onGifPickerToggle={handleGifPickerToggle}
+            onFileUpload={handleFileUpload}
+            showEmojiPicker={showEmojiPicker}
+            showGifPicker={showGifPicker}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={onAdminEffectSelect}
+          />
 
           {/* Send button */}
           <Button 
             onClick={handleSendMessage}
-            disabled={!message.trim()}
+            disabled={isMessageEmpty}
             size="sm"
-            className="flex-shrink-0 ml-2"
+            className={`flex-shrink-0 ml-2 ${isMessageEmpty ? 'opacity-50' : 'opacity-100'}`}
             title={editingMessage ? "Save" : "Send"}
             type="button"
           >
@@ -164,19 +164,22 @@ export const ChatInputArea = ({
       
       {/* Emoji picker */}
       {showEmojiPicker && (
-        <div className="relative">
+        <div className="relative z-10">
           <div className="absolute bottom-16 left-0 z-50">
             <Popover open={true} onOpenChange={setShowEmojiPicker}>
-              <PopoverContent className="w-64 p-0" align="start">
-                <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
-                  onClick={() => setShowEmojiPicker(false)}
-                >
-                  <XCircle size={14} />
-                </Button>
+              <PopoverTrigger className="hidden">Open</PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start" side="top">
+                <div className="relative">
+                  <EmojiPicker onEmojiSelect={handleInternalEmojiSelect} />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
+                    onClick={() => setShowEmojiPicker(false)}
+                  >
+                    <XCircle size={14} />
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
@@ -185,19 +188,22 @@ export const ChatInputArea = ({
       
       {/* GIF picker */}
       {showGifPicker && (
-        <div className="relative">
+        <div className="relative z-10">
           <div className="absolute bottom-16 left-0 z-50">
             <Popover open={true} onOpenChange={setShowGifPicker}>
-              <PopoverContent className="w-72 p-2" align="start">
-                <GifPicker onGifSelect={handleInternalGifSelect} />
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
-                  onClick={() => setShowGifPicker(false)}
-                >
-                  <XCircle size={14} />
-                </Button>
+              <PopoverTrigger className="hidden">Open</PopoverTrigger>
+              <PopoverContent className="w-72 p-2" align="start" side="top">
+                <div className="relative">
+                  <GifPicker onGifSelect={handleInternalGifSelect} />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full"
+                    onClick={() => setShowGifPicker(false)}
+                  >
+                    <XCircle size={14} />
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
