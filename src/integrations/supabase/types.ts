@@ -520,6 +520,51 @@ export type Database = {
         }
         Relationships: []
       }
+      research_papers: {
+        Row: {
+          author: string
+          category: string
+          content: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          likes: number | null
+          summary: string
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          views: number | null
+        }
+        Insert: {
+          author: string
+          category: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          summary: string
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          views?: number | null
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          summary?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          views?: number | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
@@ -686,6 +731,14 @@ export type Database = {
       increment_media_views: {
         Args: { media_id: string }
         Returns: undefined
+      }
+      increment_research_views: {
+        Args: { paper_id: string }
+        Returns: undefined
+      }
+      toggle_research_like: {
+        Args: { paper_id: string; user_id: string }
+        Returns: boolean
       }
     }
     Enums: {

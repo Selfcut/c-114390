@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ResearchPaper } from "@/lib/supabase-types";
 
 interface ResearchItem {
   id: string;
@@ -20,7 +21,7 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
   try {
     const { data, error } = await supabase
       .from('research_papers')
-      .select('*');
+      .select('*') as { data: ResearchPaper[] | null, error: any };
     
     if (error) {
       console.error('Error fetching research papers:', error);

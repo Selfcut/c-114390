@@ -63,7 +63,7 @@ export interface ContentLike {
   id: string;
   content_id: string;
   user_id: string;
-  content_type: 'knowledge' | 'media' | 'quote';
+  content_type: 'knowledge' | 'media' | 'quote' | 'research';
   created_at: string;
 }
 
@@ -101,4 +101,20 @@ export interface WikiArticle {
   user_id: string;
   created_at: Date;
   likes?: number;
+}
+
+// Add interface for research papers
+export interface ResearchPaper {
+  id: string;
+  title: string;
+  summary: string;
+  author: string;
+  content?: string;
+  created_at: string;
+  updated_at: string;
+  views: number;
+  likes: number;
+  category: string;
+  image_url?: string;
+  user_id?: string;
 }

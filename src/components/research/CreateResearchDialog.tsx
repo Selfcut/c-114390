@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useResearchActions } from '@/hooks/useResearchActions';
+import { ResearchPaper } from '@/lib/supabase-types';
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -68,7 +69,17 @@ export const CreateResearchDialog: React.FC<CreateResearchDialogProps> = ({
   });
   
   const onSubmit = async (values: FormValues) => {
-    const result = await createResearchPaper(values);
+    // Ensure all required fields are present
+    const paperData: Omit<ResearchPaper, 'id' | 'created_at' | 'updated_at' | 'views' | 'likes'> = {
+      title: values.title,
+      summary: values.summary,
+      author: values.author,
+      category: values.category,
+      content: values.content || null,
+      image_url: values.image_url || null
+    };
+    
+    const result = await createResearchPaper(paperData);
     
     if (result) {
       form.reset();

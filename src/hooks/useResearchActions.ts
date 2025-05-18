@@ -2,17 +2,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
-
-interface ResearchPaper {
-  id: string;
-  title: string;
-  summary: string;
-  content?: string;
-  author: string;
-  category: string;
-  image_url?: string;
-}
+import { useToast } from '@/components/ui/use-toast';
+import { ResearchPaper } from '@/lib/supabase-types';
 
 export const useResearchActions = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +11,7 @@ export const useResearchActions = () => {
   const { toast } = useToast();
   
   // Create a new research paper
-  const createResearchPaper = async (paper: Omit<ResearchPaper, 'id'>) => {
+  const createResearchPaper = async (paper: Omit<ResearchPaper, 'id' | 'created_at' | 'updated_at' | 'views' | 'likes'>) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -38,8 +29,7 @@ export const useResearchActions = () => {
           ...paper,
           user_id: user.id
         })
-        .select()
-        .single();
+        .select() as { data: ResearchPaper | null, error: any };
       
       if (error) {
         throw error;
@@ -84,7 +74,7 @@ export const useResearchActions = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id) as { error: any };
       
       if (error) {
         throw error;
@@ -126,7 +116,7 @@ export const useResearchActions = () => {
         .from('research_papers')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id) as { error: any };
       
       if (error) {
         throw error;
@@ -151,16 +141,16 @@ export const useResearchActions = () => {
     }
   };
   
-  // Increment view count
+  // Increment view count using the RPC function
   const incrementViewCount = async (id: string) => {
     try {
-      await supabase.rpc('increment_research_views', { paper_id: id });
+      await supabase.rpc('increment_research_views', { paper_id: id }) as { error: any };
     } catch (error) {
       console.error('Error incrementing view count:', error);
     }
   };
   
-  // Toggle like on a research paper
+  // Toggle like on a research paper using the RPC function
   const toggleLike = async (id: string) => {
     if (!user) {
       toast({
@@ -175,7 +165,7 @@ export const useResearchActions = () => {
       const { data, error } = await supabase.rpc('toggle_research_like', { 
         paper_id: id,
         user_id: user.id
-      });
+      }) as { data: boolean, error: any };
       
       if (error) {
         throw error;

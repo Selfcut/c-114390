@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -7,10 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Eye, ThumbsUp, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useResearchActions } from '@/hooks/useResearchActions';
+import { ResearchPaper } from '@/lib/supabase-types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,21 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface ResearchPaper {
-  id: string;
-  title: string;
-  summary: string;
-  content?: string;
-  author: string;
-  created_at: string;
-  updated_at: string;
-  views: number;
-  likes: number;
-  category: string;
-  image_url?: string;
-  user_id: string;
-}
 
 const ResearchDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -63,7 +48,7 @@ const ResearchDetail = () => {
           .from('research_papers')
           .select('*')
           .eq('id', id)
-          .single();
+          .single() as { data: ResearchPaper | null, error: any };
         
         if (error) {
           throw error;
@@ -93,7 +78,7 @@ const ResearchDetail = () => {
             .eq('content_id', id)
             .eq('user_id', user.id)
             .eq('content_type', 'research')
-            .maybeSingle();
+            .maybeSingle() as { data: any, error: any };
           
           if (!likeError && likeData) {
             setIsLiked(true);
