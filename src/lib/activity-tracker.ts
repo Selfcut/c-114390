@@ -1,9 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type ActivityType = 'view' | 'interaction' | 'learned' | 'completed' | 'like' | 'comment' | 'bookmark' | 'post' | 'update';
-
-export async function trackActivity(userId: string, eventType: ActivityType, metadata: Record<string, any> = {}) {
+// Track user activity
+export const trackActivity = async (
+  userId: string,
+  eventType: 'view' | 'create' | 'update' | 'delete' | 'like' | 'bookmark' | 'comment',
+  metadata: Record<string, any> = {}
+): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('user_activities')
@@ -13,103 +16,114 @@ export async function trackActivity(userId: string, eventType: ActivityType, met
         metadata
       });
       
-    if (error) {
-      console.error('Error tracking activity:', error);
-      return false;
-    }
+    if (error) throw error;
     
     return true;
   } catch (error) {
-    console.error('Error in trackActivity:', error);
+    console.error("Error tracking activity:", error);
     return false;
   }
-}
+};
 
-export async function getRecentActivity(userId: string, limit = 5) {
+// Get user activity stats
+export const getUserActivityStats = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from('user_activities')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-      
-    if (error) {
-      console.error('Error getting recent activity:', error);
-      return [];
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error in getRecentActivity:', error);
-    return [];
-  }
-}
-
-export async function calculateActivityStreak(userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('user_activities')
-      .select('created_at')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false });
       
-    if (error) {
-      console.error('Error fetching activities for streak:', error);
-      return 0;
-    }
+    if (error) throw error;
     
-    if (!data || data.length === 0) {
-      return 0;
-    }
-    
-    // Extract dates from activities and remove time
+    // Calculate streak
+    const today = new Date();
     const dates = data.map(activity => {
       const date = new Date(activity.created_at);
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+      return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     });
     
-    // Get unique dates (as timestamps)
-    const uniqueDates = [...new Set(dates)].sort((a, b) => b - a);
+    const uniqueDates = [...new Set(dates)].sort();
     
-    if (uniqueDates.length === 0) {
-      return 0;
-    }
+    // Check if the user was active today
+    const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    const wasActiveToday = uniqueDates.includes(todayString);
     
-    // Check if most recent activity is today or yesterday
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
+    // Calculate streak
+    let streak = 0;
     
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayTimestamp = yesterday.getTime();
-    
-    // If most recent activity is not from today or yesterday, streak is broken
-    if (uniqueDates[0] !== todayTimestamp && uniqueDates[0] !== yesterdayTimestamp) {
-      return 0;
-    }
-    
-    // Count consecutive days
-    let streak = 1; // Start with 1 for today/yesterday
-    let currentDate = uniqueDates[0] === todayTimestamp ? yesterday : new Date(yesterday);
-    currentDate.setDate(currentDate.getDate() - 1);
-    
-    for (let i = 1; i < uniqueDates.length; i++) {
-      const expectedDate = currentDate.getTime();
-      if (uniqueDates[i] === expectedDate) {
-        streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else if (uniqueDates[i] < expectedDate) {
-        // Found a gap, streak is broken
-        break;
+    if (wasActiveToday) {
+      streak = 1;
+      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      // Check for consecutive days backwards from yesterday
+      for (let i = 1; i < 100; i++) { // Limit to 100 days to prevent infinite loop
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        
+        const checkDateString = `${checkDate.getFullYear()}-${checkDate.getMonth() + 1}-${checkDate.getDate()}`;
+        
+        if (uniqueDates.includes(checkDateString)) {
+          streak++;
+        } else {
+          break;
+        }
       }
-      // If date is more recent than expected, continue checking the array
+    } else {
+      // Check if the user was active yesterday
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayString = `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
+      
+      if (uniqueDates.includes(yesterdayString)) {
+        streak = 1;
+        
+        // Check for consecutive days backwards from the day before yesterday
+        for (let i = 2; i < 100; i++) { // Limit to 100 days
+          const checkDate = new Date(today);
+          checkDate.setDate(checkDate.getDate() - i);
+          
+          const checkDateString = `${checkDate.getFullYear()}-${checkDate.getMonth() + 1}-${checkDate.getDate()}`;
+          
+          if (uniqueDates.includes(checkDateString)) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+      }
     }
     
-    return streak;
+    // Calculate XP - 10 points per activity
+    const xp = data.length * 10;
+    
+    // Calculate level - Every 100 XP is a new level
+    const level = Math.max(1, Math.floor(xp / 100) + 1);
+    
+    return {
+      activityCount: data.length,
+      streak,
+      level,
+      xp,
+      nextLevelXp: level * 100,
+      activityTypes: countActivityTypes(data)
+    };
   } catch (error) {
-    console.error('Error calculating activity streak:', error);
-    return 0;
+    console.error("Error getting user activity stats:", error);
+    throw error;
   }
-}
+};
+
+// Count activity types
+const countActivityTypes = (activities: any[]) => {
+  const counts: Record<string, number> = {};
+  
+  activities.forEach(activity => {
+    const type = activity.event_type;
+    counts[type] = (counts[type] || 0) + 1;
+  });
+  
+  return counts;
+};

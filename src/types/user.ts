@@ -1,24 +1,22 @@
 
-export type UserStatus = 'online' | 'away' | 'offline' | 'invisible' | 'do-not-disturb';
+export type UserStatus = "online" | "offline" | "away" | "busy" | "invisible";
+export type UserRole = "user" | "moderator" | "admin";
 
 export interface UserProfile {
   id: string;
-  username: string;
   name: string;
+  username: string;
   email: string;
   avatar: string;
-  avatar_url?: string;
   bio?: string;
   website?: string;
-  role?: string;
-  isAdmin?: boolean;
   status: UserStatus;
-  isGhostMode?: boolean;
+  isGhostMode: boolean;
+  role: UserRole | string;
+  isAdmin: boolean;
   notificationSettings?: {
     desktopNotifications: boolean;
     soundNotifications: boolean;
     emailNotifications: boolean;
   };
 }
-
-export type UserRole = 'admin' | 'moderator' | 'user' | string;

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,6 +11,16 @@ export interface UserProfile {
   username?: string;
   isAdmin?: boolean;
   role?: string;
+  avatar?: string;
+  bio?: string;
+  website?: string;
+  status?: string;
+  isGhostMode?: boolean;
+  notificationSettings?: {
+    desktopNotifications: boolean;
+    soundNotifications: boolean;
+    emailNotifications: boolean;
+  };
 }
 
 interface AuthContextType {
@@ -61,7 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: profileData?.name,
             avatar_url: profileData?.avatar_url,
             username: profileData?.username,
-            isAdmin: profileData?.role === 'admin'
+            role: profileData?.role || 'user',
+            isAdmin: profileData?.role === 'admin',
+            status: profileData?.status || 'offline',
+            isGhostMode: profileData?.is_ghost_mode || false,
+            bio: profileData?.bio || '',
+            website: profileData?.website || '',
+            avatar: profileData?.avatar_url
           };
           
           setUser(userWithProfile);
@@ -77,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -101,7 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: profileData?.name,
           avatar_url: profileData?.avatar_url,
           username: profileData?.username,
-          isAdmin: profileData?.role === 'admin'
+          role: profileData?.role || 'user',
+          isAdmin: profileData?.role === 'admin',
+          status: profileData?.status || 'online',
+          isGhostMode: profileData?.is_ghost_mode || false,
+          bio: profileData?.bio || '',
+          website: profileData?.website || '',
+          avatar: profileData?.avatar_url
         };
         
         setUser(userWithProfile);
@@ -121,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
+      setIsLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -137,12 +162,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, username: string, name?: string): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
+      setIsLoading(true);
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
@@ -165,12 +192,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
       setLoading(true);
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
@@ -181,12 +210,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const updateUserProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
     try {
       setLoading(true);
+      setIsLoading(true);
       
       if (!user) throw new Error('User not authenticated');
       
@@ -195,8 +226,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .update({
           name: updates.name,
-          avatar_url: updates.avatar_url,
-          username: updates.username
+          avatar_url: updates.avatar_url || updates.avatar,
+          username: updates.username,
+          bio: updates.bio,
+          website: updates.website,
+          role: updates.role,
+          status: updates.status,
+          is_ghost_mode: updates.isGhostMode
         })
         .eq('id', user.id);
         
@@ -214,6 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
   

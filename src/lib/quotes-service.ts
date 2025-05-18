@@ -1,202 +1,172 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { UserProfile } from "./auth/types";
 
 export interface QuoteWithUser {
   id: string;
   text: string;
   author: string;
   source?: string;
-  category: string;
-  tags?: string[];
+  tags: string[];
   likes: number;
-  comments: number;
   bookmarks: number;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
+  comments: number;
   user?: {
-    name?: string;
+    id: string;
+    name: string;
     username?: string;
     avatar_url?: string;
     status?: string;
   };
+  created_at: string;
 }
 
-// Function to fetch quotes with optional search, tag filter, and sort
-export const fetchQuotesWithFilters = async (
-  searchTerm: string = '',
-  tagFilter: string | null = null,
-  sortOption: 'popular' | 'new' | 'comments' = 'popular'
-): Promise<QuoteWithUser[]> => {
-  try {
-    // Start building query
-    let query = supabase
-      .from('quotes')
-      .select(`
-        *,
-        user_id,
-        profiles:profiles(name, username, avatar_url, status)
-      `);
-
-    // Apply search filter if provided
-    if (searchTerm) {
-      query = query.or(`text.ilike.%${searchTerm}%,author.ilike.%${searchTerm}%`);
-    }
-
-    // Apply tag filter if provided
-    if (tagFilter) {
-      // Using ?& operator to find array containing the tag
-      // This requires tagsArray to be a valid JSONB array
-      query = query.contains('tags', [tagFilter]);
-    }
-
-    // Apply sorting
-    switch (sortOption) {
-      case 'popular':
-        query = query.order('likes', { ascending: false });
-        break;
-      case 'new':
-        query = query.order('created_at', { ascending: false });
-        break;
-      case 'comments':
-        query = query.order('comments', { ascending: false });
-        break;
-      default:
-        query = query.order('created_at', { ascending: false });
-    }
-
-    // Execute query
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error fetching quotes:", error);
-      return [];
-    }
-
-    // Transform data to match QuoteWithUser interface
-    return data.map(item => ({
-      ...item,
-      user: item.profiles
-    })) as QuoteWithUser[];
-  } catch (error) {
-    console.error("Error in fetchQuotesWithFilters:", error);
-    return [];
-  }
-};
-
-export const fetchQuoteById = async (quoteId: string): Promise<QuoteWithUser | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('quotes')
-      .select(`
-        *,
-        user_id,
-        profiles:profiles(name, username, avatar_url, status)
-      `)
-      .eq('id', quoteId)
-      .single();
-
-    if (error) {
-      console.error("Error fetching quote:", error);
-      return null;
-    }
-
-    return {
-      ...data,
-      user: data.profiles
-    } as QuoteWithUser;
-  } catch (error) {
-    console.error("Error in fetchQuoteById:", error);
-    return null;
-  }
-};
-
+// Fetch all quotes with user data
 export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
   try {
-    const { data, error } = await supabase
-      .from('quotes')
-      .select(`
-        *,
-        user_id,
-        profiles:profiles(name, username, avatar_url, status)
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching quotes:", error);
-      return [];
-    }
-
-    // Transform data to match QuoteWithUser interface
-    return data.map(item => ({
-      ...item,
-      user: item.profiles
-    })) as QuoteWithUser[];
-  } catch (error) {
-    console.error("Error in fetchQuotes:", error);
-    return [];
-  }
-};
-
-export const fetchUserBookmarkedQuotes = async (): Promise<QuoteWithUser[]> => {
-  try {
-    // Get user's bookmarked quote IDs
-    const { data: bookmarkData, error: bookmarkError } = await supabase
-      .from('quote_bookmarks')
-      .select('quote_id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
-    if (bookmarkError || !bookmarkData || bookmarkData.length === 0) {
-      if (bookmarkError) console.error("Error fetching bookmarks:", bookmarkError);
-      return [];
-    }
-
-    // Get the actual quotes
-    const quoteIds = bookmarkData.map(b => b.quote_id);
+    // We can't directly join with profiles because of the error in the console
+    // So first fetch all quotes
     const { data: quotesData, error: quotesError } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        user_id,
-        profiles:profiles(name, username, avatar_url, status)
-      `)
-      .in('id', quoteIds);
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (quotesError) {
-      console.error("Error fetching bookmarked quotes:", quotesError);
-      return [];
-    }
-
-    // Transform data to match QuoteWithUser interface
-    return (quotesData || []).map(item => ({
-      ...item,
-      user: item.profiles
-    })) as QuoteWithUser[];
+    if (quotesError) throw quotesError;
+    
+    // Then fetch user profiles for each quote if needed
+    const quotes: QuoteWithUser[] = await Promise.all(
+      quotesData.map(async (quote) => {
+        let userData = null;
+        
+        if (quote.user_id) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, name, username, avatar_url, status')
+            .eq('id', quote.user_id)
+            .single();
+            
+          userData = profileData;
+        }
+        
+        return {
+          id: quote.id,
+          text: quote.text,
+          author: quote.author,
+          source: quote.source || undefined,
+          tags: quote.tags || [],
+          likes: quote.likes || 0,
+          bookmarks: quote.bookmarks || 0,
+          comments: quote.comments || 0,
+          created_at: quote.created_at,
+          user: userData ? {
+            id: userData.id,
+            name: userData.name,
+            username: userData.username,
+            avatar_url: userData.avatar_url,
+            status: userData.status
+          } : undefined
+        };
+      })
+    );
+    
+    return quotes;
   } catch (error) {
-    console.error("Error in fetchUserBookmarkedQuotes:", error);
-    return [];
+    console.error("Error fetching quotes:", error);
+    throw error;
   }
 };
 
+// Fetch quotes with filters
+export const fetchQuotesWithFilters = async (
+  category?: string,
+  tags?: string[],
+  search?: string
+): Promise<QuoteWithUser[]> => {
+  try {
+    let query = supabase
+      .from('quotes')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (category) {
+      query = query.eq('category', category);
+    }
+    
+    if (tags && tags.length > 0) {
+      // For each tag, we want to check if it's in the tags array
+      // This uses the Postgres array contains operator
+      tags.forEach(tag => {
+        query = query.contains('tags', [tag]);
+      });
+    }
+    
+    if (search) {
+      query = query.or(`text.ilike.%${search}%,author.ilike.%${search}%`);
+    }
+    
+    const { data: quotesData, error: quotesError } = await query;
+    
+    if (quotesError) throw quotesError;
+    
+    // Then fetch user profiles for each quote
+    const quotes: QuoteWithUser[] = await Promise.all(
+      quotesData.map(async (quote) => {
+        let userData = null;
+        
+        if (quote.user_id) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, name, username, avatar_url, status')
+            .eq('id', quote.user_id)
+            .single();
+            
+          userData = profileData;
+        }
+        
+        return {
+          id: quote.id,
+          text: quote.text,
+          author: quote.author,
+          source: quote.source || undefined,
+          tags: quote.tags || [],
+          likes: quote.likes || 0,
+          bookmarks: quote.bookmarks || 0,
+          comments: quote.comments || 0,
+          created_at: quote.created_at,
+          user: userData ? {
+            id: userData.id,
+            name: userData.name,
+            username: userData.username,
+            avatar_url: userData.avatar_url,
+            status: userData.status
+          } : undefined
+        };
+      })
+    );
+    
+    return quotes;
+  } catch (error) {
+    console.error("Error fetching quotes with filters:", error);
+    throw error;
+  }
+};
+
+// Create a new quote
 export const createQuote = async (
   text: string,
   author: string,
-  source: string,
+  source: string = "",
   category: string,
-  tags: string[]
+  tags: string[] = []
 ): Promise<boolean> => {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to create quotes",
-        variant: "destructive"
-      });
-      return false;
+    // Get the current user
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error("User not authenticated");
     }
-
-    // Create the quote
+    
     const { error } = await supabase
       .from('quotes')
       .insert({
@@ -205,266 +175,173 @@ export const createQuote = async (
         source,
         category,
         tags,
-        user_id: user.id,
+        user_id: session.user.id,
+        likes: 0,
+        bookmarks: 0,
+        comments: 0
       });
-
-    if (error) {
-      console.error("Error creating quote:", error);
-      toast({
-        title: "Failed to create quote",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    // Record activity
-    await supabase
-      .from('user_activities')
-      .insert({
-        user_id: user.id,
-        event_type: 'quote_created',
-        metadata: { text, author }
-      });
-
+      
+    if (error) throw error;
+    
     return true;
   } catch (error) {
-    console.error("Error in createQuote:", error);
+    console.error("Error creating quote:", error);
     return false;
   }
 };
 
-export const checkUserLikedQuote = async (quoteId: string): Promise<boolean> => {
-  try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) return false;
-
-    const { data, error } = await supabase
-      .from('quote_likes')
-      .select('id')
-      .eq('quote_id', quoteId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error checking if quote is liked:", error);
-      return false;
-    }
-
-    return !!data;
-  } catch (error) {
-    console.error("Error in checkUserLikedQuote:", error);
-    return false;
-  }
-};
-
-// Toggle like on a quote (like/unlike)
+// Like a quote
 export const likeQuote = async (quoteId: string): Promise<boolean> => {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to like quotes",
-        variant: "destructive"
-      });
-      return false;
+    // Get the current user
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error("User not authenticated");
     }
-
-    // Check if the user already liked the quote
-    const { data: existingLike, error: checkError } = await supabase
+    
+    // Check if the user has already liked this quote
+    const { data: existingLike } = await supabase
       .from('quote_likes')
-      .select('id')
+      .select('*')
       .eq('quote_id', quoteId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error checking existing like:", checkError);
-      return false;
-    }
-
-    // If like exists, remove it
+      .eq('user_id', session.user.id)
+      .single();
+      
     if (existingLike) {
-      const { error: deleteError } = await supabase
+      // User has already liked the quote, so unlike it
+      await supabase
         .from('quote_likes')
         .delete()
         .eq('id', existingLike.id);
-
-      if (deleteError) {
-        console.error("Error removing like:", deleteError);
-        return false;
-      }
-
-      // Update using RPC function with proper type casting
+        
+      // Decrement the likes count
       await supabase
         .from('quotes')
-        .update({ 
-          likes: (supabase.rpc as any)('decrement_counter', { 
-            row_id: quoteId, 
-            column_name: 'likes' 
-          }) as unknown as number
-        })
+        .update({ likes: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'likes', table_name: 'quotes' }) })
         .eq('id', quoteId);
-
-      return false; // Return false to indicate quote is now unliked
-    } 
-    // Otherwise add a new like
-    else {
-      const { error: insertError } = await supabase
+        
+      return false;
+    } else {
+      // User hasn't liked the quote yet, so like it
+      await supabase
         .from('quote_likes')
         .insert({
           quote_id: quoteId,
-          user_id: user.id
+          user_id: session.user.id
         });
-
-      if (insertError) {
-        console.error("Error adding like:", insertError);
-        return false;
-      }
-
-      // Update using RPC function with proper type casting
+        
+      // Increment the likes count
       await supabase
         .from('quotes')
-        .update({ 
-          likes: (supabase.rpc as any)('increment_counter', { 
-            row_id: quoteId, 
-            column_name: 'likes' 
-          }) as unknown as number
-        })
+        .update({ likes: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'likes', table_name: 'quotes' }) })
         .eq('id', quoteId);
-
-      // Record activity
-      await supabase
-        .from('user_activities')
-        .insert({
-          user_id: user.id,
-          event_type: 'quote_liked',
-          metadata: { quote_id: quoteId }
-        });
-
-      return true; // Return true to indicate quote is now liked
+        
+      return true;
     }
   } catch (error) {
-    console.error("Error in likeQuote:", error);
-    return false;
+    console.error("Error liking/unliking quote:", error);
+    throw error;
   }
 };
 
-// Check if a user has bookmarked a quote
-export const checkUserBookmarkedQuote = async (quoteId: string): Promise<boolean> => {
-  try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) return false;
-
-    const { data, error } = await supabase
-      .from('quote_bookmarks')
-      .select('id')
-      .eq('quote_id', quoteId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error checking if quote is bookmarked:", error);
-      return false;
-    }
-
-    return !!data;
-  } catch (error) {
-    console.error("Error in checkUserBookmarkedQuote:", error);
-    return false;
-  }
-};
-
-// Toggle bookmark on a quote (bookmark/unbookmark)
+// Bookmark a quote
 export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to bookmark quotes",
-        variant: "destructive"
-      });
-      return false;
+    // Get the current user
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error("User not authenticated");
     }
-
-    // Check if the user already bookmarked the quote
-    const { data: existingBookmark, error: checkError } = await supabase
+    
+    // Check if the user has already bookmarked this quote
+    const { data: existingBookmark } = await supabase
       .from('quote_bookmarks')
-      .select('id')
+      .select('*')
       .eq('quote_id', quoteId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error checking existing bookmark:", checkError);
-      return false;
-    }
-
-    // If bookmark exists, remove it
+      .eq('user_id', session.user.id)
+      .single();
+      
     if (existingBookmark) {
-      const { error: deleteError } = await supabase
+      // User has already bookmarked the quote, so unbookmark it
+      await supabase
         .from('quote_bookmarks')
         .delete()
         .eq('id', existingBookmark.id);
-
-      if (deleteError) {
-        console.error("Error removing bookmark:", deleteError);
-        return false;
-      }
-
-      // Update bookmark count with proper type casting
+        
+      // Decrement the bookmarks count
       await supabase
         .from('quotes')
-        .update({ 
-          bookmarks: (supabase.rpc as any)('decrement_counter', { 
-            row_id: quoteId, 
-            column_name: 'bookmarks' 
-          }) as unknown as number
-        })
+        .update({ bookmarks: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'bookmarks', table_name: 'quotes' }) })
         .eq('id', quoteId);
-
-      return false; // Return false to indicate quote is now unbookmarked
-    } 
-    // Otherwise add a new bookmark
-    else {
-      const { error: insertError } = await supabase
+        
+      return false;
+    } else {
+      // User hasn't bookmarked the quote yet, so bookmark it
+      await supabase
         .from('quote_bookmarks')
         .insert({
           quote_id: quoteId,
-          user_id: user.id
+          user_id: session.user.id
         });
-
-      if (insertError) {
-        console.error("Error adding bookmark:", insertError);
-        return false;
-      }
-
-      // Update bookmark count with proper type casting
+        
+      // Increment the bookmarks count
       await supabase
         .from('quotes')
-        .update({ 
-          bookmarks: (supabase.rpc as any)('increment_counter', { 
-            row_id: quoteId, 
-            column_name: 'bookmarks' 
-          }) as unknown as number
-        })
+        .update({ bookmarks: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'bookmarks', table_name: 'quotes' }) })
         .eq('id', quoteId);
-
-      // Record activity
-      await supabase
-        .from('user_activities')
-        .insert({
-          user_id: user.id,
-          event_type: 'bookmark',
-          metadata: { quote_id: quoteId }
-        });
-
-      return true; // Return true to indicate quote is now bookmarked
+        
+      return true;
     }
   } catch (error) {
-    console.error("Error in bookmarkQuote:", error);
+    console.error("Error bookmarking/unbookmarking quote:", error);
+    throw error;
+  }
+};
+
+// Check if the user has liked a quote
+export const checkUserLikedQuote = async (quoteId: string): Promise<boolean> => {
+  try {
+    // Get the current user
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return false;
+    }
+    
+    const { data } = await supabase
+      .from('quote_likes')
+      .select('id')
+      .eq('quote_id', quoteId)
+      .eq('user_id', session.user.id)
+      .single();
+      
+    return !!data;
+  } catch (error) {
+    return false;
+  }
+};
+
+// Check if the user has bookmarked a quote
+export const checkUserBookmarkedQuote = async (quoteId: string): Promise<boolean> => {
+  try {
+    // Get the current user
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return false;
+    }
+    
+    const { data } = await supabase
+      .from('quote_bookmarks')
+      .select('id')
+      .eq('quote_id', quoteId)
+      .eq('user_id', session.user.id)
+      .single();
+      
+    return !!data;
+  } catch (error) {
     return false;
   }
 };

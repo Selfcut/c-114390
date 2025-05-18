@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,9 +16,10 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, signUp, isAuthenticated } = useAuth();
+  const { signIn, signUp, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -53,6 +55,11 @@ const Auth = () => {
     if (activeTab === "signup") {
       if (!name) {
         setError('Name is required.');
+        return false;
+      }
+      
+      if (!username) {
+        setError('Username is required.');
         return false;
       }
       
@@ -97,7 +104,7 @@ const Auth = () => {
         });
       } else {
         console.log("Signing up with email:", email);
-        const result = await signUp(email, password, email.split('@')[0], name);
+        const result = await signUp(email, password, username || email.split('@')[0], name);
         
         if (result?.error) {
           console.error("Sign up error:", result.error);
@@ -180,8 +187,8 @@ const Auth = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <Button className="w-full mt-6" type="submit" disabled={loading}>
-                {loading ? (
+              <Button className="w-full mt-6" type="submit" disabled={loading || isLoading}>
+                {loading || isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Logging in...
@@ -208,6 +215,16 @@ const Auth = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  placeholder="Choose a username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="space-y-2 mt-4">
@@ -246,8 +263,8 @@ const Auth = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <Button className="w-full mt-6" type="submit" disabled={loading}>
-                {loading ? (
+              <Button className="w-full mt-6" type="submit" disabled={loading || isLoading}>
+                {loading || isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating Account...

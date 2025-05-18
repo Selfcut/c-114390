@@ -5,7 +5,7 @@ import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContextType, UserProfile } from "./auth/types";
 import { fetchUserProfile, updateUserProfile } from "./auth/utils";
-import { signIn, signOut, signUp } from "./auth/auth-methods";
+import { signIn, signOut, signUp } from "./auth/utils";
 
 // Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,6 +15,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
 
   // Initialize auth state from session
@@ -36,20 +39,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               if (profile) {
                 console.log("User profile fetched:", profile);
                 setUser(profile);
+                setIsAuthenticated(true);
               }
               else {
                 console.log("No profile found for user");
                 setUser(null);
+                setIsAuthenticated(false);
               }
+              setLoading(false);
+              setIsLoading(false);
             })
             .catch(err => {
               console.error("Error fetching user profile:", err);
               setUser(null);
+              setIsAuthenticated(false);
+              setLoading(false);
+              setIsLoading(false);
+              setError(err instanceof Error ? err : new Error(String(err)));
             });
         }, 0);
       } else {
         console.log("No user in session, setting user to null");
         setUser(null);
+        setIsAuthenticated(false);
+        setLoading(false);
+        setIsLoading(false);
       }
     });
     
@@ -64,19 +78,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (profile) {
               console.log("Initial profile fetch:", profile);
               setUser(profile);
+              setIsAuthenticated(true);
             }
             else {
               console.log("No initial profile found");
               setUser(null);
+              setIsAuthenticated(false);
             }
           })
           .catch(err => {
             console.error("Error fetching initial profile:", err);
             setUser(null);
+            setIsAuthenticated(false);
+            setError(err instanceof Error ? err : new Error(String(err)));
           })
-          .finally(() => setIsLoading(false));
+          .finally(() => {
+            setLoading(false);
+            setIsLoading(false);
+          });
       } else {
         console.log("No initial session");
+        setLoading(false);
         setIsLoading(false);
       }
     });
@@ -88,6 +110,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSignIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      setIsLoading(true);
       console.log("Signing in with email:", email);
       const { error } = await signIn(email, password);
       
@@ -105,13 +129,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Sign in exception:", error);
       return { error };
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleSignUp = async (email: string, password: string, metadata = {}) => {
+  const handleSignUp = async (email: string, password: string, username: string, name?: string) => {
     try {
+      setLoading(true);
+      setIsLoading(true);
       console.log("Signing up with email:", email);
-      const { error } = await signUp(email, password, metadata);
+      const { error } = await signUp(email, password, username, name);
       
       if (error) {
         console.error("Sign up error:", error);
@@ -127,28 +156,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Sign up exception:", error);
       return { error };
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
+      setLoading(true);
+      setIsLoading(true);
       console.log("Signing out");
       await signOut();
       
       // Explicitly clear state on signout
       setUser(null);
       setSession(null);
+      setIsAuthenticated(false);
       
       toast({
         title: "Signed out successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign out exception:", error);
       toast({
         title: "Error signing out",
         description: error.message,
         variant: "destructive"
       });
+      setError(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -157,25 +196,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: new Error("User not authenticated") };
     }
     
-    const result = await updateUserProfile(user.id, updates);
-    
-    if (!result.error) {
-      // Update local user state
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+    try {
+      setLoading(true);
+      setIsLoading(true);
+      
+      const result = await updateUserProfile(user.id, updates);
+      
+      if (!result.error) {
+        // Update local user state
+        setUser(prev => prev ? { ...prev, ...updates } : null);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated."
+        });
+      } else {
+        toast({
+          title: "Update failed",
+          description: result.error.message || "Failed to update profile",
+          variant: "destructive"
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
+      return { error };
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
     }
-    
-    return result;
   };
 
   const authValue: AuthContextType = {
     user,
     session,
+    loading,
     isLoading,
-    isAuthenticated: !!user && !!session,
+    error,
+    isAuthenticated,
     signIn: handleSignIn,
     signUp: handleSignUp,
     signOut: handleSignOut,
-    updateProfile: handleUpdateProfile
+    updateProfile: handleUpdateProfile,
+    updateUserProfile: handleUpdateProfile
   };
 
   return (
@@ -195,3 +263,6 @@ export const useAuth = () => {
   
   return context;
 };
+
+export { AuthContext };
+export default AuthProvider;

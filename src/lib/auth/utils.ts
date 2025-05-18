@@ -2,93 +2,149 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "./types";
 import { Session } from "@supabase/supabase-js";
+import { UserStatus } from "@/types/user";
 
-// Function to fetch user profile from Supabase
-export const fetchUserProfile = async (userId: string, session?: Session): Promise<UserProfile | null> => {
+// Fetch user profile from Supabase
+export const fetchUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile> => {
   try {
-    console.log("Fetching profile for user:", userId);
-    // Fetch profile data
+    // Fetch the user profile from the profiles table
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .maybeSingle();
-
+      .single();
+    
     if (error) {
       console.error("Error fetching user profile:", error);
-      return null;
+      throw error;
     }
 
-    if (!profile) {
-      console.warn("No profile found for user:", userId);
-      
-      // Try to create a profile for the user if it doesn't exist
-      try {
-        // Get the user data from auth
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData?.user) {
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              name: userData.user.email?.split('@')[0] || 'New User',
-              username: userData.user.email?.split('@')[0] || `user_${userId.substring(0, 8)}`,
-              avatar_url: null
-            })
-            .select()
-            .single();
-            
-          if (createError) {
-            console.error("Error creating user profile:", createError);
-            return null;
-          }
-          
-          console.log("Created new profile for user:", newProfile);
-          return newProfile as UserProfile;
-        }
-      } catch (createErr) {
-        console.error("Failed to create profile:", createErr);
-      }
-      
-      return null;
-    }
-
-    // Build user profile object
-    const userProfile: UserProfile = {
+    // Create a merged profile with both auth and profile data
+    const fullProfile: UserProfile = {
       id: userId,
-      email: session?.user?.email,
-      name: profile.name || 'Anonymous User',
-      avatar_url: profile.avatar_url,
-      username: profile.username,
-      role: profile.role,
-      isAdmin: profile.role === 'admin',
+      email: userSession?.user?.email || "",
+      name: profile?.name || userSession?.user?.user_metadata?.name || "User",
+      username: profile?.username || userSession?.user?.user_metadata?.username || "user",
+      avatar_url: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      avatar: profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      bio: profile?.bio || "",
+      website: profile?.website || "",
+      role: profile?.role || "user",
+      isAdmin: profile?.role === "admin",
+      status: profile?.status as UserStatus || "online",
+      isGhostMode: profile?.is_ghost_mode || false,
     };
 
-    return userProfile;
-  } catch (err) {
-    console.error("Exception in fetchUserProfile:", err);
-    return null;
+    return fullProfile;
+  } catch (error) {
+    console.error("Error in fetchUserProfile:", error);
+    
+    // Return a minimal profile in case of error
+    return {
+      id: userId,
+      email: userSession?.user?.email || "",
+      name: userSession?.user?.user_metadata?.name || "User",
+      username: userSession?.user?.user_metadata?.username || "user",
+      avatar_url: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
+      bio: "",
+      website: "",
+      role: "user",
+      isAdmin: false,
+      status: "online",
+      isGhostMode: false,
+    };
   }
 };
 
-// Function to update user profile
-export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
+// Update user profile in Supabase
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<{error: any}> => {
   try {
-    console.log("Updating profile for user:", userId, updates);
-    // Map UserProfile fields to profile table fields
-    const profileUpdates: any = {};
-    if (updates.name) profileUpdates.name = updates.name;
-    if (updates.avatar_url) profileUpdates.avatar_url = updates.avatar_url;
-    if (updates.username) profileUpdates.username = updates.username;
-    
     const { error } = await supabase
       .from('profiles')
-      .update(profileUpdates)
+      .update({
+        name: updates.name,
+        username: updates.username,
+        avatar_url: updates.avatar_url || updates.avatar,
+        bio: updates.bio,
+        website: updates.website,
+        status: updates.status,
+        is_ghost_mode: updates.isGhostMode,
+        role: updates.role
+      })
       .eq('id', userId);
+
+    if (error) {
+      console.error("Error updating user profile:", error);
+      return { error };
+    }
     
-    if (error) return { error };
     return { error: null };
-  } catch (err) {
-    return { error: err };
+  } catch (error) {
+    console.error("Error in updateUserProfile:", error);
+    return { error };
+  }
+};
+
+// Update user status in Supabase
+export const updateUserStatus = async (userId: string, status: UserStatus): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status })
+      .eq('id', userId);
+
+    if (error) {
+      console.error("Error updating user status:", error);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error in updateUserStatus:", error);
+    throw error;
+  }
+};
+
+// Authentication methods
+export const signIn = async (email: string, password: string) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) return { error };
+    return { data, error: null };
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const signUp = async (email: string, password: string, username: string, name?: string) => {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username,
+          name: name || username
+        }
+      }
+    });
+
+    if (error) return { error };
+    return { data, error: null };
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const signOut = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error signing out:", error);
+    throw error;
   }
 };
