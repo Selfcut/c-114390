@@ -1,5 +1,6 @@
+
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ResearchItem {
   id: string;
@@ -96,7 +97,7 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
   });
   
   // Update lastUpdateTime whenever data is successfully fetched
-  React.useEffect(() => {
+  useEffect(() => {
     if (researchPapers.length > 0) {
       setLastUpdateTime(new Date());
     }
