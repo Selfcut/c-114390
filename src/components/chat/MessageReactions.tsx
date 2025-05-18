@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 
 interface Reaction {
@@ -23,7 +23,8 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   onReactionAdd,
   onReactionRemove
 }) => {
-  if (!reactions || reactions.length === 0) return null;
+  const [showReactions, setShowReactions] = useState(false);
+  const commonEmojis = ["👍", "👎", "😄", "🎉", "❤️", "🔥"];
   
   const handleReactionClick = (emoji: string) => {
     console.log("Reaction clicked:", emoji, "for message:", messageId);
@@ -31,7 +32,9 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
     const userIdToUse = currentUserId || 'anonymous';
     
     if (!reaction) {
-      console.log("Reaction not found");
+      if (onReactionAdd) {
+        onReactionAdd(messageId, emoji);
+      }
       return;
     }
     
@@ -46,24 +49,46 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-1 mt-1">
-      {reactions.map((reaction, index) => {
-        const userIdToUse = currentUserId || 'anonymous';
-        const hasReacted = reaction.users.includes(userIdToUse);
-        
-        return (
-          <Button
-            key={`${reaction.emoji}-${index}`}
-            variant={hasReacted ? "secondary" : "outline"}
-            size="sm"
-            className="h-6 px-2 py-0 text-xs rounded-full flex items-center gap-1"
-            onClick={() => handleReactionClick(reaction.emoji)}
-          >
-            <span>{reaction.emoji}</span>
-            <span>{reaction.count}</span>
-          </Button>
-        );
-      })}
+    <div className="relative"
+         onMouseEnter={() => setShowReactions(true)}
+         onMouseLeave={() => setShowReactions(false)}>
+      {/* Display existing reactions */}
+      <div className="flex flex-wrap gap-1 mt-1">
+        {reactions.map((reaction, index) => {
+          const userIdToUse = currentUserId || 'anonymous';
+          const hasReacted = reaction.users.includes(userIdToUse);
+          
+          return (
+            <Button
+              key={`${reaction.emoji}-${index}`}
+              variant={hasReacted ? "secondary" : "outline"}
+              size="sm"
+              className="h-6 px-2 py-0 text-xs rounded-full flex items-center gap-1"
+              onClick={() => handleReactionClick(reaction.emoji)}
+            >
+              <span>{reaction.emoji}</span>
+              <span>{reaction.count}</span>
+            </Button>
+          );
+        })}
+      </div>
+      
+      {/* Reaction picker that shows on hover */}
+      {showReactions && (
+        <div className="absolute bottom-full mb-1 bg-background border rounded-md shadow-md p-1 flex">
+          {commonEmojis.map(emoji => (
+            <Button
+              key={emoji}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => handleReactionClick(emoji)}
+            >
+              {emoji}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

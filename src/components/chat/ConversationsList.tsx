@@ -18,7 +18,7 @@ export const ConversationsList = ({
   selectedConversation,
   onSelectConversation
 }: ConversationsListProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Start expanded by default
   
   const toggleExpand = () => {
     console.log("Toggling conversation list expand state:", !isExpanded);

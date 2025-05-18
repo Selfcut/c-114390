@@ -4,6 +4,11 @@
  */
 export const formatTime = (timestamp: string | Date) => {
   try {
+    // Handle undefined or null case
+    if (!timestamp) {
+      return 'Just now';
+    }
+    
     // If the timestamp is already a Date object, use it directly
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     

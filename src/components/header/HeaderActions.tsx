@@ -21,7 +21,7 @@ export const HeaderActions = () => {
 
   return (
     <div className="flex items-center space-x-1">
-      {/* Discord button with proper linking */}
+      {/* Discord button with proper icon */}
       <Button 
         variant="ghost" 
         size="icon" 
@@ -29,19 +29,22 @@ export const HeaderActions = () => {
         aria-label="Discord"
         onClick={() => window.open('https://disboard.org/server/discord-server-id', '_blank')}
       >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="20" 
-          height="20" 
-          viewBox="0 0 24 24" 
-          fill="none" 
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          fill="none"
+          viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth="2" 
-          strokeLinecap="round" 
+          strokeWidth="2"
+          strokeLinecap="round"
           strokeLinejoin="round"
-          className="lucide lucide-message-square"
+          className="lucide"
         >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          <circle cx="9" cy="12" r="1"></circle>
+          <circle cx="15" cy="12" r="1"></circle>
+          <path d="M7.5 7.2A4.2 4.2 0 0 1 11.7 3h.6a4.2 4.2 0 0 1 4.2 4.2v.6a9 9 0 0 1-.9 3.9 9 9 0 0 1-2.6 2.7c-.5.3-.7.7-.8 1.1a1 1 0 0 1-.5.6.7.7 0 0 1-.7 0 1 1 0 0 1-.5-.6c-.1-.4-.3-.8-.8-1.1a9 9 0 0 1-2.6-2.7 9 9 0 0 1-.9-3.9v-.6z"></path>
+          <path d="M8 15h8a4 4 0 0 1 4 4v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a4 4 0 0 1 4-4zm8 0v4.8"></path>
         </svg>
         <span className="sr-only">Discord</span>
       </Button>
@@ -50,7 +53,7 @@ export const HeaderActions = () => {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="mr-1" 
+        className="mr-1 text-amber-500" 
         aria-label="Premium"
         onClick={() => window.location.href = '/premium'}
       >

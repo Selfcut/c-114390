@@ -132,26 +132,29 @@ export const ChatInputArea = ({
             className="min-h-[40px] max-h-[120px] resize-none border-0 focus-visible:ring-0 pr-20 py-2"
             style={{ height: `${textareaHeight}px` }}
           />
-          <div className="absolute right-2 bottom-2 flex items-center">
-            <ChatInputTools
-              onEmojiPickerToggle={handleEmojiPickerToggle}
-              onGifPickerToggle={handleGifPickerToggle}
-              onFileUpload={handleFileUpload}
-              showEmojiPicker={showEmojiPicker}
-              showGifPicker={showGifPicker}
-              isAdmin={isAdmin}
-              onAdminEffectSelect={onAdminEffectSelect}
-            />
-          </div>
+          
+          {/* Tools positioned absolutely over textarea */}
+          <ChatInputTools
+            onEmojiPickerToggle={handleEmojiPickerToggle}
+            onGifPickerToggle={handleGifPickerToggle}
+            onFileUpload={handleFileUpload}
+            showEmojiPicker={showEmojiPicker}
+            showGifPicker={showGifPicker}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={onAdminEffectSelect}
+          />
         </div>
+        
+        {/* Send button - made smaller */}
         <Button 
           onClick={handleSendMessage}
           disabled={!message.trim()}
           size="sm"
-          className="flex-shrink-0 h-9 ml-1"
+          className="flex-shrink-0 h-8 w-8 p-0 ml-1"
+          title={editingMessage ? "Save" : "Send"}
         >
-          <Send size={16} className="mr-1" />
-          {editingMessage ? "Save" : "Send"}
+          <Send size={14} />
+          <span className="sr-only">{editingMessage ? "Save" : "Send"}</span>
         </Button>
       </div>
       
