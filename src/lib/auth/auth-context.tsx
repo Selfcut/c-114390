@@ -2,8 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserStatus } from "@/types/user";
-import { AuthContextType, UserProfile } from "./types";
+import { UserProfile, AuthContextType } from "./types";
 import { fetchUserProfile, updateUserProfile as updateUserProfileUtil } from "./auth-utils";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,6 +13,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<Error | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
     // Check active session on load
@@ -32,7 +32,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Get user profile using our utility function
           const userProfile = await fetchUserProfile(id, data.session);
           
-          setUser(userProfile);
+          // Set the session
+          setSession(data.session);
+          
+          // Convert to UserProfile type before setting state
+          setUser(userProfile as UserProfile);
           setIsAuthenticated(true);
         } else {
           setUser(null);
@@ -59,7 +63,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Get user profile using our utility function
         const userProfile = await fetchUserProfile(id, session);
         
-        setUser(userProfile);
+        // Set the session
+        setSession(session);
+        
+        // Convert to UserProfile type before setting state
+        setUser(userProfile as UserProfile);
         setIsAuthenticated(true);
         
       } else if (event === 'SIGNED_OUT') {
@@ -157,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
       if (error) throw error;
       
-      // Update local user state
+      // Update local user state by creating new object with updated fields
       setUser(prev => prev ? { ...prev, ...updates } : null);
       
       toast.success("Profile updated successfully");
@@ -175,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const value = {
     user,
+    session,
     loading,
     error,
     isAuthenticated,

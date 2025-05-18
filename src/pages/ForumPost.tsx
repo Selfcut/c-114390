@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -8,7 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { useForumPost } from '@/hooks/forum/useForumPost';
 import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
-import { UserProfile, UserStatus } from '@/types/user';
+import { UserProfile } from '@/lib/auth/types';
 
 // Placeholder components - in a real project, these would be in separate files
 const ForumSkeleton = () => (
@@ -127,38 +126,35 @@ const ForumPost = () => {
   // Handle upvoting the post
   const handleUpvotePost = async () => {
     if (discussion && user) {
-      const userWithRequiredFields: UserProfile = {
-        ...user,
-        name: user.name || '',
+      // Only pass required fields from user to handle type compatibility
+      const userProfile: UserProfile = {
+        id: user.id,
         username: user.username || '',
         email: user.email || '',
         avatar: user.avatar || '',
-        status: user.status || 'online',
-        role: user.role || 'user',
-        isGhostMode: user.isGhostMode || false,
-        isAdmin: user.isAdmin || false,
-        id: user.id
+        avatar_url: user.avatar_url || '',
+        role: user.role || 'user'
       };
-      await handleUpvote(userWithRequiredFields, discussion);
+      
+      await handleUpvote(userProfile, discussion);
     }
   };
   
   // Handle adding a new comment
   const handleAddComment = async (comment: string) => {
     if (!user || !discussion) return;
-    const userWithRequiredFields: UserProfile = {
-      ...user,
-      name: user.name || '',
+    
+    // Only pass required fields from user to handle type compatibility
+    const userProfile: UserProfile = {
+      id: user.id,
       username: user.username || '',
       email: user.email || '',
       avatar: user.avatar || '',
-      status: user.status || 'online',
-      role: user.role || 'user',
-      isGhostMode: user.isGhostMode || false,
-      isAdmin: user.isAdmin || false,
-      id: user.id
+      avatar_url: user.avatar_url || '',
+      role: user.role || 'user'
     };
-    await handleSubmitComment(userWithRequiredFields, comment, discussion, setComments);
+    
+    await handleSubmitComment(userProfile, comment, discussion, setComments);
   };
 
   return (

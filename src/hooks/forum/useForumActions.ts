@@ -138,8 +138,8 @@ export function useForumActions(postId?: string) {
       const newCommentObj: Comment = {
         id: commentData.id,
         content: newComment,
-        author: user.username || user.name || "User",
-        authorAvatar: user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+        author: user.username || "User",
+        authorAvatar: user.avatar_url || user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
         createdAt: new Date(),
         isAuthor: discussion ? user.id === discussion.authorId : false
       };

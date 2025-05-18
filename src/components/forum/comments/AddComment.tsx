@@ -45,7 +45,7 @@ export const AddComment: React.FC<AddCommentProps> = ({
 
   const getAvatarFallback = () => {
     if (!user) return 'G';
-    if (user.name) return user.name[0].toUpperCase();
+    if (user.username) return user.username[0].toUpperCase();
     if (user.email) return user.email[0].toUpperCase();
     return 'U';
   };
@@ -56,7 +56,7 @@ export const AddComment: React.FC<AddCommentProps> = ({
         <CardTitle className="text-lg flex items-center gap-2">
           {user && (
             <Avatar className="h-6 w-6">
-              <AvatarImage src={user.avatar_url} alt={user.name || 'User'} />
+              <AvatarImage src={user.avatar_url || user.avatar} alt={user.username || 'User'} />
               <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
             </Avatar>
           )}
