@@ -121,34 +121,36 @@ export const ChatInputArea = ({
         />
       )}
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1 relative">
+      <div className="flex items-end gap-1">
+        <div className="flex-1 relative rounded-md border overflow-hidden">
           <Textarea
             ref={textareaRef}
             value={message}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-            className="min-h-[40px] max-h-[120px] resize-none pr-24 py-2"
+            className="min-h-[40px] max-h-[80px] resize-none border-0 focus-visible:ring-0 pr-20 py-2"
             style={{ height: `${textareaHeight}px` }}
           />
-          <ChatInputTools
-            onEmojiPickerToggle={handleEmojiPickerToggle}
-            onGifPickerToggle={handleGifPickerToggle}
-            onFileUpload={handleFileUpload}
-            showEmojiPicker={showEmojiPicker}
-            showGifPicker={showGifPicker}
-            isAdmin={isAdmin}
-            onAdminEffectSelect={onAdminEffectSelect}
-          />
+          <div className="absolute right-2 bottom-1.5 flex items-center">
+            <ChatInputTools
+              onEmojiPickerToggle={handleEmojiPickerToggle}
+              onGifPickerToggle={handleGifPickerToggle}
+              onFileUpload={handleFileUpload}
+              showEmojiPicker={showEmojiPicker}
+              showGifPicker={showGifPicker}
+              isAdmin={isAdmin}
+              onAdminEffectSelect={onAdminEffectSelect}
+            />
+          </div>
         </div>
         <Button 
           onClick={handleSendMessage}
           disabled={!message.trim()}
           size="sm"
-          className="flex items-center gap-1"
+          className="flex-shrink-0 h-9"
         >
-          <Send size={16} />
+          <Send size={16} className="mr-1" />
           {editingMessage ? "Save" : "Send"}
         </Button>
       </div>

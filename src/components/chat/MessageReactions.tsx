@@ -25,7 +25,10 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
 }) => {
   if (!reactions || reactions.length === 0) return null;
   
-  const handleReactionClick = (emoji: string, hasReacted: boolean) => {
+  const handleReactionClick = (emoji: string) => {
+    const reaction = reactions.find(r => r.emoji === emoji);
+    const hasReacted = reaction?.users.includes(currentUserId || 'anonymous');
+    
     if (hasReacted && onReactionRemove) {
       onReactionRemove(messageId, emoji);
     } else if (!hasReacted && onReactionAdd) {
@@ -36,7 +39,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   return (
     <div className="flex flex-wrap gap-1 mt-1">
       {reactions.map((reaction, index) => {
-        const hasReacted = reaction.users.includes(currentUserId || '');
+        const hasReacted = reaction.users.includes(currentUserId || 'anonymous');
         
         return (
           <Button
@@ -44,7 +47,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
             variant={hasReacted ? "secondary" : "outline"}
             size="sm"
             className="h-6 px-2 py-0 text-xs rounded-full flex items-center gap-1"
-            onClick={() => handleReactionClick(reaction.emoji, hasReacted)}
+            onClick={() => handleReactionClick(reaction.emoji)}
           >
             <span>{reaction.emoji}</span>
             <span>{reaction.count}</span>
