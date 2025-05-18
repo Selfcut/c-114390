@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/media/useMediaPosts";
@@ -133,6 +134,7 @@ export const MediaContainer = () => {
           mediaData={mediaData}
           currentUser={user ? {
             ...user,
+            name: user.name || "Anonymous", // Ensure name is always defined
             role: user.role || 'user'
           } : null}
           onCreatePost={handleOpenCreateDialog}

@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home, Library, MessageSquare, User, Settings, 
   Youtube, Book, FileText, Shield, Cog, Menu, X, AlertTriangle
 } from "lucide-react";
-import { useAuth } from "@/lib/auth"; // Updated import path
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -37,7 +38,7 @@ export const Sidebar = () => {
   ];
 
   // Admin route
-  if (user?.isAdmin) {
+  if (user?.isAdmin || user?.role === "admin") {
     navItems.push({ path: "/admin", icon: Shield, label: "Admin" });
   }
 

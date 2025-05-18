@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -83,7 +84,7 @@ const Auth = () => {
     try {
       if (activeTab === "login") {
         const result = await signIn(email, password);
-        if (result?.error) {
+        if (result && result.error) {
           setError(result.error.message || 'Failed to sign in.');
         } else {
           toast({
@@ -98,7 +99,7 @@ const Auth = () => {
         };
         
         const result = await signUp(email, password, userData);
-        if (result?.error) {
+        if (result && result.error) {
           setError(result.error.message || 'Failed to sign up.');
         } else {
           toast({

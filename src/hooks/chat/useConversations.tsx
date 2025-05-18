@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation } from '@/components/chat/types';
@@ -47,43 +48,55 @@ export const useConversations = () => {
     // Set up real-time subscription
     const channelA = supabase.channel('public:conversations');
 
+    const insertHandler = (payload: any) => {
+      const newConversation: Conversation = {
+        id: payload.new.id,
+        name: payload.new.name,
+        lastMessage: payload.new.last_message,
+        updatedAt: payload.new.updated_at,
+        createdAt: payload.new.created_at,
+        isGlobal: payload.new.is_global,
+        isGroup: payload.new.is_group,
+        participants: [],
+        messages: []
+      };
+      
+      setConversations(prev => [newConversation, ...prev]);
+    };
+
+    const updateHandler = (payload: any) => {
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === payload.new.id 
+            ? {
+                ...conv,
+                name: payload.new.name,
+                lastMessage: payload.new.last_message,
+                updatedAt: payload.new.updated_at,
+                isGlobal: payload.new.is_global,
+                isGroup: payload.new.is_group
+              } 
+            : conv
+        )
+      );
+    };
+
+    const deleteHandler = (payload: any) => {
+      setConversations(prev => 
+        prev.filter(conv => conv.id !== payload.old.id)
+      );
+    };
+
     channelA
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations' }, (payload) => {
-        const newConversation: Conversation = {
-          id: payload.new.id,
-          name: payload.new.name,
-          lastMessage: payload.new.last_message,
-          updatedAt: payload.new.updated_at,
-          createdAt: payload.new.created_at,
-          isGlobal: payload.new.is_global,
-          isGroup: payload.new.is_group,
-          participants: [],
-          messages: []
-        };
-        
-        setConversations(prev => [newConversation, ...prev]);
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations' }, (payload) => {
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === payload.new.id 
-              ? {
-                  ...conv,
-                  name: payload.new.name,
-                  lastMessage: payload.new.last_message,
-                  updatedAt: payload.new.updated_at,
-                  isGlobal: payload.new.is_global,
-                  isGroup: payload.new.is_group
-                } 
-              : conv
-          )
-        );
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'conversations' }, (payload) => {
-        setConversations(prev => 
-          prev.filter(conv => conv.id !== payload.old.id)
-        );
-      })
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'conversations' }, 
+        insertHandler)
+      .on('postgres_changes', 
+        { event: 'UPDATE', schema: 'public', table: 'conversations' },
+        updateHandler)
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'conversations' },
+        deleteHandler)
       .subscribe();
 
     return () => {
