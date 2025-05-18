@@ -94,7 +94,6 @@ const Auth = () => {
             title: "Sign in successful",
             description: "Welcome back!"
           });
-          navigate('/dashboard', { replace: true });
         }
       } else {
         const userData = {

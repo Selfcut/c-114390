@@ -28,9 +28,14 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   const handleReactionClick = (emoji: string) => {
     console.log("Reaction clicked:", emoji, "for message:", messageId);
     const reaction = reactions.find(r => r.emoji === emoji);
-    const currentUser = currentUserId || 'anonymous';
-    const hasReacted = reaction?.users.includes(currentUser);
+    const userIdToUse = currentUserId || 'anonymous';
     
+    if (!reaction) {
+      console.log("Reaction not found");
+      return;
+    }
+    
+    const hasReacted = reaction.users.includes(userIdToUse);
     console.log("Has reacted:", hasReacted, "currentUserId:", currentUserId);
     
     if (hasReacted && onReactionRemove) {
@@ -43,8 +48,8 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   return (
     <div className="flex flex-wrap gap-1 mt-1">
       {reactions.map((reaction, index) => {
-        const currentUser = currentUserId || 'anonymous';
-        const hasReacted = reaction.users.includes(currentUser);
+        const userIdToUse = currentUserId || 'anonymous';
+        const hasReacted = reaction.users.includes(userIdToUse);
         
         return (
           <Button

@@ -8,7 +8,7 @@ export const useMessageReactions = (initialMessages: ChatMessage[] = []) => {
   
   // Handle reaction add
   const handleReactionAdd = useCallback((messageId: string, emoji: string, userId: string = "current-user") => {
-    console.log("Adding reaction:", emoji, "to message:", messageId);
+    console.log("Adding reaction:", emoji, "to message:", messageId, "by user:", userId);
     setMessages(prevMessages => {
       const updatedMessages = addReactionToMessage(prevMessages, messageId, emoji, userId);
       console.log("Updated messages after adding reaction:", updatedMessages);
@@ -18,7 +18,7 @@ export const useMessageReactions = (initialMessages: ChatMessage[] = []) => {
   
   // Handle reaction remove
   const handleReactionRemove = useCallback((messageId: string, emoji: string, userId: string = "current-user") => {
-    console.log("Removing reaction:", emoji, "from message:", messageId);
+    console.log("Removing reaction:", emoji, "from message:", messageId, "by user:", userId);
     setMessages(prevMessages => {
       const updatedMessages = removeReactionFromMessage(prevMessages, messageId, emoji, userId);
       console.log("Updated messages after removing reaction:", updatedMessages);

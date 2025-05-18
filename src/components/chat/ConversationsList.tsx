@@ -27,13 +27,15 @@ export const ConversationsList = ({
   
   return (
     <div className="flex flex-col space-y-2">
-      <div className="flex items-center justify-between px-2">
+      <div 
+        className="flex items-center justify-between px-2 cursor-pointer" 
+        onClick={toggleExpand}
+      >
         <h3 className="text-sm font-medium">Rooms</h3>
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-7 w-7 p-0" 
-          onClick={toggleExpand}
+          className="h-7 w-7 p-0"
         >
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </Button>

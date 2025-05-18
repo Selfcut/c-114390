@@ -13,6 +13,7 @@ export const formatTime = (timestamp: string | Date) => {
       return 'Just now';
     }
     
+    // Format the date as a time string (hours and minutes)
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch (error) {
     console.error("Error formatting time:", error, timestamp);

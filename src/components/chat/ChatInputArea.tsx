@@ -129,10 +129,10 @@ export const ChatInputArea = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-            className="min-h-[40px] max-h-[80px] resize-none border-0 focus-visible:ring-0 pr-20 py-2"
+            className="min-h-[40px] max-h-[120px] resize-none border-0 focus-visible:ring-0 pr-20 py-2"
             style={{ height: `${textareaHeight}px` }}
           />
-          <div className="absolute right-2 bottom-1.5 flex items-center">
+          <div className="absolute right-2 bottom-2 flex items-center">
             <ChatInputTools
               onEmojiPickerToggle={handleEmojiPickerToggle}
               onGifPickerToggle={handleGifPickerToggle}
@@ -148,7 +148,7 @@ export const ChatInputArea = ({
           onClick={handleSendMessage}
           disabled={!message.trim()}
           size="sm"
-          className="flex-shrink-0 h-9"
+          className="flex-shrink-0 h-9 ml-1"
         >
           <Send size={16} className="mr-1" />
           {editingMessage ? "Save" : "Send"}
