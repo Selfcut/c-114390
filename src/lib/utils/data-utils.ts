@@ -1,167 +1,138 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 
-/**
- * Fetches user learning progress data
- * @param userId The user ID
- */
-export const fetchLearningProgress = async (userId: string) => {
+export async function fetchLearningProgress(userId: string) {
   try {
-    const { data, error } = await supabase
+    // Get user activities grouped by topic/category
+    const { data: activities, error } = await supabase
       .from('user_activities')
-      .select('event_type, metadata, created_at')
+      .select('*')
       .eq('user_id', userId)
-      .in('event_type', ['read', 'learned', 'completed', 'view'])
       .order('created_at', { ascending: false });
-
+      
     if (error) {
-      console.error("Error fetching learning progress:", error);
+      console.error('Error fetching learning progress:', error);
       return [];
     }
-
-    return data || [];
+    
+    return activities || [];
   } catch (error) {
-    console.error("Error in fetchLearningProgress:", error);
+    console.error('Error in fetchLearningProgress:', error);
     return [];
   }
-};
+}
 
-/**
- * Extracts topics from user activities
- */
-export const extractTopicsFromActivities = (activities: any[]) => {
-  const topics = new Map<string, {
-    activities: number,
-    lastActivity: Date,
-    progress: number
-  }>();
-
+export function extractTopicsFromActivities(activities: any[]) {
+  // Create a map to store topic data
+  const topics = new Map();
+  
   activities.forEach(activity => {
-    // Safely access metadata properties with proper type checking
-    const metadata = activity.metadata as Record<string, any> | null;
+    // Extract topic from activity metadata
+    let topic = null;
     
-    // Extract topic with safer type handling
-    let topic = 'General';
+    if (activity.metadata?.topic) {
+      topic = activity.metadata.topic;
+    } else if (activity.metadata?.category) {
+      topic = activity.metadata.category;
+    } else if (activity.metadata?.section) {
+      topic = activity.metadata.section;
+    }
     
-    if (metadata && typeof metadata === 'object') {
-      if (typeof metadata.topic === 'string') {
-        topic = metadata.topic;
-      } else if (typeof metadata.category === 'string') {
-        topic = metadata.category;
-      } else if (typeof metadata.section === 'string') {
-        topic = metadata.section;
+    // If we found a topic, update its data in the map
+    if (topic) {
+      if (!topics.has(topic)) {
+        topics.set(topic, {
+          activities: 1,
+          lastActivity: new Date(activity.created_at),
+          progress: 15 // Start with some progress for a single activity
+        });
+      } else {
+        const topicData = topics.get(topic);
+        topicData.activities += 1;
+        
+        // Update last activity date if this one is more recent
+        const activityDate = new Date(activity.created_at);
+        if (activityDate > topicData.lastActivity) {
+          topicData.lastActivity = activityDate;
+        }
+        
+        // Calculate progress based on number of activities (cap at 100%)
+        topicData.progress = Math.min(100, topicData.activities * 15);
       }
     }
-    
-    if (!topics.has(topic)) {
-      topics.set(topic, { 
-        activities: 0, 
-        lastActivity: new Date(activity.created_at),
-        progress: 0
-      });
-    }
-    
-    const topicData = topics.get(topic)!;
-    topicData.activities += 1;
-    
-    const activityDate = new Date(activity.created_at);
-    if (activityDate > topicData.lastActivity) {
-      topicData.lastActivity = activityDate;
-    }
-    
-    // Calculate progress (more activities = more progress, max 100)
-    topicData.progress = Math.min(100, topicData.activities * 20);
   });
-
-  return topics;
-};
-
-/**
- * Creates progress data items from topics map
- */
-export const createProgressDataFromTopics = (topics: Map<string, {
-  activities: number,
-  lastActivity: Date,
-  progress: number
-}>) => {
-  // Create progress data based on topics
-  return Array.from(topics.entries()).map(([topic, data], index) => {
-    // Choose icon based on topic name
-    const icons = ["book", "brain", "target", "clock", "award", "trend"];
-    const iconIndex = Math.abs(topic.charCodeAt(0) + topic.length) % icons.length;
-    
-    return {
-      id: (index + 1).toString(),
-      title: topic,
-      description: `${data.activities} learning activities`,
-      progress: data.progress,
-      icon: icons[iconIndex],
-      recentActivity: `Last activity: ${new Date(data.lastActivity).toLocaleDateString()}`,
-      streakDays: data.activities > 2 ? Math.max(1, Math.floor(data.activities / 2)) : 0
-    };
-  });
-};
-
-/**
- * Adds default learning topics if none exist
- */
-export const addDefaultTopics = () => {
-  const defaultTopics = ['Mathematics & Logic', 'Philosophy', 'Physics', 'Computer Science'];
-  const currentDate = new Date().toLocaleDateString();
   
-  return defaultTopics.map((topic, index) => ({
-    id: (index + 1000).toString(),
-    title: topic,
-    description: 'Begin your learning journey',
-    progress: 0,
-    icon: ["book", "brain", "target", "clock"][index % 4],
-    recentActivity: `No recent activity`,
-    streakDays: 0
-  }));
-};
+  return topics;
+}
 
-/**
- * Fetches user profile data from Supabase
- */
-export const fetchUserProfile = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-      
-    if (error) {
-      console.error("Error fetching user profile:", error);
-      return null;
+export function createProgressDataFromTopics(topics: Map<string, any>) {
+  const progressData = [];
+  let idCounter = 1;
+  
+  // Convert topics map to progress data array
+  for (const [topic, data] of topics.entries()) {
+    // Skip topics with very little progress
+    if (data.activities < 2) continue;
+    
+    // Create a description based on topic and activity count
+    const description = `${data.activities} activities`;
+    
+    // Calculate streak days (placeholder logic - would need actual streak calculation)
+    const streakDays = data.activities > 5 ? Math.floor(data.activities / 2) : null;
+    
+    // Determine icon based on topic name
+    let icon = "book";
+    if (topic.toLowerCase().includes("quiz") || topic.toLowerCase().includes("test")) {
+      icon = "award";
+    } else if (
+      topic.toLowerCase().includes("watch") || 
+      topic.toLowerCase().includes("video") ||
+      topic.toLowerCase().includes("course")
+    ) {
+      icon = "clock";
     }
     
-    return data;
-  } catch (error) {
-    console.error("Error in fetchUserProfile:", error);
-    return null;
+    progressData.push({
+      id: `topic-${idCounter++}`,
+      title: topic,
+      description,
+      progress: data.progress,
+      icon,
+      streakDays
+    });
   }
-};
+  
+  // Sort by progress (descending)
+  progressData.sort((a, b) => b.progress - a.progress);
+  
+  return progressData;
+}
 
-/**
- * Updates user profile in Supabase
- */
-export const updateUserProfile = async (userId: string, updates: any) => {
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
-      
-    if (error) {
-      console.error("Error updating user profile:", error);
-      return { success: false, error };
+export function addDefaultTopics() {
+  return [
+    {
+      id: 'default-1',
+      title: 'Mathematics & Logic',
+      progress: 65,
+      description: 'Advanced Set Theory',
+      icon: 'book',
+      streakDays: 12
+    },
+    {
+      id: 'default-2',
+      title: 'Philosophy',
+      progress: 38,
+      description: 'Ethics & Moral Philosophy',
+      icon: 'award',
+      streakDays: 7
+    },
+    {
+      id: 'default-3',
+      title: 'Physics',
+      progress: 27,
+      description: 'Quantum Mechanics Basics',
+      icon: 'clock',
+      streakDays: 3
     }
-    
-    return { success: true };
-  } catch (error) {
-    console.error("Error in updateUserProfile:", error);
-    return { success: false, error };
-  }
-};
+  ];
+}

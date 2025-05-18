@@ -13,149 +13,161 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  
-  // Create supabase client with admin privileges
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
   try {
-    // Extract auth token from request and get the current user
+    // Get environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const adminSecretKey = Deno.env.get('ADMIN_SECRET_KEY') || '';
+
+    // Create Supabase admin client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get authorization header from the request
     const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    
-    let currentUserId = '';
-    
-    if (token) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError) throw authError;
-      if (user) {
-        currentUserId = user.id;
-        console.log('Current user ID:', currentUserId);
-      }
+
+    // Validate the request has an auth header
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Missing authorization header' 
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Find the user with username "polymath"
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', 'polymath')
-      .single();
-    
-    if (userError) {
-      // If user not found by username, search by email
-      const { data: emailUser, error: emailError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', 'snowly@protonmail.com') // Assuming this is the email
-        .single();
-        
-      if (emailError || !emailUser) {
-        // Try to use the current user's ID if no specific user found
-        if (currentUserId) {
-          console.log('Using current user as admin:', currentUserId);
-          const userId = currentUserId;
-          
-          // Update user role in profiles table
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ role: 'admin', isAdmin: true })
-            .eq('id', userId);
-          
-          if (profileError) throw profileError;
-          
-          // Force refresh the auth claims by updating the user's custom claims
-          await supabase.auth.admin.updateUserById(userId, {
-            app_metadata: { role: 'admin' }
-          });
-          
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              message: "Admin role assigned successfully to current user" 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        } else {
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              message: "User with username 'polymath' not found and no current user identified" 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-          );
-        }
-      } else {
-        userData = emailUser;
-      }
+    // Parse the JWT to get the user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user: callingUser }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !callingUser) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Invalid authentication token' 
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    // Try to parse the request body for specific user ID (optional)
+    let targetUserId = callingUser.id; // Default to the calling user
     
-    const userId = userData.id;
-    
-    // Update user role in profiles table
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ role: 'admin', isAdmin: true })
-      .eq('id', userId);
-    
-    if (profileError) throw profileError;
-    
-    // Check if user_roles table exists and if it does, update it
     try {
-      const { error: tableCheckError } = await supabase
+      const requestData = await req.json();
+      if (requestData && requestData.userId) {
+        targetUserId = requestData.userId;
+      }
+    } catch (e) {
+      // If parsing fails, just use the calling user's ID
+      console.log("No request body or unable to parse, using authenticated user ID");
+    }
+
+    // Check if user email contains "polymath" or if they're specifically allowed to be an admin
+    const userEmail = callingUser.email?.toLowerCase() || '';
+    const isPolymathEmail = userEmail.includes('polymath');
+    
+    // If the user is not a polymath email, check if they're trying to assign admin to someone else
+    if (!isPolymathEmail && targetUserId !== callingUser.id) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'You do not have permission to assign admin role' 
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // First, update the profiles table to set role = 'admin'
+    const { error: profileUpdateError } = await supabase
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', targetUserId);
+
+    if (profileUpdateError) {
+      console.error('Error updating profile:', profileUpdateError);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Failed to update profile role' 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user already has an admin role in user_roles
+    const { data: existingRole, error: roleCheckError } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', targetUserId)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (roleCheckError) {
+      console.error('Error checking existing roles:', roleCheckError);
+    }
+
+    // If user doesn't have an admin role already, add it
+    if (!existingRole) {
+      const { error: roleInsertError } = await supabase
         .from('user_roles')
-        .select('*')
-        .limit(1);
+        .insert({
+          user_id: targetUserId,
+          role: 'admin'
+        });
+
+      if (roleInsertError) {
+        console.error('Error inserting role:', roleInsertError);
         
-      if (!tableCheckError) {
-        // Table exists, check if user already has admin role
-        const { data: existingRole, error: checkError } = await supabase
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('role', 'admin');
-          
-        if (checkError) throw checkError;
-        
-        // If not exists, insert new role
-        if (!existingRole || existingRole.length === 0) {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({ user_id: userId, role: 'admin' });
-            
-          if (roleError) throw roleError;
-        }
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'Failed to insert admin role' 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-    } catch (err) {
-      // If table doesn't exist or other error, just continue
-      console.log('Note: user_roles table may not exist, continuing with profile update only');
     }
 
-    // Force refresh the auth claims by updating the user's custom claims
-    try {
-      await supabase.auth.admin.updateUserById(userId, {
-        app_metadata: { role: 'admin' }
-      });
-    } catch (err) {
-      console.log('Warning: Unable to update auth claims, user may need to re-login for changes to take effect');
+    // Update the user's auth claims to include admin role
+    // This requires service role key and is crucial for immediate auth changes
+    const { error: updateClaimsError } = await supabase.auth.admin.updateUserById(
+      targetUserId,
+      { app_metadata: { role: 'admin' } }
+    );
+
+    if (updateClaimsError) {
+      console.error('Error updating user claims:', updateClaimsError);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          warning: true,
+          message: 'Admin role assigned in database, but auth claims not updated. Please log out and log back in.' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
+    // Success response
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Admin role assigned successfully to user 'polymath'" 
+        message: 'Admin role assigned successfully' 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
-    console.error('Error assigning admin role:', error);
+
+  } catch (error) {
+    console.error('Unexpected error in assign-admin-role:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        message: error.message || 'An unexpected error occurred' 
       }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

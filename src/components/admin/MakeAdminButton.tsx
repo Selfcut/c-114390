@@ -12,24 +12,30 @@ export const MakeAdminButton = () => {
   const { user } = useAuth();
 
   const makeUserAdmin = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     try {
       // Call the assign-admin-role edge function
       const { data, error } = await supabase.functions.invoke('assign-admin-role', {
-        method: 'POST'
+        method: 'POST',
+        body: {
+          userId: user.id, // Pass the current user's ID
+          email: user.email // Also pass email for additional validation
+        }
       });
 
       if (error) {
         console.error('Error assigning admin role:', error);
         toast({
           title: "Error making user admin",
-          description: error.message,
+          description: error.message || "Could not assign admin role",
           variant: "destructive"
         });
         return;
       }
 
-      if (data.success) {
+      if (data?.success) {
         toast({
           title: "Success",
           description: data.message || "Admin role assigned successfully",
@@ -42,7 +48,7 @@ export const MakeAdminButton = () => {
       } else {
         toast({
           title: "Operation failed",
-          description: data.message || "Failed to assign admin role",
+          description: data?.message || "Failed to assign admin role",
           variant: "destructive"
         });
       }
@@ -58,8 +64,8 @@ export const MakeAdminButton = () => {
     }
   };
 
-  // Don't show button if user is already admin
-  if (user?.isAdmin) {
+  // Don't show button if user is already admin or not logged in
+  if (!user || user.isAdmin) {
     return null;
   }
 

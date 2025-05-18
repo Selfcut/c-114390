@@ -1,10 +1,12 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Award, Zap, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { calculateActivityStreak } from "@/lib/activity-tracker";
 
 interface UserWelcomeProps {
   userName: string;
@@ -27,6 +29,64 @@ export const UserWelcome = ({
   activityStreak,
   avatar
 }: UserWelcomeProps) => {
+  const [dailyGoals, setDailyGoals] = useState({
+    readArticle: false,
+    completeExercise: false, 
+    participateDiscussion: false
+  });
+  
+  useEffect(() => {
+    // Check for completed daily goals based on user activities
+    const checkDailyGoals = async () => {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const { data, error } = await supabase
+          .from('user_activities')
+          .select('event_type, metadata')
+          .gte('created_at', today.toISOString())
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error('Error fetching daily goals:', error);
+          return;
+        }
+        
+        // Check for article reading
+        const hasReadArticle = data?.some(activity => 
+          activity.event_type === 'view' && 
+          (activity.metadata?.section === 'library' || 
+           activity.metadata?.type === 'article' ||
+           activity.metadata?.topic)
+        );
+        
+        // Check for exercise completion
+        const hasCompletedExercise = data?.some(activity => 
+          activity.event_type === 'complete' || 
+          (activity.metadata?.action === 'exercise' || 
+           activity.metadata?.type === 'exercise')
+        );
+        
+        // Check for discussion participation
+        const hasParticipatedInDiscussion = data?.some(activity => 
+          activity.event_type === 'comment' || 
+          activity.event_type === 'post'
+        );
+        
+        setDailyGoals({
+          readArticle: hasReadArticle,
+          completeExercise: hasCompletedExercise,
+          participateDiscussion: hasParticipatedInDiscussion
+        });
+      } catch (err) {
+        console.error('Error checking daily goals:', err);
+      }
+    };
+    
+    checkDailyGoals();
+  }, []);
+  
   const progressPercentage = Math.min(100, Math.floor((xp / nextLevelXp) * 100));
 
   return (
@@ -70,7 +130,7 @@ export const UserWelcome = ({
                 <span className="text-muted-foreground text-sm">badges</span>
               </Button>
               
-              {activityStreak && (
+              {activityStreak !== undefined && (
                 <Button variant="outline" className="bg-muted/30 justify-start">
                   <Zap size={16} className="mr-2 text-amber-400" />
                   <span className="mr-1">{activityStreak}</span>
@@ -93,33 +153,65 @@ export const UserWelcome = ({
               <div className="space-y-3">
                 <div className="flex items-center">
                   <div className="w-5 h-5 mr-3 rounded-full border-2 border-green-500 flex items-center justify-center">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-3 h-3 text-green-500"
-                    >
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
+                    {dailyGoals.readArticle ? (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-3 h-3 text-green-500"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-transparent"></div>
+                    )}
                   </div>
                   <span className="text-sm">Read one article</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-5 h-5 mr-3 rounded-full border-2 border-primary flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  <div className={`w-5 h-5 mr-3 rounded-full border-2 ${dailyGoals.completeExercise ? 'border-green-500' : 'border-primary'} flex items-center justify-center`}>
+                    {dailyGoals.completeExercise ? (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-3 h-3 text-green-500"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    )}
                   </div>
                   <span className="text-sm">Complete daily exercise</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-5 h-5 mr-3 rounded-full border-2 border-muted-foreground"></div>
+                  <div className={`w-5 h-5 mr-3 rounded-full border-2 ${dailyGoals.participateDiscussion ? 'border-green-500' : 'border-muted-foreground'}`}>
+                    {dailyGoals.participateDiscussion && (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-3 h-3 text-green-500"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
                   <span className="text-sm">Participate in discussion</span>
                 </div>
               </div>
-              <Button className="w-full mt-3 bg-primary hover:bg-primary/90">
-                Continue Learning
+              <Button className="w-full mt-3 bg-primary hover:bg-primary/90" asChild>
+                <a href="/library">Continue Learning</a>
               </Button>
             </div>
           </div>
