@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Bell, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +13,7 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch notifications on component mount
   useEffect(() => {
     const fetchNotifications = async () => {
       setIsLoading(true);
@@ -34,7 +34,7 @@ const Notifications = () => {
     fetchNotifications();
   }, []);
 
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(() => {
     setNotifications(prevNotifications =>
       prevNotifications.map(notification => ({
         ...notification,
@@ -45,15 +45,15 @@ const Notifications = () => {
     toast({
       description: "All notifications marked as read",
     });
-  };
+  }, [toast]);
 
-  const markAsRead = (id: string) => {
+  const markAsRead = useCallback((id: string) => {
     setNotifications(prevNotifications =>
       prevNotifications.map(notification =>
         notification.id === id ? { ...notification, isRead: true } : notification
       )
     );
-  };
+  }, []);
 
   const getNotificationIcon = (type: string) => {
     switch(type) {

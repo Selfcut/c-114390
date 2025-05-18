@@ -8,7 +8,14 @@ import { AuthProvider } from "./lib/auth";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -17,7 +24,7 @@ function App() {
     // Simulate loading
     setTimeout(() => {
       setLoading(false);
-    }, 1000);
+    }, 500);
   }, []);
 
   return (

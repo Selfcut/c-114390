@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useCallback } from 'react';
 import { useContentFeed } from '@/hooks/useContentFeed';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
@@ -44,7 +45,11 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
   // Refetch when content type or manual refresh changes
   useEffect(() => {
     // Only run refetch when dependencies actually change, not on every render
-    refetch();
+    if (contentType || lastRefresh) {
+      refetch();
+    }
+    // Add refetch to dependencies to avoid lint warnings, but it won't cause infinite loops
+    // since refetch should be memoized in useContentFeed
   }, [contentType, lastRefresh, refetch]);
   
   // Filter items based on content type
@@ -53,7 +58,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     : feedItems.filter(item => item.type === contentType);
     
   // Handle authentication required actions
-  const handleAuthAction = (action: () => void) => {
+  const handleAuthAction = useCallback((action: () => void) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -63,18 +68,18 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
       return;
     }
     action();
-  };
+  }, [user, toast]);
   
-  const handleLikeWithAuth = (contentId: string, contentType: ContentItemType) => {
+  const handleLikeWithAuth = useCallback((contentId: string, contentType: ContentItemType) => {
     handleAuthAction(() => handleLike(contentId, contentType));
-  };
+  }, [handleAuthAction, handleLike]);
   
-  const handleBookmarkWithAuth = (contentId: string, contentType: ContentItemType) => {
+  const handleBookmarkWithAuth = useCallback((contentId: string, contentType: ContentItemType) => {
     handleAuthAction(() => handleBookmark(contentId, contentType));
-  };
+  }, [handleAuthAction, handleBookmark]);
   
   // Custom content click handler that can include analytics
-  const handleItemClick = (contentId: string, contentType: ContentItemType) => {
+  const handleItemClick = useCallback((contentId: string, contentType: ContentItemType) => {
     // Track content click
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);
@@ -89,7 +94,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
                    contentType === 'ai' ? `/ai-content/${contentId}` : '/';
       navigate(path);
     }
-  };
+  }, [handleContentClick, navigate]);
 
   // Error state
   if (error) {

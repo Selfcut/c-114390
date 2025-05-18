@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,23 +97,24 @@ export const NotificationsDropdown = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      setIsLoading(true);
-      
-      try {
-        // In a real app, we would fetch notifications from Supabase
-        // For now, we'll use mock data
-        const mockNotifications = getMockNotifications().slice(0, 4); // Show fewer in dropdown
-        
-        setNotifications(mockNotifications);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Memoize the fetch notifications function
+  const fetchNotifications = useCallback(async () => {
+    setIsLoading(true);
     
+    try {
+      // In a real app, we would fetch notifications from Supabase
+      // For now, we'll use mock data
+      const mockNotifications = getMockNotifications().slice(0, 4); // Show fewer in dropdown
+      
+      setNotifications(mockNotifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
     fetchNotifications();
     
     // Set up a realtime subscription for new notifications
@@ -158,12 +159,12 @@ export const NotificationsDropdown = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [user, toast]);
+  }, [user, toast, fetchNotifications]);
   
   // Count unread notifications
   const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
 
-  const markAllNotificationsAsRead = () => {
+  const markAllNotificationsAsRead = useCallback(() => {
     setNotifications(prevNotifications =>
       prevNotifications.map(notification => ({
         ...notification,
@@ -174,9 +175,9 @@ export const NotificationsDropdown = () => {
     toast({
       description: "All notifications marked as read",
     });
-  };
+  }, [toast]);
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = useCallback((notification: Notification) => {
     // Mark as read
     setNotifications(notifications.map(n => 
       n.id === notification.id ? { ...n, isRead: true } : n
@@ -188,7 +189,7 @@ export const NotificationsDropdown = () => {
     }
     
     // Close dropdown (will happen automatically due to clicking)
-  };
+  }, [notifications, navigate]);
 
   return (
     <DropdownMenu>
