@@ -169,7 +169,7 @@ export const ConversationsList = ({
                   key={convo.id}
                   conversation={convo}
                   isSelected={selectedConversation === convo.id}
-                  onSelect={onSelectConversation}
+                  onClick={() => onSelectConversation(convo.id)}
                 />
               ))
             ) : (

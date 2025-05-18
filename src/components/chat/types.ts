@@ -29,7 +29,7 @@ export interface ConversationItem {
   id: string;
   name: string;
   lastMessage?: string;
-  lastActivityAt: string;
+  lastActivityAt?: string;
   unreadCount?: number;
   participants?: Array<{
     id: string;

@@ -26,8 +26,8 @@ const ForumPost = () => {
 
   // Handle upvoting the post
   const handleUpvotePost = async () => {
-    if (discussion) {
-      const updatedDiscussion = await handleUpvote(user, discussion);
+    if (discussion && user) {
+      await handleUpvote(user, discussion);
       // The hook handles updating the state
     }
   };

@@ -9,12 +9,14 @@ interface ConversationItemProps {
   conversation: ConversationItemType;
   isSelected: boolean;
   onClick: () => void;
+  onSelect?: (id: string) => void;
 }
 
 export const ConversationItem: React.FC<ConversationItemProps> = ({
   conversation,
   isSelected,
-  onClick
+  onClick,
+  onSelect
 }) => {
   // Format the last activity time
   const formatLastActivity = (timestamp: string) => {
@@ -35,12 +37,19 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       ? formatLastActivity(conversation.updatedAt)
       : '';
 
+  const handleClick = () => {
+    onClick();
+    if (onSelect) {
+      onSelect(conversation.id);
+    }
+  };
+
   return (
     <div 
       className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
         isSelected ? 'bg-accent' : 'hover:bg-accent/50'
       }`}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <Avatar className="h-10 w-10">
         <AvatarImage src={conversation.avatar} />

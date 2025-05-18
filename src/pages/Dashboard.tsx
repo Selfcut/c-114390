@@ -1,403 +1,426 @@
-
-import { useEffect, useState } from 'react';
-import { PageLayout } from '@/components/layouts/PageLayout'; 
-import { useToast } from '@/hooks/use-toast';
-import { Calendar, BarChart3, BookOpen, Users, Lightbulb } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { PageLayout } from "@/components/layouts/PageLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/lib/auth";
-import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
-import { LearningProgress } from "@/components/dashboard/LearningProgress";
-import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
-import { CommunityActivity } from "@/components/dashboard/CommunityActivity";
-import { RecommendationsRow } from "../components/RecommendationsRow";
-import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getUserActivityStats } from "@/lib/utils/supabase-utils";
-import { trackActivity, calculateActivityStreak } from "@/lib/activity-tracker";
-import { fetchLearningProgress, extractTopicsFromActivities, createProgressDataFromTopics, addDefaultTopics } from "@/lib/utils/data-utils";
-import { UserWelcome } from "@/components/UserWelcome";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
-// Define interfaces for our data
-interface ProgressData {
-  id: string;
-  title: string;
-  description: string;
-  progress: number;
-  icon: string;
-  recentActivity?: string;
-  streakDays?: number;
-}
-
-interface ProfileData {
-  level?: number;
-  xp?: number;
-  nextLevelXp?: number;
-  badges?: number;
-  totalBadges?: number;
-  activityStreak?: number;
-}
-
-// TabNav component for dashboard sections
-const TabNav = ({ tabs, defaultTab, className = "" }: { 
-  tabs: { id: string; label: string; icon: React.ReactNode; content: React.ReactNode }[];
-  defaultTab: string;
-  className?: string;
-}) => {
-  const [activeTab, setActiveTab] = useState(defaultTab);
-
-  return (
-    <div className={`space-y-4 ${className}`}>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex overflow-x-auto bg-transparent space-x-2">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex items-center"
-            >
-              {tab.icon}
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {tabs.map((tab) => (
-          <TabsContent key={tab.id} value={tab.id}>
-            {tab.content}
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
-  );
-};
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  BookOpen, 
+  MessageSquare, 
+  Calendar, 
+  TrendingUp, 
+  Award, 
+  Clock, 
+  CheckCircle2, 
+  Bell, 
+  FileText,
+  ArrowRight,
+  BookMarked,
+  Users,
+  Lightbulb
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 
 const Dashboard = () => {
-  const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
-  const [progressData, setProgressData] = useState<ProgressData[]>([]);
-  const [profileData, setProfileData] = useState<ProfileData>({
-    level: 1,
-    xp: 0,
-    nextLevelXp: 100,
-    badges: 0,
-    totalBadges: 5,
-    activityStreak: 0
-  });
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    discussions: 0,
+    contributions: 0,
+    readingList: 0,
+    events: 0,
+    streak: 0,
+    karma: 0,
+    completedChallenges: 0
+  });
+  const [activities, setActivities] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
 
-  // Fetch real user activities and progress from Supabase
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!isAuthenticated || !user) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      
+    const fetchDashboardData = async () => {
       try {
-        // Record dashboard view
-        await trackActivity(user.id, 'view', { 
-          section: 'dashboard',
-          timestamp: new Date().toISOString()
-        });
+        setIsLoading(true);
         
-        // Use the getUserActivityStats utility function to get user stats
-        const stats = await getUserActivityStats(user.id);
+        if (!user) return;
         
-        // Calculate streak independently (more accurate)
-        const streak = await calculateActivityStreak(user.id);
+        // Fetch user stats
+        const { data: statsData, error: statsError } = await supabase
+          .from('user_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (statsError && statsError.code !== 'PGRST116') {
+          console.error('Error fetching stats:', statsError);
+        }
         
-        // If we have activity stats, use them
-        if (stats) {
-          setProfileData({
-            level: stats.level || 1,
-            xp: stats.xp || 0,
-            nextLevelXp: stats.nextLevelXp || 100,
-            badges: stats.badges || 0,
-            totalBadges: 5,
-            activityStreak: streak || stats.streak || 0
+        if (statsData) {
+          setStats({
+            discussions: statsData.discussions_count || 0,
+            contributions: statsData.contributions_count || 0,
+            readingList: statsData.reading_list_count || 0,
+            events: statsData.events_count || 0,
+            streak: statsData.streak || 0,
+            karma: statsData.karma || 0,
+            completedChallenges: statsData.completed_challenges || 0
           });
+        }
+        
+        // Fetch recent activities
+        const { data: activitiesData, error: activitiesError } = await supabase
+          .from('user_activities')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (activitiesError) {
+          console.error('Error fetching activities:', activitiesError);
         } else {
-          // Default values with streak
-          setProfileData(prev => ({
-            ...prev,
-            activityStreak: streak || 0
-          }));
-        }
-
-        // Fetch user learning data
-        const learningData = await fetchLearningProgress(user.id);
-        
-        // Get topics from activities
-        const topics = extractTopicsFromActivities(learningData);
-
-        // Get categories from quotes the user has interacted with
-        const { data: quoteData } = await supabase
-          .from('quotes')
-          .select('category')
-          .eq('user_id', user.id);
-        
-        // Add user quote categories to topics
-        if (quoteData && quoteData.length > 0) {
-          quoteData.forEach(quote => {
-            const category = quote.category;
-            if (!topics.has(category)) {
-              topics.set(category, { 
-                activities: 1, 
-                lastActivity: new Date(),
-                progress: 20
-              });
-            } else {
-              const topicData = topics.get(category)!;
-              topicData.activities += 1;
-              topicData.progress = Math.min(100, topicData.activities * 15);
-            }
-          });
+          setActivities(activitiesData || []);
         }
         
-        // Get knowledge entries the user has created
-        const { data: knowledgeData } = await supabase
-          .from('knowledge_entries')
-          .select('categories')
-          .eq('user_id', user.id);
+        // Fetch notifications
+        const { data: notificationsData, error: notificationsError } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('read', false)
+          .order('created_at', { ascending: false })
+          .limit(5);
           
-        // Add knowledge categories to topics
-        if (knowledgeData && knowledgeData.length > 0) {
-          knowledgeData.forEach(entry => {
-            if (entry.categories && Array.isArray(entry.categories)) {
-              entry.categories.forEach((category: string) => {
-                if (!topics.has(category)) {
-                  topics.set(category, { 
-                    activities: 2, // Worth more than regular activity
-                    lastActivity: new Date(),
-                    progress: 30
-                  });
-                } else {
-                  const topicData = topics.get(category)!;
-                  topicData.activities += 2;
-                  topicData.progress = Math.min(100, topicData.activities * 15);
-                }
-              });
-            }
-          });
+        if (notificationsError) {
+          console.error('Error fetching notifications:', notificationsError);
+        } else {
+          setNotifications(notificationsData || []);
         }
         
-        // Create progress data based on topics
-        let userProgressData = createProgressDataFromTopics(topics);
-        
-        // Ensure we have at least some progress items
-        if (userProgressData.length === 0) {
-          // If no real progress data, use default topics but make them look real
-          const defaultTopics = addDefaultTopics();
+        // Fetch recommendations
+        const { data: recommendationsData, error: recommendationsError } = await supabase
+          .from('recommendations')
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(3);
           
-          // For each default topic, create an activity to make it "real" for future visits
-          for (const topic of defaultTopics) {
-            await trackActivity(user.id, 'view', {
-              topic: topic.title,
-              section: 'learning',
-              type: 'topic'
-            });
-          }
-          
-          userProgressData = defaultTopics;
+        if (recommendationsError) {
+          console.error('Error fetching recommendations:', recommendationsError);
+        } else {
+          setRecommendations(recommendationsData || []);
         }
-        
-        setProgressData(userProgressData);
       } catch (error) {
-        console.error("Error in dashboard data fetching:", error);
-        toast({
-          title: "Error loading dashboard data",
-          description: "Please try refreshing the page",
-          variant: "destructive"
-        });
+        console.error('Dashboard data fetch error:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchUserData();
-    
-    // Set up a refresh interval if needed
-    const refreshInterval = setInterval(() => {
-      if (isAuthenticated && user) {
-        fetchUserData();
-      }
-    }, 5 * 60 * 1000); // Refresh every 5 minutes
-    
-    return () => clearInterval(refreshInterval);
-  }, [user, isAuthenticated, toast]);
+    fetchDashboardData();
+  }, [user]);
 
-  // Get user name with fallback
-  const userName = user?.name || user?.username || "Scholar";
+  // Example of how to render user avatar correctly
+  const renderUserAvatar = () => {
+    if (!user) return null;
+    
+    return (
+      <Avatar>
+        <AvatarImage src={user.avatar_url || user.avatar} />
+        <AvatarFallback>
+          {user.name?.charAt(0) || 'U'}
+        </AvatarFallback>
+      </Avatar>
+    );
+  };
 
-  // Get user badges based on activity and achievements
-  const fetchUserBadges = async () => {
-    if (!user) return [];
-    
-    try {
-      // Get badges based on user's activities
-      const { data: activityData } = await supabase
-        .from('user_activities')
-        .select('event_type, metadata')
-        .eq('user_id', user.id);
-        
-      if (!activityData) return [];
-      
-      // Count activities by type for badge criteria
-      const activityCounts: Record<string, number> = {};
-      activityData.forEach(activity => {
-        const type = activity.event_type;
-        activityCounts[type] = (activityCounts[type] || 0) + 1;
-      });
-      
-      // Define badge criteria
-      return [
-        { 
-          name: "Early Adopter", 
-          icon: "sparkles", 
-          achieved: true // Always give this one to make users feel good
-        },
-        { 
-          name: "Knowledge Seeker", 
-          icon: "book", 
-          achieved: (activityCounts['view'] || 0) >= 5
-        },
-        { 
-          name: "First Post", 
-          icon: "message", 
-          achieved: (activityCounts['post'] || 0) >= 1
-        },
-        { 
-          name: "Deep Thinker", 
-          icon: "brain", 
-          achieved: (activityCounts['comment'] || 0) >= 3
-        },
-        { 
-          name: "Community Builder", 
-          icon: "users", 
-          achieved: ((activityCounts['like'] || 0) + (activityCounts['comment'] || 0)) >= 10
-        }
-      ];
-    } catch (error) {
-      console.error('Error fetching user badges:', error);
-      return [];
-    }
-  };
-  
-  // Handle clicking on a learning card
-  const handleLearningCardClick = async (item: ProgressData) => {
-    toast({
-      title: "Learning content opened",
-      description: `You opened: ${item.title}`,
-    });
-    
-    // Record activity for opening learning content
-    if (user) {
-      await trackActivity(user.id, 'view', { 
-        topic: item.title, 
-        type: 'learning' 
-      });
-    }
-  };
-  
-  // Tabs for dashboard sections
-  const dashboardTabs = [
-    {
-      id: "progress",
-      label: "Learning Progress",
-      icon: <BarChart3 size={16} className="mr-1" />,
-      content: isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((_, i) => (
-            <div key={i} className="border rounded-lg p-6">
-              <div className="flex justify-between mb-4">
-                <div>
-                  <Skeleton className="h-5 w-36 mb-2" />
-                  <Skeleton className="h-4 w-48" />
-                </div>
-                <Skeleton className="h-10 w-10 rounded-full" />
-              </div>
-              <Skeleton className="h-2 w-full my-4" />
-              <Skeleton className="h-4 w-40 mt-4" />
+  const renderWelcomeCard = () => (
+    <Card className="col-span-full">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            {renderUserAvatar()}
+            <div>
+              <h2 className="text-2xl font-bold">Welcome back, {user?.name || 'Scholar'}</h2>
+              <p className="text-muted-foreground">Here's what's happening in your intellectual journey today</p>
             </div>
-          ))}
+          </div>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/profile">My Profile</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/forum">Join Discussions</Link>
+            </Button>
+          </div>
         </div>
-      ) : (
-        <LearningProgress 
-          progressData={progressData}
-          onCardClick={handleLearningCardClick}
-        />
-      )
-    },
-    {
-      id: "upcoming",
-      label: "Upcoming Events",
-      icon: <Calendar size={16} className="mr-1" />,
-      content: <UpcomingEvents />
-    },
-    {
-      id: "resources",
-      label: "Latest Resources",
-      icon: <BookOpen size={16} className="mr-1" />,
-      content: (
-        <div className="animate-fade-in">
-          <RecommendationsRow />
+      </CardContent>
+    </Card>
+  );
+
+  const renderStatsCards = () => (
+    <>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Discussions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.discussions}</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            <MessageSquare className="inline h-3 w-3 mr-1" />
+            Forum contributions
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Contributions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.contributions}</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            <FileText className="inline h-3 w-3 mr-1" />
+            Wiki edits & notes
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Reading List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.readingList}</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            <BookOpen className="inline h-3 w-3 mr-1" />
+            Books & articles
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.events}</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            <Calendar className="inline h-3 w-3 mr-1" />
+            In the next 30 days
+          </p>
+        </CardContent>
+      </Card>
+    </>
+  );
+
+  const renderProgressCard = () => (
+    <Card className="col-span-full">
+      <CardHeader>
+        <CardTitle>Your Progress</CardTitle>
+        <CardDescription>Track your intellectual journey</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm font-medium">Daily Streak</span>
+              <span className="text-sm text-muted-foreground">{stats.streak} days</span>
+            </div>
+            <Progress value={Math.min(stats.streak * 10, 100)} className="h-2" />
+            <p className="text-xs text-muted-foreground">
+              <Clock className="inline h-3 w-3 mr-1" />
+              Keep learning daily to increase your streak
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm font-medium">Knowledge Karma</span>
+              <span className="text-sm text-muted-foreground">{stats.karma} points</span>
+            </div>
+            <Progress value={Math.min(stats.karma / 10, 100)} className="h-2" />
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              Earn karma by helping others learn
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm font-medium">Challenges</span>
+              <span className="text-sm text-muted-foreground">{stats.completedChallenges}/10 completed</span>
+            </div>
+            <Progress value={(stats.completedChallenges / 10) * 100} className="h-2" />
+            <p className="text-xs text-muted-foreground">
+              <Award className="inline h-3 w-3 mr-1" />
+              Complete intellectual challenges to earn badges
+            </p>
+          </div>
         </div>
-      )
-    },
-    {
-      id: "community",
-      label: "Community Activity",
-      icon: <Users size={16} className="mr-1" />,
-      content: <CommunityActivity />
-    }
-  ];
+      </CardContent>
+    </Card>
+  );
+
+  const renderActivityAndNotifications = () => (
+    <Tabs defaultValue="activity" className="col-span-full md:col-span-2">
+      <TabsList>
+        <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+        <TabsTrigger value="notifications">
+          Notifications
+          {notifications.length > 0 && (
+            <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs flex items-center justify-center">
+              {notifications.length}
+            </Badge>
+          )}
+        </TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="activity" className="space-y-4 mt-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            </div>
+          ))
+        ) : activities.length > 0 ? (
+          activities.map((activity, i) => (
+            <div key={i} className="flex gap-3 items-start border-b pb-3 last:border-0">
+              <div className="bg-primary/10 p-2 rounded-full">
+                {activity.type === 'comment' && <MessageSquare className="h-5 w-5 text-primary" />}
+                {activity.type === 'read' && <BookOpen className="h-5 w-5 text-primary" />}
+                {activity.type === 'contribution' && <FileText className="h-5 w-5 text-primary" />}
+                {activity.type === 'event' && <Calendar className="h-5 w-5 text-primary" />}
+              </div>
+              <div>
+                <p className="text-sm">{activity.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>No recent activity to show</p>
+            <Button variant="link" asChild className="mt-2">
+              <Link to="/forum">Start participating in discussions</Link>
+            </Button>
+          </div>
+        )}
+        
+        {activities.length > 0 && (
+          <Button variant="outline" className="w-full" asChild>
+            <Link to="/profile">View All Activity</Link>
+          </Button>
+        )}
+      </TabsContent>
+      
+      <TabsContent value="notifications" className="space-y-4 mt-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            </div>
+          ))
+        ) : notifications.length > 0 ? (
+          notifications.map((notification, i) => (
+            <div key={i} className="flex gap-3 items-start border-b pb-3 last:border-0">
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Bell className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm">{notification.message}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="sr-only">Mark as read</span>
+              </Button>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>No new notifications</p>
+          </div>
+        )}
+        
+        {notifications.length > 0 && (
+          <Button variant="outline" className="w-full" asChild>
+            <Link to="/notifications">View All Notifications</Link>
+          </Button>
+        )}
+      </TabsContent>
+    </Tabs>
+  );
+
+  const renderRecommendations = () => (
+    <Card className="col-span-full md:col-span-1">
+      <CardHeader>
+        <CardTitle>Recommended for You</CardTitle>
+        <CardDescription>Based on your interests</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+            </div>
+          ))
+        ) : recommendations.length > 0 ? (
+          recommendations.map((rec, i) => (
+            <div key={i} className="border-b pb-3 last:border-0">
+              <div className="flex items-center gap-2 mb-1">
+                {rec.type === 'book' && <BookMarked className="h-4 w-4 text-primary" />}
+                {rec.type === 'discussion' && <MessageSquare className="h-4 w-4 text-primary" />}
+                {rec.type === 'person' && <Users className="h-4 w-4 text-primary" />}
+                {rec.type === 'idea' && <Lightbulb className="h-4 w-4 text-primary" />}
+                <span className="text-sm font-medium">{rec.title}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">{rec.description}</p>
+              <Button variant="link" size="sm" className="p-0 h-auto" asChild>
+                <Link to={rec.link}>
+                  Explore <ArrowRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>No recommendations yet</p>
+            <p className="text-xs mt-1">Complete your profile to get personalized recommendations</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <PageLayout>
-      <main className="py-8 px-6 md:px-12">
-        {isLoading ? (
-          <div className="mb-6 p-6 border rounded-lg">
-            <div className="flex justify-between">
-              <div>
-                <Skeleton className="h-7 w-48 mb-3" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <Skeleton className="h-16 w-16 rounded-full" />
-            </div>
-            <div className="flex gap-4 mt-6">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-        ) : (
-          <UserWelcome 
-            userName={userName}
-            level={profileData.level || 1}
-            xp={profileData.xp || 0}
-            nextLevelXp={profileData.nextLevelXp || 100}
-            badges={profileData.badges || 0}
-            totalBadges={5}
-            activityStreak={profileData.activityStreak}
-            avatar={user?.avatar}
-          />
-        )}
-        
-        <TabNav tabs={dashboardTabs} defaultTab="progress" className="mb-6" />
-        
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Lightbulb size={20} className="text-amber-400" />
-              Recent Activity
-              <Badge className="ml-2 bg-primary/20 text-primary">New</Badge>
-            </h2>
-          </div>
-          <ActivityFeed limit={10} />
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {renderWelcomeCard()}
+          {renderStatsCards()}
+          {renderProgressCard()}
+          {renderActivityAndNotifications()}
+          {renderRecommendations()}
         </div>
-      </main>
+      </div>
     </PageLayout>
   );
 };

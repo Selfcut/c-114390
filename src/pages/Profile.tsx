@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,7 +122,11 @@ const Profile = () => {
         };
       }
       
-      await updateProfile(updates);
+      const { error: updateError } = await updateProfile(updates);
+      
+      if (updateError) {
+        throw updateError;
+      }
       
       // Update local state
       setProfileData(prev => prev ? { ...prev, ...updates } : null);
@@ -130,6 +135,11 @@ const Profile = () => {
       await trackActivity(currentUser.id, 'update', { 
         section: 'profile',
         fields: Object.keys(updates).join(',')
+      });
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
       });
     } catch (err: any) {
       console.error("Error updating profile:", err);

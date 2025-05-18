@@ -70,7 +70,7 @@ export const UserMenu = () => {
             </Link>
           </DropdownMenuItem>
           
-          {user.role === 'admin' && (
+          {(user.role === 'admin' || user.isAdmin) && (
             <DropdownMenuItem asChild>
               <Link to="/admin" className="flex items-center cursor-pointer">
                 <Crown className="mr-2 h-4 w-4" />

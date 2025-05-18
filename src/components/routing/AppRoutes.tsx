@@ -1,5 +1,5 @@
 
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { LoadingScreen } from './LoadingScreen';
@@ -43,7 +43,7 @@ const RouteErrorFallback = () => (
 );
 
 export const AppRoutes = () => {
-  const { isLoading, user } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
   const isAdmin = user?.isAdmin || false;
   

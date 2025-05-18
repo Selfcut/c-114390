@@ -1,26 +1,21 @@
-
-import { useState, useEffect } from "react";
-import { useAdminStatus } from "./useAdminStatus";
-import { useChatMessages } from "./useChatMessages";
-import { useSpecialEffects } from "./useSpecialEffects";
-import { useRealtimeChatSubscription } from "./useRealtimeChatSubscription";
-import { useAutomatedMessages } from "./useAutomatedMessages";
-import { useChatActions } from "./useChatActions";
-import { ConversationItem } from "../types";
-import { useMessageUtils } from "@/hooks/chat/useMessageUtils";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { UserProfile } from "@/lib/auth/types";
+import { ChatMessage, ConversationItem } from "../types";
 
-interface UseChatSidebarStateProps {
+export interface UseChatSidebarStateProps {
   isOpen: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  user?: UserProfile | null;
 }
 
+// Implementation of the hook
 export const useChatSidebarState = ({ 
   isOpen,
-  messagesEndRef
+  messagesEndRef,
+  user
 }: UseChatSidebarStateProps) => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const { isAdmin } = useAdminStatus();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);

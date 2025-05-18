@@ -16,9 +16,9 @@ export const FullHeightChatSidebar = () => {
   
   // Use our new hook to manage all chat sidebar state
   const chatState = useChatSidebarState({
-    user,
     isOpen,
-    messagesEndRef
+    messagesEndRef,
+    user
   });
   
   return (
