@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './components/routing/AppRoutes';
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
+import { AuthProvider } from "./lib/auth";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -17,10 +18,12 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="vite-theme">
-        <AppRoutes />
-        <Toaster />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="light" storageKey="vite-theme">
+          <AppRoutes />
+          <Toaster />
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

@@ -41,7 +41,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
   };
 
   // Get content likes count
-  const fetchLikesCount = async (contentId: string) => {
+  const fetchLikesCount = async (contentId: string): Promise<void> => {
     setIsLoading(true);
     try {
       const { count, error } = await supabase
@@ -119,7 +119,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
   });
 
-  const toggleLike = (contentId: string) => {
+  const toggleLike = async (contentId: string): Promise<void> => {
     if (!user) {
       toast({
         title: 'Authentication Required',
@@ -129,7 +129,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
       return;
     }
     
-    toggleLikeMutation.mutate(contentId);
+    await toggleLikeMutation.mutateAsync(contentId);
   };
 
   return {
