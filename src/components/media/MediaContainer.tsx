@@ -58,12 +58,17 @@ export const MediaContainer = () => {
     }
   }, [user?.id, mediaType, sortBy, sortOrder, searchTerm]);
 
+  // Create the mediaData object with the correct structure
   const mediaData = {
-    // Correct the postsData structure to match what MediaContent expects
-    postsData: postsData || { posts: [], hasMore: false, total: 0, error: null },
+    postsData: postsData || { 
+      posts: [], 
+      hasMore: false, 
+      total: 0,
+      error: null 
+    },
     isLoading,
     isError,
-    error: error instanceof Error ? error : error ? new Error(String(error)) : null,
+    error: error instanceof Error ? error : new Error(error || "Unknown error"),
     refetch,
     loadMore
   };

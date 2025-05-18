@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -57,11 +56,11 @@ const WikiArticlePage = () => {
         if (article) {
           setArticle(article);
           
-          // Check if the user has liked this article
+          // Fix for checking user like
           if (isAuthenticated) {
-            // Use a variable to store the result instead of directly testing truthiness of void
-            const result = await checkUserLike(article.id);
-            setIsLiked(result);
+            // Store the result before using it
+            const hasLiked = await checkUserLike(article.id);
+            setIsLiked(hasLiked);
           }
         } else {
           setError("Article not found");

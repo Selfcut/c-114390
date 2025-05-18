@@ -4,10 +4,23 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MediaPost, validateMediaType } from '@/utils/mediaUtils';
 import { CreatePostData } from './types';
-import { MediaPosts } from './useFetchMediaPosts';
+
+export interface MediaPosts {
+  posts: MediaPost[];
+  hasMore: boolean;
+  total: number;
+  error: string | null;
+}
+
+export interface MediaQueryResult {
+  posts: MediaPost[];
+  hasMore: boolean;
+  total: number;
+  error: string | null;
+}
 
 export interface UseMediaPostsReturn {
-  postsData: MediaPosts | undefined;
+  postsData: MediaQueryResult;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -33,7 +46,7 @@ export const useMediaPosts = (
   const pageSize = 10;
   
   // Fetch media posts
-  const fetchPosts = async (): Promise<MediaPosts> => {
+  const fetchPosts = async (): Promise<MediaQueryResult> => {
     try {
       let query = supabase
         .from('media_posts')
@@ -136,7 +149,7 @@ export const useMediaPosts = (
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `media/${fileName}`;
         
-        // Use the upload method without onUploadProgress as it's not supported
+        // Use the upload method without unsupported options
         const { error: uploadError } = await supabase.storage
           .from('content')
           .upload(filePath, postData.file, {
@@ -190,10 +203,15 @@ export const useMediaPosts = (
   }, []);
   
   return {
-    postsData: data,
+    postsData: data || {
+      posts: [],
+      hasMore: false,
+      total: 0,
+      error: null
+    },
     isLoading: isLoading || isPending,
     isError: !!error,
-    error: error instanceof Error ? error : null,
+    error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,
     loadMore,
     hasMore,
