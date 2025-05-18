@@ -9,6 +9,7 @@ import { useChatTextarea } from "@/hooks/useChatTextarea";
 import { MessageEditingIndicator } from "./input/MessageEditingIndicator";
 import { MessageReplyIndicator } from "./input/MessageReplyIndicator";
 import { ChatInputTools } from "./input/ChatInputTools";
+import { AdminEffects } from "./AdminEffects";
 
 interface ChatInputAreaProps {
   message: string;
@@ -25,6 +26,8 @@ interface ChatInputAreaProps {
   onCancelReply?: () => void;
   isAdmin?: boolean;
   onAdminEffectSelect?: (effectType: string, content?: string) => void;
+  onEmojiSelect: (emoji: string) => void;
+  onGifSelect: (gif: { url: string; alt: string }) => void;
 }
 
 export const ChatInputArea = ({
@@ -37,7 +40,9 @@ export const ChatInputArea = ({
   onCancelEdit,
   onCancelReply,
   isAdmin = false,
-  onAdminEffectSelect
+  onAdminEffectSelect,
+  onEmojiSelect,
+  onGifSelect
 }: ChatInputAreaProps) => {
   const { textareaRef, textareaHeight } = useChatTextarea({ 
     message,
@@ -64,13 +69,12 @@ export const ChatInputArea = ({
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setMessage(message + emoji);
+    onEmojiSelect(emoji);
     setShowEmojiPicker(false);
   };
 
   const handleGifSelect = (gif: { url: string; alt: string }) => {
-    const gifMarkdown = `![${gif.alt}](${gif.url})`;
-    setMessage(message + " " + gifMarkdown);
+    onGifSelect(gif);
     setShowGifPicker(false);
   };
 
@@ -105,16 +109,14 @@ export const ChatInputArea = ({
           
         {/* Controls positioned below textarea */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-            <GifPicker onGifSelect={handleGifSelect} />
-            {isAdmin && onAdminEffectSelect && (
-              <AdminEffects 
-                onEffectSelect={onAdminEffectSelect} 
-                isAdmin={isAdmin}
-              />
-            )}
-          </div>
+          <ChatInputTools
+            onEmojiPickerToggle={handleEmojiPickerToggle}
+            onGifPickerToggle={handleGifPickerToggle}
+            showEmojiPicker={showEmojiPicker}
+            showGifPicker={showGifPicker}
+            isAdmin={isAdmin}
+            onAdminEffectSelect={onAdminEffectSelect}
+          />
 
           {/* Send button */}
           <Button 
