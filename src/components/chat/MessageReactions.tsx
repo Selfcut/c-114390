@@ -11,7 +11,7 @@ interface Reaction {
 interface MessageReactionsProps {
   reactions: Reaction[];
   messageId: string;
-  currentUserId: string;
+  currentUserId: string | null;
   onReactionAdd?: (messageId: string, emoji: string) => void;
   onReactionRemove?: (messageId: string, emoji: string) => void;
 }
@@ -23,6 +23,8 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   onReactionAdd,
   onReactionRemove
 }) => {
+  if (!reactions || reactions.length === 0) return null;
+  
   const handleReactionClick = (emoji: string, hasReacted: boolean) => {
     if (hasReacted && onReactionRemove) {
       onReactionRemove(messageId, emoji);
@@ -32,9 +34,9 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-1 ml-2">
+    <div className="flex flex-wrap gap-1 mt-1">
       {reactions.map((reaction, index) => {
-        const hasReacted = reaction.users.includes(currentUserId);
+        const hasReacted = reaction.users.includes(currentUserId || '');
         
         return (
           <Button

@@ -46,7 +46,9 @@ export const ChatInputArea = ({
 }: ChatInputAreaProps) => {
   const { textareaRef, textareaHeight } = useChatTextarea({ 
     message,
-    isEditing: !!editingMessage 
+    isEditing: !!editingMessage,
+    minHeight: 40,
+    maxHeight: 80 // Reduced from 120 to 80
   });
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -107,7 +109,7 @@ export const ChatInputArea = ({
   };
 
   return (
-    <div className="border-t border-border p-3 bg-background">
+    <div className="border-t border-border p-2 bg-background"> {/* Reduced padding from p-3 to p-2 */}
       {/* Editing indicator */}
       {editingMessage && onCancelEdit && (
         <MessageEditingIndicator onCancelEdit={onCancelEdit} />
@@ -129,7 +131,7 @@ export const ChatInputArea = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-            className="min-h-[40px] max-h-[120px] resize-none pr-24 py-2"
+            className="min-h-[40px] max-h-[80px] resize-none pr-24 py-2 text-sm" // Added text-sm to make text smaller
             style={{ height: `${textareaHeight}px` }}
           />
           <ChatInputTools

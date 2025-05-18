@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -130,7 +129,7 @@ const Events = () => {
 
   return (
     <PageLayout>
-      <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         <EventsHeader onCreateEvent={handleCreateEventClick} />
         <EventsFilters 
           searchQuery={searchQuery}
@@ -139,7 +138,7 @@ const Events = () => {
           onCategoryChange={setSelectedCategory}
         />
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
           <div className="lg:col-span-1">
             <div className="bg-card border rounded-lg shadow-sm p-4">
               <Calendar

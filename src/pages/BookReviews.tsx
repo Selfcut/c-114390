@@ -16,7 +16,7 @@ const BookReviews = () => {
   
   return (
     <PageLayout>
-      <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         <BookReviewsHeader onCreateReview={handleCreateReview} />
         <BookReviewsFilters 
           searchQuery={searchQuery}
