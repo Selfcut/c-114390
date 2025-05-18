@@ -14,8 +14,8 @@ interface ChatContentProps {
   onMessageReply: (messageId: string) => void;
   onReactionAdd: (messageId: string, emoji: string) => void;
   onReactionRemove: (messageId: string, emoji: string) => void;
-  inputMessage: string;
-  setInputMessage: (message: string) => void;
+  message: string;
+  setMessage: (message: string) => void;
   handleSendMessage: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   editingMessageId: string | null;
@@ -44,8 +44,8 @@ export const ChatContent = ({
   onMessageReply,
   onReactionAdd,
   onReactionRemove,
-  inputMessage,
-  setInputMessage,
+  message,
+  setMessage,
   handleSendMessage,
   handleKeyDown,
   editingMessageId,
@@ -76,18 +76,18 @@ export const ChatContent = ({
       />
       
       <ChatInputSection
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
+        message={message}
+        setMessage={setMessage}
         handleSendMessage={handleSendMessage}
         handleKeyDown={handleKeyDown}
         editingMessageId={editingMessageId}
         replyingToMessage={replyingToMessage}
         onCancelEdit={onCancelEdit}
         onCancelReply={onCancelReply}
-        onEmojiSelect={onEmojiSelect}
-        onGifSelect={onGifSelect}
         isAdmin={isAdmin}
         onAdminEffectSelect={onAdminEffectSelect}
+        onEmojiSelect={onEmojiSelect}
+        onGifSelect={onGifSelect}
       />
     </div>
   );

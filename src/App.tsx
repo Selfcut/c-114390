@@ -12,16 +12,16 @@ import Chat from "./pages/Chat";
 import Media from "./pages/Media";
 import Problems from "./pages/Problems";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { SidebarLayout } from "./components/layouts/SidebarLayout";
+import { PageLayout } from "./components/layouts/PageLayout";
 import { Toaster } from "./components/ui/toaster";
-import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { ThemeProvider } from "./components/providers/ThemeProvider";
 
 function App() {
   return (
     <ThemeProvider>
       <ErrorBoundary>
         <Router>
-          <SidebarLayout>
+          <PageLayout>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -36,7 +36,7 @@ function App() {
               <Route path="/problems" element={<Problems />} />
               <Route path="*" element={<Index />} />
             </Routes>
-          </SidebarLayout>
+          </PageLayout>
         </Router>
         <Toaster />
       </ErrorBoundary>

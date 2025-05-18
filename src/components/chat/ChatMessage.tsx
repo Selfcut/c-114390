@@ -109,11 +109,7 @@ export const ChatMessage = ({
           {message.reactions && message.reactions.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               <MessageReactions
-                reactions={message.reactions}
                 messageId={message.id}
-                currentUserId={currentUserId || ''}
-                onReactionAdd={onReactionAdd}
-                onReactionRemove={onReactionRemove}
               />
             </div>
           )}

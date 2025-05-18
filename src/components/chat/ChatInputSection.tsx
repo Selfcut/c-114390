@@ -9,7 +9,7 @@ interface ChatInputSectionProps {
   setMessage: (message: string) => void;
   handleSendMessage: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  isSubmitting: boolean;
+  isSubmitting?: boolean;
   editingMessageId: string | null;
   replyingToMessage: {
     id: string;
@@ -29,7 +29,7 @@ export const ChatInputSection = ({
   setMessage,
   handleSendMessage,
   handleKeyDown,
-  isSubmitting,
+  isSubmitting = false,
   editingMessageId,
   replyingToMessage,
   onCancelEdit,
