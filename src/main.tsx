@@ -11,7 +11,7 @@ document.title = "Polymath - Intellectual Science Community";
 // Initialize theme as early as possible to avoid flash of wrong theme
 const initTheme = () => {
   try {
-    const storedTheme = localStorage.getItem('app-theme') || 'dark';
+    const storedTheme = localStorage.getItem('vite-theme') || 'light';
     if (storedTheme === 'system') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       document.documentElement.classList.add(isDark ? 'dark' : 'light');
@@ -19,9 +19,9 @@ const initTheme = () => {
       document.documentElement.classList.add(storedTheme);
     }
   } catch (error) {
-    // Fallback to dark mode if localStorage is not available
-    document.documentElement.classList.add('dark');
-    console.warn("Error accessing localStorage for theme, defaulting to dark mode");
+    // Fallback to light mode if localStorage is not available
+    document.documentElement.classList.add('light');
+    console.warn("Error accessing localStorage for theme, defaulting to light mode");
   }
 };
 

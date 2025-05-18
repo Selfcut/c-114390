@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Bell, MessageSquare } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,8 +28,6 @@ export const NotificationsDropdown = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
-    if (!user) return;
-    
     const fetchNotifications = async () => {
       setIsLoading(true);
       
@@ -78,18 +76,23 @@ export const NotificationsDropdown = () => {
     fetchNotifications();
     
     // Set up a realtime subscription for new notifications
-    const channel = supabase
-      .channel('public:notifications')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, 
-        (payload) => {
-          console.log('New notification:', payload);
-          // In a real app, we would handle new notifications here
-        })
-      .subscribe();
+    let channel;
+    if (user && user.id) {
+      channel = supabase
+        .channel('public:notifications')
+        .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, 
+          (payload) => {
+            console.log('New notification:', payload);
+            // In a real app, we would handle new notifications here
+          })
+        .subscribe();
+    }
     
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user]);
   

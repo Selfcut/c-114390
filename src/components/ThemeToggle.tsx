@@ -10,9 +10,7 @@ export function ThemeToggle() {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    // Ensure the class is properly applied to the document
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(newTheme);
+    console.log(`Theme toggled to: ${newTheme}`);
   };
 
   return (
