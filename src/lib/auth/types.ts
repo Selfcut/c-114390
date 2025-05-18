@@ -11,13 +11,18 @@ export interface UserProfile {
   website?: string;
   avatar?: string;
   avatar_url?: string;
-  name?: string; // Add name field to match the UserProfile in user.ts
-  role?: UserRole | string; // Allow string for compatibility
+  name?: string;
+  role?: UserRole | string;
   created_at?: string;
   updated_at?: string;
   status?: UserStatus;
   isGhostMode?: boolean;
   isAdmin?: boolean;
+  notificationSettings?: {
+    desktopNotifications: boolean;
+    soundNotifications: boolean;
+    emailNotifications: boolean;
+  };
 }
 
 export interface AuthState {
@@ -29,7 +34,7 @@ export interface AuthState {
 
 export interface AuthContextValue extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, userData?: Partial<UserProfile>) => Promise<{ error: Error | null; data: any | null }>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null; data: any | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;

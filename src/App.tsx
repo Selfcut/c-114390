@@ -39,7 +39,7 @@ function App() {
                 <Route path="/book-reviews" element={<PageLayout><BookReviews /></PageLayout>} />
                 <Route path="/book-reviews/:id" element={<PageLayout><BookReviewDetail /></PageLayout>} />
                 <Route path="/chat" element={<PageLayout><Chat /></PageLayout>} />
-                <Route path="/media" element={<PageLayout><Media /></PageLayout>} />
+                <Route path="/media" element={<Media />} />
                 <Route path="/problems" element={<PageLayout><Problems /></PageLayout>} />
                 <Route path="/events" element={<PageLayout><Events /></PageLayout>} />
                 <Route path="/quotes" element={<PageLayout><Quotes /></PageLayout>} />
