@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,42 +10,88 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock notifications - in a real app, these would come from an API or database
-const mockNotifications = [
-  {
-    id: 'notif1',
-    type: 'mention',
-    content: 'PhilosophyLover mentioned you in Systems Thinking discussion',
-    isRead: false,
-    timestamp: new Date(Date.now() - 15 * 60 * 1000) // 15 mins ago
-  },
-  {
-    id: 'notif2',
-    type: 'reply',
-    content: 'WisdomSeeker replied to your comment',
-    isRead: false,
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
-  },
-  {
-    id: 'notif3',
-    type: 'like',
-    content: 'KnowledgeExplorer liked your quote',
-    isRead: true,
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
-  },
-  {
-    id: 'notif4',
-    type: 'system',
-    content: 'Welcome to Polymath! Complete your profile to get started.',
-    isRead: true,
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
-  }
-];
+interface Notification {
+  id: string;
+  type: 'mention' | 'reply' | 'like' | 'system';
+  content: string;
+  isRead: boolean;
+  timestamp: Date;
+}
 
 export const NotificationsDropdown = () => {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchNotifications = async () => {
+      setIsLoading(true);
+      
+      try {
+        // In a real app, we would fetch notifications from Supabase
+        // For now, we'll use mock data
+        const mockNotifications = [
+          {
+            id: 'notif1',
+            type: 'mention' as const,
+            content: 'PhilosophyLover mentioned you in Systems Thinking discussion',
+            isRead: false,
+            timestamp: new Date(Date.now() - 15 * 60 * 1000) // 15 mins ago
+          },
+          {
+            id: 'notif2',
+            type: 'reply' as const,
+            content: 'WisdomSeeker replied to your comment',
+            isRead: false,
+            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
+          },
+          {
+            id: 'notif3',
+            type: 'like' as const,
+            content: 'KnowledgeExplorer liked your quote',
+            isRead: true,
+            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+          },
+          {
+            id: 'notif4',
+            type: 'system' as const,
+            content: 'Welcome to Polymath! Complete your profile to get started.',
+            isRead: true,
+            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+          }
+        ];
+        
+        setNotifications(mockNotifications);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchNotifications();
+    
+    // Set up a realtime subscription for new notifications
+    const channel = supabase
+      .channel('public:notifications')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, 
+        (payload) => {
+          console.log('New notification:', payload);
+          // In a real app, we would handle new notifications here
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
   
   // Count unread notifications
   const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
@@ -103,7 +149,11 @@ export const NotificationsDropdown = () => {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {notifications.length === 0 ? (
+        {isLoading ? (
+          <div className="py-4 flex justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          </div>
+        ) : notifications.length === 0 ? (
           <div className="py-6 px-2 text-center">
             <div className="flex justify-center mb-2">
               <Bell className="h-12 w-12 text-muted-foreground opacity-20" />
