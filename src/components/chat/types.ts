@@ -15,7 +15,6 @@ export interface ChatMessage {
     senderName: string;
   };
   
-  // Add these missing properties to fix the errors
   reactions?: Array<{
     emoji: string;
     count: number;
@@ -37,6 +36,13 @@ export interface ConversationItem {
     name: string;
     avatar?: string;
   }>;
+  
+  // Adding missing properties that are used in the code
+  avatar?: string;
+  isGlobal?: boolean;
+  isGroup?: boolean;
+  unread?: number;
+  updatedAt?: string;
 }
 
 export interface Conversation {
@@ -45,4 +51,14 @@ export interface Conversation {
   participants: string[];
   createdAt: string;
   updatedAt: string;
+  
+  // Adding missing properties that are used in the code
+  name?: string;
+  last_message?: string;
+  lastMessage?: string;
+  is_global?: boolean;
+  isGlobal?: boolean;
+  is_group?: boolean;
+  isGroup?: boolean;
+  updated_at?: string;
 }

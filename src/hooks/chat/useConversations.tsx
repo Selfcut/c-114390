@@ -26,10 +26,13 @@ export const useConversations = () => {
         const formattedConversations: Conversation[] = data.map(conv => ({
           id: conv.id,
           name: conv.name,
-          last_message: conv.last_message || '',
-          updated_at: conv.updated_at,
-          is_global: conv.is_global || false,
-          is_group: conv.is_group || false
+          lastMessage: conv.last_message,
+          messages: [],
+          participants: [], // We'll populate this separately if needed
+          createdAt: conv.created_at,
+          updatedAt: conv.updated_at,
+          isGlobal: conv.is_global,
+          isGroup: conv.is_group
         }));
 
         setConversations(formattedConversations);
@@ -68,11 +71,13 @@ export const useConversations = () => {
       setConversations([{
         id: 'global',
         name: 'Global Chat',
-        last_message: 'Welcome to the community!',
-        is_global: true,
-        is_group: true,
-        updated_at: new Date().toISOString(),
-        created_at: new Date().toISOString()
+        lastMessage: 'Welcome to the community!',
+        messages: [],
+        participants: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isGlobal: true,
+        isGroup: true
       }]);
       
       setSelectedConversation('global');
@@ -116,11 +121,13 @@ export const useConversations = () => {
       const newConversation: Conversation = {
         id: roomId,
         name: name.trim(),
-        last_message: `${user.name || 'Someone'} created this chat room`,
-        is_global: false,
-        is_group: true,
-        updated_at: new Date().toISOString(),
-        created_at: new Date().toISOString()
+        lastMessage: `${user.name || 'Someone'} created this chat room`,
+        messages: [],
+        participants: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isGlobal: false,
+        isGroup: true
       };
       
       setConversations(prev => [newConversation, ...prev]);

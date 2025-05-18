@@ -25,7 +25,7 @@ export const useChatSidebarState = ({
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<string>("global");
-  
+
   // Use the chat messages hook for loading messages
   const {
     messages,
@@ -55,6 +55,7 @@ export const useChatSidebarState = ({
             lastMessage: conv.last_message || '',
             isGlobal: conv.is_global || false,
             isGroup: conv.is_group || false,
+            lastActivityAt: conv.updated_at || new Date().toISOString(),
             updatedAt: conv.updated_at || new Date().toISOString(),
             unread: 0 // We'll implement unread counts separately
           }));
@@ -100,6 +101,7 @@ export const useChatSidebarState = ({
         lastMessage: 'Welcome to the community!',
         isGlobal: true,
         isGroup: true,
+        lastActivityAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         unread: 0
       }]);

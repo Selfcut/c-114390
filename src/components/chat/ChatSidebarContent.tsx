@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ConversationsList } from "./ConversationsList";
 import { ChatContent } from "./ChatContent";
@@ -86,8 +87,8 @@ export const ChatSidebarContent: React.FC<ChatSidebarContentProps> = ({
         onMessageReply={onMessageReply}
         onReactionAdd={onReactionAdd}
         onReactionRemove={onReactionRemove}
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
+        message={inputMessage}
+        setMessage={setInputMessage}
         handleSendMessage={handleSendMessage}
         handleKeyDown={handleKeyDown}
         editingMessageId={editingMessageId}

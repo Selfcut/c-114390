@@ -32,6 +32,9 @@ interface ChatContentProps {
   onAdminEffectSelect: (effectType: string, content?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   currentUserId: string | null;
+  // Alias properties for compatibility
+  inputMessage?: string;
+  setInputMessage?: (message: string) => void;
 }
 
 export const ChatContent = ({
@@ -46,6 +49,8 @@ export const ChatContent = ({
   onReactionRemove,
   message,
   setMessage,
+  inputMessage,
+  setInputMessage,
   handleSendMessage,
   handleKeyDown,
   editingMessageId,
@@ -59,6 +64,10 @@ export const ChatContent = ({
   messagesEndRef,
   currentUserId,
 }: ChatContentProps) => {
+  // Use inputMessage as a fallback if message is not provided
+  const actualMessage = message || inputMessage || '';
+  const actualSetMessage = setMessage || setInputMessage || (() => {});
+  
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <ChatMessageArea
@@ -76,8 +85,8 @@ export const ChatContent = ({
       />
       
       <ChatInputSection
-        message={message}
-        setMessage={setMessage}
+        message={actualMessage}
+        setMessage={actualSetMessage}
         handleSendMessage={handleSendMessage}
         handleKeyDown={handleKeyDown}
         editingMessageId={editingMessageId}
