@@ -41,8 +41,18 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
       const { data: knowledgeData, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
-          *,
-          profiles(name, avatar_url, username)
+          id,
+          title,
+          summary,
+          content,
+          created_at,
+          categories,
+          cover_image,
+          views,
+          likes,
+          comments,
+          user_id,
+          profiles:user_id(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
         .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
@@ -51,8 +61,17 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
       const { data: quotesData, error: quoteError } = await supabase
         .from('quotes')
         .select(`
-          *,
-          profiles(name, avatar_url, username)
+          id,
+          text,
+          author,
+          source,
+          created_at,
+          tags,
+          likes,
+          comments,
+          bookmarks,
+          user_id,
+          profiles:user_id(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
         .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
@@ -61,8 +80,18 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
       const { data: mediaData, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
-          *,
-          profiles(name, avatar_url, username)
+          id,
+          title,
+          content,
+          created_at,
+          tags,
+          url,
+          type,
+          likes,
+          comments,
+          views,
+          user_id,
+          profiles:user_id(name, avatar_url, username)
         `)
         .order('created_at', { ascending: false })
         .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
@@ -79,7 +108,8 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
         if (knowledgeError && quoteError && mediaError) {
           setState(prev => ({
             ...prev,
-            error: "Failed to load content. Please try again later."
+            error: "Failed to load content. Please try again later.",
+            isLoading: false
           }));
           return;
         }
@@ -104,7 +134,7 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
         ...prev,
         feedItems: reset ? combinedItems : [...prev.feedItems, ...combinedItems],
         hasMore: combinedItems.length === pageSize * 3,
-        page: reset ? 0 : prev.page,
+        page: reset ? 0 : prev.page + 1,
         isLoading: false
       }));
       
@@ -136,9 +166,9 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
   
   const loadMore = useCallback(() => {
     if (!state.isLoading && state.hasMore) {
-      setState(prev => ({ ...prev, page: prev.page + 1 }));
+      loadContent(false);
     }
-  }, [state.isLoading, state.hasMore]);
+  }, [state.isLoading, state.hasMore, loadContent]);
 
   // Return the data and functions
   return {

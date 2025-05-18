@@ -39,11 +39,11 @@ export const MakeAdminButton = () => {
           variant: "destructive"
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Exception when making admin:', err);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: err.message || "An unexpected error occurred",
         variant: "destructive"
       });
     } finally {

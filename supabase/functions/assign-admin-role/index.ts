@@ -57,31 +57,44 @@ serve(async (req) => {
     
     if (profileError) throw profileError;
     
-    // Check if user_roles table exists
-    const { data: tableExists, error: tableCheckError } = await supabase
-      .from('user_roles')
-      .select('*')
-      .limit(1);
-    
-    // If user_roles table exists, add user to admin role
-    if (tableExists !== null) {
-      // Check if user already has admin role
-      const { data: existingRole, error: checkError } = await supabase
+    // Check if user_roles table exists and if it does, update it
+    try {
+      const { error: tableCheckError } = await supabase
         .from('user_roles')
         .select('*')
-        .eq('user_id', userId)
-        .eq('role', 'admin');
+        .limit(1);
         
-      if (checkError) throw checkError;
-      
-      // If not exists, insert new role
-      if (!existingRole || existingRole.length === 0) {
-        const { error: roleError } = await supabase
+      if (!tableCheckError) {
+        // Table exists, check if user already has admin role
+        const { data: existingRole, error: checkError } = await supabase
           .from('user_roles')
-          .insert({ user_id: userId, role: 'admin' });
+          .select('*')
+          .eq('user_id', userId)
+          .eq('role', 'admin');
           
-        if (roleError) throw roleError;
+        if (checkError) throw checkError;
+        
+        // If not exists, insert new role
+        if (!existingRole || existingRole.length === 0) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role: 'admin' });
+            
+          if (roleError) throw roleError;
+        }
       }
+    } catch (err) {
+      // If table doesn't exist or other error, just continue
+      console.log('Note: user_roles table may not exist, continuing with profile update only');
+    }
+
+    // Force refresh the auth claims by updating the user's custom claims
+    try {
+      await supabase.auth.admin.updateUserById(userId, {
+        app_metadata: { role: 'admin' }
+      });
+    } catch (err) {
+      console.log('Warning: Unable to update auth claims, user may need to re-login for changes to take effect');
     }
 
     return new Response(
@@ -96,7 +109,7 @@ serve(async (req) => {
         } 
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error assigning admin role:', error);
     
     return new Response(
