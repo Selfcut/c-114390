@@ -134,7 +134,7 @@ export const MediaContainer = () => {
           mediaData={mediaData}
           currentUser={user ? {
             ...user,
-            name: user.name || "Anonymous", // Ensure name is always defined
+            name: user.name || "Anonymous",
             role: user.role || 'user'
           } : null}
           onCreatePost={handleOpenCreateDialog}
