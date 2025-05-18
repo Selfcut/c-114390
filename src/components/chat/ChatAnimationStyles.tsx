@@ -3,7 +3,7 @@ import React from "react";
 
 export const ChatAnimationStyles = () => {
   return (
-    <style jsx global>{`
+    <style jsx="true" global="true">{`
       /* Add base animation styles */
       @keyframes fadeIn {
         from { opacity: 0; }
