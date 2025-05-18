@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/media/useMediaPosts";
@@ -132,7 +131,10 @@ export const MediaContainer = () => {
         
         <MediaContent
           mediaData={mediaData}
-          currentUser={user}
+          currentUser={user ? {
+            ...user,
+            role: user.role || 'user'
+          } : null}
           onCreatePost={handleOpenCreateDialog}
         />
         

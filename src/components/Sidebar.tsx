@@ -1,155 +1,92 @@
-
-import { NavLink } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
-import {
-  LayoutDashboard,
-  MessageSquare,
-  MessageCircle,
-  BookOpen,
-  Brain,
-  ShieldCheck,
-  GraduationCap,
-  Quote,
-  Library,
-  AlertTriangle,
-  Microscope,
-  BookText,
-  CalendarDays
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Home, Library, MessageSquare, User, Settings, 
+  Youtube, Book, FileText, Shield, Cog, Menu, X, AlertTriangle
 } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/lib/auth"; // Updated import path
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export const Sidebar = () => {
-  const { user, signOut } = useAuth();
-  
-  const isAdmin = user?.isAdmin || user?.role === 'admin';
-  
+  const { user } = useAuth();
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem('sidebar-collapsed', String(newState));
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      newState ? '64px' : '256px'
+    );
+  };
+
   const navItems = [
-    {
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      label: "Dashboard",
-      path: "/dashboard",
-    },
-    {
-      icon: <MessageSquare className="h-5 w-5" />,
-      label: "Forum",
-      path: "/forum",
-    },
-    {
-      icon: <MessageCircle className="h-5 w-5" />,
-      label: "Chat",
-      path: "/chat",
-    },
-    {
-      icon: <Library className="h-5 w-5" />,
-      label: "Library",
-      path: "/library",
-    },
-    {
-      icon: <GraduationCap className="h-5 w-5" />,
-      label: "Wiki",
-      path: "/wiki",
-    },
-    {
-      icon: <Quote className="h-5 w-5" />,
-      label: "Quotes",
-      path: "/quotes",
-    },
-    {
-      icon: <Microscope className="h-5 w-5" />,
-      label: "Research",
-      path: "/research",
-    },
-    {
-      icon: <BookText className="h-5 w-5" />,
-      label: "Book Reviews",
-      path: "/book-reviews",
-    },
-    {
-      icon: <CalendarDays className="h-5 w-5" />,
-      label: "Events",
-      path: "/events",
-    },
-    {
-      icon: <AlertTriangle className="h-5 w-5" />,
-      label: "Problems",
-      path: "/problems",
-    },
-    {
-      icon: <Brain className="h-5 w-5" />,
-      label: "AI Tools",
-      path: "/ai",
-    },
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/forum", icon: MessageSquare, label: "Forum" },
+    { path: "/library", icon: Library, label: "Library" },
+    { path: "/wiki", icon: Book, label: "Wiki" },
+    { path: "/media", icon: Youtube, label: "Media" },
+    { path: "/quotes", icon: FileText, label: "Quotes" },
+    { path: "/problems", icon: AlertTriangle, label: "Problems" },
+    { path: "/ai", icon: Cog, label: "AI Tools" },
   ];
 
-  // Add admin entry if user is admin
-  if (isAdmin) {
-    navItems.push({
-      icon: <ShieldCheck className="h-5 w-5" />,
-      label: "Admin",
-      path: "/admin",
-    });
+  // Admin route
+  if (user?.isAdmin) {
+    navItems.push({ path: "/admin", icon: Shield, label: "Admin" });
   }
 
+  // User routes
+  navItems.push(
+    { path: "/profile", icon: User, label: "Profile" },
+    { path: "/settings", icon: Settings, label: "Settings" }
+  );
+
   return (
-    <div className="sidebar w-64 h-screen flex flex-col bg-background border-r border-border fixed left-0 top-0 overflow-hidden z-20">
-      <div className="flex items-center p-4 h-16 border-b border-border">
-        <img src="/logo.svg" alt="Logo" className="h-8 w-8 mr-2" />
-        <span className="font-bold text-lg">Polymath</span>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) => `
-                  flex items-center px-4 py-2 rounded-md text-sm
-                  ${isActive ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted"}
-                `}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            {user && (
-              <>
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden mr-3">
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
-                  ) : (
-                    user.name?.charAt(0) || "U"
-                  )}
-                </div>
-                <div className="truncate">
-                  <div className="text-sm font-medium">{user.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {user.email}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="flex-shrink-0">
-            <ThemeToggle />
-          </div>
-        </div>
-        {user && (
-          <button
-            onClick={signOut}
-            className="mt-4 text-sm text-center px-4 py-2 rounded-md bg-muted hover:bg-muted/80 w-full"
-          >
-            Sign out
-          </button>
+    <aside 
+      className={cn(
+        "bg-background border-r h-full transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="p-4 flex items-center justify-between border-b">
+        {!collapsed && (
+          <h2 className="font-semibold text-lg">Polymath</h2>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleSidebar}
+          className="ml-auto"
+        >
+          {collapsed ? <Menu size={20} /> : <X size={20} />}
+        </Button>
       </div>
-    </div>
+      
+      <div className="py-4">
+        <nav className="space-y-1 px-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-accent/50 text-foreground"
+              )}
+            >
+              <item.icon size={20} />
+              {!collapsed && <span>{item.label}</span>}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </aside>
   );
 };

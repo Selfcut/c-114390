@@ -8,7 +8,7 @@ export interface UserProfile {
   name: string;
   avatar_url?: string;
   username?: string;
-  role: string;
+  role?: string;
   isAdmin?: boolean;
   avatar?: string;
   status?: UserStatus;

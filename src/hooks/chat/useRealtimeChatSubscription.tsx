@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage } from '@/components/chat/types';
@@ -21,7 +20,7 @@ export const useRealtimeChatSubscription = ({
 
     // Subscribe to new chat messages
     const channel = supabase.channel('public:chat_messages');
-    
+
     channel
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         console.log('New message received:', payload);

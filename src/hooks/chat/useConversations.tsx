@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation } from '@/components/chat/types';
@@ -46,8 +45,8 @@ export const useConversations = () => {
     fetchConversations();
 
     // Set up real-time subscription
-    const channelA = supabase.channel('public:conversations')
-    
+    const channelA = supabase.channel('public:conversations');
+
     channelA
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations' }, (payload) => {
         const newConversation: Conversation = {
