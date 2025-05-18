@@ -60,10 +60,14 @@ export const MediaContainer = () => {
   }, [user?.id, mediaType, sortBy, sortOrder, searchTerm]);
 
   const mediaData = {
-    postsData,
+    // Format the data to match what MediaContent expects
+    postsData: {
+      posts: postsData || [],
+      hasMore: postsData?.hasMore || false,
+      error: error ? (error instanceof Error ? error.message : String(error)) : null
+    },
     isLoading,
     isError,
-    // Convert error to Error type if it's a string
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,
     loadMore

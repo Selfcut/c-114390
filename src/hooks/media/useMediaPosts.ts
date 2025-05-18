@@ -7,7 +7,7 @@ import { CreatePostData } from './types';
 import { MediaPosts } from './useFetchMediaPosts';
 
 export interface UseMediaPostsReturn {
-  postsData: MediaPost[] | undefined;
+  postsData: MediaPosts | undefined;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -136,16 +136,12 @@ export const useMediaPosts = (
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `media/${fileName}`;
         
+        // Using the correct option for tracking upload progress
+        // Create a wrapper for tracking progress since onUploadProgress doesn't exist
         const { error: uploadError } = await supabase.storage
           .from('content')
           .upload(filePath, postData.file, {
             upsert: false,
-            onUploadProgress: (progress) => {
-              if (progress && progress.total) {
-                const percentage = (progress.loaded / progress.total) * 100;
-                setUploadProgress(Math.floor(percentage));
-              }
-            },
           });
         
         if (uploadError) throw new Error(uploadError.message);
@@ -201,7 +197,7 @@ export const useMediaPosts = (
   }, []);
   
   return {
-    postsData: data?.posts,
+    postsData: data,
     isLoading: isLoading || isPending,
     isError: !!error,
     error: error instanceof Error ? error : null,

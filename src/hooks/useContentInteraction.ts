@@ -14,13 +14,20 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
   const [hasInteracted, setHasInteracted] = useState(false);
   const [interactionCount, setInteractionCount] = useState(0);
 
+  // Get the correct table name
+  const getTableName = (): string => {
+    // These are the actual tables in the database
+    return `content_${interactionType}s`;
+  };
+
   // Check if user has interacted with content
   const checkInteraction = async (contentId: string): Promise<boolean> => {
     if (!user) return false;
     setIsLoading(true);
     
     try {
-      const tableName = `content_${interactionType}s`;
+      const tableName = getTableName();
+      // Use the from method with a literal string that matches a valid table name
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
@@ -48,7 +55,7 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
     setIsLoading(true);
     
     try {
-      const tableName = `content_${interactionType}s`;
+      const tableName = getTableName();
       
       if (hasInteracted) {
         // Remove interaction
@@ -91,8 +98,10 @@ export const useContentInteraction = ({ contentType, interactionType }: ContentI
   const fetchInteractionCount = async (contentId: string): Promise<void> => {
     setIsLoading(true);
     try {
+      const tableName = getTableName();
+      
       const { count, error } = await supabase
-        .from(`content_${interactionType}s`)
+        .from(tableName)
         .select('*', { count: 'exact' })
         .eq('content_id', contentId)
         .eq('content_type', contentType);

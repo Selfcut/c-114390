@@ -119,6 +119,7 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     }
   });
 
+  // Fix the return type to match the expected Promise<void>
   const toggleLike = async (contentId: string): Promise<void> => {
     if (!user) {
       toast({
@@ -131,11 +132,9 @@ export const useLikeOperations = (options: ContentTypeOptions): LikesHookResult 
     
     try {
       await toggleLikeMutation.mutateAsync(contentId);
-      // We explicitly don't need to return anything here for void return type
+      // No return value needed for void Promise
     } catch (error) {
       console.error('Error in toggleLike:', error);
-      // Rethrow to propagate the error if needed
-      throw error;
     }
   };
 
