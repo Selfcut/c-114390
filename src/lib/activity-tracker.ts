@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type ActivityType = 'view' | 'interaction' | 'learned' | 'completed' | 'like' | 'comment' | 'bookmark' | 'post';
+export type ActivityType = 'view' | 'interaction' | 'learned' | 'completed' | 'like' | 'comment' | 'bookmark' | 'post' | 'update';
 
 export async function trackActivity(userId: string, eventType: ActivityType, metadata: Record<string, any> = {}) {
   try {
