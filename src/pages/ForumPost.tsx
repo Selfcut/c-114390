@@ -10,6 +10,9 @@ import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
 import { UserProfile } from '@/types/user';  // Import from the central location
 
+// Import the ForumDiscussion interface from the actions hook
+import type { ForumDiscussion } from '@/hooks/forum/useForumActions';
+
 // Create a type adapter between the hook's Comment type and our local Comment type
 interface ForumComment {
   id: string;
@@ -205,11 +208,12 @@ const ForumPost = () => {
         isAdmin: user.isAdmin || false
       };
       
-      // Ensure discussion has user_id property for ForumDiscussion compatibility
-      const discussionWithUserId = {
-        ...discussion,
-        user_id: discussion.user_id || user.id, // Provide a default if missing
-      } as ForumDiscussion;
+      // Convert discussion to ForumDiscussion type to ensure user_id property exists
+      const discussionWithUserId: ForumDiscussion = {
+        id: discussion.id,
+        upvotes: discussion.upvotes,
+        user_id: (discussion as any).user_id || user.id, // Cast to any to avoid TS error
+      };
       
       await handleUpvote(userProfile, discussionWithUserId);
     }
@@ -233,11 +237,12 @@ const ForumPost = () => {
       isAdmin: user.isAdmin || false
     };
     
-    // Ensure discussion has user_id property for ForumDiscussion compatibility
-    const discussionWithUserId = {
-      ...discussion,
-      user_id: discussion.user_id || user.id, // Provide a default if missing
-    } as ForumDiscussion;
+    // Convert discussion to ForumDiscussion type to ensure user_id property exists
+    const discussionWithUserId: ForumDiscussion = {
+      id: discussion.id,
+      upvotes: discussion.upvotes,
+      user_id: (discussion as any).user_id || user.id, // Cast to any to avoid TS error
+    };
     
     await handleSubmitComment(userProfile, comment, discussionWithUserId, setComments);
   };

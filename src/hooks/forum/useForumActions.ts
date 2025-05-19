@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { UserProfile } from '@/types/user'; // Use the centralized type
 
-interface ForumDiscussion {
+// Export the interface so it can be imported elsewhere
+export interface ForumDiscussion {
   id: string;
   upvotes: number;
   user_id: string;
