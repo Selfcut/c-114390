@@ -1,40 +1,4 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { QuoteSubmission } from './types';
-
-/**
- * Create a new quote
- */
-export const createQuote = async ({
-  text,
-  author,
-  source,
-  category,
-  tags
-}: QuoteSubmission): Promise<boolean> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) throw new Error('User not authenticated');
-    
-    const { error } = await supabase
-      .from('quotes')
-      .insert({
-        text,
-        author,
-        source: source || null,
-        category: category || 'Other',
-        tags: tags || [],
-        user_id: user.user.id
-      });
-    
-    if (error) throw error;
-    
-    return true;
-  } catch (error) {
-    console.error('Error creating quote:', error);
-    return false;
-  }
-};
 
 /**
  * Check if the current user has liked a specific quote
