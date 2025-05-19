@@ -8,6 +8,8 @@ export {
   fetchQuotesWithFilters,
   fetchQuoteById,
   countQuotes,
+  updateQuote,
+  deleteQuote,
   // Rename this to avoid collision with the same function in quote-interactions.ts
   createQuote as createQuoteSubmission
 } from './quotes-service';
@@ -20,6 +22,9 @@ export {
   checkUserBookmarkedQuote,
   likeQuote,
   bookmarkQuote,
+  fetchComments,
+  createComment,
+  deleteComment,
   subscribeToQuoteUpdates,
   subscribeToQuoteInteractions
 } from './quote-interactions';

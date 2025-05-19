@@ -20,6 +20,22 @@ export interface QuoteWithUser {
   } | null;
 }
 
+export interface QuoteComment {
+  id: string;
+  quote_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: string;
+    username: string;
+    name: string;
+    avatar_url: string | null;
+    status: string;
+  } | null;
+}
+
 export type QuoteSubmission = {
   text: string;
   author: string;

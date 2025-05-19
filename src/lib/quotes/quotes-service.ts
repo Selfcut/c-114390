@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser, QuoteFilterOptions, QuoteSubmission } from './types';
 
@@ -209,6 +208,81 @@ export const createQuote = async (quoteSubmission: QuoteSubmission): Promise<boo
     return true;
   } catch (error) {
     console.error('Error creating quote:', error);
+    return false;
+  }
+};
+
+/**
+ * Update an existing quote
+ */
+export const updateQuote = async (quoteId: string, quoteData: Partial<QuoteSubmission>): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+    
+    // Verify quote belongs to the user before update
+    const { data: quoteToUpdate, error: fetchError } = await supabase
+      .from('quotes')
+      .select('user_id')
+      .eq('id', quoteId)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    if (quoteToUpdate.user_id !== user.user.id) {
+      throw new Error('Not authorized to edit this quote');
+    }
+    
+    const { error } = await supabase
+      .from('quotes')
+      .update({
+        text: quoteData.text,
+        author: quoteData.author,
+        source: quoteData.source || null,
+        category: quoteData.category || 'Other',
+        tags: quoteData.tags || [],
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', quoteId);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating quote:', error);
+    return false;
+  }
+};
+
+/**
+ * Delete a quote
+ */
+export const deleteQuote = async (quoteId: string): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+    
+    // Verify quote belongs to the user before deletion
+    const { data: quoteToDelete, error: fetchError } = await supabase
+      .from('quotes')
+      .select('user_id')
+      .eq('id', quoteId)
+      .single();
+    
+    if (fetchError) throw fetchError;
+    if (quoteToDelete.user_id !== user.user.id) {
+      throw new Error('Not authorized to delete this quote');
+    }
+    
+    const { error } = await supabase
+      .from('quotes')
+      .delete()
+      .eq('id', quoteId);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting quote:', error);
     return false;
   }
 };

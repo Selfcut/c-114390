@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Bookmark, Share, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -13,6 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserHoverCard } from '@/components/UserHoverCard';
 import { useRealtimeQuotes } from '@/hooks/useRealtimeQuotes';
+import { EditQuoteModal } from './EditQuoteModal';
+import { DeleteQuoteDialog } from './DeleteQuoteDialog';
+import { QuoteComments } from './QuoteComments';
 
 export const QuoteDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,44 +29,46 @@ export const QuoteDetail = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [bookmarkCount, setBookmarkCount] = useState(0);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Fetch quote details
-  useEffect(() => {
-    const loadQuote = async () => {
-      setIsLoading(true);
-      if (!id) return;
+  const fetchQuoteData = useCallback(async () => {
+    setIsLoading(true);
+    if (!id) return;
 
-      try {
-        const quoteData = await fetchQuoteById(id);
-        if (quoteData) {
-          setQuote(quoteData);
-          setLikeCount(quoteData.likes || 0);
-          setBookmarkCount(quoteData.bookmarks || 0);
+    try {
+      const quoteData = await fetchQuoteById(id);
+      if (quoteData) {
+        setQuote(quoteData);
+        setLikeCount(quoteData.likes || 0);
+        setBookmarkCount(quoteData.bookmarks || 0);
 
-          // Check if user liked or bookmarked this quote
-          if (isAuthenticated) {
-            const [liked, bookmarked] = await Promise.all([
-              checkUserLikedQuote(id),
-              checkUserBookmarkedQuote(id)
-            ]);
-            setIsLiked(liked);
-            setIsBookmarked(bookmarked);
-          }
+        // Check if user liked or bookmarked this quote
+        if (isAuthenticated) {
+          const [liked, bookmarked] = await Promise.all([
+            checkUserLikedQuote(id),
+            checkUserBookmarkedQuote(id)
+          ]);
+          setIsLiked(liked);
+          setIsBookmarked(bookmarked);
         }
-      } catch (error) {
-        console.error('Error loading quote:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load the quote',
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    loadQuote();
+    } catch (error) {
+      console.error('Error loading quote:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load the quote',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [id, isAuthenticated, toast]);
+
+  useEffect(() => {
+    fetchQuoteData();
+  }, [fetchQuoteData]);
 
   // Subscribe to real-time updates
   const handleQuoteUpdate = (updatedQuote: QuoteWithUser) => {
@@ -103,11 +108,16 @@ export const QuoteDetail = () => {
       const result = await likeQuote(id);
       setIsLiked(result);
       setLikeCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
+      
+      toast({
+        title: result ? 'Quote Liked' : 'Like Removed',
+        description: result ? 'You have liked this quote' : 'You have removed your like from this quote'
+      });
     } catch (error) {
       console.error('Error liking quote:', error);
       toast({
         title: 'Error',
-        description: 'Failed to like the quote',
+        description: 'Failed to update like status',
         variant: 'destructive'
       });
     }
@@ -128,11 +138,16 @@ export const QuoteDetail = () => {
       const result = await bookmarkQuote(id);
       setIsBookmarked(result);
       setBookmarkCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
+      
+      toast({
+        title: result ? 'Quote Bookmarked' : 'Bookmark Removed',
+        description: result ? 'This quote has been added to your bookmarks' : 'This quote has been removed from your bookmarks'
+      });
     } catch (error) {
       console.error('Error bookmarking quote:', error);
       toast({
         title: 'Error',
-        description: 'Failed to bookmark the quote',
+        description: 'Failed to update bookmark status',
         variant: 'destructive'
       });
     }
@@ -176,6 +191,25 @@ export const QuoteDetail = () => {
 
   // Handle back navigation
   const goBack = () => {
+    navigate('/quotes');
+  };
+
+  // Handle quote edit
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    fetchQuoteData();
+    toast({
+      title: 'Success',
+      description: 'Quote updated successfully'
+    });
+  };
+
+  // Handle quote deletion
+  const handleDeleteSuccess = () => {
+    toast({
+      title: 'Success',
+      description: 'Quote deleted successfully'
+    });
     navigate('/quotes');
   };
 
@@ -316,19 +350,19 @@ export const QuoteDetail = () => {
             <Button
               variant="outline"
               size="sm"
-              className={isLiked ? 'text-red-500' : ''}
+              className={`transition-all ${isLiked ? 'text-red-500' : ''}`}
               onClick={handleLike}
             >
-              <Heart size={16} className={`mr-1 ${isLiked ? 'fill-red-500' : ''}`} />
+              <Heart size={16} className={`mr-1 transition-transform ${isLiked ? 'fill-red-500 scale-110' : ''}`} />
               {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className={isBookmarked ? 'text-yellow-500' : ''}
+              className={`transition-all ${isBookmarked ? 'text-yellow-500' : ''}`}
               onClick={handleBookmark}
             >
-              <Bookmark size={16} className={`mr-1 ${isBookmarked ? 'fill-yellow-500' : ''}`} />
+              <Bookmark size={16} className={`mr-1 transition-transform ${isBookmarked ? 'fill-yellow-500 scale-110' : ''}`} />
               {bookmarkCount} {bookmarkCount === 1 ? 'Save' : 'Saves'}
             </Button>
           </div>
@@ -336,10 +370,19 @@ export const QuoteDetail = () => {
           <div className="flex items-center gap-2">
             {isOwner && (
               <>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
                   <Edit size={16} className="mr-1" /> Edit
                 </Button>
-                <Button variant="outline" size="sm" className="text-destructive">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
                   <Trash2 size={16} className="mr-1" /> Delete
                 </Button>
               </>
@@ -350,6 +393,29 @@ export const QuoteDetail = () => {
           </div>
         </CardFooter>
       </Card>
+
+      {/* Comments Section */}
+      {id && <QuoteComments quoteId={id} />}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && quote && (
+        <EditQuoteModal
+          quote={quote}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {isDeleteDialogOpen && id && (
+        <DeleteQuoteDialog
+          quoteId={id}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 };
