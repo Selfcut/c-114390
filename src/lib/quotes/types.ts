@@ -33,6 +33,8 @@ export type QuoteFilterOptions = {
   tag?: string;
   limit?: number;
   offset?: number;
+  sortColumn?: string;
+  sortAscending?: boolean;
 };
 
 export interface PaginationResult<T> {

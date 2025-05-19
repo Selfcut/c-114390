@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { QuoteSubmissionModal } from "@/components/QuoteSubmissionModal";
 import { useQuotes } from "@/hooks/useQuotes";
@@ -8,6 +8,7 @@ import { QuotesSearch } from "@/components/quotes/QuotesSearch";
 import { TagsFilter } from "@/components/quotes/TagsFilter";
 import { QuotesGrid } from "@/components/quotes/QuotesGrid";
 import { QuotePagination } from "@/components/quotes/QuotePagination";
+import { QuotesSorting } from "@/components/quotes/QuotesSorting";
 
 const Quotes = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,6 +21,8 @@ const Quotes = () => {
     setSearchQuery,
     filterTag,
     setFilterTag,
+    sortOption,
+    setSortOption,
     userLikes,
     userBookmarks,
     handleLike,
@@ -44,12 +47,19 @@ const Quotes = () => {
         <QuotesHeader onSubmitClick={() => setIsModalOpen(true)} />
         
         {/* Search and filters */}
-        <QuotesSearch 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filterTag={filterTag}
-          onTagClear={() => setFilterTag(null)}
-        />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <QuotesSearch 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filterTag={filterTag}
+            onTagClear={() => setFilterTag(null)}
+          />
+          
+          <QuotesSorting 
+            value={sortOption} 
+            onChange={setSortOption}
+          />
+        </div>
 
         {/* Tags scroller */}
         <TagsFilter 

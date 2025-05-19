@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -148,4 +149,73 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
     console.error('Error bookmarking quote:', error);
     throw error;
   }
+};
+
+/**
+ * Subscribe to real-time updates for quotes
+ */
+export const subscribeToQuoteUpdates = (
+  quoteId: string | null,
+  onUpdate: (payload: any) => void
+) => {
+  const channel = supabase
+    .channel(`quote-updates-${quoteId || 'all'}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'quotes',
+        ...(quoteId ? { filter: `id=eq.${quoteId}` } : {})
+      },
+      onUpdate
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+/**
+ * Subscribe to real-time updates for quote interactions (likes and bookmarks)
+ */
+export const subscribeToQuoteInteractions = (
+  userId: string | null,
+  onLikeUpdate: (payload: any) => void,
+  onBookmarkUpdate: (payload: any) => void
+) => {
+  if (!userId) return () => {};
+
+  const channel = supabase.channel(`quote-interactions-${userId}`);
+
+  // Subscribe to likes changes
+  channel.on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'quote_likes',
+      filter: `user_id=eq.${userId}`
+    },
+    onLikeUpdate
+  );
+
+  // Subscribe to bookmarks changes
+  channel.on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'quote_bookmarks',
+      filter: `user_id=eq.${userId}`
+    },
+    onBookmarkUpdate
+  );
+
+  channel.subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 };

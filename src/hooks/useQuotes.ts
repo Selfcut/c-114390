@@ -12,18 +12,23 @@ import {
   QuoteWithUser,
   QuoteFilterOptions
 } from '@/lib/quotes';
+import { useRealtimeQuotes } from './useRealtimeQuotes';
+
+export type QuoteSortOption = 'newest' | 'oldest' | 'most_liked' | 'most_bookmarked';
 
 interface UseQuotesOptions {
   initialLimit?: number;
+  enableRealtime?: boolean;
 }
 
 export const useQuotes = (options: UseQuotesOptions = {}) => {
-  const { initialLimit = 10 } = options;
+  const { initialLimit = 10, enableRealtime = true } = options;
   
   const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<QuoteSortOption>('newest');
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
   const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
   const [totalQuotes, setTotalQuotes] = useState(0);
@@ -41,16 +46,35 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
     new Set(quotes.flatMap(quote => quote.tags || []))
   );
 
+  // Convert sort option to database sorting parameters
+  const getSortParams = useCallback((option: QuoteSortOption): { column: string; ascending: boolean } => {
+    switch (option) {
+      case 'oldest':
+        return { column: 'created_at', ascending: true };
+      case 'most_liked':
+        return { column: 'likes', ascending: false };
+      case 'most_bookmarked':
+        return { column: 'bookmarks', ascending: false };
+      case 'newest':
+      default:
+        return { column: 'created_at', ascending: false };
+    }
+  }, []);
+
   // Fetch quotes with filters and pagination
   const fetchQuotesData = useCallback(async () => {
     setIsLoading(true);
     try {
+      const { column, ascending } = getSortParams(sortOption);
+      
       // Prepare filter options
       const filterOptions: QuoteFilterOptions = {
         searchTerm: searchQuery || undefined,
         tag: filterTag || undefined,
         limit,
-        offset: (currentPage - 1) * limit
+        offset: (currentPage - 1) * limit,
+        sortColumn: column,
+        sortAscending: ascending
       };
       
       // Fetch quotes and count
@@ -88,12 +112,55 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, filterTag, currentPage, limit, isAuthenticated, user, toast]);
+  }, [searchQuery, filterTag, currentPage, limit, sortOption, isAuthenticated, user, toast, getSortParams]);
 
   // Initial fetch and refetch when filters or pagination changes
   useEffect(() => {
     fetchQuotesData();
   }, [fetchQuotesData]);
+
+  // Set up realtime subscriptions for quotes and interactions
+  const handleQuoteUpdate = useCallback((updatedQuote: QuoteWithUser) => {
+    setQuotes(prevQuotes => 
+      prevQuotes.map(quote => 
+        quote.id === updatedQuote.id ? { ...quote, ...updatedQuote } : quote
+      )
+    );
+  }, []);
+
+  const handleInteractionUpdate = useCallback((type: 'like' | 'bookmark', quoteId: string, isActive: boolean) => {
+    if (type === 'like') {
+      setUserLikes(prev => ({ ...prev, [quoteId]: isActive }));
+      setQuotes(prevQuotes => 
+        prevQuotes.map(quote => 
+          quote.id === quoteId 
+            ? { 
+                ...quote, 
+                likes: isActive ? (quote.likes || 0) + 1 : Math.max((quote.likes || 0) - 1, 0)
+              }
+            : quote
+        )
+      );
+    } else if (type === 'bookmark') {
+      setUserBookmarks(prev => ({ ...prev, [quoteId]: isActive }));
+      setQuotes(prevQuotes => 
+        prevQuotes.map(quote => 
+          quote.id === quoteId 
+            ? { 
+                ...quote, 
+                bookmarks: isActive ? (quote.bookmarks || 0) + 1 : Math.max((quote.bookmarks || 0) - 1, 0)
+              }
+            : quote
+        )
+      );
+    }
+  }, []);
+
+  // Set up realtime subscriptions if enabled
+  useRealtimeQuotes({
+    onQuoteUpdate: enableRealtime ? handleQuoteUpdate : undefined,
+    onInteractionUpdate: enableRealtime ? handleInteractionUpdate : undefined
+  });
 
   // Handle like button click
   const handleLike = async (quoteId: string) => {
@@ -109,7 +176,7 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
     try {
       const result = await likeQuote(quoteId);
       
-      // Update local state
+      // Update local state (will also be updated by realtime subscription)
       setUserLikes(prev => ({
         ...prev,
         [quoteId]: result
@@ -153,7 +220,7 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
     try {
       const result = await bookmarkQuote(quoteId);
       
-      // Update local state
+      // Update local state (will also be updated by realtime subscription)
       setUserBookmarks(prev => ({
         ...prev,
         [quoteId]: result
@@ -187,6 +254,7 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
   const resetFilters = () => {
     setSearchQuery("");
     setFilterTag(null);
+    setSortOption('newest');
     setCurrentPage(1);
   };
 
@@ -203,6 +271,8 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
     setSearchQuery,
     filterTag,
     setFilterTag,
+    sortOption,
+    setSortOption,
     userLikes,
     userBookmarks,
     handleLike,

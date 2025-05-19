@@ -93,6 +93,12 @@ export const fetchQuotesWithFilters = async (
       query = query.contains('tags', [options.tag]);
     }
     
+    // Apply sorting
+    const sortColumn = options.sortColumn || 'created_at';
+    const sortAscending = options.sortAscending !== undefined ? options.sortAscending : false;
+    
+    query = query.order(sortColumn, { ascending: sortAscending });
+    
     // Apply pagination
     if (options.limit) {
       query = query.limit(options.limit);
@@ -104,9 +110,6 @@ export const fetchQuotesWithFilters = async (
         options.offset + (options.limit || 10) - 1
       );
     }
-    
-    // Order by created_at
-    query = query.order('created_at', { ascending: false });
     
     const { data, error } = await query;
     
