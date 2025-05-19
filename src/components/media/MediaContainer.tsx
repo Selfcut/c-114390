@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/user'; // Use the centralized type
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/media/useMediaPosts";

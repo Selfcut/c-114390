@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,9 +23,10 @@ export const useForumActions = (postId?: string) => {
       // setDiscussion(prev => prev ? { ...prev, upvotes: prev.upvotes + 1 } : prev);
 
       // Perform the upvote on the server
-      const { error } = await supabase.rpc('upvote_forum_post', {
+      const { error } = await supabase.rpc('increment_counter', {
         row_id: postId,
-        user_id: user.id
+        column_name: 'upvotes',
+        table_name: 'forum_posts'
       });
 
       if (error) {

@@ -28,6 +28,19 @@ interface Comment {
   comment: string;
 }
 
+// Ensure ForumPost type includes user_id needed by ForumDiscussion
+interface ForumPost {
+  id: string;
+  title: string;
+  content: string;
+  upvotes: number;
+  views: number;
+  comments: number;
+  user_id: string; // Add this to satisfy the ForumDiscussion requirement
+  createdAt: Date | string;
+  // Add other properties as needed
+}
+
 // Function to convert hook Comment type to our local Comment type
 function adaptComments(comments: ForumComment[]): Comment[] {
   return comments.map(comment => ({
@@ -192,7 +205,13 @@ const ForumPost = () => {
         isAdmin: user.isAdmin || false
       };
       
-      await handleUpvote(userProfile, discussion);
+      // Ensure discussion has user_id property for ForumDiscussion compatibility
+      const discussionWithUserId = {
+        ...discussion,
+        user_id: discussion.user_id || user.id, // Provide a default if missing
+      };
+      
+      await handleUpvote(userProfile, discussionWithUserId);
     }
   };
   
@@ -214,7 +233,13 @@ const ForumPost = () => {
       isAdmin: user.isAdmin || false
     };
     
-    await handleSubmitComment(userProfile, comment, discussion, setComments);
+    // Ensure discussion has user_id property for ForumDiscussion compatibility
+    const discussionWithUserId = {
+      ...discussion,
+      user_id: discussion.user_id || user.id, // Provide a default if missing
+    };
+    
+    await handleSubmitComment(userProfile, comment, discussionWithUserId, setComments);
   };
 
   // Convert the hook's comments to our local Comment format
