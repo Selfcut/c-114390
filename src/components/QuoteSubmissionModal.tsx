@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { X, Send, Tag, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -7,7 +8,7 @@ import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { toast } from "./ui/use-toast";
 import { Badge } from "./ui/badge";
-import { createQuote } from "@/lib/quotes-service";
+import { createQuote, QuoteSubmission } from "@/lib/quotes-service";
 
 interface QuoteSubmissionModalProps {
   isOpen: boolean;
@@ -68,14 +69,17 @@ export const QuoteSubmissionModal = ({
     try {
       setIsSubmitting(true);
       
+      // Create the quote submission object
+      const quoteSubmission: QuoteSubmission = {
+        text: quoteText.trim(),
+        author: author.trim(),
+        source: source.trim() || undefined,
+        category: category,
+        tags: tags.length > 0 ? tags : undefined
+      };
+      
       // Create the quote using the service function
-      const success = await createQuote(
-        quoteText.trim(),
-        author.trim(),
-        source.trim(),
-        category,
-        tags
-      );
+      const success = await createQuote(quoteSubmission);
       
       if (success) {
         // Reset form
