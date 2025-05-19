@@ -1,46 +1,33 @@
-
-import React from 'react';
+import { PlusCircle, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Quote, Plus } from "lucide-react";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
 
-interface QuotesHeaderProps {
-  onSubmitClick: () => void;
-}
-
-export const QuotesHeader: React.FC<QuotesHeaderProps> = ({
-  onSubmitClick
-}) => {
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  
-  const handleSubmitClick = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to submit quotes",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    onSubmitClick();
-  };
+export const QuotesHeader = ({ onSubmitClick }: { onSubmitClick: () => void }) => {
+  const navigate = useNavigate();
   
   return (
-    <div className="flex justify-between items-center mb-8 stagger-fade animate-in">
-      <h1 className="text-3xl font-bold flex items-center gap-3">
-        <Quote size={28} className="text-primary" />
-        Wisdom Quotes
-      </h1>
-      <Button 
-        className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-        onClick={handleSubmitClick}
-      >
-        <Plus size={18} />
-        <span>Submit Quote</span>
-      </Button>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight mb-1">Quotes</h1>
+        <p className="text-muted-foreground">
+          Discover, share and save inspiring quotes from around the world
+        </p>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/saved-quotes')}
+        >
+          <Bookmark className="h-4 w-4 mr-2" />
+          Saved Quotes
+        </Button>
+        
+        <Button onClick={onSubmitClick}>
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Submit Quote
+        </Button>
+      </div>
     </div>
   );
 };
