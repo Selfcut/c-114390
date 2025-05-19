@@ -40,16 +40,23 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
     if (error) throw error;
     
     // Transform the data to match our expected type
-    const formattedQuotes = (data || []).map(quote => ({
-      ...quote,
-      user: quote.user || {
-        id: null,
-        username: 'unknown',
-        name: 'Unknown User',
-        avatar_url: null,
-        status: 'offline'
-      }
-    }));
+    const formattedQuotes = (data || []).map(quote => {
+      // Handle potential error or missing user data
+      const userObj = typeof quote.user === 'object' && quote.user !== null && !('error' in quote.user)
+        ? quote.user
+        : {
+            id: null,
+            username: 'unknown',
+            name: 'Unknown User',
+            avatar_url: null,
+            status: 'offline'
+          };
+          
+      return {
+        ...quote,
+        user: userObj
+      };
+    });
     
     return formattedQuotes;
   } catch (error) {
@@ -111,16 +118,23 @@ export const fetchQuotesWithFilters = async (
     if (error) throw error;
     
     // Transform the data to match our expected type
-    const formattedQuotes = (data || []).map(quote => ({
-      ...quote,
-      user: quote.user || {
-        id: null,
-        username: 'unknown',
-        name: 'Unknown User',
-        avatar_url: null,
-        status: 'offline'
-      }
-    }));
+    const formattedQuotes = (data || []).map(quote => {
+      // Handle potential error or missing user data
+      const userObj = typeof quote.user === 'object' && quote.user !== null && !('error' in quote.user)
+        ? quote.user
+        : {
+            id: null,
+            username: 'unknown',
+            name: 'Unknown User',
+            avatar_url: null,
+            status: 'offline'
+          };
+          
+      return {
+        ...quote,
+        user: userObj
+      };
+    });
     
     return formattedQuotes;
   } catch (error) {

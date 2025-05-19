@@ -46,16 +46,23 @@ export const useQuotes = () => {
       if (error) throw error;
 
       // Format quotes to include user data with fallbacks for missing data
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => ({
-        ...quote,
-        user: quote.user || {
-          id: null,
-          username: 'unknown',
-          name: 'Unknown User',
-          avatar_url: null,
-          status: 'offline'
-        }
-      }));
+      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
+        // Handle potential error or missing user data
+        const userObj = typeof quote.user === 'object' && quote.user !== null && !('error' in quote.user)
+          ? quote.user
+          : {
+              id: null,
+              username: 'unknown',
+              name: 'Unknown User',
+              avatar_url: null,
+              status: 'offline'
+            };
+            
+        return {
+          ...quote,
+          user: userObj
+        };
+      });
 
       setQuotes(formattedQuotes);
       setFilteredQuotes(formattedQuotes);
