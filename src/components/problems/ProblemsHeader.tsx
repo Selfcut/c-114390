@@ -9,8 +9,8 @@ export const ProblemsHeader = () => {
       </h1>
       <p className="text-muted-foreground max-w-2xl">
         Explore our comprehensive collection of the world's most pressing problems. 
-        Each domain contains up to 100 ranked problems, from climate change to 
-        artificial intelligence risks. Join the discussion and contribute your ideas to 
+        Each domain contains 100 ranked problems, from climate change to 
+        artificial intelligence risks, sorted by priority. Join the discussion and contribute your ideas to 
         help find solutions for a better future.
       </p>
     </div>

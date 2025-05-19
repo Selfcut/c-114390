@@ -53,8 +53,9 @@ const Problems = () => {
               
               // Check each tag for problem references
               post.tags.forEach(tag => {
-                if (tag.startsWith('Problem ')) {
-                  const problemId = parseInt(tag.replace('Problem ', ''));
+                const problemMatch = tag.match(/Problem (\d+)/);
+                if (problemMatch) {
+                  const problemId = parseInt(problemMatch[1], 10);
                   if (stats[problemId]) {
                     stats[problemId].discussions++;
                     
@@ -109,6 +110,11 @@ const Problems = () => {
       (category ? problem.categories.includes(category) : true)
     )
     .sort((a, b) => {
+      // First sort by rank if available
+      if (a.rank && b.rank) {
+        return a.rank - b.rank;
+      }
+      // Then fall back to other sorting criteria
       if (sortBy === 'severity') return b.severity - a.severity;
       if (sortBy === 'solvability') return a.solvability - b.solvability; // Lower is harder to solve
       return b.urgency - a.urgency;
