@@ -18,7 +18,7 @@ export interface QuoteWithUser {
     name: string;
     avatar_url: string | null;
     status: string;
-  };
+  } | null;
 }
 
 export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
@@ -27,7 +27,7 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
       .from('quotes')
       .select(`
         *,
-        user:user_id (
+        user:profiles(
           id, 
           username, 
           name, 
@@ -38,7 +38,20 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    
+    // Transform the data to match our expected type
+    const formattedQuotes = (data || []).map(quote => ({
+      ...quote,
+      user: quote.user || {
+        id: null,
+        username: 'unknown',
+        name: 'Unknown User',
+        avatar_url: null,
+        status: 'offline'
+      }
+    }));
+    
+    return formattedQuotes;
   } catch (error) {
     console.error('Error fetching quotes:', error);
     return [];
@@ -58,7 +71,7 @@ export const fetchQuotesWithFilters = async (
       .from('quotes')
       .select(`
         *,
-        user:user_id (
+        user:profiles(
           id, 
           username, 
           name, 
@@ -96,10 +109,55 @@ export const fetchQuotesWithFilters = async (
     const { data, error } = await query;
     
     if (error) throw error;
-    return data || [];
+    
+    // Transform the data to match our expected type
+    const formattedQuotes = (data || []).map(quote => ({
+      ...quote,
+      user: quote.user || {
+        id: null,
+        username: 'unknown',
+        name: 'Unknown User',
+        avatar_url: null,
+        status: 'offline'
+      }
+    }));
+    
+    return formattedQuotes;
   } catch (error) {
     console.error('Error fetching filtered quotes:', error);
     return [];
+  }
+};
+
+// Add the missing createQuote function
+export const createQuote = async (
+  text: string,
+  author: string,
+  source?: string,
+  category?: string,
+  tags?: string[]
+): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+    
+    const { error } = await supabase
+      .from('quotes')
+      .insert({
+        text,
+        author,
+        source: source || null,
+        category: category || 'Other',
+        tags: tags || [],
+        user_id: user.user.id
+      });
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating quote:', error);
+    return false;
   }
 };
 

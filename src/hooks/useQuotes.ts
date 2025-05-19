@@ -33,7 +33,7 @@ export const useQuotes = () => {
         .from('quotes')
         .select(`
           *,
-          user_id (
+          user:profiles(
             id,
             username,
             name,
@@ -45,15 +45,15 @@ export const useQuotes = () => {
 
       if (error) throw error;
 
-      // Format quotes to include user data
+      // Format quotes to include user data with fallbacks for missing data
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => ({
         ...quote,
-        user: {
-          id: quote.user_id?.id || null,
-          username: quote.user_id?.username || 'unknown',
-          name: quote.user_id?.name || 'Unknown User',
-          avatar_url: quote.user_id?.avatar_url || null,
-          status: quote.user_id?.status || 'offline'
+        user: quote.user || {
+          id: null,
+          username: 'unknown',
+          name: 'Unknown User',
+          avatar_url: null,
+          status: 'offline'
         }
       }));
 
