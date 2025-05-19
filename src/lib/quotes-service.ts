@@ -42,7 +42,9 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
     // Transform the data to match our expected type
     const formattedQuotes = (data || []).map(quote => {
       // Handle potential error or missing user data
-      const userObj = typeof quote.user === 'object' && quote.user !== null && !('error' in quote.user)
+      const userObj = typeof quote.user === 'object' && 
+        // Need to check if 'error' is in quote.user safely
+        (quote.user !== null && !('error' in quote.user))
         ? quote.user
         : {
             id: null,
@@ -120,7 +122,9 @@ export const fetchQuotesWithFilters = async (
     // Transform the data to match our expected type
     const formattedQuotes = (data || []).map(quote => {
       // Handle potential error or missing user data
-      const userObj = typeof quote.user === 'object' && quote.user !== null && !('error' in quote.user)
+      const userObj = typeof quote.user === 'object' && 
+        // Need to check if 'error' is in quote.user safely
+        (quote.user !== null && !('error' in quote.user))
         ? quote.user
         : {
             id: null,

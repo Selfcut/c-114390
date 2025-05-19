@@ -48,7 +48,9 @@ export const useQuotes = () => {
       // Format quotes to include user data with fallbacks for missing data
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potential error or missing user data
-        const userObj = typeof quote.user === 'object' && quote.user !== null && !('error' in quote.user)
+        const userObj = typeof quote.user === 'object' && quote.user !== null && 
+          // Need to check if 'error' is in quote.user safely
+          (!quote.user || !('error' in quote.user))
           ? quote.user
           : {
               id: null,
