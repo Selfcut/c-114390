@@ -9,9 +9,6 @@ import { useForumActions, ForumDiscussion } from '@/hooks/forum/useForumActions'
 import { formatTimeAgo } from '@/utils/formatters';
 import { UserProfile } from '@/types/user';  // Import from the central location
 
-// Import the ForumDiscussion interface from the actions hook
-import type { ForumDiscussion } from '@/hooks/forum/useForumActions';
-
 // Create a type adapter between the hook's Comment type and our local Comment type
 interface ForumComment {
   id: string;
@@ -39,6 +36,7 @@ interface ForumPost {
   views: number;
   comments: number;
   user_id: string; // Required field for ForumDiscussion compatibility
+  authorId?: string; // Optional alias for user_id for better readability
   createdAt: Date | string;
   // Add other properties as needed
 }
@@ -211,7 +209,7 @@ const ForumPost = () => {
       const discussionWithUserId: ForumDiscussion = {
         id: discussion.id,
         upvotes: discussion.upvotes,
-        user_id: discussion.user_id || user.id, // Use discussion's user_id if it exists, otherwise fall back to current user
+        user_id: discussion.user_id || discussion.authorId || user.id, // Use appropriate ID field
       };
       
       await handleUpvote(userProfile, discussionWithUserId);
@@ -240,7 +238,7 @@ const ForumPost = () => {
     const discussionWithUserId: ForumDiscussion = {
       id: discussion.id,
       upvotes: discussion.upvotes,
-      user_id: discussion.user_id || user.id, // Use discussion's user_id if it exists
+      user_id: discussion.user_id || discussion.authorId || user.id, // Use appropriate ID field
     };
     
     await handleSubmitComment(userProfile, comment, discussionWithUserId, setComments);
