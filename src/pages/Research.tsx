@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Loader2, ArrowDownUp, Calendar, ExternalLink } from "lucide-react";
 
@@ -18,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 
 // Hooks and Types
 import { useResearchData } from "@/hooks/useResearchData";
@@ -45,7 +47,8 @@ const RESEARCH_DOMAINS = [
 
 const Research = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, isModerator } = useAuth();
+  const { user } = useAuth();
+  const { isAdmin, isModerator } = useAdminStatus();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -239,8 +242,11 @@ const Research = () => {
         ) : error ? (
           <Card className="text-center py-10">
             <CardContent>
-              <p className="text-destructive mb-4">{error}</p>
-              <Button onClick={() => refetch()}>Retry</Button>
+              <ErrorMessage 
+                title="Error loading research papers"
+                message={error instanceof Error ? error.message : String(error)}
+                retry={() => refetch()}
+              />
             </CardContent>
           </Card>
         ) : sortedPapers.length > 0 ? (
