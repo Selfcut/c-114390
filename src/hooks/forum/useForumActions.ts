@@ -21,9 +21,6 @@ export const useForumActions = (postId?: string) => {
     try {
       setIsSubmitting(true);
 
-      // Optimistically update the local state
-      // setDiscussion(prev => prev ? { ...prev, upvotes: prev.upvotes + 1 } : prev);
-
       // Perform the upvote on the server
       const { error } = await supabase.rpc('increment_counter', {
         row_id: postId,
@@ -37,8 +34,6 @@ export const useForumActions = (postId?: string) => {
           description: "Failed to upvote the post.",
           variant: "destructive",
         });
-        // Revert the optimistic update if the server update fails
-        // setDiscussion(prev => prev ? { ...prev, upvotes: prev.upvotes - 1 } : prev);
       } else {
         toast({
           description: "You upvoted the post!",
@@ -50,8 +45,6 @@ export const useForumActions = (postId?: string) => {
         description: "An unexpected error occurred while upvoting.",
         variant: "destructive",
       });
-      // Revert the optimistic update if an unexpected error occurs
-      // setDiscussion(prev => prev ? { ...prev, upvotes: prev.upvotes - 1 } : prev);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +80,7 @@ export const useForumActions = (postId?: string) => {
             user_id: user.id
           }
         ])
-        .select('*')
+        .select('*');
 
       if (error) {
         console.error('Error submitting comment:', error);
@@ -105,8 +98,8 @@ export const useForumActions = (postId?: string) => {
     } catch (error) {
       console.error('Unexpected error submitting comment:', error);
       toast({
-          description: "An unexpected error occurred while submitting the comment.",
-          variant: "destructive",
+        description: "An unexpected error occurred while submitting the comment.",
+        variant: "destructive",
       });
       // Revert the optimistic update if an unexpected error occurs
       setComments(prevComments => prevComments.slice(0, -1));

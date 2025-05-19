@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useForumPost } from '@/hooks/forum/useForumPost';
-import { useForumActions } from '@/hooks/forum/useForumActions';
+import { useForumActions, ForumDiscussion } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
 import { UserProfile } from '@/types/user';  // Import from the central location
 
@@ -208,11 +207,11 @@ const ForumPost = () => {
         isAdmin: user.isAdmin || false
       };
       
-      // Convert discussion to ForumDiscussion type to ensure user_id property exists
+      // Convert discussion to ForumDiscussion type with explicit typing
       const discussionWithUserId: ForumDiscussion = {
         id: discussion.id,
         upvotes: discussion.upvotes,
-        user_id: (discussion as any).user_id || user.id, // Cast to any to avoid TS error
+        user_id: discussion.user_id || user.id, // Use discussion's user_id if it exists, otherwise fall back to current user
       };
       
       await handleUpvote(userProfile, discussionWithUserId);
@@ -237,11 +236,11 @@ const ForumPost = () => {
       isAdmin: user.isAdmin || false
     };
     
-    // Convert discussion to ForumDiscussion type to ensure user_id property exists
+    // Convert discussion to ForumDiscussion type with explicit typing
     const discussionWithUserId: ForumDiscussion = {
       id: discussion.id,
       upvotes: discussion.upvotes,
-      user_id: (discussion as any).user_id || user.id, // Cast to any to avoid TS error
+      user_id: discussion.user_id || user.id, // Use discussion's user_id if it exists
     };
     
     await handleSubmitComment(userProfile, comment, discussionWithUserId, setComments);

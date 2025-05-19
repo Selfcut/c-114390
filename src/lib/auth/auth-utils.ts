@@ -39,18 +39,6 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       isGhostMode: profile?.is_ghost_mode || false,
     };
 
-    // Special case for the admin user (only in auth-utils.ts version)
-    if (userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc") {
-      // If this is the user we want to make admin, update their role
-      await supabase
-        .from('profiles')
-        .update({ role: 'admin' })
-        .eq('id', userId);
-      
-      fullProfile.role = "admin";
-      fullProfile.isAdmin = true;
-    }
-
     return fullProfile;
   } catch (error) {
     console.error("Error in fetchUserProfile:", error);
@@ -65,8 +53,8 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       avatar_url: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
       bio: "",
       website: "",
-      role: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc" ? "admin" : "user",
-      isAdmin: userId === "dc7bedf3-14c3-4376-adfb-de5ac8207adc",
+      role: "user",
+      isAdmin: false,
       status: "online" as UserStatus,
       isGhostMode: false,
     };
