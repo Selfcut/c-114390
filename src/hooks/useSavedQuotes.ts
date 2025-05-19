@@ -71,6 +71,25 @@ export const useSavedQuotes = () => {
     }
   }, [isAuthenticated, user, toast]);
 
+  // Helper function to safely handle user data
+  const formatUserData = (quoteUser: any) => {
+    // Check if quoteUser is a valid object and not an error
+    if (typeof quoteUser === 'object' && 
+        quoteUser !== null && 
+        !quoteUser.hasOwnProperty('error')) {
+      return quoteUser;
+    }
+    
+    // Return default user object if user data is invalid or an error
+    return {
+      id: null,
+      username: 'unknown',
+      name: 'Unknown User',
+      avatar_url: null,
+      status: 'offline'
+    };
+  };
+
   // Fetch bookmarked quotes
   const fetchSavedQuotes = useCallback(async () => {
     if (!isAuthenticated || !user) {
@@ -125,18 +144,21 @@ export const useSavedQuotes = () => {
       if (collectionError) throw collectionError;
       
       // Map quotes to their collections
-      const quotesWithCollections = quotesData.map(quote => {
+      const quotesWithCollections: SavedQuoteWithCollection[] = quotesData.map(quote => {
         // Find all collection IDs this quote belongs to
         const quoteCollections = collectionItems
           ? collectionItems
               .filter(item => item.quote_id === quote.id)
               .map(item => item.collection_id)
           : [];
+        
+        // Format and normalize the user object
+        const formattedUser = formatUserData(quote.user);
           
         return {
           quote: {
             ...quote,
-            user: quote.user || null
+            user: formattedUser
           },
           collections: quoteCollections
         };
