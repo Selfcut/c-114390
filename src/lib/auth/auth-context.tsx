@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(data.session);
           
           // Convert to UserProfile type before setting state
-          setUser(userProfile);
+          setUser(userProfile as UserProfile);
           setIsAuthenticated(true);
         } else {
           setUser(null);
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         
         // Convert to UserProfile type before setting state
-        setUser(userProfile);
+        setUser(userProfile as UserProfile);
         setIsAuthenticated(true);
         
       } else if (event === 'SIGNED_OUT') {

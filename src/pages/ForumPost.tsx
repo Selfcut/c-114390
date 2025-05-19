@@ -9,6 +9,14 @@ import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
 import { UserProfile } from '@/types/user';  // Import from the central location
 
+// Comment interface aligned with the list component expectations
+interface Comment {
+  id: string;
+  author_name: string;
+  created_at: string;
+  comment: string;
+}
+
 // Placeholder components - in a real project, these would be in separate files
 interface ForumPostSkeletonProps {}
 const ForumSkeleton: React.FC<ForumPostSkeletonProps> = () => (
@@ -42,7 +50,7 @@ interface ForumPostStatsProps {
   views: number;
   comments: number;
   upvotes: number;
-  createdAt: string;
+  createdAt: string; // Changed to string to match the formatTimeAgo function
   formatTimeAgo: (date: string) => string;
 }
 const ForumPostStats: React.FC<ForumPostStatsProps> = ({ views, comments, upvotes, createdAt, formatTimeAgo }) => (
@@ -97,13 +105,6 @@ const AddComment: React.FC<AddCommentProps> = ({ onSubmit, isSubmitting, user })
     </form>
   );
 };
-
-interface Comment {
-  id: string;
-  author_name: string;
-  created_at: string;
-  comment: string;
-}
 
 interface CommentsListProps {
   comments: Comment[];
@@ -209,10 +210,7 @@ const ForumPost = () => {
           <ForumSkeleton />
         ) : discussion ? (
           <>
-            <ForumPostDetails 
-              discussion={discussion} 
-              formatTimeAgo={formatTimeAgo} 
-            />
+            <ForumPostDetails discussion={discussion} />
             
             <ForumPostStats
               views={discussion.views}
@@ -232,7 +230,7 @@ const ForumPost = () => {
             {/* Comments */}
             <h2 className="text-2xl font-semibold mb-4">Replies</h2>
             <CommentsList 
-              comments={comments}
+              comments={comments as Comment[]}
               formatTimeAgo={formatTimeAgo}
             />
           </>

@@ -1,5 +1,4 @@
 
-
 export type UserStatus = "online" | "offline" | "away" | "busy" | "do-not-disturb" | "invisible";
 export type UserRole = "user" | "moderator" | "admin";
 
@@ -9,6 +8,7 @@ export interface UserProfile {
   username: string;
   email: string;
   avatar: string;
+  avatar_url?: string; // Adding this to match usage in components
   bio?: string;
   website?: string;
   status: UserStatus;
@@ -21,4 +21,3 @@ export interface UserProfile {
     emailNotifications: boolean;
   };
 }
-
