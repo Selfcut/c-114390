@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
@@ -9,12 +10,32 @@ import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
 import { UserProfile } from '@/types/user';  // Import from the central location
 
-// Comment interface aligned with the list component expectations
+// Create a type adapter between the hook's Comment type and our local Comment type
+interface ForumComment {
+  id: string;
+  content: string; // Maps to 'comment' in our local type
+  author: string;  // Maps to 'author_name' in our local type
+  createdAt: Date; // Maps to 'created_at' in our local type (but as Date)
+  authorAvatar?: string;
+  isAuthor: boolean;
+}
+
+// Local Comment interface for the components in this file
 interface Comment {
   id: string;
   author_name: string;
   created_at: string;
   comment: string;
+}
+
+// Function to convert hook Comment type to our local Comment type
+function adaptComments(comments: ForumComment[]): Comment[] {
+  return comments.map(comment => ({
+    id: comment.id,
+    author_name: comment.author,
+    created_at: comment.createdAt.toISOString(), // Convert Date to string
+    comment: comment.content
+  }));
 }
 
 // Placeholder components - in a real project, these would be in separate files
@@ -50,7 +71,7 @@ interface ForumPostStatsProps {
   views: number;
   comments: number;
   upvotes: number;
-  createdAt: string; // Changed to string to match the formatTimeAgo function
+  createdAt: string | Date; // Updated to accept either string or Date
   formatTimeAgo: (date: string) => string;
 }
 const ForumPostStats: React.FC<ForumPostStatsProps> = ({ views, comments, upvotes, createdAt, formatTimeAgo }) => (
@@ -58,7 +79,7 @@ const ForumPostStats: React.FC<ForumPostStatsProps> = ({ views, comments, upvote
     <div>{upvotes} upvotes</div>
     <div>{comments} comments</div>
     <div>{views} views</div>
-    <div>{formatTimeAgo(createdAt)}</div>
+    <div>{formatTimeAgo(typeof createdAt === 'string' ? createdAt : createdAt.toISOString())}</div>
   </div>
 );
 
@@ -151,7 +172,7 @@ const ForumPost = () => {
   const { user } = useAuth();
   
   // Use custom hooks for forum state and actions
-  const { isLoading, discussion, comments, setComments } = useForumPost(id);
+  const { isLoading, discussion, comments: hookComments, setComments } = useForumPost(id);
   const { isSubmitting, handleUpvote, handleSubmitComment } = useForumActions(id);
 
   // Handle upvoting the post
@@ -194,6 +215,11 @@ const ForumPost = () => {
     await handleSubmitComment(userProfile, comment, discussion, setComments);
   };
 
+  // Convert the hook's comments to our local Comment format
+  const adaptedComments = React.useMemo(() => {
+    return adaptComments(hookComments as unknown as ForumComment[]);
+  }, [hookComments]);
+
   return (
     <PageLayout>
       <div className="container mx-auto py-8">
@@ -214,9 +240,9 @@ const ForumPost = () => {
             
             <ForumPostStats
               views={discussion.views}
-              comments={comments.length}
+              comments={adaptedComments.length}
               upvotes={discussion.upvotes}
-              createdAt={discussion.createdAt}
+              createdAt={discussion.createdAt} 
               formatTimeAgo={formatTimeAgo}
             />
             
@@ -230,7 +256,7 @@ const ForumPost = () => {
             {/* Comments */}
             <h2 className="text-2xl font-semibold mb-4">Replies</h2>
             <CommentsList 
-              comments={comments as Comment[]}
+              comments={adaptedComments}
               formatTimeAgo={formatTimeAgo}
             />
           </>
