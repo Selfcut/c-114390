@@ -36,7 +36,7 @@ interface ForumPost {
   upvotes: number;
   views: number;
   comments: number;
-  user_id: string; // Add this to satisfy the ForumDiscussion requirement
+  user_id: string; // Required field for ForumDiscussion compatibility
   createdAt: Date | string;
   // Add other properties as needed
 }
@@ -209,7 +209,7 @@ const ForumPost = () => {
       const discussionWithUserId = {
         ...discussion,
         user_id: discussion.user_id || user.id, // Provide a default if missing
-      };
+      } as ForumDiscussion;
       
       await handleUpvote(userProfile, discussionWithUserId);
     }
@@ -237,7 +237,7 @@ const ForumPost = () => {
     const discussionWithUserId = {
       ...discussion,
       user_id: discussion.user_id || user.id, // Provide a default if missing
-    };
+    } as ForumDiscussion;
     
     await handleSubmitComment(userProfile, comment, discussionWithUserId, setComments);
   };

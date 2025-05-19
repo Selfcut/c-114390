@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { UserProfile } from '@/types/user'; // Use the centralized type
 
 interface ForumDiscussion {
@@ -12,6 +12,7 @@ interface ForumDiscussion {
 
 export const useForumActions = (postId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleUpvote = async (user: UserProfile, discussion: ForumDiscussion) => {
     if (!postId) return;
@@ -32,7 +33,6 @@ export const useForumActions = (postId?: string) => {
       if (error) {
         console.error('Error upvoting post:', error);
         toast({
-          title: "Error",
           description: "Failed to upvote the post.",
           variant: "destructive",
         });
@@ -40,14 +40,12 @@ export const useForumActions = (postId?: string) => {
         // setDiscussion(prev => prev ? { ...prev, upvotes: prev.upvotes - 1 } : prev);
       } else {
         toast({
-          title: "Success",
           description: "You upvoted the post!",
         });
       }
     } catch (error) {
       console.error('Unexpected error upvoting post:', error);
       toast({
-        title: "Unexpected Error",
         description: "An unexpected error occurred while upvoting.",
         variant: "destructive",
       });
@@ -93,7 +91,6 @@ export const useForumActions = (postId?: string) => {
       if (error) {
         console.error('Error submitting comment:', error);
         toast({
-          title: "Error",
           description: "Failed to submit the comment.",
           variant: "destructive",
         });
@@ -101,16 +98,14 @@ export const useForumActions = (postId?: string) => {
         setComments(prevComments => prevComments.slice(0, -1));
       } else {
         toast({
-          title: "Success",
           description: "Comment submitted successfully!",
         });
       }
     } catch (error) {
       console.error('Unexpected error submitting comment:', error);
       toast({
-        title: "Unexpected Error",
-        description: "An unexpected error occurred while submitting the comment.",
-        variant: "destructive",
+          description: "An unexpected error occurred while submitting the comment.",
+          variant: "destructive",
       });
       // Revert the optimistic update if an unexpected error occurs
       setComments(prevComments => prevComments.slice(0, -1));
