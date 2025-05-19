@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 
 // Import pages directly for better code clarity
 import Welcome from '@/pages/Welcome';
-import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Forum from '@/pages/Forum';
 import ForumPost from '@/pages/ForumPost';
@@ -20,11 +19,13 @@ import Chat from '@/pages/Chat';
 import Media from '@/pages/Media';
 import MediaDetail from '@/pages/MediaDetail';
 import Problems from '@/pages/Problems';
+import ProblemDetail from '@/pages/ProblemDetail';
 import Events from '@/pages/Events';
 import Quotes from '@/pages/Quotes';
 import Wiki from '@/pages/Wiki';
 import WikiArticle from '@/components/wiki/WikiArticlePage';
 import NotFound from '@/pages/NotFound';
+import Auth from '@/pages/Auth';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -50,8 +51,8 @@ export const AppRoutes = () => {
       {/* Welcome page as entry point */}
       <Route path="/" element={<Welcome />} />
       
-      {/* Old index page for reference - will eventually be removed */}
-      <Route path="/legacy" element={<Index />} />
+      {/* Authentication */}
+      <Route path="/auth" element={<Auth />} />
       
       {/* Main application routes */}
       <Route path="/dashboard" element={
@@ -60,26 +61,36 @@ export const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* Forum routes */}
       <Route path="/forum" element={<Forum />} />
       <Route path="/forum/:id" element={<ForumPost />} />
       
+      {/* Library & Research routes */}
       <Route path="/library" element={<Library />} />
       <Route path="/research" element={<Research />} />
       
+      {/* Book review routes */}
       <Route path="/book-reviews" element={<BookReviews />} />
       <Route path="/book-reviews/:id" element={<BookReviewDetail />} />
       
+      {/* Chat route */}
       <Route path="/chat" element={<Chat />} />
       
+      {/* Media routes */}
       <Route path="/media" element={<Media />} />
       <Route path="/media/:id" element={<MediaDetail />} />
       
+      {/* Problems routes */}
       <Route path="/problems" element={<Problems />} />
+      <Route path="/problems/:problemId" element={<ProblemDetail />} />
       
+      {/* Events route */}
       <Route path="/events" element={<Events />} />
       
+      {/* Quotes route */}
       <Route path="/quotes" element={<Quotes />} />
       
+      {/* Wiki routes */}
       <Route path="/wiki" element={<Wiki />} />
       <Route path="/wiki/:id" element={<WikiArticle />} />
       
