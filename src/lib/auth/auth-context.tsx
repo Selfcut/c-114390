@@ -181,6 +181,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
+  // Add the missing deleteAccount function
+  const deleteAccount = async (): Promise<{ error: Error | null }> => {
+    try {
+      setLoading(true);
+      setIsLoading(true);
+      
+      if (!user) throw new Error('User not authenticated');
+      
+      // Delete the user account
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) throw error;
+      
+      // Sign out after deletion
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      toast.success("Account deleted successfully");
+      return { error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete account';
+      toast.error(message);
+      setError(error instanceof Error ? error : new Error(String(error)));
+      return { error: error instanceof Error ? error : new Error(String(error)) };
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+  
   const value = {
     user,
     session,
@@ -192,7 +223,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     updateUserProfile: handleUpdateUserProfile,
-    updateProfile: handleUpdateUserProfile // Alias for backward compatibility
+    updateProfile: handleUpdateUserProfile, // Alias for backward compatibility
+    deleteAccount // Add the deleteAccount function to the context value
   };
 
   return (
