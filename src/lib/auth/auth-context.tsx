@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserProfile, AuthContextType } from "./types";
+import { UserProfile, UserStatus } from "@/types/user";
+import { AuthContextType, AuthError } from "./auth-types";
 import { fetchUserProfile, updateUserProfile as updateUserProfileUtil } from "./auth-utils";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
+  const signIn = async (email: string, password: string): Promise<{ error: AuthError | null }> => {
     try {
       setLoading(true);
       setIsLoading(true);
@@ -89,10 +90,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
 
-      // Fix: Properly handle the error object which might be a Supabase error object
+      // Handle Supabase error objects properly
       if (error) {
-        // Convert any error to a standard Error object
-        return { error: new Error(error.message || 'Failed to sign in') };
+        return { error: { message: error.message || 'Failed to sign in', status: error.status } };
       }
       
       toast.success("Signed in successfully");
@@ -101,18 +101,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      return { error: error instanceof Error ? error : new Error(String(error)) };
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, username: string, name?: string): Promise<{ error: Error | null }> => {
+  const signUp = async (email: string, password: string, username: string, name?: string): Promise<{ error: AuthError | null }> => {
     try {
       setLoading(true);
       setIsLoading(true);
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -123,10 +123,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      // Fix: Properly handle the error object which might be a Supabase error object
+      // Handle Supabase error objects properly
       if (error) {
-        // Convert any error to a standard Error object
-        return { error: new Error(error.message || 'Failed to sign up') };
+        return { error: { message: error.message || 'Failed to sign up', status: error.status } };
       }
       
       toast.success("Account created! Check your email to confirm your account.");
@@ -135,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const message = error instanceof Error ? error.message : 'Failed to sign up';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      return { error: error instanceof Error ? error : new Error(String(error)) };
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -160,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const handleUpdateUserProfile = async (updates: Partial<UserProfile>): Promise<{ error: any } | null> => {
+  const handleUpdateUserProfile = async (updates: Partial<UserProfile>): Promise<{ error: AuthError | null }> => {
     try {
       setLoading(true);
       setIsLoading(true);
@@ -170,7 +169,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update the profile using our utility function
       const { error } = await updateUserProfileUtil(user.id, updates);
         
-      if (error) throw error;
+      if (error) {
+        return { error: { message: error.message || 'Failed to update profile' } };
+      }
       
       // Update local user state by creating new object with updated fields
       setUser(prev => prev ? { ...prev, ...updates } : null);
@@ -181,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const message = error instanceof Error ? error.message : 'Failed to update profile';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      return { error };
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -189,18 +190,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   // Implement the deleteAccount function required by AuthContextType
-  const deleteAccount = async (): Promise<{ error: Error | null }> => {
+  const deleteAccount = async (): Promise<{ error: AuthError | null }> => {
     try {
       setLoading(true);
       setIsLoading(true);
       
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        return { error: { message: 'User not authenticated' } };
+      }
       
       // Delete the user account
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       
       if (error) {
-        return { error: new Error(error.message || 'Failed to delete account') };
+        return { error: { message: error.message || 'Failed to delete account' } };
       }
       
       // Sign out after deletion
@@ -214,26 +217,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const message = error instanceof Error ? error.message : 'Failed to delete account';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      return { error: error instanceof Error ? error : new Error(String(error)) };
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
     }
   };
   
-  const value = {
+  // Update user status utility function
+  const updateUserStatus = async (status: UserStatus): Promise<void> => {
+    try {
+      if (!user) throw new Error('User not authenticated');
+      
+      await handleUpdateUserProfile({ status });
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      toast.error("Failed to update status");
+      throw error;
+    }
+  };
+  
+  // Toggle ghost mode utility function
+  const toggleGhostMode = async (): Promise<void> => {
+    try {
+      if (!user) throw new Error('User not authenticated');
+      
+      const currentGhostMode = user.isGhostMode || false;
+      await handleUpdateUserProfile({ isGhostMode: !currentGhostMode });
+      
+      toast.success(`Ghost mode ${!currentGhostMode ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error("Error toggling ghost mode:", error);
+      toast.error("Failed to toggle ghost mode");
+      throw error;
+    }
+  };
+  
+  // Toggle do not disturb utility function
+  const toggleDoNotDisturb = async (): Promise<void> => {
+    try {
+      if (!user) throw new Error('User not authenticated');
+      
+      const newStatus: UserStatus = user.status === 'do-not-disturb' ? 'online' : 'do-not-disturb';
+      await handleUpdateUserProfile({ status: newStatus });
+      
+      toast.success(`Do not disturb ${newStatus === 'do-not-disturb' ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error("Error toggling do not disturb:", error);
+      toast.error("Failed to toggle do not disturb mode");
+      throw error;
+    }
+  };
+  
+  const value: AuthContextType = {
     user,
     session,
-    loading,
-    error,
-    isAuthenticated,
     isLoading,
+    isAuthenticated,
     signIn,
     signUp,
     signOut,
-    updateUserProfile: handleUpdateUserProfile,
-    updateProfile: handleUpdateUserProfile, // Alias for backward compatibility
-    deleteAccount // Add the deleteAccount function to the context value
+    updateProfile: handleUpdateUserProfile,
+    updateUserStatus,
+    toggleGhostMode,
+    toggleDoNotDisturb,
+    deleteAccount
   };
 
   return (

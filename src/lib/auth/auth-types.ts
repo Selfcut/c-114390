@@ -1,5 +1,4 @@
 
-import { User } from "@supabase/supabase-js";
 import { UserProfile, UserStatus, UserRole } from "@/types/user";
 
 export interface AuthError {
@@ -12,12 +11,12 @@ export interface AuthContextType {
   session: any;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any } | null>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
-  updateUserStatus: (status: UserStatus) => Promise<void>;
-  toggleGhostMode: () => Promise<void>;
-  toggleDoNotDisturb: () => Promise<void>;
-  deleteAccount: () => Promise<{ error: Error | null }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: AuthError | null }>;
+  updateUserStatus?: (status: UserStatus) => Promise<void>;
+  toggleGhostMode?: () => Promise<void>;
+  toggleDoNotDisturb?: () => Promise<void>;
+  deleteAccount: () => Promise<{ error: AuthError | null }>;
 }

@@ -18,8 +18,9 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 }) => {
   const location = useLocation();
   
-  // Don't render the header for these specific routes that handle their own headers
-  const pathsWithOwnHeaders = ['/forum'];
+  // Don't render the header for specific routes that handle their own headers
+  // We're removing '/forum' from this array so the standard header will be shown
+  const pathsWithOwnHeaders: string[] = []; 
   const shouldShowHeader = !hideHeader && !pathsWithOwnHeaders.includes(location.pathname);
 
   return (

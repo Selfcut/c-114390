@@ -7,10 +7,11 @@ import { useAuth } from '@/lib/auth';
 import { useForumPost } from '@/hooks/forum/useForumPost';
 import { useForumActions } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
-import { UserProfile } from '@/lib/auth/types';  // Import from auth/types
+import { UserProfile } from '@/types/user';  // Import from the central location
 
 // Placeholder components - in a real project, these would be in separate files
-const ForumSkeleton = () => (
+interface ForumPostSkeletonProps {}
+const ForumSkeleton: React.FC<ForumPostSkeletonProps> = () => (
   <div className="space-y-4 animate-pulse">
     <div className="h-10 bg-secondary rounded w-3/4"></div>
     <div className="h-6 bg-secondary rounded w-1/4"></div>
@@ -22,7 +23,10 @@ const ForumSkeleton = () => (
   </div>
 );
 
-const ForumPostDetails = ({ discussion }: { discussion: any, formatTimeAgo: any }) => (
+interface ForumPostDetailsProps {
+  discussion: any;
+}
+const ForumPostDetails: React.FC<ForumPostDetailsProps> = ({ discussion }) => (
   <div className="space-y-6">
     <h1 className="text-3xl font-bold">{discussion.title}</h1>
     <div className="flex items-center text-sm text-muted-foreground">
@@ -34,7 +38,14 @@ const ForumPostDetails = ({ discussion }: { discussion: any, formatTimeAgo: any 
   </div>
 );
 
-const ForumPostStats = ({ views, comments, upvotes, createdAt, formatTimeAgo }: any) => (
+interface ForumPostStatsProps {
+  views: number;
+  comments: number;
+  upvotes: number;
+  createdAt: string;
+  formatTimeAgo: (date: string) => string;
+}
+const ForumPostStats: React.FC<ForumPostStatsProps> = ({ views, comments, upvotes, createdAt, formatTimeAgo }) => (
   <div className="flex flex-wrap gap-4 py-4 text-sm text-muted-foreground border-t border-b mt-6 mb-8">
     <div>{upvotes} upvotes</div>
     <div>{comments} comments</div>
@@ -43,7 +54,12 @@ const ForumPostStats = ({ views, comments, upvotes, createdAt, formatTimeAgo }: 
   </div>
 );
 
-const AddComment = ({ onSubmit, isSubmitting, user }: any) => {
+interface AddCommentProps {
+  onSubmit: (comment: string) => Promise<void>;
+  isSubmitting: boolean;
+  user: UserProfile | null;
+}
+const AddComment: React.FC<AddCommentProps> = ({ onSubmit, isSubmitting, user }) => {
   const [comment, setComment] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -82,7 +98,18 @@ const AddComment = ({ onSubmit, isSubmitting, user }: any) => {
   );
 };
 
-const CommentsList = ({ comments, formatTimeAgo }: any) => {
+interface Comment {
+  id: string;
+  author_name: string;
+  created_at: string;
+  comment: string;
+}
+
+interface CommentsListProps {
+  comments: Comment[];
+  formatTimeAgo: (date: string) => string;
+}
+const CommentsList: React.FC<CommentsListProps> = ({ comments, formatTimeAgo }) => {
   if (!comments.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -93,7 +120,7 @@ const CommentsList = ({ comments, formatTimeAgo }: any) => {
   
   return (
     <div className="space-y-6">
-      {comments.map((comment: any) => (
+      {comments.map((comment: Comment) => (
         <div key={comment.id} className="p-4 border rounded-lg">
           <div className="flex justify-between mb-2">
             <span className="font-medium">{comment.author_name || 'Anonymous'}</span>
@@ -106,7 +133,10 @@ const CommentsList = ({ comments, formatTimeAgo }: any) => {
   );
 };
 
-const NotFoundCard = ({ onNavigateBack }: any) => (
+interface NotFoundCardProps {
+  onNavigateBack: () => void;
+}
+const NotFoundCard: React.FC<NotFoundCardProps> = ({ onNavigateBack }) => (
   <div className="text-center py-8">
     <h2 className="text-2xl font-bold mb-2">Post Not Found</h2>
     <p className="text-muted-foreground mb-6">The forum post you're looking for doesn't exist or has been removed.</p>
@@ -132,8 +162,11 @@ const ForumPost = () => {
         username: user.username || '',
         email: user.email || '',
         avatar: user.avatar || '',
-        avatar_url: user.avatar_url || '',
-        role: user.role || 'user'
+        name: user.name || '',
+        status: user.status || 'online',
+        isGhostMode: user.isGhostMode || false,
+        role: user.role || 'user',
+        isAdmin: user.isAdmin || false
       };
       
       await handleUpvote(userProfile, discussion);
@@ -150,8 +183,11 @@ const ForumPost = () => {
       username: user.username || '',
       email: user.email || '',
       avatar: user.avatar || '',
-      avatar_url: user.avatar_url || '',
-      role: user.role || 'user'
+      name: user.name || '',
+      status: user.status || 'online',
+      isGhostMode: user.isGhostMode || false,
+      role: user.role || 'user',
+      isAdmin: user.isAdmin || false
     };
     
     await handleSubmitComment(userProfile, comment, discussion, setComments);

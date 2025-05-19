@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { AuthContextType, UserProfile } from "./auth/types";
+import { AuthContextType, AuthError, UserProfile, UserStatus } from "./auth/auth-types";
 import { fetchUserProfile, updateUserProfile } from "./auth/utils";
 import { signIn, signOut, signUp } from "./auth/utils";
 
@@ -128,7 +127,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: null };
     } catch (error) {
       console.error("Sign in exception:", error);
-      return { error };
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -155,7 +155,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: null };
     } catch (error) {
       console.error("Sign up exception:", error);
-      return { error };
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -193,7 +194,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) {
-      return { error: new Error("User not authenticated") };
+      return { error: { message: "User not authenticated" } };
     }
     
     try {
@@ -217,15 +218,112 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       }
       
-      return result;
+      return { error: result.error ? { message: result.error.message } : null };
     } catch (error) {
       console.error("Error updating profile:", error);
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
         title: "Update failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: message,
         variant: "destructive"
       });
-      return { error };
+      return { error: { message } };
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserStatus = async (status: UserStatus): Promise<void> => {
+    try {
+      if (!user) throw new Error('User not authenticated');
+      
+      await handleUpdateProfile({ status });
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      toast({
+        title: "Failed to update status",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+  
+  const toggleGhostMode = async (): Promise<void> => {
+    try {
+      if (!user) throw new Error('User not authenticated');
+      
+      const currentGhostMode = user.isGhostMode || false;
+      await handleUpdateProfile({ isGhostMode: !currentGhostMode });
+      
+      toast({
+        title: `Ghost mode ${!currentGhostMode ? 'enabled' : 'disabled'}`
+      });
+    } catch (error) {
+      console.error("Error toggling ghost mode:", error);
+      toast({
+        title: "Failed to toggle ghost mode",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+  
+  const toggleDoNotDisturb = async (): Promise<void> => {
+    try {
+      if (!user) throw new Error('User not authenticated');
+      
+      const newStatus: UserStatus = user.status === 'do-not-disturb' ? 'online' : 'do-not-disturb';
+      await handleUpdateProfile({ status: newStatus });
+      
+      toast({
+        title: `Do not disturb ${newStatus === 'do-not-disturb' ? 'enabled' : 'disabled'}`
+      });
+    } catch (error) {
+      console.error("Error toggling do not disturb:", error);
+      toast({
+        title: "Failed to toggle do not disturb mode",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+  
+  const deleteAccount = async (): Promise<{ error: AuthError | null }> => {
+    try {
+      setLoading(true);
+      setIsLoading(true);
+      
+      if (!user) {
+        return { error: { message: 'User not authenticated' } };
+      }
+      
+      // Delete the user account
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) {
+        return { error: { message: error.message || 'Failed to delete account' } };
+      }
+      
+      // Sign out after deletion
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      
+      toast({
+        title: "Account deleted successfully"
+      });
+      return { error: null };
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast({
+        title: "Failed to delete account",
+        description: message,
+        variant: "destructive"
+      });
+      return { error: { message } };
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -235,15 +333,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const authValue: AuthContextType = {
     user,
     session,
-    loading,
     isLoading,
-    error,
     isAuthenticated,
     signIn: handleSignIn,
     signUp: handleSignUp,
     signOut: handleSignOut,
     updateProfile: handleUpdateProfile,
-    updateUserProfile: handleUpdateProfile
+    updateUserStatus,
+    toggleGhostMode,
+    toggleDoNotDisturb,
+    deleteAccount
   };
 
   return (
