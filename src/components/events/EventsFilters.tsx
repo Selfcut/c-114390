@@ -1,59 +1,87 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { EventFilterType } from '@/types/events';
+import { useAuth } from '@/lib/auth';
 
-export interface EventsFiltersProps {
-  currentFilter: string;
-  onFilterChange: (filter: string) => void;
+interface EventsFiltersProps {
+  currentFilter: EventFilterType;
+  onFilterChange: (filter: EventFilterType) => void;
+  categories?: string[];
+  currentCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
-export const EventsFilters = ({ currentFilter, onFilterChange }: EventsFiltersProps) => {
+export const EventsFilters = ({
+  currentFilter,
+  onFilterChange,
+  categories = [],
+  currentCategory,
+  onCategoryChange
+}: EventsFiltersProps) => {
+  const { user } = useAuth();
+  
+  // Default categories if none provided
+  const defaultCategories = [
+    'Workshop',
+    'Lecture',
+    'Discussion',
+    'Social',
+    'Conference',
+    'Study Group',
+    'Research',
+    'Webinar',
+  ];
+  
+  const displayCategories = categories.length > 0 ? categories : defaultCategories;
+  
   return (
-    <div className="space-y-4 p-4 bg-card rounded-lg border">
-      <h3 className="font-medium text-lg">Filter Events</h3>
-      
-      <RadioGroup 
-        value={currentFilter} 
-        onValueChange={onFilterChange}
-        className="space-y-2"
+    <div className="flex flex-col sm:flex-row gap-4">
+      <Tabs
+        defaultValue={currentFilter}
+        value={currentFilter}
+        onValueChange={(value) => onFilterChange(value as EventFilterType)}
+        className="w-full sm:w-auto"
       >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="all" id="all" />
-          <Label htmlFor="all">All Events</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="upcoming" id="upcoming" />
-          <Label htmlFor="upcoming">Upcoming</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="past" id="past" />
-          <Label htmlFor="past">Past Events</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="attending" id="attending" />
-          <Label htmlFor="attending">I'm Attending</Label>
-        </div>
-      </RadioGroup>
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="all">All Events</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
+          {user && (
+            <>
+              <TabsTrigger value="attending">Attending</TabsTrigger>
+              <TabsTrigger value="created">Created</TabsTrigger>
+            </>
+          )}
+        </TabsList>
+      </Tabs>
       
-      <div className="pt-4 border-t">
-        <Label className="text-md font-medium mb-2 block">Categories</Label>
-        <div className="space-y-2">
-          <Button variant="outline" size="sm" className="mr-2 mt-2">
-            Seminars
-          </Button>
-          <Button variant="outline" size="sm" className="mr-2 mt-2">
-            Workshops
-          </Button>
-          <Button variant="outline" size="sm" className="mr-2 mt-2">
-            Conferences
-          </Button>
-          <Button variant="outline" size="sm" className="mr-2 mt-2">
-            Journal Clubs
-          </Button>
+      {onCategoryChange && (
+        <div className="w-full sm:w-[180px]">
+          <Select
+            value={currentCategory}
+            onValueChange={onCategoryChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Categories</SelectItem>
+              {displayCategories.map((category) => (
+                <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
+      )}
     </div>
   );
 };

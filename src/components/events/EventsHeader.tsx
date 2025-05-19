@@ -2,40 +2,57 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarPlus, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Search } from 'lucide-react';
 
-export interface EventsHeaderProps {
+interface EventsHeaderProps {
+  canCreateEvent: boolean;
   onCreateEvent: () => void;
   onSearch: (term: string) => void;
-  canCreateEvent?: boolean;
+  searchTerm?: string;
 }
 
-export const EventsHeader = ({ 
-  onCreateEvent, 
+export const EventsHeader = ({
+  canCreateEvent,
+  onCreateEvent,
   onSearch,
-  canCreateEvent = true
+  searchTerm = ''
 }: EventsHeaderProps) => {
+  const [searchValue, setSearchValue] = React.useState(searchTerm);
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(searchValue);
+  };
+
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
-      <div>
-        <h1 className="text-3xl font-bold">Events</h1>
-        <p className="text-muted-foreground">Discover intellectual gatherings and knowledge-sharing events</p>
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center">
+        <CalendarIcon className="h-6 w-6 mr-2 text-primary" />
+        <h1 className="text-2xl font-bold">Events</h1>
       </div>
       
-      <div className="flex items-center space-x-4 w-full md:w-auto">
-        <div className="relative w-full md:w-auto">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search events..."
-            className="pl-8 w-full md:w-[200px] lg:w-[300px]"
-            onChange={(e) => onSearch(e.target.value)}
-          />
-        </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search events..."
+              className="pl-8 w-full sm:w-[250px]"
+              value={searchValue}
+              onChange={handleSearchInputChange}
+            />
+          </div>
+          <Button type="submit" variant="outline">Search</Button>
+        </form>
         
         {canCreateEvent && (
           <Button onClick={onCreateEvent}>
-            <CalendarPlus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
             Create Event
           </Button>
         )}
