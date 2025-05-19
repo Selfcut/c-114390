@@ -35,8 +35,7 @@ interface ForumPost {
   upvotes: number;
   views: number;
   comments: number;
-  user_id: string; // Required field for ForumDiscussion compatibility
-  authorId?: string; // Optional alias for user_id for better readability
+  authorId: string; // This will be used as user_id for ForumDiscussion compatibility
   createdAt: Date | string;
   // Add other properties as needed
 }
@@ -209,7 +208,7 @@ const ForumPost = () => {
       const discussionWithUserId: ForumDiscussion = {
         id: discussion.id,
         upvotes: discussion.upvotes,
-        user_id: discussion.user_id || discussion.authorId || user.id, // Use appropriate ID field
+        user_id: discussion.authorId, // Use authorId as the user_id
       };
       
       await handleUpvote(userProfile, discussionWithUserId);
@@ -238,7 +237,7 @@ const ForumPost = () => {
     const discussionWithUserId: ForumDiscussion = {
       id: discussion.id,
       upvotes: discussion.upvotes,
-      user_id: discussion.user_id || discussion.authorId || user.id, // Use appropriate ID field
+      user_id: discussion.authorId, // Use authorId as the user_id
     };
     
     await handleSubmitComment(userProfile, comment, discussionWithUserId, setComments);
