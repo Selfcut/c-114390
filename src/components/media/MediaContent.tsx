@@ -1,7 +1,7 @@
 
 import React from "react";
 import { UseMediaPostsReturn } from "@/hooks/media/types";
-import { UserProfile } from "@/lib/auth/types";
+import { UserProfile } from "@/types/user"; // Use the centralized type
 import { MediaEmptyState } from "@/components/media/MediaEmptyState";
 import { MediaErrorDisplay } from "@/components/media/MediaErrorDisplay";
 import { MediaFeed } from "@/components/media/MediaFeed";

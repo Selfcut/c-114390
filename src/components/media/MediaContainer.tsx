@@ -1,5 +1,5 @@
-
-import React, { useState, useEffect } from "react";
+import React from 'react';
+import { UserProfile } from '@/types/user'; // Use the centralized type
 import { useAuth } from "@/lib/auth";
 import { useMediaPosts } from "@/hooks/media/useMediaPosts";
 import { MediaHeader } from "@/components/media/MediaHeader";
@@ -9,7 +9,6 @@ import { CreatePostDialog } from "@/components/media/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostData } from "@/hooks/media/types";
-import { UserProfile } from "@/lib/auth/types";
 import { UserStatus } from "@/types/user";
 
 export const MediaContainer = () => {

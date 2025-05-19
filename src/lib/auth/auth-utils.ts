@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile } from "./types";
+import { UserProfile } from "@/types/user";
 import { UserStatus } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
 

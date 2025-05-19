@@ -20,3 +20,6 @@ export interface AuthContextType {
   toggleDoNotDisturb?: () => Promise<void>;
   deleteAccount: () => Promise<{ error: AuthError | null }>;
 }
+
+// Re-export the UserProfile type from the central location for backward compatibility
+export type { UserProfile, UserStatus, UserRole };

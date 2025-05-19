@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +51,7 @@ const Profile = () => {
           username: data.username,
           email: currentUser?.email || "",
           avatar: data.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${data.username}`,
+          avatar_url: data.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${data.username}`,
           bio: data.bio || "",
           website: data.website || "",
           status: (data.status as UserStatus) || "offline",

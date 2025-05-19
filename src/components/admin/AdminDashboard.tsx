@@ -43,6 +43,7 @@ const AdminDashboard = ({ isAdmin }: AdminDashboardProps = {}) => {
           username: user.username,
           email: '', // This is a required field in UserProfile but not in the table
           avatar: user.avatar_url || '',
+          avatar_url: user.avatar_url || '', // Make sure avatar_url is included
           bio: user.bio || '',
           website: user.website || '',
           role: user.role as any,
