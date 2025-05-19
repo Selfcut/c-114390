@@ -32,7 +32,7 @@ export interface AuthState {
 
 export interface AuthContextValue extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null; data: any | null }>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;

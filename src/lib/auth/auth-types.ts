@@ -19,4 +19,5 @@ export interface AuthContextType {
   updateUserStatus: (status: UserStatus) => Promise<void>;
   toggleGhostMode: () => Promise<void>;
   toggleDoNotDisturb: () => Promise<void>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
 }

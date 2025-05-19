@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -81,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<{ error: any } | null> => {
+  const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
     try {
       setLoading(true);
       setIsLoading(true);
@@ -90,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
 
-      if (error) return { error };
+      if (error) return { error: error instanceof Error ? error : new Error(error.message) };
       
       toast.success("Signed in successfully");
       return { error: null };
@@ -98,14 +97,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      return { error };
+      return { error: error instanceof Error ? error : new Error(String(error)) };
     } finally {
       setLoading(false);
       setIsLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, username: string, name?: string): Promise<{ error: any } | null> => {
+  const signUp = async (email: string, password: string, username: string, name?: string): Promise<{ error: Error | null }> => {
     try {
       setLoading(true);
       setIsLoading(true);
@@ -120,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      if (error) return { error };
+      if (error) return { error: error instanceof Error ? error : new Error(error.message) };
       
       toast.success("Account created! Check your email to confirm your account.");
       return { error: null };
@@ -128,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const message = error instanceof Error ? error.message : 'Failed to sign up';
       toast.error(message);
       setError(error instanceof Error ? error : new Error(String(error)));
-      return { error };
+      return { error: error instanceof Error ? error : new Error(String(error)) };
     } finally {
       setLoading(false);
       setIsLoading(false);
