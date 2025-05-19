@@ -5,7 +5,7 @@ import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { problemsData } from '@/data/problemsData';
+import { problemsData, getProblemById } from '@/data/problemsData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,6 +14,7 @@ import { ProblemDetailCard } from '@/components/problems/ProblemDetailCard';
 import { CommentForm } from '@/components/problems/CommentForm';
 import { CommentsList } from '@/components/problems/CommentsList';
 import { ProblemNotFound } from '@/components/problems/ProblemNotFound';
+import { ResourceLinks } from '@/components/problems/ResourceLinks';
 import { useComments } from '@/hooks/problems/useComments';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,7 +50,7 @@ const ProblemDetail = () => {
     enabled: !!problemId && !!problem
   });
 
-  // Fetch problem info from Supabase API 
+  // Fetch problem info
   useEffect(() => {
     // Find the problem by ID
     const fetchProblemData = async () => {
@@ -60,8 +61,8 @@ const ProblemDetail = () => {
       try {
         const id = parseInt(problemId, 10);
         
-        // For now, use the sample data since we're transitioning to real data
-        const foundProblem = problemsData.find(p => p.id === id);
+        // Get problem from our local data
+        const foundProblem = getProblemById(id);
         
         if (foundProblem) {
           setProblem(foundProblem);
@@ -237,6 +238,11 @@ const ProblemDetail = () => {
               }}
               commentsCount={comments.length} 
             />
+            
+            {/* Resource Links */}
+            {problem.resourceLinks && (
+              <ResourceLinks resources={problem.resourceLinks} />
+            )}
             
             {/* Discussion Section */}
             <div className="flex justify-between items-center mb-4">

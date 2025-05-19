@@ -3,10 +3,11 @@ import React, { memo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Share, MessageSquare, ThumbsUp } from 'lucide-react';
+import { AlertTriangle, Share, MessageSquare, ThumbsUp, BookmarkPlus } from 'lucide-react';
+import { Problem } from '@/data/problemsData';
 
 interface ProblemDetailCardProps {
-  problem: any;
+  problem: Problem & { discussions?: number; solutions?: number };
   commentsCount: number;
 }
 
@@ -21,7 +22,10 @@ export const ProblemDetailCard = memo(({ problem, commentsCount }: ProblemDetail
           <div>
             <div className="flex items-center gap-3 mb-2">
               <AlertTriangle size={20} className="text-amber-500" />
-              <Badge>{problem.categories[0]}</Badge>
+              <Badge className="capitalize">{problem.domain}</Badge>
+              {problem.categories.slice(0, 2).map((category, index) => (
+                <Badge key={index} variant="outline">{category}</Badge>
+              ))}
             </div>
             <CardTitle className="text-3xl mb-2">{problem.title}</CardTitle>
             <CardDescription className="text-lg">
@@ -30,10 +34,16 @@ export const ProblemDetailCard = memo(({ problem, commentsCount }: ProblemDetail
             </CardDescription>
           </div>
           
-          <Button variant="outline" size="sm">
-            <Share size={16} className="mr-2" />
-            Share
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <BookmarkPlus size={16} className="mr-2" />
+              Save
+            </Button>
+            <Button variant="outline" size="sm">
+              <Share size={16} className="mr-2" />
+              Share
+            </Button>
+          </div>
         </div>
       </CardHeader>
       
@@ -42,7 +52,7 @@ export const ProblemDetailCard = memo(({ problem, commentsCount }: ProblemDetail
           <p className="text-lg mb-4">{problem.description}</p>
           
           {problem.longDescription && (
-            <p>{problem.longDescription}</p>
+            <p className="mb-6">{problem.longDescription}</p>
           )}
           
           {problem.impact && (
@@ -80,14 +90,20 @@ export const ProblemDetailCard = memo(({ problem, commentsCount }: ProblemDetail
             Join the discussion to explore solutions to this global challenge.
           </div>
           
-          <div className="flex items-center gap-2">
-            <MessageSquare size={16} />
-            <span>{commentsCount} contributions</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <MessageSquare size={16} />
+              <span>{commentsCount} contributions</span>
+            </div>
             
-            <span className="mx-2">•</span>
+            <div className="flex items-center gap-1">
+              <ThumbsUp size={16} />
+              <span>{problem.solutions || 0} proposed solutions</span>
+            </div>
             
-            <ThumbsUp size={16} />
-            <span>0 endorsements</span>
+            <div className="text-sm text-muted-foreground">
+              #{problem.id} in {problem.domain} problems
+            </div>
           </div>
         </div>
       </CardFooter>

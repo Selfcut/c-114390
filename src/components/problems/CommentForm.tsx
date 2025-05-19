@@ -1,146 +1,189 @@
 
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseMutation } from '@/hooks/api/useSupabaseQuery';
+import { useToast } from '@/hooks/use-toast';
+import { Lightbulb, MessageSquare, Loader2 } from 'lucide-react';
+
+interface CommentFormData {
+  content: string;
+}
 
 interface CommentFormProps {
   problemId: number;
   problemTitle: string;
   problemCategories: string[];
-  onCommentAdded: (newComment: Comment) => void;
-}
-
-interface Comment {
-  id: string;
-  author: string;
-  authorAvatar?: string | null;
-  authorId: string;
-  content: string;
-  createdAt: Date;
-  upvotes: number;
+  onCommentAdded: (comment: any) => void;
 }
 
 export const CommentForm = ({ 
   problemId, 
-  problemTitle, 
+  problemTitle,
   problemCategories,
   onCommentAdded 
 }: CommentFormProps) => {
-  const [comment, setComment] = useState('');
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentFormData>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commentType, setCommentType] = useState<'discussion' | 'solution'>('discussion');
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  // Use the Supabase mutation hook
-  const { mutate, isLoading: isSubmitting } = useSupabaseMutation();
 
-  const handleCommentSubmit = async () => {
-    if (!comment.trim()) {
-      toast({
-        description: "Please write something before posting.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+  const onSubmit = async (data: CommentFormData) => {
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to join the discussion.",
+        title: "Authentication required",
+        description: "Please sign in to post a comment",
         variant: "destructive"
       });
       return;
     }
-    
-    // Create a new forum post connected to this problem
-    const newPost = {
-      title: `Contribution to Problem #${problemId}: ${problemTitle}`,
-      content: comment.trim(),
-      user_id: user.id,
-      tags: [`Problem ${problemId}`, ...problemCategories.slice(0, 2)],
-      is_pinned: false,
-    };
-    
-    try {
-      const result = await mutate(
-        async () => {
-          const response = await supabase.from('forum_posts').insert(newPost).select();
-          return { data: response.data, error: response.error };
-        },
-        undefined, // Add this as the second parameter (empty variables)
-        {
-          successMessage: {
-            title: "Success",
-            description: "Your input has been added to the discussion."
-          }
-        }
-      );
-      
-      if (result.error) {
-        console.error('Error adding comment:', result.error);
-        toast({
-          title: "Error",
-          description: "Failed to add your comment",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      if (result.data) {
-        // Fetch the user profile for the newly created post
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('name, username, avatar_url')
-          .eq('id', user.id)
-          .maybeSingle();
 
-        // Create new comment object
-        const newComment: Comment = {
-          id: result.data[0]?.id || '',
-          content: comment.trim(),
-          author: profileData?.name || profileData?.username || user.name || user.email || 'Anonymous',
-          authorAvatar: profileData?.avatar_url || user.avatar_url,
-          authorId: user.id,
-          createdAt: new Date(),
-          upvotes: 0
-        };
-        
-        // Call the callback to update parent component
-        onCommentAdded(newComment);
-        setComment('');
-      }
+    try {
+      setIsSubmitting(true);
+      
+      // Prepare tags for the post
+      const tags = [
+        `Problem ${problemId}`,
+        ...problemCategories,
+        commentType === 'solution' ? 'solution' : 'discussion'
+      ];
+      
+      // Create a new forum post with the problem tag
+      const { data: post, error } = await supabase
+        .from('forum_posts')
+        .insert({
+          title: commentType === 'solution' 
+            ? `Solution for: ${problemTitle}` 
+            : `Discussion on: ${problemTitle}`,
+          content: data.content,
+          user_id: user.id,
+          tags: tags
+        })
+        .select('id, content, created_at, user_id')
+        .single();
+      
+      if (error) throw error;
+      
+      // Fetch the user's profile to add to the comment data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name, username, avatar_url')
+        .eq('id', user.id)
+        .single();
+      
+      // Format the comment with the user data
+      const newComment = {
+        id: post.id,
+        content: post.content,
+        author: profileData?.name || profileData?.username || 'Anonymous',
+        authorAvatar: profileData?.avatar_url,
+        authorId: post.user_id,
+        createdAt: new Date(post.created_at),
+        upvotes: 0
+      };
+      
+      // Add the comment to the local state
+      onCommentAdded(newComment);
+      
+      // Reset the form
+      reset();
+      setCommentType('discussion');
+      
+      // Show success toast
+      toast({
+        title: "Comment posted",
+        description: commentType === 'solution' 
+          ? "Your solution has been shared" 
+          : "Your comment has been posted"
+      });
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error("Error posting comment:", error);
       toast({
         title: "Error",
-        description: "Failed to add your comment",
+        description: "Failed to post your comment. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Card className="mb-8">
       <CardContent className="pt-6">
-        <h3 className="font-medium mb-2">Contribute your insights</h3>
-        <Textarea
-          placeholder="Share your thoughts or potential solutions..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          className="min-h-[120px] mb-4"
-        />
-        <div className="flex justify-end">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="mb-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Button 
+                type="button"
+                variant={commentType === 'discussion' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCommentType('discussion')}
+                className="flex items-center"
+              >
+                <MessageSquare size={16} className="mr-2" />
+                Discussion
+              </Button>
+              <Button 
+                type="button"
+                variant={commentType === 'solution' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCommentType('solution')}
+                className="flex items-center"
+              >
+                <Lightbulb size={16} className="mr-2" />
+                Proposed Solution
+              </Button>
+            </div>
+            
+            <Textarea
+              placeholder={commentType === 'solution' 
+                ? "Share your solution to this problem..." 
+                : "Join the discussion..."}
+              {...register("content", { 
+                required: "Comment content is required",
+                minLength: {
+                  value: 10,
+                  message: "Comment must be at least 10 characters"
+                }
+              })}
+              rows={5}
+              className={errors.content ? "border-red-500" : ""}
+            />
+            {errors.content && (
+              <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>
+            )}
+          </div>
+          
           <Button 
-            onClick={handleCommentSubmit}
-            disabled={!comment.trim() || isSubmitting}
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
-            {isSubmitting ? "Posting..." : "Post Contribution"}
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Posting...
+              </>
+            ) : commentType === 'solution' ? (
+              <>
+                <Lightbulb size={16} className="mr-2" />
+                Post Solution
+              </>
+            ) : (
+              <>
+                <MessageSquare size={16} className="mr-2" />
+                Post Comment
+              </>
+            )}
           </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );
