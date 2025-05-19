@@ -121,3 +121,91 @@ export const fetchQuotesWithFilters = async (
     return [];
   }
 };
+
+/**
+ * Fetch a single quote by ID
+ */
+export const fetchQuoteById = async (id: string): Promise<QuoteWithUser | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('quotes')
+      .select(`
+        *,
+        user:profiles(
+          id, 
+          username, 
+          name, 
+          avatar_url, 
+          status
+        )
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    return formatQuote(data);
+  } catch (error) {
+    console.error('Error fetching quote by ID:', error);
+    return null;
+  }
+};
+
+/**
+ * Count total quotes with filters
+ */
+export const countQuotes = async (options?: Pick<QuoteFilterOptions, 'searchTerm' | 'tag'>): Promise<number> => {
+  try {
+    let query = supabase
+      .from('quotes')
+      .select('id', { count: 'exact', head: true });
+    
+    // Apply filters if provided
+    if (options?.searchTerm) {
+      query = query.or(
+        `text.ilike.%${options.searchTerm}%,author.ilike.%${options.searchTerm}%`
+      );
+    }
+    
+    if (options?.tag) {
+      query = query.contains('tags', [options.tag]);
+    }
+    
+    const { count, error } = await query;
+    
+    if (error) throw error;
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error counting quotes:', error);
+    return 0;
+  }
+};
+
+/**
+ * Create a new quote
+ */
+export const createQuote = async (quoteSubmission: QuoteSubmission): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+    
+    const { error } = await supabase
+      .from('quotes')
+      .insert({
+        text: quoteSubmission.text,
+        author: quoteSubmission.author,
+        source: quoteSubmission.source || null,
+        category: quoteSubmission.category || 'Other',
+        tags: quoteSubmission.tags || [],
+        user_id: user.user.id
+      });
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating quote:', error);
+    return false;
+  }
+};

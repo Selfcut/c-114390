@@ -7,6 +7,7 @@ import { QuotesHeader } from "@/components/quotes/QuotesHeader";
 import { QuotesSearch } from "@/components/quotes/QuotesSearch";
 import { TagsFilter } from "@/components/quotes/TagsFilter";
 import { QuotesGrid } from "@/components/quotes/QuotesGrid";
+import { QuotePagination } from "@/components/quotes/QuotePagination";
 
 const Quotes = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,8 +25,11 @@ const Quotes = () => {
     handleLike,
     handleBookmark,
     refreshQuotes,
-    resetFilters
-  } = useQuotes();
+    resetFilters,
+    currentPage,
+    totalPages,
+    handlePageChange
+  } = useQuotes({ initialLimit: 12 });
 
   // Handle successful quote submission
   const handleQuoteSubmitted = async () => {
@@ -65,6 +69,17 @@ const Quotes = () => {
           onTagClick={setFilterTag}
           onResetFilters={resetFilters}
         />
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-8">
+            <QuotePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
         
         {/* Quote submission modal */}
         {isModalOpen && (

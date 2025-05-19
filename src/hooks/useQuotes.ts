@@ -1,42 +1,72 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  fetchQuotes, 
+  fetchQuotesWithFilters, 
+  countQuotes,
   checkUserLikedQuote, 
   checkUserBookmarkedQuote,
   likeQuote,
   bookmarkQuote,
-  QuoteWithUser
+  QuoteWithUser,
+  QuoteFilterOptions
 } from '@/lib/quotes';
 
-export const useQuotes = () => {
+interface UseQuotesOptions {
+  initialLimit?: number;
+}
+
+export const useQuotes = (options: UseQuotesOptions = {}) => {
+  const { initialLimit = 10 } = options;
+  
   const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
-  const [filteredQuotes, setFilteredQuotes] = useState<QuoteWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
   const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
-  const { isAuthenticated } = useAuth();
+  const [totalQuotes, setTotalQuotes] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(initialLimit);
+  
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
 
-  // Extract all unique tags
+  // Calculate total pages
+  const totalPages = Math.max(1, Math.ceil(totalQuotes / limit));
+
+  // Extract all unique tags from quotes
   const allTags = Array.from(
     new Set(quotes.flatMap(quote => quote.tags || []))
   );
 
-  // Fetch quotes from Supabase
-  const fetchQuotesData = async () => {
+  // Fetch quotes with filters and pagination
+  const fetchQuotesData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const fetchedQuotes = await fetchQuotes();
+      // Prepare filter options
+      const filterOptions: QuoteFilterOptions = {
+        searchTerm: searchQuery || undefined,
+        tag: filterTag || undefined,
+        limit,
+        offset: (currentPage - 1) * limit
+      };
+      
+      // Fetch quotes and count
+      const [fetchedQuotes, count] = await Promise.all([
+        fetchQuotesWithFilters(filterOptions),
+        countQuotes({
+          searchTerm: searchQuery || undefined,
+          tag: filterTag || undefined
+        })
+      ]);
+      
       setQuotes(fetchedQuotes);
-      setFilteredQuotes(fetchedQuotes);
+      setTotalQuotes(count);
       
       // Check user interactions if authenticated
-      if (isAuthenticated) {
+      if (isAuthenticated && user) {
         const likesObj: Record<string, boolean> = {};
         const bookmarksObj: Record<string, boolean> = {};
         
@@ -45,8 +75,8 @@ export const useQuotes = () => {
           bookmarksObj[quote.id] = await checkUserBookmarkedQuote(quote.id);
         }));
         
-        setUserLikes(likesObj);
-        setUserBookmarks(bookmarksObj);
+        setUserLikes(prev => ({ ...prev, ...likesObj }));
+        setUserBookmarks(prev => ({ ...prev, ...bookmarksObj }));
       }
     } catch (error) {
       console.error("Error fetching quotes:", error);
@@ -58,34 +88,12 @@ export const useQuotes = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, filterTag, currentPage, limit, isAuthenticated, user, toast]);
 
-  // Initial fetch on component mount
+  // Initial fetch and refetch when filters or pagination changes
   useEffect(() => {
     fetchQuotesData();
-  }, [isAuthenticated]);
-
-  // Filter quotes based on search and tag filter
-  useEffect(() => {
-    if (searchQuery || filterTag) {
-      const filtered = quotes.filter(quote => {
-        const matchesSearch = searchQuery ? 
-          quote.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          quote.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (quote.tags && quote.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
-          : true;
-            
-        const matchesTag = filterTag ? 
-          quote.tags && quote.tags.includes(filterTag)
-          : true;
-            
-        return matchesSearch && matchesTag;
-      });
-      setFilteredQuotes(filtered);
-    } else {
-      setFilteredQuotes(quotes);
-    }
-  }, [searchQuery, filterTag, quotes]);
+  }, [fetchQuotesData]);
 
   // Handle like button click
   const handleLike = async (quoteId: string) => {
@@ -95,7 +103,7 @@ export const useQuotes = () => {
         description: "Please log in to like quotes",
         variant: "destructive"
       });
-      return;
+      return null;
     }
     
     try {
@@ -139,7 +147,7 @@ export const useQuotes = () => {
         description: "Please log in to bookmark quotes",
         variant: "destructive"
       });
-      return;
+      return null;
     }
     
     try {
@@ -179,11 +187,16 @@ export const useQuotes = () => {
   const resetFilters = () => {
     setSearchQuery("");
     setFilterTag(null);
+    setCurrentPage(1);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return {
-    quotes: filteredQuotes,
-    allQuotes: quotes,
+    quotes,
     allTags,
     isLoading,
     searchQuery,
@@ -195,6 +208,11 @@ export const useQuotes = () => {
     handleLike,
     handleBookmark,
     refreshQuotes: fetchQuotesData,
-    resetFilters
+    resetFilters,
+    // Pagination
+    currentPage,
+    totalPages,
+    handlePageChange,
+    totalQuotes
   };
 };

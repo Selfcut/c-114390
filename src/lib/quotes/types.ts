@@ -10,6 +10,7 @@ export interface QuoteWithUser {
   bookmarks?: number;
   created_at: string;
   user_id: string;
+  category?: string;
   user?: {
     id: string | null;
     username: string;
@@ -33,3 +34,11 @@ export type QuoteFilterOptions = {
   limit?: number;
   offset?: number;
 };
+
+export interface PaginationResult<T> {
+  data: T[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

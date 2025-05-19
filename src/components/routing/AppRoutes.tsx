@@ -22,6 +22,7 @@ import Problems from '@/pages/Problems';
 import ProblemDetail from '@/pages/ProblemDetail';
 import Events from '@/pages/Events';
 import Quotes from '@/pages/Quotes';
+import QuoteDetail from '@/pages/QuoteDetail';
 import Wiki from '@/pages/Wiki';
 import WikiArticle from '@/components/wiki/WikiArticlePage';
 import NotFound from '@/pages/NotFound';
@@ -87,8 +88,9 @@ export const AppRoutes = () => {
       {/* Events route */}
       <Route path="/events" element={<Events />} />
       
-      {/* Quotes route */}
+      {/* Quotes routes */}
       <Route path="/quotes" element={<Quotes />} />
+      <Route path="/quotes/:id" element={<QuoteDetail />} />
       
       {/* Wiki routes */}
       <Route path="/wiki" element={<Wiki />} />
