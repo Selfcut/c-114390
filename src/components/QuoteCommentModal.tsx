@@ -163,7 +163,7 @@ export const QuoteCommentModal = ({
         .eq('id', quoteId);
       
       // Use our helper function to increment the comments count
-      await incrementCounter(quoteId, 'comments');
+      await incrementCounter(quoteId, 'comments', 'quotes');
       
       // Add activity record
       await supabase
