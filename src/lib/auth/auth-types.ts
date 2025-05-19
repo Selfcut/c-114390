@@ -2,6 +2,9 @@
 import { Session } from '@supabase/supabase-js';
 import { UserProfile, UserStatus } from '@/types/user';
 
+export type { UserProfile, UserStatus } from '@/types/user';
+export type { UserRole } from '@/types/user';
+
 export interface AuthError {
   message: string;
   status?: number;

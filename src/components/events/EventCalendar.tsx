@@ -9,6 +9,7 @@ import { format, isToday, isSameDay, isSameMonth } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 interface EventCalendarProps {
   events: EventWithAttendees[];
@@ -40,34 +41,12 @@ export const EventCalendar: React.FC<EventCalendarProps> = ({
     }
   };
   
-  // Custom day render to show events
-  const renderDay = (day: Date, modifiers: { today: boolean }) => {
-    // Check if there are events on this day
-    const dayEvents = events.filter(event => {
+  // Function to check if a date has events
+  const hasEventsOnDay = (day: Date) => {
+    return events.some(event => {
       const eventDate = new Date(event.date);
       return isSameDay(eventDate, day);
     });
-    
-    const hasEvents = dayEvents.length > 0;
-    
-    return (
-      <div className="relative w-full h-full p-0">
-        <span className={cn(
-          "absolute top-1 left-1 text-xs",
-          isToday(day) && "font-bold text-primary"
-        )}>
-          {format(day, "d")}
-        </span>
-        {hasEvents && (
-          <div className="absolute bottom-1 w-full flex justify-center">
-            <div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
-            {dayEvents.length > 1 && (
-              <div className="h-1.5 w-1.5 bg-primary rounded-full ml-0.5"></div>
-            )}
-          </div>
-        )}
-      </div>
-    );
   };
   
   // Function to render agenda view
@@ -145,9 +124,18 @@ export const EventCalendar: React.FC<EventCalendarProps> = ({
             <Calendar
               mode="single"
               selected={selectedDate}
-              onDayClick={handleDateSelect}
-              renderDay={renderDay}
+              onSelect={handleDateSelect}
               className="rounded-md"
+              modifiers={{
+                hasEvents: hasEventsOnDay
+              }}
+              modifiersStyles={{
+                hasEvents: {
+                  fontWeight: 'bold',
+                  textDecoration: 'underline',
+                  color: 'var(--primary)'
+                }
+              }}
             />
           </div>
           {selectedDate && (

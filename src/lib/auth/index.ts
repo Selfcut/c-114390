@@ -1,6 +1,6 @@
 
 // Export all auth functionality from a single entry point
 export * from './auth-context';
-// Export types but avoid duplicate exports
-export type { UserProfile, UserStatus, UserRole } from './auth-types';
+// Export the types directly from user.ts to avoid duplicates
+export type { UserProfile, UserStatus, UserRole } from '@/types/user';
 export * from './auth-utils';
