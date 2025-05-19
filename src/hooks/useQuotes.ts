@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { 
+  fetchQuotes, 
   checkUserLikedQuote, 
   checkUserBookmarkedQuote,
+  likeQuote,
+  bookmarkQuote,
   QuoteWithUser
-} from '@/lib/quotes-service';
+} from '@/lib/quotes';
 
 export const useQuotes = () => {
   const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
@@ -26,55 +28,19 @@ export const useQuotes = () => {
   );
 
   // Fetch quotes from Supabase
-  const fetchQuotes = async () => {
+  const fetchQuotesData = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('quotes')
-        .select(`
-          *,
-          user:profiles(
-            id,
-            username,
-            name,
-            avatar_url,
-            status
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Format quotes to include user data with fallbacks for missing data
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
-        // Handle potential error or missing user data
-        const userObj = typeof quote.user === 'object' && quote.user !== null && 
-          // Need to check if 'error' is in quote.user safely using hasOwnProperty
-          !Object.prototype.hasOwnProperty.call(quote.user, 'error')
-          ? quote.user
-          : {
-              id: null,
-              username: 'unknown',
-              name: 'Unknown User',
-              avatar_url: null,
-              status: 'offline'
-            };
-            
-        return {
-          ...quote,
-          user: userObj
-        };
-      });
-
-      setQuotes(formattedQuotes);
-      setFilteredQuotes(formattedQuotes);
+      const fetchedQuotes = await fetchQuotes();
+      setQuotes(fetchedQuotes);
+      setFilteredQuotes(fetchedQuotes);
       
       // Check user interactions if authenticated
       if (isAuthenticated) {
         const likesObj: Record<string, boolean> = {};
         const bookmarksObj: Record<string, boolean> = {};
         
-        await Promise.all(formattedQuotes.map(async (quote) => {
+        await Promise.all(fetchedQuotes.map(async (quote) => {
           likesObj[quote.id] = await checkUserLikedQuote(quote.id);
           bookmarksObj[quote.id] = await checkUserBookmarkedQuote(quote.id);
         }));
@@ -96,7 +62,7 @@ export const useQuotes = () => {
 
   // Initial fetch on component mount
   useEffect(() => {
-    fetchQuotes();
+    fetchQuotesData();
   }, [isAuthenticated]);
 
   // Filter quotes based on search and tag filter
@@ -133,46 +99,7 @@ export const useQuotes = () => {
     }
     
     try {
-      const { data: existingLike } = await supabase
-        .from('quote_likes')
-        .select('id')
-        .eq('quote_id', quoteId)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .maybeSingle();
-      
-      let result: boolean;
-      
-      if (existingLike) {
-        // Unlike
-        await supabase
-          .from('quote_likes')
-          .delete()
-          .eq('id', existingLike.id);
-        
-        await supabase.rpc('decrement_counter', {
-          row_id: quoteId,
-          column_name: 'likes',
-          table_name: 'quotes'
-        });
-        
-        result = false;
-      } else {
-        // Like
-        await supabase
-          .from('quote_likes')
-          .insert({
-            quote_id: quoteId,
-            user_id: (await supabase.auth.getUser()).data.user?.id
-          });
-        
-        await supabase.rpc('increment_counter', {
-          row_id: quoteId,
-          column_name: 'likes',
-          table_name: 'quotes'
-        });
-        
-        result = true;
-      }
+      const result = await likeQuote(quoteId);
       
       // Update local state
       setUserLikes(prev => ({
@@ -216,46 +143,7 @@ export const useQuotes = () => {
     }
     
     try {
-      const { data: existingBookmark } = await supabase
-        .from('quote_bookmarks')
-        .select('id')
-        .eq('quote_id', quoteId)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .maybeSingle();
-      
-      let result: boolean;
-      
-      if (existingBookmark) {
-        // Remove bookmark
-        await supabase
-          .from('quote_bookmarks')
-          .delete()
-          .eq('id', existingBookmark.id);
-        
-        await supabase.rpc('decrement_counter', {
-          row_id: quoteId,
-          column_name: 'bookmarks',
-          table_name: 'quotes'
-        });
-        
-        result = false;
-      } else {
-        // Add bookmark
-        await supabase
-          .from('quote_bookmarks')
-          .insert({
-            quote_id: quoteId,
-            user_id: (await supabase.auth.getUser()).data.user?.id
-          });
-        
-        await supabase.rpc('increment_counter', {
-          row_id: quoteId,
-          column_name: 'bookmarks',
-          table_name: 'quotes'
-        });
-        
-        result = true;
-      }
+      const result = await bookmarkQuote(quoteId);
       
       // Update local state
       setUserBookmarks(prev => ({
@@ -306,7 +194,7 @@ export const useQuotes = () => {
     userBookmarks,
     handleLike,
     handleBookmark,
-    refreshQuotes: fetchQuotes,
+    refreshQuotes: fetchQuotesData,
     resetFilters
   };
 };
