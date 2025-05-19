@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Globe, Flask, Atom, BookOpen, Cpu } from 'lucide-react';
+import { Globe, Beaker, Atom, BookOpen, Cpu } from 'lucide-react';
 
 interface DomainSelectorProps {
   currentDomain: Problem['domain'];
@@ -19,7 +19,7 @@ interface DomainSelectorProps {
 
 const domainIcons = {
   world: <Globe className="h-4 w-4 mr-2" />,
-  science: <Flask className="h-4 w-4 mr-2" />,
+  science: <Beaker className="h-4 w-4 mr-2" />,
   physics: <Atom className="h-4 w-4 mr-2" />,
   philosophy: <BookOpen className="h-4 w-4 mr-2" />,
   technology: <Cpu className="h-4 w-4 mr-2" />,
@@ -91,4 +91,3 @@ export const DomainSelector = ({
     </div>
   );
 };
-
