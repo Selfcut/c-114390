@@ -15,80 +15,128 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Categories to fetch - adjust as needed
+// Categories to fetch - expanded list of research domains
 const categories = [
   'cs.AI', // Artificial Intelligence
   'cs.CL', // Computational Linguistics
   'cs.LG', // Machine Learning
   'stat.ML', // Statistics - Machine Learning
+  'q-bio.NC', // Quantitative Biology - Neurons and Cognition
+  'q-fin.ST', // Quantitative Finance
+  'physics.soc-ph', // Physics - Society and Physics
+  'cs.CV', // Computer Vision
+  'cs.RO', // Robotics
+  'cs.CR', // Cryptography and Security
+  'cs.SE', // Software Engineering
+  'q-bio.BM', // Quantitative Biology - Biomolecules
+  'cs.NE', // Neural and Evolutionary Computing
+  'physics.med-ph', // Medical Physics
+  'cs.CY' // Computers and Society
 ];
 
+// Map category codes to human-readable names
+const categoryNames = {
+  'cs.AI': 'Artificial Intelligence',
+  'cs.CL': 'Computational Linguistics',
+  'cs.LG': 'Machine Learning',
+  'stat.ML': 'Statistics - Machine Learning',
+  'q-bio.NC': 'Neuroscience',
+  'q-fin.ST': 'Quantitative Finance',
+  'physics.soc-ph': 'Social Physics',
+  'cs.CV': 'Computer Vision',
+  'cs.RO': 'Robotics',
+  'cs.CR': 'Cybersecurity',
+  'cs.SE': 'Software Engineering',
+  'q-bio.BM': 'Biomolecular Research',
+  'cs.NE': 'Neural Computing',
+  'physics.med-ph': 'Medical Physics',
+  'cs.CY': 'Computing and Society'
+};
+
 // Function to fetch recent papers from arXiv
-async function fetchArxivPapers(category: string, maxResults: number = 10) {
-  const url = `http://export.arxiv.org/api/query?search_query=cat:${category}&sortBy=submittedDate&sortOrder=descending&max_results=${maxResults}`;
-  
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch arXiv papers: ${response.status} ${response.statusText}`);
-  }
-  
-  const xmlText = await response.text();
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xmlText, "text/xml");
-  
-  if (!doc) {
-    throw new Error("Failed to parse XML response");
-  }
-  
-  const entries = Array.from(doc.querySelectorAll("entry"));
-  
-  return entries.map(entry => {
-    const title = entry.querySelector("title")?.textContent?.trim() || "Untitled Paper";
-    const summary = entry.querySelector("summary")?.textContent?.trim() || "";
-    const published = entry.querySelector("published")?.textContent || "";
-    const id = entry.querySelector("id")?.textContent || "";
-    const arxivId = id.split('/').pop()?.split('v')[0] || "";
+async function fetchArxivPapers(category: string, maxResults: number = 20) {
+  try {
+    const url = `http://export.arxiv.org/api/query?search_query=cat:${category}&sortBy=submittedDate&sortOrder=descending&max_results=${maxResults}`;
     
-    // Get all authors
-    const authorNodes = Array.from(entry.querySelectorAll("author name"));
-    const authors = authorNodes.map(node => node.textContent || "").join(", ");
+    console.log(`Fetching papers from ${category}...`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch arXiv papers: ${response.status} ${response.statusText}`);
+    }
     
-    return {
-      title,
-      summary,
-      author: authors,
-      published_date: published,
-      source: "arXiv",
-      source_url: `https://arxiv.org/abs/${arxivId}`,
-      category: category,
-      is_auto_fetched: true
-    };
-  });
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, "text/xml");
+    
+    if (!doc) {
+      throw new Error("Failed to parse XML response");
+    }
+    
+    const entries = Array.from(doc.querySelectorAll("entry"));
+    
+    return entries.map(entry => {
+      const title = entry.querySelector("title")?.textContent?.trim() || "Untitled Paper";
+      const summary = entry.querySelector("summary")?.textContent?.trim() || "";
+      const published = entry.querySelector("published")?.textContent || "";
+      const id = entry.querySelector("id")?.textContent || "";
+      const arxivId = id.split('/').pop()?.split('v')[0] || "";
+      
+      // Get all authors
+      const authorNodes = Array.from(entry.querySelectorAll("author name"));
+      const authors = authorNodes.map(node => node.textContent || "").join(", ");
+      
+      // Convert category code to human-readable name
+      const displayCategory = categoryNames[category as keyof typeof categoryNames] || category;
+      
+      return {
+        title,
+        summary: summary.substring(0, 500) + (summary.length > 500 ? "..." : ""),
+        author: authors,
+        published_date: published,
+        source: "arXiv",
+        source_url: `https://arxiv.org/abs/${arxivId}`,
+        category: displayCategory,
+        is_auto_fetched: true
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching ${category} papers:`, error);
+    return [];
+  }
 }
 
 // Function to store papers in the database
 async function storePapers(papers: any[]) {
-  const { data, error } = await supabase
-    .from('research_papers')
-    .upsert(
-      papers.map(paper => ({
-        title: paper.title,
-        summary: paper.summary,
-        author: paper.author,
-        published_date: paper.published_date,
-        source: paper.source,
-        source_url: paper.source_url,
-        category: paper.category,
-        is_auto_fetched: paper.is_auto_fetched
-      })),
-      { onConflict: 'source_url' }
-    );
-  
-  if (error) {
-    throw new Error(`Failed to store papers: ${error.message}`);
+  if (papers.length === 0) {
+    return [];
   }
   
-  return data;
+  try {
+    const { data, error } = await supabase
+      .from('research_papers')
+      .upsert(
+        papers.map(paper => ({
+          title: paper.title,
+          summary: paper.summary,
+          author: paper.author,
+          published_date: paper.published_date,
+          source: paper.source,
+          source_url: paper.source_url,
+          category: paper.category,
+          is_auto_fetched: paper.is_auto_fetched
+        })),
+        { onConflict: 'source_url' }
+      );
+    
+    if (error) {
+      throw new Error(`Failed to store papers: ${error.message}`);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error storing papers:', error);
+    throw error;
+  }
 }
 
 serve(async (req) => {
@@ -98,37 +146,46 @@ serve(async (req) => {
   }
   
   try {
+    console.log("Fetch research job started");
     const papers = [];
+    const startTime = Date.now();
     
     // Fetch papers for each category
     for (const category of categories) {
-      const categoryPapers = await fetchArxivPapers(category, 5);
-      papers.push(...categoryPapers);
-    }
-    
-    // Store papers in the database
-    await storePapers(papers);
-    
-    // Trigger embedding generation for new papers
-    for (const paper of papers) {
       try {
-        await fetch(`${supabaseUrl}/functions/v1/generate-embeddings`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contentType: 'research',
-            // Note: We don't have the contentId here yet since we just inserted them
-          }),
-        });
-      } catch (error) {
-        console.error('Error generating embeddings:', error);
+        console.log(`Fetching papers for ${category}...`);
+        const categoryPapers = await fetchArxivPapers(category, 20);
+        console.log(`Fetched ${categoryPapers.length} papers from ${category}`);
+        papers.push(...categoryPapers);
+      } catch (categoryError) {
+        console.error(`Error processing category ${category}:`, categoryError);
+        // Continue with other categories even if one fails
       }
     }
     
-    return new Response(JSON.stringify({ success: true, count: papers.length }), {
+    // Store papers in the database
+    if (papers.length > 0) {
+      await storePapers(papers);
+      
+      // Trigger embedding generation for new papers (simplified approach)
+      try {
+        await supabase.functions.invoke('generate-embeddings', {
+          body: { contentType: 'research', batchSize: 50 }
+        });
+      } catch (embedError) {
+        console.error('Error generating embeddings:', embedError);
+      }
+    }
+    
+    const duration = (Date.now() - startTime) / 1000;
+    console.log(`Fetch research job completed in ${duration.toFixed(2)}s. Fetched ${papers.length} papers.`);
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      count: papers.length,
+      duration: `${duration.toFixed(2)}s`,
+      categories: categories.length
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {

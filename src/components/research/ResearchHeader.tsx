@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Microscope, Plus } from "lucide-react";
 
 interface ResearchHeaderProps {
-  onCreateResearch: () => void;
+  onCreateResearch: (() => void) | null;
 }
 
 export const ResearchHeader = ({ onCreateResearch }: ResearchHeaderProps) => {
@@ -14,15 +14,18 @@ export const ResearchHeader = ({ onCreateResearch }: ResearchHeaderProps) => {
         <Microscope className="h-8 w-8 text-primary" />
         Research Papers
       </h1>
-      <p className="text-muted-foreground">
-        Explore groundbreaking research papers from our scientific community.
+      <p className="text-muted-foreground max-w-2xl">
+        Explore groundbreaking research papers across multiple scientific domains. 
+        Automatically updated with the latest publications from top research archives.
       </p>
-      <div className="flex mt-2">
-        <Button onClick={onCreateResearch} className="flex items-center gap-2">
-          <Plus size={16} />
-          Add Research Paper
-        </Button>
-      </div>
+      {onCreateResearch && (
+        <div className="flex mt-2">
+          <Button onClick={onCreateResearch} className="flex items-center gap-2">
+            <Plus size={16} />
+            Add Research Paper
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

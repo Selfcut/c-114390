@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ArrowDownUp, Calendar, ExternalLink } from "lucide-react";
 
 // Components
 import { ResearchHeader } from "@/components/research/ResearchHeader";
@@ -15,111 +15,113 @@ import { ResearchLoadingIndicator } from "@/components/research/ResearchLoadingI
 import { CreateResearchDialog } from "@/components/research/CreateResearchDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
-// Types
-import { ResearchPaper } from "@/lib/supabase-types";
-import { ResearchItem, mapResearchPaperToItem } from "@/components/research/types";
+// Hooks and Types
+import { useResearchData } from "@/hooks/useResearchData";
+import { ResearchItem } from "@/components/research/types";
+
+// Domain categories for research papers
+const RESEARCH_DOMAINS = [
+  "All Categories",
+  "Artificial Intelligence",
+  "Machine Learning",
+  "Computational Linguistics",
+  "Statistics - Machine Learning",
+  "Neuroscience",
+  "Computer Vision",
+  "Robotics",
+  "Cybersecurity",
+  "Software Engineering",
+  "Biomolecular Research",
+  "Neural Computing",
+  "Medical Physics",
+  "Computing and Society",
+  "Quantitative Finance",
+  "Social Physics"
+];
 
 const Research = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin, isModerator } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
-  const [researchPapers, setResearchPapers] = useState<ResearchItem[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState<Date>(new Date());
+  const [sortByDate, setSortByDate] = useState(true);
   
-  // Search state
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<ResearchPaper[]>([]);
-  
-  // Fetch research papers on component mount
-  useEffect(() => {
-    fetchResearchPapers();
-  }, []);
+  // Use our research data hook
+  const { 
+    researchPapers, 
+    isLoading, 
+    error, 
+    refetch, 
+    lastUpdateTime 
+  } = useResearchData(searchQuery, selectedDomain);
 
-  // Fetch all research papers
-  const fetchResearchPapers = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('research_papers')
-        .select('*');
-        
-      if (error) {
-        throw error;
+  // Sort papers by date (newest first)
+  const sortedPapers = React.useMemo(() => {
+    if (!researchPapers) return [];
+    
+    return [...researchPapers].sort((a, b) => {
+      if (sortByDate) {
+        return b.date.getTime() - a.date.getTime();
+      } else {
+        // Sort by title if not sorting by date
+        return a.title.localeCompare(b.title);
       }
-      
-      if (data) {
-        const mappedPapers = data.map(mapResearchPaperToItem);
-        setResearchPapers(mappedPapers);
-        setLastUpdateTime(new Date());
+    });
+  }, [researchPapers, sortByDate]);
+  
+  // Get unique domains from the fetched papers
+  const availableDomains = React.useMemo(() => {
+    if (!researchPapers) return [];
+    
+    const domains = new Set<string>();
+    researchPapers.forEach(paper => {
+      if (paper.category) {
+        domains.add(paper.category);
       }
-    } catch (error: any) {
-      console.error('Error fetching research papers:', error);
-      toast.error(`Failed to load research papers: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    });
+    
+    return Array.from(domains).sort();
+  }, [researchPapers]);
   
   // Handle search
-  const performSearch = async (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) {
-      // If search is cleared, show all papers
-      setSearchResults([]);
-      return;
-    }
-    
-    setIsSearching(true);
-    setSearchError(null);
-    
-    try {
-      // Try semantic search if available
-      try {
-        const { data: semanticData, error: semanticError } = await supabase.functions.invoke('semantic-search', {
-          body: { 
-            query: searchQuery,
-            contentType: 'research',
-            limit: 20,
-            threshold: 0.65
-          }
-        });
-        
-        if (!semanticError && semanticData?.results && semanticData.results.length > 0) {
-          setSearchResults(semanticData.results);
-          setIsSearching(false);
-          return;
-        }
-      } catch (semanticError) {
-        console.log('Semantic search not available, falling back to basic search');
-      }
-      
-      // Fallback to basic search
-      const { data, error } = await supabase
-        .from('research_papers')
-        .select('*')
-        .or(`title.ilike.%${searchQuery}%,summary.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
-      
-      if (error) throw error;
-      
-      setSearchResults(data || []);
-    } catch (error: any) {
-      console.error('Search error:', error);
-      setSearchError(`Search failed: ${error.message}`);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
   };
   
   // Clear search
   const clearSearch = () => {
     setSearchQuery("");
-    setSearchResults([]);
+  };
+  
+  // Manually fetch latest research papers
+  const handleFetchLatestResearch = async () => {
+    try {
+      toast.loading("Fetching latest research papers...");
+      
+      const { data, error } = await supabase.functions.invoke('fetch-research');
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.dismiss();
+      toast.success(`Successfully fetched ${data?.count || 0} research papers`);
+      
+      // Trigger a refresh
+      setRefreshTrigger(new Date());
+      refetch();
+      
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error(`Failed to fetch research papers: ${err.message}`);
+      console.error('Error fetching research:', err);
+    }
   };
   
   // Handle creating new research
@@ -133,7 +135,7 @@ const Research = () => {
   };
   
   const handleResearchCreated = async (id: string) => {
-    fetchResearchPapers();
+    refetch();
     toast.success("Research paper published successfully");
     
     // Generate embeddings for the new research paper
@@ -145,43 +147,43 @@ const Research = () => {
       console.error('Failed to generate embeddings:', err);
     }
   };
-  
-  // Filter papers based on category if selected
-  const filteredPapers = researchPapers.filter(paper => {
-    if (selectedCategory) {
-      return paper.category === selectedCategory;
-    }
-    return true;
-  });
-  
-  // Determine which papers to display
-  const displayPapers = searchResults.length > 0
-    ? searchResults.map(mapResearchPaperToItem)
-    : filteredPapers;
-    
-  // Handle category selection
-  const handleCategoryChange = (category: string | null) => {
-    setSelectedCategory(category);
-    // Clear search if active
-    if (searchResults.length > 0) {
-      clearSearch();
-    }
-  };
-  
+
   return (
     <PageLayout>
-      <div className="container mx-auto max-w-7xl">
-        <div className="flex justify-between items-center mb-8">
-          <ResearchHeader onCreateResearch={handleCreateResearch} />
+      <div className="container mx-auto max-w-7xl py-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          <ResearchHeader onCreateResearch={null} /> {/* No button in the header */}
           
-          <div className="text-sm text-muted-foreground">
-            Last updated: {format(lastUpdateTime, 'h:mm a')}
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="text-sm text-muted-foreground whitespace-nowrap">
+              Last updated: {format(lastUpdateTime, 'h:mm a')}
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleFetchLatestResearch}
+              className="whitespace-nowrap"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Fetch Latest Research
+            </Button>
+            
+            {(isAdmin || isModerator) && (
+              <Button 
+                size="sm"
+                onClick={handleCreateResearch} 
+                className="whitespace-nowrap ml-2"
+              >
+                Add Research Paper
+              </Button>
+            )}
           </div>
         </div>
         
-        {/* Unified Search Bar */}
+        {/* Search and Sort Controls */}
         <div className="mb-6">
-          <form onSubmit={performSearch} className="flex gap-2">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -190,71 +192,77 @@ const Research = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
-                disabled={isSearching}
+                disabled={isLoading}
               />
             </div>
+            
             <Button 
-              type="submit" 
-              disabled={!searchQuery.trim() || isSearching}
+              variant="outline" 
+              size="icon"
+              onClick={() => setSortByDate(!sortByDate)}
+              title={sortByDate ? "Sort alphabetically" : "Sort by date"}
             >
-              {isSearching ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Search className="h-4 w-4 mr-2" />
-              )}
-              Search
+              <ArrowDownUp className="h-4 w-4" />
             </Button>
-            {searchResults.length > 0 && (
+            
+            {searchQuery && (
               <Button 
                 variant="outline" 
                 onClick={clearSearch}
-                disabled={isSearching}
+                disabled={isLoading}
               >
                 Clear
               </Button>
             )}
           </form>
-          {searchError && (
-            <p className="text-sm text-destructive mt-1">{searchError}</p>
-          )}
-          {searchResults.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Found {searchResults.length} research papers
-            </p>
-          )}
         </div>
         
-        {/* Category filter dropdown */}
-        <div className="mb-6">
-          <select
-            className="border border-input bg-background px-3 py-2 rounded-md text-sm"
-            value={selectedCategory || ''}
-            onChange={(e) => handleCategoryChange(e.target.value || null)}
-            disabled={searchResults.length > 0}
-          >
-            <option value="">All Categories</option>
-            <option value="Machine Learning">Machine Learning</option>
-            <option value="Artificial Intelligence">Artificial Intelligence</option>
-            <option value="Natural Language Processing">Natural Language Processing</option>
-            <option value="Computer Vision">Computer Vision</option>
-            <option value="Neuroscience">Neuroscience</option>
-            <option value="Ethics">Ethics</option>
-          </select>
-        </div>
+        {/* Domains Tabs */}
+        <Tabs 
+          value={selectedDomain || "All Categories"} 
+          onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
+          className="mb-6"
+        >
+          <div className="border-b">
+            <ScrollableTabsList>
+              {RESEARCH_DOMAINS.map(domain => (
+                <TabsTrigger key={domain} value={domain}>
+                  {domain}
+                </TabsTrigger>
+              ))}
+            </ScrollableTabsList>
+          </div>
+        </Tabs>
         
-        {isLoading || isSearching ? (
+        {isLoading ? (
           <ResearchLoadingIndicator />
-        ) : displayPapers.length > 0 ? (
+        ) : error ? (
+          <Card className="text-center py-10">
+            <CardContent>
+              <p className="text-destructive mb-4">{error}</p>
+              <Button onClick={() => refetch()}>Retry</Button>
+            </CardContent>
+          </Card>
+        ) : sortedPapers.length > 0 ? (
           <ResearchGrid 
             searchQuery={searchQuery}
-            selectedCategory={selectedCategory}
-            researchPapers={displayPapers}
+            selectedCategory={selectedDomain}
+            researchPapers={sortedPapers}
           />
         ) : (
-          <div className="text-center py-10 border rounded-lg bg-muted/20">
-            <p className="text-muted-foreground mb-2">No research papers found</p>
-            <Button onClick={handleCreateResearch}>Create Your First Research Paper</Button>
-          </div>
+          <Card className="text-center py-12 border-dashed">
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-2">No research papers found</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchQuery 
+                  ? "Try adjusting your search terms or filters" 
+                  : "Research papers from top journals and publications will appear here"}
+              </p>
+              <Button onClick={handleFetchLatestResearch}>
+                Fetch Latest Research
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
       
@@ -264,6 +272,17 @@ const Research = () => {
         onSuccess={handleResearchCreated}
       />
     </PageLayout>
+  );
+};
+
+// Custom scrollable tabs list for horizontal scrolling on mobile
+const ScrollableTabsList: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  return (
+    <div className="overflow-auto scrollbar-hide">
+      <TabsList className="inline-flex w-max min-w-full">
+        {children}
+      </TabsList>
+    </div>
   );
 };
 

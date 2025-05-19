@@ -10,7 +10,23 @@ export const formatTime = (timestamp: string | Date) => {
     }
     
     // If the timestamp is already a Date object, use it directly
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    let date: Date;
+    
+    if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      // Handle ISO strings and other timestamp formats
+      if (typeof timestamp === 'string') {
+        if (timestamp.toLowerCase() === 'invalid date') {
+          return 'Unknown time';
+        }
+        
+        // Try parsing the date string
+        date = new Date(timestamp);
+      } else {
+        return 'Unknown time';
+      }
+    }
     
     // Check if date is valid
     if (isNaN(date.getTime())) {

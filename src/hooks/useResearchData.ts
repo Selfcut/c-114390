@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ResearchItem, mapResearchPaperToItem } from "@/components/research/types";
 import { ResearchPaper } from "@/lib/supabase-types";
@@ -10,7 +10,8 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
   try {
     const { data, error } = await supabase
       .from('research_papers')
-      .select('*');
+      .select('*')
+      .order('published_date', { ascending: false });
     
     if (error) {
       console.error('Error fetching research papers:', error);
@@ -34,7 +35,7 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
   
   const { data: researchPapers = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['research-papers', searchQuery, selectedCategory],
+    queryKey: ['research-papers'],
     queryFn: fetchResearchPapers,
     refetchInterval: 60 * 60 * 1000, // Auto-refresh every hour
     refetchOnWindowFocus: false
@@ -48,18 +49,20 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
   }, [researchPapers]);
   
   // Filter research items based on search query and selected category
-  const filteredPapers = researchPapers.filter(item => {
-    const matchesSearch = searchQuery 
-      ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        item.summary.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-    
-    const matchesCategory = selectedCategory 
-      ? item.category === selectedCategory
-      : true;
-    
-    return matchesSearch && matchesCategory;
-  });
+  const filteredPapers = useMemo(() => {
+    return researchPapers.filter(item => {
+      const matchesSearch = searchQuery 
+        ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          item.summary.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      
+      const matchesCategory = selectedCategory 
+        ? item.category === selectedCategory
+        : true;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [researchPapers, searchQuery, selectedCategory]);
   
   return {
     researchPapers: filteredPapers,
