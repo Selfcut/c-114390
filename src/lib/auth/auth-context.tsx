@@ -89,7 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
 
-      if (error) return { error: error instanceof Error ? error : new Error(error.message) };
+      // Fix: Properly handle the error object which might be a Supabase error object
+      if (error) {
+        // Convert any error to a standard Error object
+        return { error: new Error(error.message || 'Failed to sign in') };
+      }
       
       toast.success("Signed in successfully");
       return { error: null };
@@ -119,7 +123,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      if (error) return { error: error instanceof Error ? error : new Error(error.message) };
+      // Fix: Properly handle the error object which might be a Supabase error object
+      if (error) {
+        // Convert any error to a standard Error object
+        return { error: new Error(error.message || 'Failed to sign up') };
+      }
       
       toast.success("Account created! Check your email to confirm your account.");
       return { error: null };
@@ -180,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Add the missing deleteAccount function
+  // Implement the deleteAccount function required by AuthContextType
   const deleteAccount = async (): Promise<{ error: Error | null }> => {
     try {
       setLoading(true);
@@ -191,7 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Delete the user account
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       
-      if (error) throw error;
+      if (error) {
+        return { error: new Error(error.message || 'Failed to delete account') };
+      }
       
       // Sign out after deletion
       await supabase.auth.signOut();
