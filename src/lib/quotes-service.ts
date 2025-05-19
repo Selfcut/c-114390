@@ -43,8 +43,8 @@ export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
     const formattedQuotes = (data || []).map(quote => {
       // Handle potential error or missing user data
       const userObj = typeof quote.user === 'object' && 
-        // Need to check if 'error' is in quote.user safely
-        (quote.user !== null && !('error' in quote.user))
+        // Need to check if 'error' is in quote.user safely - fix the null check
+        (quote.user !== null && !Object.prototype.hasOwnProperty.call(quote.user, 'error'))
         ? quote.user
         : {
             id: null,
@@ -123,8 +123,8 @@ export const fetchQuotesWithFilters = async (
     const formattedQuotes = (data || []).map(quote => {
       // Handle potential error or missing user data
       const userObj = typeof quote.user === 'object' && 
-        // Need to check if 'error' is in quote.user safely
-        (quote.user !== null && !('error' in quote.user))
+        // Need to check if 'error' is in quote.user safely - fix the null check
+        (quote.user !== null && !Object.prototype.hasOwnProperty.call(quote.user, 'error'))
         ? quote.user
         : {
             id: null,
