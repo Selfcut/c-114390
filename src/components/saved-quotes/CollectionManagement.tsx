@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -61,6 +60,7 @@ export function CollectionManagement({
     
     setIsSubmitting(true);
     try {
+      // Using .update() directly on the table
       const { error } = await supabase
         .from('quote_collections')
         .update({
@@ -96,6 +96,7 @@ export function CollectionManagement({
     
     setIsSubmitting(true);
     try {
+      // Using .delete() directly on the table
       const { error } = await supabase
         .from('quote_collections')
         .delete()

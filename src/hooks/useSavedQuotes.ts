@@ -34,27 +34,31 @@ export const useSavedQuotes = () => {
     try {
       const { data, error } = await supabase
         .from('quote_collections')
-        .select('*, quote_collection_items!inner(quote_id)')
-        .eq('user_id', user.id);
+        .select('*');
         
       if (error) throw error;
       
-      // Count quotes in each collection and format
-      const collectionsWithCount = data.map(collection => {
-        // Count unique quote_ids for this collection
-        const uniqueQuoteIds = new Set(
-          collection.quote_collection_items.map((item: any) => item.quote_id)
-        );
+      // Count quotes in each collection
+      const collectionsWithCount: QuoteCollection[] = [];
+      
+      for (const collection of data) {
+        // Count quotes in this collection
+        const { count, error: countError } = await supabase
+          .from('quote_collection_items')
+          .select('*', { count: 'exact', head: true })
+          .eq('collection_id', collection.id);
         
-        return {
+        if (countError) throw countError;
+        
+        collectionsWithCount.push({
           id: collection.id,
           name: collection.name,
           description: collection.description,
           user_id: collection.user_id,
           created_at: collection.created_at,
-          quote_count: uniqueQuoteIds.size
-        };
-      });
+          quote_count: count || 0
+        });
+      }
       
       setCollections(collectionsWithCount);
     } catch (error) {
@@ -124,8 +128,10 @@ export const useSavedQuotes = () => {
       const quotesWithCollections = quotesData.map(quote => {
         // Find all collection IDs this quote belongs to
         const quoteCollections = collectionItems
-          .filter(item => item.quote_id === quote.id)
-          .map(item => item.collection_id);
+          ? collectionItems
+              .filter(item => item.quote_id === quote.id)
+              .map(item => item.collection_id)
+          : [];
           
         return {
           quote: {
@@ -202,7 +208,7 @@ export const useSavedQuotes = () => {
     
     try {
       // Check if quote is already in collection
-      const { data: existingItem } = await supabase
+      const { data: existingItem, error: checkError } = await supabase
         .from('quote_collection_items')
         .select()
         .eq('quote_id', quoteId)
@@ -210,6 +216,8 @@ export const useSavedQuotes = () => {
         .eq('user_id', user.id)
         .maybeSingle();
         
+      if (checkError) throw checkError;
+      
       if (existingItem) {
         // Already in collection
         return true;

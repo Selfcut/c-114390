@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -38,7 +37,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-export const AppRoutes = () => {
+export function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
@@ -100,4 +99,4 @@ export const AppRoutes = () => {
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
-};
+}

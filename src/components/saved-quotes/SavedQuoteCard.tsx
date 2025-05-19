@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, MessageSquare, Trash, FolderPlus, Check, X } from 'lucide-react';
+import { MoreHorizontal, MessageSquare, FolderPlus, Check } from 'lucide-react';
 
 import { QuoteWithUser } from '@/lib/quotes/types';
 import { Button } from '@/components/ui/button';
@@ -47,21 +47,9 @@ export function SavedQuoteCard({
     navigate(`/quotes/${quote.id}`);
   };
   
-  const handleRemoveFromCollection = (collectionId: string) => {
-    if (onRemoveFromCollection) {
-      onRemoveFromCollection(quote.id, collectionId);
-    }
-  };
-  
-  const handleAddToCollection = (collectionId: string) => {
-    if (onAddToCollection) {
-      onAddToCollection(quote.id, collectionId);
-    }
-  };
-  
   return (
     <>
-      <Card className="hover:shadow-md transition-all duration-200 cursor-pointer">
+      <Card className="hover:shadow-md transition-all duration-200 cursor-pointer" onClick={handleQuoteClick}>
         <CardContent className="p-4">
           <div className="mb-3">
             <p className="text-lg font-serif italic relative">
@@ -90,6 +78,7 @@ export function SavedQuoteCard({
                   key={index} 
                   variant="secondary" 
                   className="text-xs hover:bg-secondary/80"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   #{tag}
                 </Badge>
@@ -122,7 +111,10 @@ export function SavedQuoteCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => navigate(`/quotes/${quote.id}?openComments=true`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/quotes/${quote.id}?openComments=true`);
+                }}
               >
                 <MessageSquare className="h-4 w-4" />
                 <span className="sr-only">Comments</span>
@@ -140,12 +132,18 @@ export function SavedQuoteCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem onClick={() => setIsCollectionDialogOpen(true)}>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCollectionDialogOpen(true);
+                  }}>
                     <FolderPlus className="h-4 w-4 mr-2" />
                     Manage Collections
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleQuoteClick}>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/quotes/${quote.id}`);
+                  }}>
                     View Quote Details
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -191,9 +189,8 @@ export function SavedQuoteCard({
                           size="sm"
                           variant="ghost"
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleRemoveFromCollection(collection.id)}
+                          onClick={() => onRemoveFromCollection && onRemoveFromCollection(quote.id, collection.id)}
                         >
-                          <Trash className="h-4 w-4 mr-1" />
                           Remove
                         </Button>
                       ) : (
@@ -201,7 +198,7 @@ export function SavedQuoteCard({
                           size="sm"
                           variant="ghost"
                           className="text-primary hover:text-primary hover:bg-primary/10"
-                          onClick={() => handleAddToCollection(collection.id)}
+                          onClick={() => onAddToCollection && onAddToCollection(quote.id, collection.id)}
                         >
                           <Check className="h-4 w-4 mr-1" />
                           Add
