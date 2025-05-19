@@ -76,8 +76,14 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       
       if (deleteError) throw deleteError;
       
-      // Decrement likes count
-      await supabase.rpc('decrement_quote_likes', { quote_id: quoteId });
+      // Decrement likes count - using the utility function instead of direct RPC call
+      await supabase.from('quotes')
+        .update({ likes: supabase.rpc('decrement_counter', { 
+          row_id: quoteId, 
+          column_name: 'likes', 
+          table_name: 'quotes' 
+        }) })
+        .eq('id', quoteId);
       
       return false;
     } else {
@@ -91,8 +97,14 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       
       if (insertError) throw insertError;
       
-      // Increment likes count
-      await supabase.rpc('increment_quote_likes', { quote_id: quoteId });
+      // Increment likes count - using the utility function instead of direct RPC call
+      await supabase.from('quotes')
+        .update({ likes: supabase.rpc('increment_counter', { 
+          row_id: quoteId, 
+          column_name: 'likes', 
+          table_name: 'quotes' 
+        }) })
+        .eq('id', quoteId);
       
       return true;
     }
@@ -124,8 +136,14 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       
       if (deleteError) throw deleteError;
       
-      // Decrement bookmarks count
-      await supabase.rpc('decrement_quote_bookmarks', { quote_id: quoteId });
+      // Decrement bookmarks count - using the utility function instead of direct RPC call
+      await supabase.from('quotes')
+        .update({ bookmarks: supabase.rpc('decrement_counter', { 
+          row_id: quoteId, 
+          column_name: 'bookmarks', 
+          table_name: 'quotes' 
+        }) })
+        .eq('id', quoteId);
       
       return false;
     } else {
@@ -139,8 +157,14 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       
       if (insertError) throw insertError;
       
-      // Increment bookmarks count
-      await supabase.rpc('increment_quote_bookmarks', { quote_id: quoteId });
+      // Increment bookmarks count - using the utility function instead of direct RPC call
+      await supabase.from('quotes')
+        .update({ bookmarks: supabase.rpc('increment_counter', { 
+          row_id: quoteId, 
+          column_name: 'bookmarks', 
+          table_name: 'quotes' 
+        }) })
+        .eq('id', quoteId);
       
       return true;
     }
@@ -155,24 +179,48 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
  */
 export const fetchComments = async (quoteId: string): Promise<QuoteComment[]> => {
   try {
-    const { data, error } = await supabase
+    // First fetch all comments for the quote
+    const { data: commentData, error: commentError } = await supabase
       .from('quote_comments')
-      .select(`
-        *,
-        user:profiles(
-          id,
-          username,
-          name,
-          avatar_url,
-          status
-        )
-      `)
+      .select('*')
       .eq('quote_id', quoteId)
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (commentError) throw commentError;
     
-    return data || [];
+    if (!commentData || commentData.length === 0) {
+      return [];
+    }
+    
+    // Then fetch user data for each comment
+    const comments: QuoteComment[] = [];
+    
+    for (const comment of commentData) {
+      // Get the user data for this comment
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id, username, name, avatar_url, status')
+        .eq('id', comment.user_id)
+        .single();
+      
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error fetching user data for comment:', userError);
+      }
+      
+      // Add the comment with user data to the array
+      comments.push({
+        ...comment,
+        user: userData || {
+          id: null,
+          username: 'unknown',
+          name: 'Unknown User',
+          avatar_url: null,
+          status: 'offline'
+        }
+      });
+    }
+    
+    return comments;
   } catch (error) {
     console.error('Error fetching quote comments:', error);
     return [];
@@ -200,8 +248,14 @@ export const createComment = async (quoteId: string, content: string): Promise<Q
     
     if (commentError) throw commentError;
     
-    // Increment comments count on the quote
-    await supabase.rpc('increment_quote_comments', { quote_id: quoteId });
+    // Increment comments count on the quote - using the utility function instead of direct RPC call
+    await supabase.from('quotes')
+      .update({ comments: supabase.rpc('increment_counter', { 
+        row_id: quoteId, 
+        column_name: 'comments', 
+        table_name: 'quotes' 
+      }) })
+      .eq('id', quoteId);
     
     // Fetch the user data to return with the comment
     const { data: userData, error: userError } = await supabase
@@ -254,8 +308,14 @@ export const deleteComment = async (commentId: string): Promise<boolean> => {
     
     if (deleteError) throw deleteError;
     
-    // Decrement comments count on the quote
-    await supabase.rpc('decrement_quote_comments', { quote_id: comment.quote_id });
+    // Decrement comments count on the quote - using the utility function instead of direct RPC call
+    await supabase.from('quotes')
+      .update({ comments: supabase.rpc('decrement_counter', { 
+        row_id: comment.quote_id, 
+        column_name: 'comments', 
+        table_name: 'quotes' 
+      }) })
+      .eq('id', comment.quote_id);
     
     return true;
   } catch (error) {
