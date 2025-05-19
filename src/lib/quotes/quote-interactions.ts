@@ -3,56 +3,96 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuoteComment } from './types';
 
 /**
- * Toggle like status for a quote
+ * Check if a user has liked a specific quote
+ */
+export const checkUserLikedQuote = async (quoteId: string): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return false;
+    
+    const { data, error } = await supabase
+      .from('quote_likes')
+      .select('id')
+      .eq('quote_id', quoteId)
+      .eq('user_id', user.user.id)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking if user liked quote:', error);
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error checking if user liked quote:', error);
+    return false;
+  }
+};
+
+/**
+ * Check if a user has bookmarked a specific quote
+ */
+export const checkUserBookmarkedQuote = async (quoteId: string): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return false;
+    
+    const { data, error } = await supabase
+      .from('quote_bookmarks')
+      .select('id')
+      .eq('quote_id', quoteId)
+      .eq('user_id', user.user.id)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking if user bookmarked quote:', error);
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error checking if user bookmarked quote:', error);
+    return false;
+  }
+};
+
+/**
+ * Toggle like for a quote
+ * @returns boolean - true if liked, false if unliked
  */
 export const likeQuote = async (quoteId: string): Promise<boolean> => {
   try {
-    // Check if user is authenticated
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not authenticated');
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
     
-    const userId = userData.user.id;
+    // Check if user already liked this quote
+    const isLiked = await checkUserLikedQuote(quoteId);
     
-    // Check if user already liked the quote
-    const { data: existingLike } = await supabase
-      .from('quote_likes')
-      .select()
-      .eq('quote_id', quoteId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    // If liked, unlike by deleting the record
-    if (existingLike) {
-      await supabase
+    if (isLiked) {
+      // Unlike the quote
+      const { error: deleteError } = await supabase
         .from('quote_likes')
         .delete()
         .eq('quote_id', quoteId)
-        .eq('user_id', userId);
+        .eq('user_id', user.user.id);
       
-      // Update like count on the quote
-      await supabase.rpc('decrement_counter', {
-        row_id: quoteId,
-        column_name: 'likes',
-        table_name: 'quotes'
-      });
+      if (deleteError) throw deleteError;
+      
+      // Decrement likes count
+      await supabase.rpc('decrement_quote_likes', { quote_id: quoteId });
       
       return false;
-    }
-    // If not liked, add a like record
-    else {
-      await supabase
+    } else {
+      // Like the quote
+      const { error: insertError } = await supabase
         .from('quote_likes')
         .insert({
           quote_id: quoteId,
-          user_id: userId
+          user_id: user.user.id
         });
       
-      // Update like count on the quote
-      await supabase.rpc('increment_counter', {
-        row_id: quoteId,
-        column_name: 'likes',
-        table_name: 'quotes'
-      });
+      if (insertError) throw insertError;
+      
+      // Increment likes count
+      await supabase.rpc('increment_quote_likes', { quote_id: quoteId });
       
       return true;
     }
@@ -63,56 +103,44 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
 };
 
 /**
- * Toggle bookmark status for a quote
+ * Toggle bookmark for a quote
+ * @returns boolean - true if bookmarked, false if unbookmarked
  */
 export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
   try {
-    // Check if user is authenticated
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not authenticated');
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
     
-    const userId = userData.user.id;
+    // Check if user already bookmarked this quote
+    const isBookmarked = await checkUserBookmarkedQuote(quoteId);
     
-    // Check if user already bookmarked the quote
-    const { data: existingBookmark } = await supabase
-      .from('quote_bookmarks')
-      .select()
-      .eq('quote_id', quoteId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    // If bookmarked, remove bookmark by deleting the record
-    if (existingBookmark) {
-      await supabase
+    if (isBookmarked) {
+      // Remove the bookmark
+      const { error: deleteError } = await supabase
         .from('quote_bookmarks')
         .delete()
         .eq('quote_id', quoteId)
-        .eq('user_id', userId);
+        .eq('user_id', user.user.id);
       
-      // Update bookmark count on the quote
-      await supabase.rpc('decrement_counter', {
-        row_id: quoteId,
-        column_name: 'bookmarks',
-        table_name: 'quotes'
-      });
+      if (deleteError) throw deleteError;
+      
+      // Decrement bookmarks count
+      await supabase.rpc('decrement_quote_bookmarks', { quote_id: quoteId });
       
       return false;
-    }
-    // If not bookmarked, add a bookmark record
-    else {
-      await supabase
+    } else {
+      // Add the bookmark
+      const { error: insertError } = await supabase
         .from('quote_bookmarks')
         .insert({
           quote_id: quoteId,
-          user_id: userId
+          user_id: user.user.id
         });
       
-      // Update bookmark count on the quote
-      await supabase.rpc('increment_counter', {
-        row_id: quoteId,
-        column_name: 'bookmarks',
-        table_name: 'quotes'
-      });
+      if (insertError) throw insertError;
+      
+      // Increment bookmarks count
+      await supabase.rpc('increment_quote_bookmarks', { quote_id: quoteId });
       
       return true;
     }
@@ -123,110 +151,164 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
 };
 
 /**
- * Check if a user has liked a quote
+ * Fetch comments for a specific quote
  */
-export const checkUserLikedQuote = async (quoteId: string): Promise<boolean> => {
+export const fetchComments = async (quoteId: string): Promise<QuoteComment[]> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return false;
-    
     const { data, error } = await supabase
-      .from('quote_likes')
-      .select()
+      .from('quote_comments')
+      .select(`
+        *,
+        user:profiles(
+          id,
+          username,
+          name,
+          avatar_url,
+          status
+        )
+      `)
       .eq('quote_id', quoteId)
-      .eq('user_id', userData.user.id)
-      .maybeSingle();
+      .order('created_at', { ascending: false });
     
     if (error) throw error;
     
-    return !!data;
+    return data || [];
   } catch (error) {
-    console.error('Error checking if user liked quote:', error);
+    console.error('Error fetching quote comments:', error);
+    return [];
+  }
+};
+
+/**
+ * Create a new comment for a quote
+ */
+export const createComment = async (quoteId: string, content: string): Promise<QuoteComment | null> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+    
+    // Insert the new comment
+    const { data: commentData, error: commentError } = await supabase
+      .from('quote_comments')
+      .insert({
+        quote_id: quoteId,
+        user_id: user.user.id,
+        content
+      })
+      .select()
+      .single();
+    
+    if (commentError) throw commentError;
+    
+    // Increment comments count on the quote
+    await supabase.rpc('increment_quote_comments', { quote_id: quoteId });
+    
+    // Fetch the user data to return with the comment
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('id, username, name, avatar_url, status')
+      .eq('id', user.user.id)
+      .single();
+    
+    if (userError) throw userError;
+    
+    // Return the complete comment with user data
+    return {
+      ...commentData,
+      user: userData
+    };
+  } catch (error) {
+    console.error('Error creating comment:', error);
+    return null;
+  }
+};
+
+/**
+ * Delete a comment
+ */
+export const deleteComment = async (commentId: string): Promise<boolean> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+    
+    // Get the comment to check ownership and get the quote_id
+    const { data: comment, error: fetchError } = await supabase
+      .from('quote_comments')
+      .select('quote_id, user_id')
+      .eq('id', commentId)
+      .single();
+    
+    if (fetchError) throw fetchError;
+    
+    // Check if user owns the comment or is an admin
+    if (comment.user_id !== user.user.id) {
+      // For admin checks, we could add additional logic here
+      throw new Error('Not authorized to delete this comment');
+    }
+    
+    // Delete the comment
+    const { error: deleteError } = await supabase
+      .from('quote_comments')
+      .delete()
+      .eq('id', commentId);
+    
+    if (deleteError) throw deleteError;
+    
+    // Decrement comments count on the quote
+    await supabase.rpc('decrement_quote_comments', { quote_id: comment.quote_id });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting comment:', error);
     return false;
   }
 };
 
 /**
- * Check if a user has bookmarked a quote
- */
-export const checkUserBookmarkedQuote = async (quoteId: string): Promise<boolean> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return false;
-    
-    const { data, error } = await supabase
-      .from('quote_bookmarks')
-      .select()
-      .eq('quote_id', quoteId)
-      .eq('user_id', userData.user.id)
-      .maybeSingle();
-    
-    if (error) throw error;
-    
-    return !!data;
-  } catch (error) {
-    console.error('Error checking if user bookmarked quote:', error);
-    return false;
-  }
-};
-
-/**
- * Subscribe to quote updates
+ * Subscribe to real-time quote updates
  */
 export const subscribeToQuoteUpdates = (
-  quoteId: string | null,
+  quoteId: string | null, 
   callback: (payload: any) => void
 ): (() => void) => {
-  let channel: any;
+  // Create a channel for listening to quote updates
+  const channel = supabase
+    .channel(`quotes:${quoteId || 'all'}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'quotes',
+        ...(quoteId ? { filter: `id=eq.${quoteId}` } : {})
+      },
+      (payload) => {
+        callback({
+          eventType: payload.eventType,
+          new: payload.new,
+          old: payload.old
+        });
+      }
+    )
+    .subscribe();
   
-  if (quoteId) {
-    // Subscribe to updates for a specific quote
-    channel = supabase
-      .channel('quotes-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quotes',
-          filter: `id=eq.${quoteId}`
-        },
-        callback
-      )
-      .subscribe();
-  } else {
-    // Subscribe to all quote updates
-    channel = supabase
-      .channel('quotes-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quotes'
-        },
-        callback
-      )
-      .subscribe();
-  }
-  
-  // Return unsubscribe function
+  // Return cleanup function
   return () => {
     supabase.removeChannel(channel);
   };
 };
 
 /**
- * Subscribe to quote interactions (likes, bookmarks)
+ * Subscribe to quote interactions (likes and bookmarks)
  */
 export const subscribeToQuoteInteractions = (
   userId: string,
   likesCallback: (payload: any) => void,
   bookmarksCallback: (payload: any) => void
 ): (() => void) => {
-  // Subscribe to likes changes
+  // Create a channel for likes
   const likesChannel = supabase
-    .channel('quote-likes-changes')
+    .channel(`quote_likes:${userId}`)
     .on(
       'postgres_changes',
       {
@@ -235,13 +317,19 @@ export const subscribeToQuoteInteractions = (
         table: 'quote_likes',
         filter: `user_id=eq.${userId}`
       },
-      likesCallback
+      (payload) => {
+        likesCallback({
+          eventType: payload.eventType,
+          new: payload.new || {},
+          old: payload.old || {}
+        });
+      }
     )
     .subscribe();
   
-  // Subscribe to bookmarks changes
+  // Create a channel for bookmarks
   const bookmarksChannel = supabase
-    .channel('quote-bookmarks-changes')
+    .channel(`quote_bookmarks:${userId}`)
     .on(
       'postgres_changes',
       {
@@ -250,137 +338,27 @@ export const subscribeToQuoteInteractions = (
         table: 'quote_bookmarks',
         filter: `user_id=eq.${userId}`
       },
-      bookmarksCallback
+      (payload) => {
+        bookmarksCallback({
+          eventType: payload.eventType,
+          new: payload.new || {},
+          old: payload.old || {}
+        });
+      }
     )
     .subscribe();
   
-  // Return unsubscribe function
+  // Return cleanup function
   return () => {
     supabase.removeChannel(likesChannel);
     supabase.removeChannel(bookmarksChannel);
   };
 };
 
-/**
- * Create quote comment
- */
-export const createComment = async (quoteId: string, content: string): Promise<QuoteComment | null> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not authenticated');
-    
-    const { data, error } = await supabase
-      .from('quote_comments')
-      .insert({
-        quote_id: quoteId,
-        user_id: userData.user.id,
-        content
-      })
-      .select(`
-        *,
-        user:profiles(id, name, username, avatar_url, status)
-      `)
-      .single();
-    
-    if (error) throw error;
-    
-    // Update comment count on the quote
-    await supabase.rpc('increment_counter', {
-      row_id: quoteId,
-      column_name: 'comments',
-      table_name: 'quotes'
-    });
-    
-    return data as unknown as QuoteComment;
-  } catch (error) {
-    console.error('Error creating quote comment:', error);
-    return null;
-  }
-};
-
-/**
- * Fetch comments for a quote
- */
-export const fetchComments = async (quoteId: string): Promise<QuoteComment[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('quote_comments')
-      .select(`
-        *,
-        user:profiles(id, name, username, avatar_url, status)
-      `)
-      .eq('quote_id', quoteId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    return data as unknown as QuoteComment[];
-  } catch (error) {
-    console.error('Error fetching quote comments:', error);
-    return [];
-  }
-};
-
-/**
- * Delete a comment
- */
-export const deleteComment = async (commentId: string, quoteId: string): Promise<boolean> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not authenticated');
-    
-    // Check if user is the author of the comment
-    const { data: comment } = await supabase
-      .from('quote_comments')
-      .select('user_id')
-      .eq('id', commentId)
-      .single();
-    
-    if (comment.user_id !== userData.user.id) {
-      throw new Error('Not authorized to delete this comment');
-    }
-    
-    const { error } = await supabase
-      .from('quote_comments')
-      .delete()
-      .eq('id', commentId);
-    
-    if (error) throw error;
-    
-    // Update comment count on the quote
-    await supabase.rpc('decrement_counter', {
-      row_id: quoteId,
-      column_name: 'comments',
-      table_name: 'quotes'
-    });
-    
-    return true;
-  } catch (error) {
-    console.error('Error deleting quote comment:', error);
-    return false;
-  }
-};
-
-/**
- * Create a new quote
- */
-export const createQuote = async (quoteData: any): Promise<boolean> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) throw new Error('User not authenticated');
-    
-    const { error } = await supabase
-      .from('quotes')
-      .insert({
-        ...quoteData,
-        user_id: user.user.id
-      });
-    
-    if (error) throw error;
-    
-    return true;
-  } catch (error) {
-    console.error('Error creating quote:', error);
-    return false;
-  }
+// Create quote (local version used for testing/mocking)
+export const createQuote = async (quoteData: any): Promise<any> => {
+  // This is just for completeness as the real one is exported as createQuoteSubmission
+  // from quotes-service.ts - see re-exports in index.ts
+  console.warn('Using test version of createQuote - use createQuoteSubmission instead');
+  return null;
 };
