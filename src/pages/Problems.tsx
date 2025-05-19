@@ -8,8 +8,8 @@ import { ProblemsFilters } from '@/components/problems/ProblemsFilters';
 import { DomainSelector } from '@/components/problems/DomainSelector';
 import { 
   problemsData, 
-  getProblemsByDomain, 
-  getAvailableDomains,
+  getProblemsByDomainFromData as getProblemsByDomain, 
+  getAvailableDomainsFromData as getAvailableDomains,
   Problem 
 } from '@/data/problemsData';
 import { supabase } from '@/integrations/supabase/client';

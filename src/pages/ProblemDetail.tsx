@@ -1,43 +1,40 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { problemsData, getProblemById } from '@/data/problemsData';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
-// Import our components
+// Import components
 import { ProblemDetailCard } from '@/components/problems/ProblemDetailCard';
 import { CommentForm } from '@/components/problems/CommentForm';
 import { CommentsList } from '@/components/problems/CommentsList';
 import { ProblemNotFound } from '@/components/problems/ProblemNotFound';
 import { ResourceLinks } from '@/components/problems/ResourceLinks';
-import { useComments } from '@/hooks/problems/useComments';
+import { ProblemDetailSkeleton } from '@/components/problems/ProblemDetailSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 
-interface ProblemStats {
-  discussionCount: number;
-  solutionCount: number;
-}
+// Import hooks
+import { useProblemDetail } from '@/hooks/problems/useProblemDetail';
+import { useComments } from '@/hooks/problems/useComments';
 
 const ProblemDetail = () => {
   const { problemId } = useParams<{ problemId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [problem, setProblem] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [problemStats, setProblemStats] = useState<ProblemStats>({
-    discussionCount: 0,
-    solutionCount: 0
-  });
   
-  // Use our custom hook for comments with the fixed query
+  // Use our custom hook for problem details
+  const { 
+    problem, 
+    loading, 
+    error, 
+    problemStats 
+  } = useProblemDetail(problemId);
+  
+  // Use our custom hook for comments
   const { 
     comments, 
     isLoading: commentsLoading, 
@@ -50,83 +47,6 @@ const ProblemDetail = () => {
     enabled: !!problemId && !!problem
   });
 
-  // Fetch problem info
-  useEffect(() => {
-    // Find the problem by ID
-    const fetchProblemData = async () => {
-      if (!problemId) return;
-      
-      setLoading(true);
-      setError(null);
-      try {
-        const id = parseInt(problemId, 10);
-        
-        // Get problem from our local data
-        const foundProblem = getProblemById(id);
-        
-        if (foundProblem) {
-          setProblem(foundProblem);
-          
-          // Get real statistics from Supabase
-          try {
-            // Get count of forum posts related to this problem
-            const { data, error } = await supabase
-              .from('forum_posts')
-              .select('id, tags')
-              .contains('tags', [`Problem ${id}`]);
-            
-            if (error) throw error;
-            
-            // Count discussions and solutions
-            let discussionCount = 0;
-            let solutionCount = 0;
-            
-            if (data && data.length > 0) {
-              discussionCount = data.length;
-              
-              // Count posts that have both the problem tag and solution tag
-              solutionCount = data.filter(post => 
-                post.tags && post.tags.includes('solution')
-              ).length;
-            }
-            
-            setProblemStats({
-              discussionCount,
-              solutionCount
-            });
-          } catch (statsError) {
-            console.error("Error fetching problem statistics:", statsError);
-            // Don't show an error toast for stats errors
-          }
-        } else {
-          const notFoundError = new Error("Problem not found");
-          setError(notFoundError);
-          toast({
-            title: "Problem not found",
-            description: "The problem you're looking for doesn't exist",
-            variant: "destructive"
-          });
-          // Give user time to see the error message before redirecting
-          setTimeout(() => navigate('/problems'), 3000);
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error loading problem';
-        const problemError = err instanceof Error ? err : new Error(errorMessage);
-        setError(problemError);
-        console.error("Error loading problem:", err);
-        toast({
-          title: "Error",
-          description: "Failed to load problem details",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchProblemData();
-  }, [problemId, toast, navigate]);
-  
   const handleBack = () => {
     navigate('/problems');
   };
@@ -143,85 +63,6 @@ const ProblemDetail = () => {
     console.error('Error loading comments:', commentsError);
   }
   
-  if (loading) {
-    return (
-      <PageLayout>
-        <div className="container mx-auto py-8 px-4">
-          <Button variant="ghost" className="mb-6" onClick={handleBack}>
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Problems Directory
-          </Button>
-          
-          {/* Skeleton UI */}
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-3/4">
-                    <Skeleton className="h-8 w-1/2 mb-2" />
-                    <Skeleton className="h-5 w-full" />
-                  </div>
-                  <Skeleton className="h-10 w-24" />
-                </div>
-                <div className="space-y-4">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <div className="flex justify-between items-center mb-4">
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-10 w-24" />
-            </div>
-            
-            {Array(2).fill(0).map((_, index) => (
-              <Card key={`comment-skeleton-${index}`}>
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-2">
-                        <Skeleton className="h-5 w-24" />
-                        <Skeleton className="h-4 w-32" />
-                      </div>
-                      <Skeleton className="h-4 w-full mb-1" />
-                      <Skeleton className="h-4 w-full mb-1" />
-                      <Skeleton className="h-4 w-2/3 mb-3" />
-                      <div className="flex gap-2">
-                        <Skeleton className="h-8 w-16" />
-                        <Skeleton className="h-8 w-16" />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  if (error && !problem) {
-    return (
-      <PageLayout>
-        <div className="container mx-auto py-8 px-4">
-          <Button variant="ghost" className="mb-6" onClick={handleBack}>
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Problems Directory
-          </Button>
-          <ProblemNotFound onBackClick={handleBack} />
-        </div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
@@ -230,7 +71,9 @@ const ProblemDetail = () => {
           Back to Problems Directory
         </Button>
         
-        {!problem ? (
+        {loading ? (
+          <ProblemDetailSkeleton />
+        ) : error || !problem ? (
           <ProblemNotFound onBackClick={handleBack} />
         ) : (
           <>
