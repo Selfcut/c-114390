@@ -39,17 +39,20 @@ const Problems = () => {
         });
         
         try {
-          // Try to get real data from Supabase
+          // Get actual data from Supabase - fetch all forum posts
           const { data, error } = await supabase
             .from('forum_posts')
             .select('id, tags');
+            
+          if (error) throw error;
             
           if (data && data.length > 0) {
             // Process the data to count discussions and solutions by problem ID
             data.forEach(post => {
               if (!post.tags) return;
               
-              for (const tag of post.tags) {
+              // Check each tag for problem references
+              post.tags.forEach(tag => {
                 if (tag.startsWith('Problem ')) {
                   const problemId = parseInt(tag.replace('Problem ', ''));
                   if (stats[problemId]) {
@@ -61,27 +64,26 @@ const Problems = () => {
                     }
                   }
                 }
-              }
+              });
             });
+            
+            // Set stats with the real data
+            setProblemStats(stats);
+            setIsLoading(false);
+            return;
           }
         } catch (error) {
           console.error("Failed to fetch forum posts:", error);
-          // If we can't get real data, we'll just use sample data below
-        }
-        
-        // If we have no discussions/solutions data, add some sample data
-        const hasAnyData = Object.values(stats).some(stat => stat.discussions > 0);
-        if (!hasAnyData) {
-          // Add sample data for display purposes
-          problemsData.forEach(problem => {
-            stats[problem.id] = {
-              discussions: Math.floor(Math.random() * 10) + 1,
-              solutions: Math.floor(Math.random() * 5)
-            };
+          toast({
+            title: "Error",
+            description: "Failed to load discussion statistics",
+            variant: "destructive"
           });
         }
         
+        // If we reach here, we couldn't get real data
         setProblemStats(stats);
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching problem statistics:", error);
         toast({

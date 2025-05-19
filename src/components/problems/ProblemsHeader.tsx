@@ -8,7 +8,8 @@ export const ProblemsHeader = () => {
         Global Problems Directory
       </h1>
       <p className="text-muted-foreground max-w-2xl">
-        Explore detailed analysis of the world's most pressing problems, from climate change to 
+        Explore our comprehensive collection of the world's most pressing problems. 
+        Each domain contains up to 100 ranked problems, from climate change to 
         artificial intelligence risks. Join the discussion and contribute your ideas to 
         help find solutions for a better future.
       </p>

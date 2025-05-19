@@ -37,7 +37,7 @@ const ProblemDetail = () => {
     solutionCount: 0
   });
   
-  // Use our custom hook for comments
+  // Use our custom hook for comments with the fixed query
   const { 
     comments, 
     isLoading: commentsLoading, 
@@ -67,28 +67,32 @@ const ProblemDetail = () => {
         if (foundProblem) {
           setProblem(foundProblem);
           
-          // Try to get real statistics from Supabase
+          // Get real statistics from Supabase
           try {
             // Get count of forum posts related to this problem
-            const { count: discussionCount, error: countError } = await supabase
+            const { data, error } = await supabase
               .from('forum_posts')
-              .select('*', { count: 'exact', head: true })
-              .like('tags', `%Problem ${id}%`);
+              .select('id, tags')
+              .contains('tags', [`Problem ${id}`]);
             
-            if (countError) throw countError;
+            if (error) throw error;
             
-            // Get count of solutions (posts with "solution" tag)
-            const { count: solutionCount, error: solutionError } = await supabase
-              .from('forum_posts')
-              .select('*', { count: 'exact', head: true })
-              .like('tags', `%Problem ${id}%`)
-              .like('tags', '%solution%');
+            // Count discussions and solutions
+            let discussionCount = 0;
+            let solutionCount = 0;
             
-            if (solutionError) throw solutionError;
+            if (data && data.length > 0) {
+              discussionCount = data.length;
+              
+              // Count posts that have both the problem tag and solution tag
+              solutionCount = data.filter(post => 
+                post.tags && post.tags.includes('solution')
+              ).length;
+            }
             
             setProblemStats({
-              discussionCount: discussionCount || 0,
-              solutionCount: solutionCount || 0
+              discussionCount,
+              solutionCount
             });
           } catch (statsError) {
             console.error("Error fetching problem statistics:", statsError);

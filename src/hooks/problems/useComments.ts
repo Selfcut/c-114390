@@ -40,6 +40,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
       }
       
       // Get forum posts that are specifically about this problem
+      // Fix: Use the proper array containment operator for PostgreSQL
       const { data, error } = await supabase
         .from('forum_posts')
         .select(`
@@ -51,7 +52,7 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
           created_at,
           user_id
         `)
-        .like('tags', `%Problem ${problemId}%`)
+        .contains('tags', [`Problem ${problemId}`])
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -141,7 +142,8 @@ export function useComments({ problemId, enabled = true }: UseCommentsOptions) {
             event: '*',
             schema: 'public',
             table: 'forum_posts',
-            filter: `tags=cs.contains(tags, 'Problem ${problemId}')`
+            // Fix: Use the proper filter syntax
+            filter: `tags::text LIKE '%Problem ${problemId}%'`
           }, 
           (payload) => {
             console.log('Received real-time update:', payload);
