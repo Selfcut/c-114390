@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageLayout } from "@/components/layouts/PageLayout";
 import { BookReviewsHeader } from "@/components/bookreviews/BookReviewsHeader";
 import { BookReviewsFilters } from "@/components/bookreviews/BookReviewsFilters";
 import { BookReviewsList } from "@/components/bookreviews/BookReviewsList";
@@ -137,21 +139,23 @@ const BookReviews = () => {
   const genres = Array.from(new Set(books.map(book => book.genre))).filter(Boolean) as string[];
   
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <BookReviewsHeader onCreateReview={handleCreateReview} />
-      <BookReviewsFilters 
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedGenre={selectedGenre}
-        onGenreChange={setSelectedGenre}
-        genres={genres}
-      />
-      <BookReviewsList 
-        books={filteredBooks}
-        isLoading={isLoading}
-        onBookClick={handleBookClick}
-      />
-    </div>
+    <PageLayout>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <BookReviewsHeader onCreateReview={handleCreateReview} />
+        <BookReviewsFilters 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedGenre={selectedGenre}
+          onGenreChange={setSelectedGenre}
+          genres={genres}
+        />
+        <BookReviewsList 
+          books={filteredBooks}
+          isLoading={isLoading}
+          onBookClick={handleBookClick}
+        />
+      </div>
+    </PageLayout>
   );
 };
 

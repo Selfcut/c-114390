@@ -1,28 +1,5 @@
 import { User } from '@supabase/supabase-js';
-import { UserStatus, UserRole } from '@/types/user';
-
-export interface UserProfile {
-  id: string;
-  username: string;
-  email: string;
-  full_name?: string;
-  bio?: string;
-  website?: string;
-  avatar?: string;
-  avatar_url?: string;
-  name?: string;
-  role?: UserRole | string;
-  created_at?: string;
-  updated_at?: string;
-  status?: UserStatus;
-  isGhostMode?: boolean;
-  isAdmin?: boolean;
-  notificationSettings?: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
-}
+import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
 export interface AuthState {
   user: UserProfile | null;

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(data.session);
           
           // Convert to UserProfile type before setting state
-          setUser(userProfile as UserProfile);
+          setUser(userProfile as unknown as UserProfile);
           setIsAuthenticated(true);
         } else {
           setUser(null);
@@ -67,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         
         // Convert to UserProfile type before setting state
-        setUser(userProfile as UserProfile);
+        setUser(userProfile as unknown as UserProfile);
         setIsAuthenticated(true);
         
       } else if (event === 'SIGNED_OUT') {

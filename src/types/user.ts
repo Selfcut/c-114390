@@ -8,7 +8,7 @@ export interface UserProfile {
   username: string;
   email: string;
   avatar: string;
-  avatar_url?: string; // Adding this to match usage in components
+  avatar_url: string; // This was missing but referenced in components
   bio?: string;
   website?: string;
   status: UserStatus;

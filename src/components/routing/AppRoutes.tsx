@@ -21,6 +21,7 @@ const Quotes = React.lazy(() => import('@/pages/Quotes'));
 const Events = React.lazy(() => import('@/pages/Events'));
 const NotFound = React.lazy(() => import('@/pages/NotFound'));
 const Welcome = React.lazy(() => import('@/pages/Welcome'));
+const BookReviews = React.lazy(() => import('@/pages/BookReviews'));
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -62,6 +63,8 @@ export const AppRoutes = () => {
         <Route path="/wiki" element={<ProtectedRoute><Wiki /></ProtectedRoute>} />
         <Route path="/quotes" element={<ProtectedRoute><Quotes /></ProtectedRoute>} />
         <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+        <Route path="/book-reviews" element={<ProtectedRoute><BookReviews /></ProtectedRoute>} />
+        <Route path="/book-reviews/:id" element={<ProtectedRoute><BookReviews /></ProtectedRoute>} />
 
         {/* Catch all */}
         <Route path="*" element={<NotFound />} />
