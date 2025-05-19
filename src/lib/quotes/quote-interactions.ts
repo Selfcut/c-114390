@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteComment } from './types';
+import { incrementCounter, decrementCounter } from '@/lib/utils/supabase-utils';
 
 /**
  * Check if a user has liked a specific quote
@@ -76,10 +77,8 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       
       if (deleteError) throw deleteError;
       
-      // Decrement likes count - using direct update instead of RPC call
-      await supabase.from('quotes')
-        .update({ likes: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'likes', table_name: 'quotes' }) })
-        .eq('id', quoteId);
+      // Decrement likes count using utility function
+      await decrementCounter(quoteId, 'likes', 'quotes');
       
       return false;
     } else {
@@ -93,10 +92,8 @@ export const likeQuote = async (quoteId: string): Promise<boolean> => {
       
       if (insertError) throw insertError;
       
-      // Increment likes count - using direct update instead of RPC call
-      await supabase.from('quotes')
-        .update({ likes: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'likes', table_name: 'quotes' }) })
-        .eq('id', quoteId);
+      // Increment likes count using utility function
+      await incrementCounter(quoteId, 'likes', 'quotes');
       
       return true;
     }
@@ -128,10 +125,8 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       
       if (deleteError) throw deleteError;
       
-      // Decrement bookmarks count - using direct update instead of RPC call
-      await supabase.from('quotes')
-        .update({ bookmarks: supabase.rpc('decrement_counter', { row_id: quoteId, column_name: 'bookmarks', table_name: 'quotes' }) })
-        .eq('id', quoteId);
+      // Decrement bookmarks count using utility function
+      await decrementCounter(quoteId, 'bookmarks', 'quotes');
       
       return false;
     } else {
@@ -145,10 +140,8 @@ export const bookmarkQuote = async (quoteId: string): Promise<boolean> => {
       
       if (insertError) throw insertError;
       
-      // Increment bookmarks count - using direct update instead of RPC call
-      await supabase.from('quotes')
-        .update({ bookmarks: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'bookmarks', table_name: 'quotes' }) })
-        .eq('id', quoteId);
+      // Increment bookmarks count using utility function
+      await incrementCounter(quoteId, 'bookmarks', 'quotes');
       
       return true;
     }
@@ -232,10 +225,8 @@ export const createComment = async (quoteId: string, content: string): Promise<Q
     
     if (commentError) throw commentError;
     
-    // Increment comments count
-    await supabase.from('quotes')
-      .update({ comments: supabase.rpc('increment_counter', { row_id: quoteId, column_name: 'comments', table_name: 'quotes' }) })
-      .eq('id', quoteId);
+    // Increment comments count using utility function
+    await incrementCounter(quoteId, 'comments', 'quotes');
     
     // Fetch the user data to return with the comment
     const { data: userData, error: userError } = await supabase
@@ -288,10 +279,8 @@ export const deleteComment = async (commentId: string): Promise<boolean> => {
     
     if (deleteError) throw deleteError;
     
-    // Decrement comments count
-    await supabase.from('quotes')
-      .update({ comments: supabase.rpc('decrement_counter', { row_id: comment.quote_id, column_name: 'comments', table_name: 'quotes' }) })
-      .eq('id', comment.quote_id);
+    // Decrement comments count using utility function
+    await decrementCounter(comment.quote_id, 'comments', 'quotes');
     
     return true;
   } catch (error) {

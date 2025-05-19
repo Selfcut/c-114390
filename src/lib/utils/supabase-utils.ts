@@ -1,13 +1,23 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Helper functions for counter operations
-export const incrementCounter = async (tableId: string, columnName: string) => {
+/**
+ * Increment a counter column in a specified table for a specific row
+ */
+export const incrementCounter = async (rowId: string, columnName: string, tableName: string): Promise<boolean> => {
   try {
-    await (supabase.rpc as any)('increment_counter', {
-      row_id: tableId,
-      column_name: columnName
+    // Call the RPC function directly
+    const { error } = await supabase.rpc('increment_counter', {
+      row_id: rowId,
+      column_name: columnName,
+      table_name: tableName
     });
+    
+    if (error) {
+      console.error(`Error incrementing ${columnName}:`, error);
+      return false;
+    }
+    
     return true;
   } catch (error) {
     console.error(`Error incrementing ${columnName}:`, error);
@@ -15,12 +25,23 @@ export const incrementCounter = async (tableId: string, columnName: string) => {
   }
 };
 
-export const decrementCounter = async (tableId: string, columnName: string) => {
+/**
+ * Decrement a counter column in a specified table for a specific row
+ */
+export const decrementCounter = async (rowId: string, columnName: string, tableName: string): Promise<boolean> => {
   try {
-    await (supabase.rpc as any)('decrement_counter', {
-      row_id: tableId,
-      column_name: columnName
+    // Call the RPC function directly
+    const { error } = await supabase.rpc('decrement_counter', {
+      row_id: rowId,
+      column_name: columnName,
+      table_name: tableName
     });
+    
+    if (error) {
+      console.error(`Error decrementing ${columnName}:`, error);
+      return false;
+    }
+    
     return true;
   } catch (error) {
     console.error(`Error decrementing ${columnName}:`, error);
