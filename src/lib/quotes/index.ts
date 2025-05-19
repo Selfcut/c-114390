@@ -19,5 +19,7 @@ export {
   checkUserLikedQuote,
   checkUserBookmarkedQuote,
   likeQuote,
-  bookmarkQuote
+  bookmarkQuote,
+  subscribeToQuoteUpdates,
+  subscribeToQuoteInteractions
 } from './quote-interactions';
