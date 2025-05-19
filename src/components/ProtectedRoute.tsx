@@ -40,7 +40,7 @@ export const ProtectedRoute = ({
 
   // If authentication is required but user is not authenticated
   if (!isAuthenticated && !allowGuests) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // If admin access is required but user is not an admin

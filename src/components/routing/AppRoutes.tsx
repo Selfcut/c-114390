@@ -6,22 +6,25 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Loader2 } from 'lucide-react';
 
-// Lazy loaded pages
-const Auth = React.lazy(() => import('@/pages/Auth'));
-const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
-const Profile = React.lazy(() => import('@/pages/Profile'));
-const Settings = React.lazy(() => import('@/pages/Settings'));
-const AdminPanel = React.lazy(() => import('@/pages/AdminPanel'));
-const Forum = React.lazy(() => import('@/pages/Forum'));
-const ForumPost = React.lazy(() => import('@/pages/ForumPost'));
-const Chat = React.lazy(() => import('@/pages/Chat'));
-const Library = React.lazy(() => import('@/pages/Library'));
-const Wiki = React.lazy(() => import('@/pages/Wiki'));
-const Quotes = React.lazy(() => import('@/pages/Quotes'));
-const Events = React.lazy(() => import('@/pages/Events'));
-const NotFound = React.lazy(() => import('@/pages/NotFound'));
-const Welcome = React.lazy(() => import('@/pages/Welcome'));
-const BookReviews = React.lazy(() => import('@/pages/BookReviews'));
+// Import pages directly for better code clarity
+import Welcome from '@/pages/Welcome';
+import Index from '@/pages/Index';
+import Dashboard from '@/pages/Dashboard';
+import Forum from '@/pages/Forum';
+import ForumPost from '@/pages/ForumPost';
+import Library from '@/pages/Library';
+import Research from '@/pages/Research';
+import BookReviews from '@/pages/BookReviews';
+import BookReviewDetail from '@/pages/BookReviewDetail';
+import Chat from '@/pages/Chat';
+import Media from '@/pages/Media';
+import MediaDetail from '@/pages/MediaDetail';
+import Problems from '@/pages/Problems';
+import Events from '@/pages/Events';
+import Quotes from '@/pages/Quotes';
+import Wiki from '@/pages/Wiki';
+import WikiArticle from '@/components/wiki/WikiArticlePage';
+import NotFound from '@/pages/NotFound';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -43,32 +46,45 @@ export const AppRoutes = () => {
   }
 
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Welcome />} />
-        <Route path="/auth" element={
-          isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />
-        } />
-
-        {/* Protected routes */}
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
-        <Route path="/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
-        <Route path="/forum/:id" element={<ProtectedRoute><ForumPost /></ProtectedRoute>} />
-        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-        <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
-        <Route path="/wiki" element={<ProtectedRoute><Wiki /></ProtectedRoute>} />
-        <Route path="/quotes" element={<ProtectedRoute><Quotes /></ProtectedRoute>} />
-        <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-        <Route path="/book-reviews" element={<ProtectedRoute><BookReviews /></ProtectedRoute>} />
-        <Route path="/book-reviews/:id" element={<ProtectedRoute><BookReviews /></ProtectedRoute>} />
-
-        {/* Catch all */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <Routes>
+      {/* Welcome page as entry point */}
+      <Route path="/" element={<Welcome />} />
+      
+      {/* Old index page for reference - will eventually be removed */}
+      <Route path="/legacy" element={<Index />} />
+      
+      {/* Main application routes */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/forum" element={<Forum />} />
+      <Route path="/forum/:id" element={<ForumPost />} />
+      
+      <Route path="/library" element={<Library />} />
+      <Route path="/research" element={<Research />} />
+      
+      <Route path="/book-reviews" element={<BookReviews />} />
+      <Route path="/book-reviews/:id" element={<BookReviewDetail />} />
+      
+      <Route path="/chat" element={<Chat />} />
+      
+      <Route path="/media" element={<Media />} />
+      <Route path="/media/:id" element={<MediaDetail />} />
+      
+      <Route path="/problems" element={<Problems />} />
+      
+      <Route path="/events" element={<Events />} />
+      
+      <Route path="/quotes" element={<Quotes />} />
+      
+      <Route path="/wiki" element={<Wiki />} />
+      <Route path="/wiki/:id" element={<WikiArticle />} />
+      
+      {/* Catch all route */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
