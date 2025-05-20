@@ -114,13 +114,13 @@ export const useQuotes = (): UseQuotesResult => {
 
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data with null safety
-        const userObj = quote.user && typeof quote.user === 'object'
+        const user = quote.user && typeof quote.user === 'object' 
           ? {
-              id: quote.user?.id ?? 'unknown',
-              username: quote.user?.username ?? 'unknown',
-              name: quote.user?.name ?? 'Unknown User',
-              avatar_url: quote.user?.avatar_url ?? null,
-              status: quote.user?.status ?? 'offline'
+              id: quote.user.id ?? 'unknown',
+              username: quote.user.username ?? 'unknown',
+              name: quote.user.name ?? 'Unknown User',
+              avatar_url: quote.user.avatar_url ?? null,
+              status: quote.user.status ?? 'offline'
             }
           : null;
 
@@ -138,7 +138,7 @@ export const useQuotes = (): UseQuotesResult => {
           user_id: quote.user_id,
           category: quote.category || 'Other',
           featured_date: quote.featured_date || null,
-          user: userObj
+          user
         };
       });
 
@@ -193,13 +193,13 @@ export const useQuotes = (): UseQuotesResult => {
 
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data with null safety
-        const userObj = quote.profiles && typeof quote.profiles === 'object'
+        const profiles = quote.profiles && typeof quote.profiles === 'object' 
           ? {
-              id: quote.profiles?.id ?? 'unknown',
-              username: quote.profiles?.username ?? 'unknown',
-              name: quote.profiles?.name ?? 'Unknown User',
-              avatar_url: quote.profiles?.avatar_url ?? null,
-              status: quote.profiles?.status ?? 'offline'
+              id: quote.profiles.id ?? 'unknown',
+              username: quote.profiles.username ?? 'unknown',
+              name: quote.profiles.name ?? 'Unknown User',
+              avatar_url: quote.profiles.avatar_url ?? null,
+              status: quote.profiles.status ?? 'offline'
             }
           : null;
 
@@ -217,7 +217,7 @@ export const useQuotes = (): UseQuotesResult => {
           user_id: quote.user_id,
           category: quote.category || 'Other',
           featured_date: quote.featured_date || null,
-          user: userObj
+          user: profiles
         };
       });
 
@@ -345,13 +345,13 @@ export const useQuotes = (): UseQuotesResult => {
       }
 
       // Handle potentially missing user data with null safety
-      const userObj = data.profiles && typeof data.profiles === 'object'
+      const profiles = data.profiles && typeof data.profiles === 'object'
         ? {
-            id: data.profiles?.id ?? 'unknown',
-            username: data.profiles?.username ?? 'unknown',
-            name: data.profiles?.name ?? 'Unknown User',
-            avatar_url: data.profiles?.avatar_url ?? null,
-            status: data.profiles?.status ?? 'offline'
+            id: data.profiles.id ?? 'unknown',
+            username: data.profiles.username ?? 'unknown',
+            name: data.profiles.name ?? 'Unknown User',
+            avatar_url: data.profiles.avatar_url ?? null,
+            status: data.profiles.status ?? 'offline'
           }
         : null;
 
@@ -369,7 +369,7 @@ export const useQuotes = (): UseQuotesResult => {
         user_id: data.user_id,
         category: data.category || 'Other',
         featured_date: data.featured_date || null,
-        user: userObj
+        user: profiles
       };
 
       toast({
@@ -412,13 +412,13 @@ export const useQuotes = (): UseQuotesResult => {
       }
 
       // Handle potentially missing user data with null safety
-      const userObj = data.profiles && typeof data.profiles === 'object'
+      const profiles = data.profiles && typeof data.profiles === 'object' 
         ? {
-            id: data.profiles?.id ?? 'unknown',
-            username: data.profiles?.username ?? 'unknown',
-            name: data.profiles?.name ?? 'Unknown User',
-            avatar_url: data.profiles?.avatar_url ?? null,
-            status: data.profiles?.status ?? 'offline'
+            id: data.profiles.id ?? 'unknown',
+            username: data.profiles.username ?? 'unknown',
+            name: data.profiles.name ?? 'Unknown User',
+            avatar_url: data.profiles.avatar_url ?? null,
+            status: data.profiles.status ?? 'offline'
           }
         : null;
 
@@ -436,7 +436,7 @@ export const useQuotes = (): UseQuotesResult => {
         user_id: data.user_id,
         category: data.category || 'Other',
         featured_date: data.featured_date || null,
-        user: userObj
+        user: profiles
       };
 
       toast({
