@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { QuoteWithUser, QuoteFilterOptions, PaginationResult, QuoteSortOption } from '@/lib/quotes/types';
+import { QuoteWithUser, QuoteFilterOptions, PaginationResult, QuoteSortOption, QuoteSubmission } from '@/lib/quotes/types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 interface UseQuotesResult {
   quotes: QuoteWithUser[];
   allTags: string[];
   isLoading: boolean;
-  error: string | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   filterTag: string | null;
@@ -18,777 +16,374 @@ interface UseQuotesResult {
   setSortOption: (option: QuoteSortOption) => void;
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
-  handleLike: (quoteId: string) => Promise<boolean>;
-  handleBookmark: (quoteId: string) => Promise<boolean>;
-  fetchQuotes: (options?: QuoteFilterOptions) => Promise<void>;
+  handleLike: (quoteId: string) => Promise<boolean | null>;
+  handleBookmark: (quoteId: string) => Promise<boolean | null>;
   refreshQuotes: () => Promise<void>;
   resetFilters: () => void;
-  createQuote: (quote: Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>) => Promise<QuoteWithUser | null>;
-  updateQuote: (id: string, updates: Partial<Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>>) => Promise<QuoteWithUser | null>;
-  deleteQuote: (id: string) => Promise<boolean>;
-  checkUserLikedQuote: (id: string) => Promise<boolean>;
-  checkUserBookmarkedQuote: (id: string) => Promise<boolean>;
-  fetchQuotesWithFilters: (options: QuoteFilterOptions) => Promise<PaginationResult<QuoteWithUser>>;
-  trackQuoteView: () => void;
   currentPage: number;
   totalPages: number;
-  handlePageChange: (page: number) => void;
+  handlePageChange: (newPage: number) => void;
 }
 
-export const useQuotes = (): UseQuotesResult => {
+export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult {
   const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<QuoteSortOption>('newest');
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
   const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
+  const [pageSize, setPageSize] = useState(12); // You can adjust the page size as needed
+  const [totalCount, setTotalCount] = useState(0);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Fetch all available tags
+  // Function to handle page changes
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  // Fetch quotes from Supabase with filters and pagination
+  const fetchQuotes = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Apply filters and sorting
+      let query = supabase
+        .from('quotes')
+        .select(`
+          *,
+          user:profiles (id, username, name, avatar_url, status)
+        `, { count: 'exact' })
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
+
+      if (searchQuery) {
+        query = query.ilike('text', `%${searchQuery}%`);
+      }
+
+      if (filterTag) {
+        query = query.contains('tags', [filterTag]);
+      }
+
+      const sortColumn = getSortColumn(sortOption);
+      query = query.order(sortColumn.column, { ascending: sortColumn.ascending });
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        throw error;
+      }
+      
+      // Format the user object
+      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
+        const userData = quote.user;
+        const userObj = userData && typeof userData === 'object'
+          ? {
+              id: (userData as any).id || 'unknown',
+              username: (userData as any).username || 'unknown',
+              name: (userData as any).name || 'Unknown User',
+              avatar_url: (userData as any).avatar_url || null,
+              status: (userData as any).status || 'offline'
+            }
+          : null;
+        
+        return {
+          ...quote,
+          user: userObj
+        };
+      });
+
+      setQuotes(formattedQuotes);
+      setTotalCount(count || 0);
+      
+      // Fetch user likes and bookmarks
+      if (isAuthenticated && user) {
+        await fetchUserInteractions(formattedQuotes);
+      }
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load quotes',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, filterTag, sortOption, currentPage, pageSize, isAuthenticated, user, toast]);
+
+  // Fetch all distinct tags
   const fetchAllTags = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('quotes')
         .select('tags');
-      
+
       if (error) {
-        console.error('Error fetching tags:', error);
-        return;
+        throw error;
       }
-      
-      // Extract unique tags
-      const uniqueTags = new Set<string>();
-      data.forEach(quote => {
-        if (quote.tags && Array.isArray(quote.tags)) {
-          quote.tags.forEach(tag => uniqueTags.add(tag));
-        }
+
+      // Extract and flatten tags
+      const tags = data
+        .map(item => item.tags)
+        .filter(tags => Array.isArray(tags))
+        .reduce((acc, tags) => acc.concat(tags), []);
+
+      // Get distinct tags
+      const distinctTags = [...new Set(tags)];
+      setAllTags(distinctTags);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load tags',
+        variant: 'destructive',
       });
-      
-      setAllTags(Array.from(uniqueTags));
-    } catch (err) {
-      console.error('Error fetching tags:', err);
+    }
+  }, [toast]);
+
+  // Fetch user likes and bookmarks
+  const fetchUserInteractions = async (quotes: QuoteWithUser[]) => {
+    if (!isAuthenticated || !user) return;
+
+    try {
+      const quoteIds = quotes.map(quote => quote.id);
+
+      // Fetch likes
+      const { data: likesData, error: likesError } = await supabase
+        .from('quote_likes')
+        .select('quote_id')
+        .in('quote_id', quoteIds)
+        .eq('user_id', user.id);
+
+      if (likesError) throw likesError;
+
+      const likedQuotes = likesData ? likesData.map(like => like.quote_id) : [];
+      const initialLikes: Record<string, boolean> = {};
+      quotes.forEach(quote => {
+        initialLikes[quote.id] = likedQuotes.includes(quote.id);
+      });
+      setUserLikes(initialLikes);
+
+      // Fetch bookmarks
+      const { data: bookmarksData, error: bookmarksError } = await supabase
+        .from('quote_bookmarks')
+        .select('quote_id')
+        .in('quote_id', quoteIds)
+        .eq('user_id', user.id);
+
+      if (bookmarksError) throw bookmarksError;
+
+      const bookmarkedQuotes = bookmarksData ? bookmarksData.map(bookmark => bookmark.quote_id) : [];
+      const initialBookmarks: Record<string, boolean> = {};
+      quotes.forEach(quote => {
+        initialBookmarks[quote.id] = bookmarkedQuotes.includes(quote.id);
+      });
+      setUserBookmarks(initialBookmarks);
+    } catch (error) {
+      console.error('Error fetching user interactions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load user interactions',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Handle sort options mapping
+  const getSortColumn = useCallback((sortOption?: string) => {
+    switch (sortOption) {
+      case 'newest':
+        return { column: 'created_at', ascending: false };
+      case 'oldest':
+        return { column: 'created_at', ascending: true };
+      case 'most_liked':
+      case 'popular': // Support both naming conventions
+        return { column: 'likes', ascending: false };
+      case 'most_bookmarked':
+        return { column: 'bookmarks', ascending: false };
+      default:
+        return { column: 'created_at', ascending: false };
     }
   }, []);
 
-  // Handle user interaction states
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchUserInteractions();
-    }
-  }, [isAuthenticated, user]);
-
-  // Fetch quotes
-  const fetchQuotes = useCallback(async (options: QuoteFilterOptions = {}) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      let query = supabase
-        .from('quotes')
-        .select(`
-          *,
-          user:profiles(id, name, username, avatar_url, status)
-        `);
-
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-
-      if (options.offset) {
-        query = query.range(options.offset, options.offset + (options.limit ? options.limit - 1 : 9));
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
-        // Handle potentially missing user data with null safety
-        const user = quote.user && typeof quote.user === 'object' 
-          ? {
-              id: (quote.user as any)?.id ?? 'unknown',
-              username: (quote.user as any)?.username ?? 'unknown',
-              name: (quote.user as any)?.name ?? 'Unknown User',
-              avatar_url: (quote.user as any)?.avatar_url ?? null,
-              status: (quote.user as any)?.status ?? 'offline'
-            }
-          : null;
-
-        return {
-          id: quote.id,
-          text: quote.text,
-          author: quote.author,
-          source: quote.source || null,
-          tags: quote.tags || [],
-          likes: quote.likes || 0,
-          comments: quote.comments || 0,
-          bookmarks: quote.bookmarks || 0,
-          created_at: quote.created_at,
-          updated_at: quote.updated_at,
-          user_id: quote.user_id,
-          category: quote.category || 'Other',
-          featured_date: quote.featured_date || null,
-          user
-        };
-      });
-
-      setQuotes(formattedQuotes);
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Error',
-        description: 'Failed to load quotes',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  // Fetch quotes with filters and pagination
-  const fetchQuotesWithFilters = useCallback(async (options: QuoteFilterOptions): Promise<PaginationResult<QuoteWithUser>> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      let query = supabase
-        .from('quotes')
-        .select(`
-          *,
-          profiles:profiles(id, name, username, avatar_url, status)
-        `, { count: 'exact' });
-      
-      if (options.searchTerm) {
-        query = query.ilike('text', `%${options.searchTerm}%`);
-      }
-
-      if (options.tag) {
-        query = query.contains('tags', [options.tag]);
-      }
-
-      if (options.sortColumn) {
-        query = query.order(options.sortColumn, { ascending: options.sortAscending });
-      }
-
-      const limit = options.limit || 10;
-      const offset = options.offset || 0;
-
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error, count } = await query;
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // Transform the data to match our expected type
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
-        // Handle potentially missing user data with null safety
-        const profiles = quote.profiles && typeof quote.profiles === 'object' 
-          ? {
-              id: (quote.profiles as any)?.id ?? 'unknown',
-              username: (quote.profiles as any)?.username ?? 'unknown',
-              name: (quote.profiles as any)?.name ?? 'Unknown User',
-              avatar_url: (quote.profiles as any)?.avatar_url ?? null,
-              status: (quote.profiles as any)?.status ?? 'offline'
-            }
-          : null;
-
-        return {
-          id: quote.id,
-          text: quote.text,
-          author: quote.author,
-          source: quote.source || null,
-          tags: quote.tags || [],
-          likes: quote.likes || 0,
-          comments: quote.comments || 0,
-          bookmarks: quote.bookmarks || 0,
-          created_at: quote.created_at,
-          updated_at: quote.updated_at,
-          user_id: quote.user_id,
-          category: quote.category || 'Other',
-          featured_date: quote.featured_date || null,
-          user: profiles
-        };
-      });
-
-      const totalCount = count || 0;
-      const totalPages = Math.ceil(totalCount / (options.limit || 10));
-      const page = Math.floor((options.offset || 0) / (options.limit || 10)) + 1;
-
-      setCurrentPage(page);
-      setTotalPages(totalPages);
-
-      return {
-        data: formattedQuotes,
-        totalCount,
-        page,
-        limit: options.limit || 10,
-        totalPages
-      };
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Error',
-        description: 'Failed to load quotes',
-        variant: 'destructive'
-      });
-      return {
-        data: [],
-        totalCount: 0,
-        page: 1,
-        limit: options.limit || 10,
-        totalPages: 1
-      };
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  // Refresh quotes with current filters
-  const refreshQuotes = useCallback(async () => {
-    const options: QuoteFilterOptions = {
-      searchTerm: searchQuery,
-      tag: filterTag || undefined,
-      limit: 10,
-      offset: (currentPage - 1) * 10
-    };
-    
-    // Map sort option to proper column and direction
-    switch (sortOption) {
-      case 'newest':
-        options.sortColumn = 'created_at';
-        options.sortAscending = false;
-        break;
-      case 'oldest':
-        options.sortColumn = 'created_at';
-        options.sortAscending = true;
-        break;
-      case 'most_liked':
-        options.sortColumn = 'likes';
-        options.sortAscending = false;
-        break;
-      case 'most_bookmarked':
-        options.sortColumn = 'bookmarks';
-        options.sortAscending = false;
-        break;
-    }
-
-    const result = await fetchQuotesWithFilters(options);
-    setQuotes(result.data);
-    
-    // Also refresh all tags for filters
-    fetchAllTags();
-    
-    // Refresh user interactions
-    if (isAuthenticated && user) {
-      fetchUserInteractions();
-    }
-  }, [
-    fetchQuotesWithFilters, 
-    searchQuery, 
-    filterTag, 
-    currentPage, 
-    sortOption, 
-    fetchAllTags, 
-    isAuthenticated, 
-    user
-  ]);
-
-  useEffect(() => {
-    refreshQuotes();
-  }, [refreshQuotes]);
-
-  // Create quote
-  const createQuote = useCallback(async (quote: Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>): Promise<QuoteWithUser | null> => {
+  // Handle like a quote
+  const handleLike = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
-        title: 'Authentication Required',
-        description: 'You must be logged in to create a quote.',
+        title: 'Authentication required',
+        description: 'You must be logged in to like quotes',
         variant: 'destructive',
       });
-      navigate('/login');
       return null;
     }
 
-    setIsLoading(true);
-    setError(null);
-
     try {
-      // Ensure category is not undefined
-      const quoteWithCategory = {
-        ...quote,
-        category: quote.category || 'Other',
-        user_id: user.id
-      };
-      
-      const { data, error } = await supabase
-        .from('quotes')
-        .insert(quoteWithCategory)
-        .select(`
-          *,
-          profiles:profiles(id, name, username, avatar_url, status)
-        `)
-        .single();
+      // Optimistically update the local state
+      setUserLikes(prevLikes => ({
+        ...prevLikes,
+        [quoteId]: !prevLikes[quoteId],
+      }));
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Handle potentially missing user data with null safety
-      const profiles = data.profiles && typeof data.profiles === 'object'
-        ? {
-            id: (data.profiles as any)?.id ?? 'unknown',
-            username: (data.profiles as any)?.username ?? 'unknown',
-            name: (data.profiles as any)?.name ?? 'Unknown User',
-            avatar_url: (data.profiles as any)?.avatar_url ?? null,
-            status: (data.profiles as any)?.status ?? 'offline'
-          }
-        : null;
-
-      const formattedQuote: QuoteWithUser = {
-        id: data.id,
-        text: data.text,
-        author: data.author,
-        source: data.source || null,
-        tags: data.tags || [],
-        likes: data.likes || 0,
-        comments: data.comments || 0,
-        bookmarks: data.bookmarks || 0,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        user_id: data.user_id,
-        category: data.category || 'Other',
-        featured_date: data.featured_date || null,
-        user: profiles
-      };
-
-      toast({
-        title: 'Success',
-        description: 'Quote created successfully!',
+      // Update the like in the database
+      const { error } = await supabase.rpc('like_quote', {
+        quote_id: quoteId,
+        user_id: user.id,
       });
 
-      return formattedQuote;
-    } catch (err: any) {
-      setError(err.message);
+      if (error) {
+        throw error;
+      }
+
+      return !userLikes[quoteId]; // Return the new like status
+    } catch (error) {
+      console.error('Error liking quote:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update like status',
+        variant: 'destructive',
+      });
+
+      // Revert the local state on error
+      setUserLikes(prevLikes => ({
+        ...prevLikes,
+        [quoteId]: !prevLikes[quoteId],
+      }));
+
+      return null; // Indicate failure
+    }
+  };
+
+  // Handle bookmark a quote
+  const handleBookmark = async (quoteId: string): Promise<boolean | null> => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to bookmark quotes',
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    try {
+      // Optimistically update the local state
+      setUserBookmarks(prevBookmarks => ({
+        ...prevBookmarks,
+        [quoteId]: !prevBookmarks[quoteId],
+      }));
+
+      // Update the bookmark in the database
+      const { error } = await supabase.rpc('bookmark_quote', {
+        quote_id: quoteId,
+        user_id: user.id,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return !userBookmarks[quoteId]; // Return the new bookmark status
+    } catch (error) {
+      console.error('Error bookmarking quote:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update bookmark status',
+        variant: 'destructive',
+      });
+
+      // Revert the local state on error
+      setUserBookmarks(prevBookmarks => ({
+        ...prevBookmarks,
+        [quoteId]: !prevBookmarks[quoteId],
+      }));
+
+      return null; // Indicate failure
+    }
+  };
+  
+  // Reset filters
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterTag(null);
+    setSortOption('newest');
+    setCurrentPage(1);
+  };
+
+  // Refresh quotes
+  const refreshQuotes = async () => {
+    await fetchQuotes();
+    await fetchAllTags();
+  };
+  
+  // Fix the createQuote function to include all required fields
+  const createQuote = async (quoteData: QuoteSubmission) => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to create quotes',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    try {
+      // Make sure we include all required fields for the Quote type
+      const { data, error } = await supabase
+        .from('quotes')
+        .insert({
+          text: quoteData.text,
+          author: quoteData.author,
+          source: quoteData.source,
+          category: quoteData.category,
+          tags: quoteData.tags,
+          user_id: user.id
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        toast({
+          title: 'Quote created',
+          description: 'Your quote has been added successfully',
+        });
+        await refreshQuotes(); // Refresh quotes after creating a new one
+        return true;
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to create quote',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error creating quote:', error);
       toast({
         title: 'Error',
         description: 'Failed to create quote',
         variant: 'destructive',
       });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, navigate, toast, user]);
-
-  // Update quote
-  const updateQuote = useCallback(async (id: string, updates: Partial<Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>>): Promise<QuoteWithUser | null> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error } = await supabase
-        .from('quotes')
-        .update(updates)
-        .eq('id', id)
-        .select(`
-          *,
-          profiles:profiles(id, name, username, avatar_url, status)
-        `)
-        .single();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Handle potentially missing user data with null safety
-      const profiles = data.profiles && typeof data.profiles === 'object' 
-        ? {
-            id: (data.profiles as any)?.id ?? 'unknown',
-            username: (data.profiles as any)?.username ?? 'unknown',
-            name: (data.profiles as any)?.name ?? 'Unknown User',
-            avatar_url: (data.profiles as any)?.avatar_url ?? null,
-            status: (data.profiles as any)?.status ?? 'offline'
-          }
-        : null;
-
-      const formattedQuote: QuoteWithUser = {
-        id: data.id,
-        text: data.text,
-        author: data.author,
-        source: data.source || null,
-        tags: data.tags || [],
-        likes: data.likes || 0,
-        comments: data.comments || 0,
-        bookmarks: data.bookmarks || 0,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        user_id: data.user_id,
-        category: data.category || 'Other',
-        featured_date: data.featured_date || null,
-        user: profiles
-      };
-
-      toast({
-        title: 'Success',
-        description: 'Quote updated successfully!',
-      });
-
-      return formattedQuote;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Error',
-        description: 'Failed to update quote',
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  // Delete quote
-  const deleteQuote = useCallback(async (id: string): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { error } = await supabase
-        .from('quotes')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setQuotes(prevQuotes => prevQuotes.filter(quote => quote.id !== id));
-
-      toast({
-        title: 'Success',
-        description: 'Quote deleted successfully!',
-      });
-
-      return true;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete quote',
-        variant: 'destructive',
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  // Fetch user likes and bookmarks
-  const fetchUserInteractions = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      // Fetch likes
-      const { data: likesData } = await supabase
-        .from('quote_likes')
-        .select('quote_id')
-        .eq('user_id', user.id);
-        
-      // Fetch bookmarks
-      const { data: bookmarksData } = await supabase
-        .from('quote_bookmarks')
-        .select('quote_id')
-        .eq('user_id', user.id);
-        
-      // Create maps for quick lookup
-      const likes: Record<string, boolean> = {};
-      const bookmarks: Record<string, boolean> = {};
-      
-      likesData?.forEach(like => {
-        likes[like.quote_id] = true;
-      });
-      
-      bookmarksData?.forEach(bookmark => {
-        bookmarks[bookmark.quote_id] = true;
-      });
-      
-      setUserLikes(likes);
-      setUserBookmarks(bookmarks);
-    } catch (err) {
-      console.error('Error fetching user interactions:', err);
-    }
-  }, [user]);
-
-  // Like quote
-  const handleLike = useCallback(async (id: string): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'You must be logged in to like a quote.',
-        variant: 'destructive',
-      });
-      navigate('/login');
       return false;
     }
+  };
 
-    try {
-      // Use direct tables instead of RPC function
-      const isLiked = userLikes[id];
-      
-      if (isLiked) {
-        // Unlike: remove from the likes table
-        await supabase
-          .from('quote_likes')
-          .delete()
-          .eq('quote_id', id)
-          .eq('user_id', user.id);
-          
-        // Decrement the counter
-        await supabase.rpc('decrement_counter', {
-          row_id: id,
-          column_name: 'likes',
-          table_name: 'quotes'
-        });
-        
-        // Update local state
-        setUserLikes(prev => ({
-          ...prev,
-          [id]: false
-        }));
-        
-        // Update quote counter in local state
-        setQuotes(prevQuotes =>
-          prevQuotes.map(quote =>
-            quote.id === id
-              ? { ...quote, likes: Math.max(0, (quote.likes || 0) - 1) }
-              : quote
-          )
-        );
-        
-        return false;
-      } else {
-        // Like: add to the likes table
-        await supabase
-          .from('quote_likes')
-          .insert({
-            quote_id: id,
-            user_id: user.id
-          });
-          
-        // Increment the counter
-        await supabase.rpc('increment_counter', {
-          row_id: id,
-          column_name: 'likes',
-          table_name: 'quotes'
-        });
-        
-        // Update local state
-        setUserLikes(prev => ({
-          ...prev,
-          [id]: true
-        }));
-        
-        // Update quote counter in local state
-        setQuotes(prevQuotes =>
-          prevQuotes.map(quote =>
-            quote.id === id
-              ? { ...quote, likes: (quote.likes || 0) + 1 }
-              : quote
-          )
-        );
-        
-        return true;
-      }
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Error',
-        description: 'Failed to process like',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [isAuthenticated, navigate, toast, user, userLikes]);
-
-  // Bookmark quote
-  const handleBookmark = useCallback(async (id: string): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'You must be logged in to bookmark a quote.',
-        variant: 'destructive',
-      });
-      navigate('/login');
-      return false;
-    }
-
-    try {
-      // Use direct tables instead of RPC function
-      const isBookmarked = userBookmarks[id];
-      
-      if (isBookmarked) {
-        // Remove bookmark
-        await supabase
-          .from('quote_bookmarks')
-          .delete()
-          .eq('quote_id', id)
-          .eq('user_id', user.id);
-          
-        // Decrement the counter
-        await supabase.rpc('decrement_counter', {
-          row_id: id,
-          column_name: 'bookmarks',
-          table_name: 'quotes'
-        });
-        
-        // Update local state
-        setUserBookmarks(prev => ({
-          ...prev,
-          [id]: false
-        }));
-        
-        // Update quote counter in local state
-        setQuotes(prevQuotes =>
-          prevQuotes.map(quote =>
-            quote.id === id
-              ? { ...quote, bookmarks: Math.max(0, (quote.bookmarks || 0) - 1) }
-              : quote
-          )
-        );
-        
-        return false;
-      } else {
-        // Add bookmark
-        await supabase
-          .from('quote_bookmarks')
-          .insert({
-            quote_id: id,
-            user_id: user.id
-          });
-          
-        // Increment the counter
-        await supabase.rpc('increment_counter', {
-          row_id: id,
-          column_name: 'bookmarks',
-          table_name: 'quotes'
-        });
-        
-        // Update local state
-        setUserBookmarks(prev => ({
-          ...prev,
-          [id]: true
-        }));
-        
-        // Update quote counter in local state
-        setQuotes(prevQuotes =>
-          prevQuotes.map(quote =>
-            quote.id === id
-              ? { ...quote, bookmarks: (quote.bookmarks || 0) + 1 }
-              : quote
-          )
-        );
-        
-        return true;
-      }
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Error',
-        description: 'Failed to process bookmark',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [isAuthenticated, navigate, toast, user, userBookmarks]);
-
-  // Check if user liked quote
-  const checkUserLikedQuote = useCallback(async (id: string): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
-      return false;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('quote_likes')
-        .select('*')
-        .eq('quote_id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        return false;
-      }
-
-      return !!data;
-    } catch (err: any) {
-      console.error('Error checking if user liked quote:', err);
-      return false;
-    }
-  }, [isAuthenticated, user]);
-
-  // Check if user bookmarked quote
-  const checkUserBookmarkedQuote = useCallback(async (id: string): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
-      return false;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('quote_bookmarks')
-        .select('*')
-        .eq('quote_id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        return false;
-      }
-
-      return !!data;
-    } catch (err: any) {
-      console.error('Error checking if user bookmarked quote:', err);
-      return false;
-    }
-  }, [isAuthenticated, user]);
-
-  const trackQuoteView = useCallback(() => {
-    try {
-      // Track view logic here
-    } catch (error) {
-      console.error('Error tracking quote view:', error);
-    }
-  }, []);
-
-  // Handle page change
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
-
-  // Reset all filters
-  const resetFilters = useCallback(() => {
-    setSearchQuery('');
-    setFilterTag(null);
-    setSortOption('newest');
-    setCurrentPage(1);
-  }, []);
+  // Initial fetch
+  useEffect(() => {
+    fetchQuotes();
+    fetchAllTags();
+  }, [fetchQuotes, fetchAllTags]);
 
   return {
     quotes,
     allTags,
     isLoading,
-    error,
     searchQuery,
     setSearchQuery,
     filterTag,
@@ -799,18 +394,10 @@ export const useQuotes = (): UseQuotesResult => {
     userBookmarks,
     handleLike,
     handleBookmark,
-    fetchQuotes,
-    createQuote,
-    updateQuote,
-    deleteQuote,
-    checkUserLikedQuote,
-    checkUserBookmarkedQuote,
-    fetchQuotesWithFilters,
-    trackQuoteView,
     refreshQuotes,
     resetFilters,
     currentPage,
     totalPages,
     handlePageChange
   };
-};
+}

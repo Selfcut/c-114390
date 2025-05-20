@@ -21,7 +21,7 @@ export interface Quote extends QuoteSubmission {
 }
 
 // Define the filter types for fetching quotes
-export type QuoteSortOption = 'newest' | 'oldest' | 'popular' | 'featured';
+export type QuoteSortOption = 'newest' | 'oldest' | 'popular' | 'featured' | 'most_liked' | 'most_bookmarked';
 
 export interface QuotesFilter {
   page?: number;
@@ -31,4 +31,62 @@ export interface QuotesFilter {
   search?: string;
   authorId?: string;
   category?: string;
+}
+
+// Add back the missing types that other components rely on
+export interface QuoteWithUser extends Quote {
+  user?: {
+    id: string;
+    username: string;
+    name: string;
+    avatar_url: string | null;
+    status: string;
+  } | null;
+}
+
+export interface QuoteComment {
+  id: string;
+  quote_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: string;
+    username: string;
+    name: string;
+    avatar_url: string | null;
+    status: string;
+  } | null;
+}
+
+export type QuoteFilterOptions = {
+  searchTerm?: string;
+  tag?: string;
+  limit?: number;
+  offset?: number;
+  sortColumn?: string;
+  sortAscending?: boolean;
+};
+
+export interface PaginationResult<T> {
+  data: T[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface EditQuoteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  quote: QuoteWithUser;
+  onQuoteUpdated: (updatedQuote: QuoteWithUser) => void;
+}
+
+export interface DeleteQuoteDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  quoteId: string;
+  onQuoteDeleted: () => void;
 }
