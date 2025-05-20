@@ -25,7 +25,7 @@ BEGIN
     '0 * * * *',  -- Run at minute 0 of every hour (hourly)
     $$
     SELECT net.http_post(
-      url := 'https://' || current_setting('request.headers')::json->>'host' || '/functions/v1/fetch-research-papers',
+      url := 'https://zmevoxevezwnkigertpn.supabase.co/functions/v1/fetch-research',
       headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZXZveGV2ZXp3bmtpZ2VydHBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNzYxMDcsImV4cCI6MjA2Mjg1MjEwN30.pWgLkPyobQPhf2fgvI9suqWjDl_VvYEu7Y4coc5RzsM"}'::jsonb,
       body := '{"source": "cron"}'::jsonb
     ) AS request_id;
