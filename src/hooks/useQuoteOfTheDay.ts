@@ -26,7 +26,7 @@ export function useQuoteOfTheDay() {
         const today = new Date().toISOString().split('T')[0];
         
         // Try to get a quote specifically selected for today first
-        const { data: featuredQuote, error: featuredError } = await supabase
+        const { data: featuredData, error: featuredError } = await supabase
           .from('quotes')
           .select(`
             *,
@@ -39,7 +39,9 @@ export function useQuoteOfTheDay() {
             )
           `)
           .eq('featured_date', today)
-          .maybeSingle();
+          .limit(1);
+        
+        const featuredQuote = featuredData && featuredData.length > 0 ? featuredData[0] : null;
         
         // If no quote is featured for today, get a random popular one
         if (featuredQuote && isValidQuote(featuredQuote)) {
@@ -52,7 +54,7 @@ export function useQuoteOfTheDay() {
           }
         } else {
           // Get a random popular quote (with more likes)
-          const { data: popularQuotes, error: popularError } = await supabase
+          const { data: popularData, error: popularError } = await supabase
             .from('quotes')
             .select(`
               *,
@@ -68,7 +70,9 @@ export function useQuoteOfTheDay() {
             .order('likes', { ascending: false })
             .limit(10);
             
-          if (popularQuotes && popularQuotes.length > 0) {
+          const popularQuotes = popularData || [];
+          
+          if (popularQuotes.length > 0) {
             // Find the first valid quote from the top 10 most liked
             const validQuote = popularQuotes.find(isValidQuote);
             
@@ -82,7 +86,7 @@ export function useQuoteOfTheDay() {
               }
             } else {
               // Get any random quote as fallback
-              const { data: randomQuotes, error: randomError } = await supabase
+              const { data: randomData, error: randomError } = await supabase
                 .from('quotes')
                 .select(`
                   *,
@@ -97,8 +101,10 @@ export function useQuoteOfTheDay() {
                 .limit(1)
                 .order('created_at', { ascending: false });
                 
-              if (randomQuotes && randomQuotes.length > 0 && isValidQuote(randomQuotes[0])) {
-                const processedQuote = createSafeQuote(randomQuotes[0]);
+              const randomQuote = randomData && randomData.length > 0 ? randomData[0] : null;
+              
+              if (randomQuote && isValidQuote(randomQuote)) {
+                const processedQuote = createSafeQuote(randomQuote);
                 setQuote(processedQuote);
                 
                 if (processedQuote.id) {
