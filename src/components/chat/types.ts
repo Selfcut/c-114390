@@ -16,6 +16,10 @@ export interface ChatMessage {
   };
   reactions?: MessageReaction[];
   replyToMessage?: ChatMessage;
+  isSystem?: boolean;
+  isAdmin?: boolean;
+  effectType?: string;
+  isEdited?: boolean;
 }
 
 export interface MessageReaction {
@@ -24,6 +28,8 @@ export interface MessageReaction {
   userId: string;
   username?: string;
   messageId: string;
+  users: string[];
+  count: number;
 }
 
 export interface Conversation {
@@ -33,6 +39,12 @@ export interface Conversation {
   updatedAt: string;
   isGlobal?: boolean;
   isGroup?: boolean;
+}
+
+export interface ConversationItem extends Conversation {
+  avatar?: string;
+  unreadCount?: number;
+  lastActivityAt?: string;
 }
 
 export interface ChatUser {

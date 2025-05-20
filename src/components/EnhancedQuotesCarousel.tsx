@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { fetchQuotes, likeQuote, checkUserLikedQuote } from "@/lib/quotes-service";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EnhancedQuotesCarouselProps {
   className?: string;

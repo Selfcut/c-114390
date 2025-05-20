@@ -1,120 +1,129 @@
 
+import React, { useEffect } from 'react';
 import { ChatMessage } from './types';
 
-export const consciousnessStemMessages: ChatMessage[] = [
-  {
-    id: 'auto-1',
-    content: "Did you know that recent research in quantum biology suggests that quantum effects may play a role in consciousness? The quantum coherence in microtubules within neurons could be key to understanding how the brain generates consciousness.",
-    senderName: "Neural Network",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-2',
-    content: "The hard problem of consciousness asks: Why does physical processing in the brain give rise to subjective experience? Despite advances in neuroscience, this philosophical question remains largely unanswered.",
-    senderName: "Philosophy Bot",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-3',
-    content: "Researchers at MIT have developed neural networks that can detect consciousnesses-like properties in artificial systems. This brings us closer to understanding what consciousness actually is and how it might be replicated.",
-    senderName: "Tech Update",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-4',
-    content: "The emergence theory of consciousness suggests that consciousness emerges from complex information processing systems when they reach a certain threshold of complexity. This could explain why certain neural networks exhibit consciousness-like properties.",
-    senderName: "Science Daily",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-5',
-    content: "According to integrated information theory (IIT), consciousness corresponds to a certain type of information integration within a system. The theory assigns a numerical value (Φ) to measure the level of consciousness in any system.",
-    senderName: "Neural Network",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-6',
-    content: "![neural-activity](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd3c0Z3c2MGU4MGp4OHo3ZWdyeXZpN3ZycnE5eTBmeGQ0Y3Z2cGVxeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o6Zt481isNVuQI1l6/giphy.gif)\nThis visualization shows neural activity during conscious thought processes. The complex patterns of activation represent the integrated information that may give rise to conscious experience.",
-    senderName: "Brain Viz",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-7',
-    content: "A fascinating aspect of STEM education is how it encourages the development of critical thinking and problem-solving skills that mirror the information processing capabilities of the conscious brain.",
-    senderName: "Education Hub",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  },
-  {
-    id: 'auto-8',
-    content: "The development of brain-computer interfaces (BCIs) is opening new frontiers in understanding consciousness. By directly interfacing with neural activity, we may soon have new insights into the nature of conscious experience.",
-    senderName: "Tech Update",
-    userId: "system-auto",
-    createdAt: new Date().toISOString(),
-    isSystem: true,
-    conversationId: 'global'
-  }
-];
+interface AutomatedMessagesProps {
+  addMessage: (message: ChatMessage) => void;
+}
 
-// Function to get a random automated message
-export const getRandomAutomatedMessage = (): ChatMessage => {
-  const randomIndex = Math.floor(Math.random() * consciousnessStemMessages.length);
-  const message = consciousnessStemMessages[randomIndex];
+export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage }) => {
+  useEffect(() => {
+    // Introduction message
+    const introMessage: ChatMessage = {
+      id: 'intro-1',
+      content: 'Welcome to our community chat! Feel free to ask questions and connect with others.',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Tips message
+    const tipsMessage: ChatMessage = {
+      id: 'tips-1',
+      content: 'Tip: You can use reactions to express how you feel about a message.',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Events reminder
+    const eventsMessage: ChatMessage = {
+      id: 'events-1',
+      content: 'Don\'t forget to check out upcoming events in the Events section!',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Tips for new users
+    const newUserMessage: ChatMessage = {
+      id: 'newuser-1',
+      content: 'New here? Be sure to complete your profile and introduce yourself to the community!',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Help message
+    const helpMessage: ChatMessage = {
+      id: 'help-1',
+      content: 'Need help? Type @admin followed by your question to get assistance from our team.',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Research insight
+    const researchMessage: ChatMessage = {
+      id: 'research-1',
+      content: 'Check out our Research section for the latest papers and publications in our field.',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Quote of the day
+    const quoteMessage: ChatMessage = {
+      id: 'quote-1',
+      content: 'Quote of the day: "The greatest glory in living lies not in never falling, but in rising every time we fall." - Nelson Mandela',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Community guidelines reminder
+    const guidelinesMessage: ChatMessage = {
+      id: 'guidelines-1',
+      content: 'Remember our community guidelines: Be respectful, stay on topic, and help others when you can!',
+      createdAt: new Date().toISOString(),
+      userId: 'system',
+      conversationId: 'global',
+      senderName: 'System',
+      isSystem: true
+    };
+    
+    // Send messages at intervals
+    const messages = [
+      introMessage,
+      tipsMessage,
+      eventsMessage,
+      newUserMessage,
+      helpMessage,
+      researchMessage,
+      quoteMessage,
+      guidelinesMessage
+    ];
+    
+    let index = 0;
+    const sendInterval = setInterval(() => {
+      if (index < messages.length) {
+        addMessage(messages[index]);
+        index++;
+      } else {
+        clearInterval(sendInterval);
+      }
+    }, 30000); // Send a message every 30 seconds
+    
+    // Send first message immediately
+    addMessage(messages[0]);
+    index++;
+    
+    return () => clearInterval(sendInterval);
+  }, [addMessage]);
   
-  return {
-    ...message,
-    id: `auto-${Date.now()}`, // Generate a new ID to ensure uniqueness
-    createdAt: new Date().toISOString(), // Update timestamp to current time
-    conversationId: 'global' // Ensure this is set
-  };
-};
-
-// Function to schedule automated messages
-export const scheduleAutomatedMessages = (
-  addMessage: (message: ChatMessage) => void,
-  minDelay = 300000, // 5 minutes minimum
-  maxDelay = 1200000 // 20 minutes maximum
-): () => void => {
-  const getRandomDelay = () => Math.floor(Math.random() * (maxDelay - minDelay) + minDelay);
-  
-  let timeoutId: number | null = null;
-  
-  const scheduleNext = () => {
-    const delay = getRandomDelay();
-    timeoutId = window.setTimeout(() => {
-      const newMessage = getRandomAutomatedMessage();
-      addMessage(newMessage);
-      scheduleNext(); // Schedule the next message
-    }, delay);
-  };
-  
-  // Start the scheduling
-  scheduleNext();
-  
-  // Return cleanup function
-  return () => {
-    if (timeoutId !== null) {
-      window.clearTimeout(timeoutId);
-    }
-  };
+  return null;
 };

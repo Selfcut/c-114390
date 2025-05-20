@@ -1,196 +1,101 @@
-
-import React, { useEffect, useState } from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { Card } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { DayContentProps } from 'react-day-picker';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react';
-import { isValid, format, parseISO, isToday } from 'date-fns'; // Import isValid
+import { format } from 'date-fns';
+import { EventList } from './EventList';
+import { useEvents } from '@/hooks/useEvents';
+import { useNavigate } from 'react-router-dom';
 
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  image_url?: string;
-  category: string;
-}
+const DayContent = (props: DayContentProps) => {
+  const { date, activeMonth } = props;
+  const isSameMonth = date?.getMonth() === activeMonth?.getMonth();
+  const day = date?.getDate();
+  const { events } = useEvents();
+  const navigate = useNavigate();
 
-interface EventCalendarProps {
-  events: Event[];
-  isLoading: boolean;
-  onDateSelect?: (date: Date | undefined) => void;
-  onEventClick?: (eventId: string) => void;
-  selectedDate?: Date;
-}
-
-export const EventCalendar: React.FC<EventCalendarProps> = ({
-  events,
-  isLoading,
-  onDateSelect,
-  onEventClick,
-  selectedDate
-}) => {
-  const [currentDate, setCurrentDate] = useState<Date | undefined>(selectedDate || new Date());
-  const [eventsOnDate, setEventsOnDate] = useState<Event[]>([]);
-
-  // Function to determine which dates have events
-  const eventsDateRenderer = (date: Date) => {
-    // Check if the date is valid before performing operations on it
-    if (!isValid(date)) return null;
-    
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const hasEvents = events.some(event => {
-      try {
-        const eventDate = parseISO(event.date);
-        return isValid(eventDate) && format(eventDate, 'yyyy-MM-dd') === dateStr;
-      } catch (error) {
-        console.error('Invalid event date:', event.date, error);
-        return false;
-      }
-    });
-
-    return hasEvents ? (
-      <div className="relative">
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-      </div>
-    ) : null;
-  };
-
-  // Filter events for the selected date
-  useEffect(() => {
-    if (!currentDate || !isValid(currentDate)) {
-      setEventsOnDate([]);
-      return;
-    }
-
-    const dateStr = format(currentDate, 'yyyy-MM-dd');
-    const filteredEvents = events.filter(event => {
-      try {
-        const eventDate = parseISO(event.date);
-        return isValid(eventDate) && format(eventDate, 'yyyy-MM-dd') === dateStr;
-      } catch (error) {
-        console.error('Invalid event date:', event.date, error);
-        return false;
-      }
-    });
-
-    setEventsOnDate(filteredEvents);
-  }, [currentDate, events]);
-
-  // Handle date selection
-  const handleDateSelect = (date: Date | undefined) => {
-    setCurrentDate(date);
-    if (onDateSelect) {
-      onDateSelect(date);
-    }
-  };
-
-  // Navigate to previous month
-  const goToPreviousMonth = () => {
-    if (currentDate) {
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() - 1);
-      setCurrentDate(newDate);
-    }
-  };
-
-  // Navigate to next month
-  const goToNextMonth = () => {
-    if (currentDate) {
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() + 1);
-      setCurrentDate(newDate);
-    }
-  };
-
-  // Navigate to current month
-  const goToCurrentMonth = () => {
-    setCurrentDate(new Date());
-  };
-
-  if (isLoading) {
+  const eventCount = events.filter(event => {
+    const eventDate = new Date(event.date);
     return (
-      <Card className="p-4">
-        <div className="flex justify-between mb-4">
-          <Skeleton className="h-8 w-20" />
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-          </div>
-        </div>
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-12 w-full mt-4" />
-        <Skeleton className="h-12 w-full mt-2" />
-        <Skeleton className="h-12 w-full mt-2" />
-      </Card>
+      eventDate.getDate() === date?.getDate() &&
+      eventDate.getMonth() === date?.getMonth() &&
+      eventDate.getFullYear() === date?.getFullYear()
     );
-  }
+  }).length;
+  
+  return (
+    <div className="relative">
+      {props.date && <div>{props.date.getDate()}</div>}
+      {eventCount > 0 && (
+        <Badge 
+          variant="secondary" 
+          className="absolute top-1 right-1 text-[10px] px-1 py-0.5 rounded-md"
+          onClick={() => {
+            const formattedDate = format(date as Date, 'yyyy-MM-dd');
+            navigate(`/events?date=${formattedDate}`);
+          }}
+        >
+          {eventCount}
+        </Badge>
+      )}
+    </div>
+  );
+};
+
+export const EventCalendar = () => {
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const { events, isLoading } = useEvents();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (date) {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      navigate(`/events?date=${formattedDate}`);
+    }
+  }, [date, navigate]);
 
   return (
-    <Card className="p-4">
-      <div className="flex justify-between mb-4">
-        <h3 className="text-lg font-semibold">Calendar</h3>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={goToCurrentMonth}>
-            <CalendarIcon className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      
-      <Calendar
-        mode="single"
-        selected={currentDate}
-        onSelect={handleDateSelect}
-        className="rounded-md border"
-        components={{
-          DayContent: (props) => (
-            <>
-              {props.day}
-              {eventsDateRenderer(props.date)}
-            </>
-          )
-        }}
-      />
-      
-      <div className="mt-4">
-        {currentDate && isValid(currentDate) ? (
-          <h4 className="text-md font-medium mb-2">
-            Events on {format(currentDate, 'MMMM d, yyyy')} 
-            {isToday(currentDate) && <span className="ml-1 text-primary">(Today)</span>}
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base font-semibold">
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          Events Calendar
+        </CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          Select a date to view events
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <CalendarComponent
+          mode="single"
+          selected={date}
+          onSelect={setDate}
+          className="border-none shadow-none"
+          components={{
+            DayContent: DayContent,
+            IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+            IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+          }}
+        />
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold">
+            Events on {date ? format(date, 'MMMM dd, yyyy') : 'Select a date'}
           </h4>
-        ) : (
-          <h4 className="text-md font-medium mb-2">Select a date</h4>
-        )}
-        
-        <ScrollArea className="h-[200px] rounded-md border">
-          <div className="p-4">
-            {eventsOnDate.length > 0 ? (
-              eventsOnDate.map(event => (
-                <div 
-                  key={event.id} 
-                  className="p-3 border rounded-md mb-2 hover:bg-muted cursor-pointer"
-                  onClick={() => onEventClick && onEventClick(event.id)}
-                >
-                  <div className="font-medium">{event.title}</div>
-                  <div className="text-sm text-muted-foreground">{event.category}</div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                No events scheduled for this date
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} height={40} />
+              ))}
+            </div>
+          ) : (
+            <EventList date={date} events={events} />
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 };

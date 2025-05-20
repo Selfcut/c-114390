@@ -24,7 +24,7 @@ export const addReactionToMessage = (
     
     if (existingReaction) {
       // Check if user already reacted with this emoji
-      if (existingReaction.users.includes(safeUserId)) {
+      if (existingReaction.users && existingReaction.users.includes(safeUserId)) {
         // User already reacted, don't change anything
         return msg;
       }
@@ -32,14 +32,25 @@ export const addReactionToMessage = (
       // Update existing reaction
       updatedReactions = existingReactions.map(r => 
         r.emoji === emoji 
-          ? { ...r, count: r.count + 1, users: [...r.users, safeUserId] }
+          ? { 
+              ...r, 
+              count: r.count + 1, 
+              users: [...(r.users || []), safeUserId] 
+            }
           : r
       );
     } else {
       // Add new reaction
       updatedReactions = [
         ...existingReactions, 
-        { emoji, count: 1, users: [safeUserId] }
+        { 
+          emoji, 
+          count: 1, 
+          users: [safeUserId],
+          userId: safeUserId,
+          messageId: msg.id,
+          id: `reaction-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+        }
       ];
     }
     
@@ -67,7 +78,7 @@ export const removeReactionFromMessage = (
     const existingReaction = existingReactions.find(r => r.emoji === emoji);
     
     // If no reaction exists or user hasn't reacted, don't change anything
-    if (!existingReaction || !existingReaction.users.includes(safeUserId)) {
+    if (!existingReaction || !existingReaction.users || !existingReaction.users.includes(safeUserId)) {
       return msg;
     }
     
@@ -125,7 +136,7 @@ export const hasUserReacted = (
   if (!message.reactions) return false;
   
   const reaction = message.reactions.find(r => r.emoji === emoji);
-  if (!reaction) return false;
+  if (!reaction || !reaction.users) return false;
   
   return reaction.users.includes(userId || 'anonymous');
 };

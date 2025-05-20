@@ -1,11 +1,5 @@
 import { useState, useCallback } from "react";
-import { ChatMessage } from "../types";
-
-interface Reaction {
-  emoji: string;
-  count: number;
-  users: string[];
-}
+import { ChatMessage, MessageReaction } from "../types";
 
 export const useMessageReactions = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -32,11 +26,15 @@ export const useMessageReactions = () => {
             }
           } else {
             // Add new reaction
-            reactions.push({
+            const newReaction: MessageReaction = {
+              id: `reaction-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
               emoji,
               count: 1,
-              users: userId ? [userId] : ['anonymous']
-            });
+              users: userId ? [userId] : ['anonymous'],
+              userId: userId || 'anonymous',
+              messageId
+            };
+            reactions.push(newReaction);
           }
           
           return { ...message, reactions };

@@ -1,12 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-
-interface ReactionItem {
-  emoji: string;
-  count: number;
-  userReacted: boolean;
-}
+import { MessageReaction } from './types';
 
 interface MessageReactionsProps {
   messageId: string;
@@ -14,21 +9,23 @@ interface MessageReactionsProps {
 
 export const MessageReactions = ({ messageId }: MessageReactionsProps) => {
   // In a real app, this data would come from the database
-  const [reactions, setReactions] = useState<ReactionItem[]>([
-    { emoji: '👍', count: 1, userReacted: false },
-    { emoji: '❤️', count: 0, userReacted: false },
-    { emoji: '😂', count: 0, userReacted: false },
+  const [reactions, setReactions] = useState<MessageReaction[]>([
+    { id: '1', emoji: '👍', count: 1, messageId, userId: 'system', users: ['system'] },
+    { id: '2', emoji: '❤️', count: 0, messageId, userId: 'system', users: [] },
+    { id: '3', emoji: '😂', count: 0, messageId, userId: 'system', users: [] },
   ]);
 
   const toggleReaction = (emoji: string) => {
     setReactions(prev => 
       prev.map(reaction => {
         if (reaction.emoji === emoji) {
-          const newUserReacted = !reaction.userReacted;
+          const newUserReacted = !reaction.users.includes('current-user');
           return {
             ...reaction,
             count: reaction.count + (newUserReacted ? 1 : -1),
-            userReacted: newUserReacted
+            users: newUserReacted 
+              ? [...reaction.users, 'current-user'] 
+              : reaction.users.filter(id => id !== 'current-user')
           };
         }
         return reaction;
@@ -48,7 +45,7 @@ export const MessageReactions = ({ messageId }: MessageReactionsProps) => {
       {visibleReactions.map(reaction => (
         <Button
           key={reaction.emoji}
-          variant={reaction.userReacted ? "secondary" : "outline"}
+          variant={reaction.users.includes('current-user') ? "secondary" : "outline"}
           size="sm"
           className="h-6 py-0 px-1.5 text-xs"
           onClick={() => toggleReaction(reaction.emoji)}

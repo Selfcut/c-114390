@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { likeQuote, bookmarkQuote, checkUserLikedQuote, checkUserBookmarkedQuote } from "@/lib/quotes-service";
 import { QuoteCommentModal } from "./QuoteCommentModal";
 import { toast } from "./ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface QuoteCardProps {
   id: string;
