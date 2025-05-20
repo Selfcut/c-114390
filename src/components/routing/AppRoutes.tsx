@@ -28,6 +28,7 @@ import Wiki from '@/pages/Wiki';
 import WikiArticle from '@/components/wiki/WikiArticlePage';
 import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
+import AdminPanel from '@/pages/AdminPanel';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -99,6 +100,9 @@ export function AppRoutes() {
       {/* Wiki routes */}
       <Route path="/wiki" element={<Wiki />} />
       <Route path="/wiki/:id" element={<WikiArticle />} />
+
+      {/* Admin route */}
+      <Route path="/admin" element={<AdminPanel />} />
       
       {/* Catch all route */}
       <Route path="*" element={<NotFound />} />
