@@ -13,6 +13,28 @@ export const DEFAULT_USER = {
   status: 'offline'
 };
 
+// Helper interface to properly type Supabase response
+interface QuoteResponse {
+  id: string;
+  text: string;
+  author: string;
+  source?: string | null;
+  tags?: string[];
+  likes?: number;
+  comments?: number;
+  bookmarks?: number;
+  created_at: string;
+  user_id: string;
+  category?: string;
+  user?: {
+    id: string | null;
+    username: string;
+    name: string;
+    avatar_url: string | null;
+    status: string;
+  } | null;
+}
+
 export function useQuoteOfTheDay() {
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,12 +54,9 @@ export function useQuoteOfTheDay() {
           .eq('featured_date', today)
           .limit(1);
         
-        const featuredQuote = featuredData && featuredData.length > 0 ? featuredData[0] : null;
-        
-        // If no quote is featured for today, get a random popular one
-        if (featuredQuote && isValidQuote(featuredQuote)) {
-          // Create a safely processed quote object
-          const processedQuote = createSafeQuote(featuredQuote);
+        // Check if we have a valid featured quote for today
+        if (featuredData && featuredData.length > 0 && isValidQuote(featuredData[0])) {
+          const processedQuote = createSafeQuote(featuredData[0]);
           setQuote(processedQuote);
           
           if (processedQuote.id) {
@@ -59,7 +78,6 @@ export function useQuoteOfTheDay() {
             const validQuote = popularQuotes.find(isValidQuote);
             
             if (validQuote) {
-              // Create a safely processed quote object
               const processedQuote = createSafeQuote(validQuote);
               setQuote(processedQuote);
               
@@ -113,7 +131,7 @@ export function isValidQuote(quote: any): boolean {
 
 // Create a safe quote object without deep type inference issues
 export function createSafeQuote(rawQuote: any): QuoteWithUser {
-  // Create a clean quote object with explicit types
+  // Explicitly create a new object with typed properties to avoid deep type inference
   const safeQuote: QuoteWithUser = {
     id: typeof rawQuote.id === 'string' ? rawQuote.id : '',
     text: typeof rawQuote.text === 'string' ? rawQuote.text : '',
@@ -125,13 +143,11 @@ export function createSafeQuote(rawQuote: any): QuoteWithUser {
     bookmarks: typeof rawQuote.bookmarks === 'number' ? rawQuote.bookmarks : 0,
     created_at: typeof rawQuote.created_at === 'string' ? rawQuote.created_at : new Date().toISOString(),
     user_id: typeof rawQuote.user_id === 'string' ? rawQuote.user_id : '',
-    // Set default user
-    user: DEFAULT_USER
+    user: DEFAULT_USER // Set default user first
   };
   
-  // Handle user separately with minimal nesting
+  // Handle user data separately to avoid deep type inference issues
   if (rawQuote.user && typeof rawQuote.user === 'object') {
-    // Create a new user object with explicit properties
     safeQuote.user = {
       id: typeof rawQuote.user.id === 'string' ? rawQuote.user.id : '',
       username: typeof rawQuote.user.username === 'string' ? rawQuote.user.username : 'unknown',
