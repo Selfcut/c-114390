@@ -5,18 +5,23 @@ import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface QuotesSearchProps {
-  searchQuery: string;
+  search?: string;
+  searchQuery?: string;
   onSearchChange: (value: string) => void;
-  filterTag: string | null;
-  onTagClear: () => void;
+  filterTag?: string | null;
+  onTagClear?: () => void;
 }
 
 export const QuotesSearch: React.FC<QuotesSearchProps> = ({
+  search,
   searchQuery,
   onSearchChange,
   filterTag,
   onTagClear
 }) => {
+  // Use either search or searchQuery prop (for backward compatibility)
+  const currentSearch = search || searchQuery || "";
+  
   return (
     <div className="mb-6 flex flex-col sm:flex-row gap-4">
       <div className="relative flex-grow">
@@ -24,21 +29,21 @@ export const QuotesSearch: React.FC<QuotesSearchProps> = ({
         <Input
           placeholder="Search quotes..."
           className="pl-10"
-          value={searchQuery}
+          value={currentSearch}
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
       
-      <div className="flex flex-wrap gap-2">
-        {filterTag && (
+      {filterTag && onTagClear && (
+        <div className="flex flex-wrap gap-2">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
             {filterTag}
             <button onClick={onTagClear} className="ml-1 hover:text-white">
               ×
             </button>
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

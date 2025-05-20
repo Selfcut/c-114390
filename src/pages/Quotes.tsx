@@ -67,8 +67,8 @@ const Quotes = () => {
             />
             
             <QuotesSorting
-              sortOption={sortOption}
-              onSortChange={setSortOption}
+              value={sortOption}
+              onChange={setSortOption}
             />
             
             <div className="pt-4">
@@ -90,6 +90,7 @@ const Quotes = () => {
               userBookmarks={userBookmarks}
               onLike={handleLike}
               onBookmark={handleBookmark}
+              onTagClick={setFilterTag}
             />
             
             <div className="mt-8">
@@ -105,10 +106,7 @@ const Quotes = () => {
         <QuoteSubmissionModal
           isOpen={isSubmitModalOpen}
           onClose={() => setIsSubmitModalOpen(false)}
-          onSuccess={() => {
-            setIsSubmitModalOpen(false);
-            refreshQuotes();
-          }}
+          onQuoteAdded={refreshQuotes}
         />
       </div>
     </PageLayout>

@@ -12,13 +12,15 @@ interface QuoteSubmissionModalProps {
   onClose: () => void;
   onQuoteAdded?: () => void;
   onSubmit?: () => Promise<void>;
+  onSuccess?: () => void;
 }
 
 export const QuoteSubmissionModal = ({ 
   isOpen, 
   onClose,
   onQuoteAdded,
-  onSubmit: externalSubmitHandler
+  onSubmit: externalSubmitHandler,
+  onSuccess
 }: QuoteSubmissionModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAuthenticated } = useAuth();
@@ -48,6 +50,11 @@ export const QuoteSubmissionModal = ({
         // Call external submit handler if provided
         if (externalSubmitHandler) {
           await externalSubmitHandler();
+        }
+        
+        // Call success handler if provided (for backward compatibility)
+        if (onSuccess) {
+          onSuccess();
         }
         
         // Close modal

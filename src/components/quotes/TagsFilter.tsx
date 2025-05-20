@@ -6,14 +6,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TagsFilterProps {
   tags: string[];
-  activeTag: string | null;
-  onTagClick: (tag: string | null) => void;
+  selectedTag: string | null;
+  onSelectTag: (tag: string | null) => void;
 }
 
 export const TagsFilter: React.FC<TagsFilterProps> = ({
   tags,
-  activeTag,
-  onTagClick
+  selectedTag,
+  onSelectTag
 }) => {
   return (
     <div className="mb-6">
@@ -26,10 +26,10 @@ export const TagsFilter: React.FC<TagsFilterProps> = ({
           {tags.map(tag => (
             <Button
               key={tag}
-              variant={activeTag === tag ? "default" : "outline"} 
+              variant={selectedTag === tag ? "default" : "outline"} 
               size="sm"
               className="h-8"
-              onClick={() => onTagClick(activeTag === tag ? null : tag)}
+              onClick={() => onSelectTag(selectedTag === tag ? null : tag)}
             >
               {tag}
             </Button>

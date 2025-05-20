@@ -22,7 +22,7 @@ export function QuoteOfTheDay() {
         const today = new Date().toISOString().split('T')[0];
         
         // Try to get a quote specifically selected for today first
-        let { data: featuredQuote } = await supabase
+        const { data: featuredQuote, error: featuredError } = await supabase
           .from('quotes')
           .select(`
             *,
@@ -40,7 +40,7 @@ export function QuoteOfTheDay() {
         // If no quote is featured for today, get a random popular one
         if (!featuredQuote) {
           // Get a random popular quote (with more likes)
-          const { data: popularQuotes } = await supabase
+          const { data: popularQuotes, error: popularError } = await supabase
             .from('quotes')
             .select(`
               *,
@@ -59,13 +59,26 @@ export function QuoteOfTheDay() {
           if (popularQuotes && popularQuotes.length > 0) {
             // Select a random quote from the top 10 most liked
             const randomIndex = Math.floor(Math.random() * popularQuotes.length);
-            featuredQuote = popularQuotes[randomIndex];
+            const selectedQuote = popularQuotes[randomIndex];
+            
+            if (selectedQuote && selectedQuote.user !== null) {
+              setQuote(selectedQuote as QuoteWithUser);
+              if (selectedQuote.id) {
+                trackQuoteView(selectedQuote.id);
+              }
+            }
+          }
+        } else if (featuredQuote && featuredQuote.user !== null) {
+          // Handle featured quote if found
+          setQuote(featuredQuote as QuoteWithUser);
+          if (featuredQuote.id) {
+            trackQuoteView(featuredQuote.id);
           }
         }
         
         // If we still don't have a quote, just get any random quote
-        if (!featuredQuote) {
-          const { data: randomQuotes } = await supabase
+        if (!quote) {
+          const { data: randomQuotes, error: randomError } = await supabase
             .from('quotes')
             .select(`
               *,
@@ -80,14 +93,12 @@ export function QuoteOfTheDay() {
             .limit(1)
             .order('created_at', { ascending: false });
             
-          if (randomQuotes && randomQuotes.length > 0) {
-            featuredQuote = randomQuotes[0];
+          if (randomQuotes && randomQuotes.length > 0 && randomQuotes[0].user !== null) {
+            setQuote(randomQuotes[0] as QuoteWithUser);
+            if (randomQuotes[0].id) {
+              trackQuoteView(randomQuotes[0].id);
+            }
           }
-        }
-        
-        if (featuredQuote) {
-          setQuote(featuredQuote);
-          trackQuoteView(featuredQuote.id);
         }
       } catch (error) {
         console.error('Error fetching quote of the day:', error);
