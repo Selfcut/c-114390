@@ -26,7 +26,7 @@ export function useQuoteOfTheDay() {
         const today = new Date().toISOString().split('T')[0];
         
         // Try to get a quote specifically selected for today first
-        const { data: featuredQuote } = await supabase
+        const { data: featuredQuote, error: featuredError } = await supabase
           .from('quotes')
           .select(`
             *,
@@ -52,7 +52,7 @@ export function useQuoteOfTheDay() {
           }
         } else {
           // Get a random popular quote (with more likes)
-          const { data: popularQuotes } = await supabase
+          const { data: popularQuotes, error: popularError } = await supabase
             .from('quotes')
             .select(`
               *,
@@ -82,7 +82,7 @@ export function useQuoteOfTheDay() {
               }
             } else {
               // Get any random quote as fallback
-              const { data: randomQuotes } = await supabase
+              const { data: randomQuotes, error: randomError } = await supabase
                 .from('quotes')
                 .select(`
                   *,
@@ -134,14 +134,14 @@ export function isValidQuote(quote: any): boolean {
 
 // Helper function to sanitize user data in a quote
 export function sanitizeQuoteUser(quote: any): QuoteWithUser {
-  // Create a safe copy of the quote
+  // Create a safe copy of the quote to avoid mutation
   const safeQuote = { ...quote };
   
   // Check if user property exists and has valid data
   if (
     typeof quote.user !== 'object' || 
     quote.user === null || 
-    quote.user.error || 
+    !quote.user || 
     typeof quote.user.username !== 'string' ||
     typeof quote.user.name !== 'string'
   ) {
