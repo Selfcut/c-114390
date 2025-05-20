@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser } from '@/lib/quotes/types';
@@ -26,9 +27,38 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
         (payload) => {
           // Handle different realtime events
           if (payload.eventType === 'INSERT') {
-            addNewQuote(payload.new);
+            const newQuote = payload.new as any;
+            // Make sure we have the required fields for QuoteWithUser type
+            const quoteWithUser: QuoteWithUser = {
+              id: newQuote.id,
+              text: newQuote.text,
+              author: newQuote.author,
+              created_at: newQuote.created_at,
+              category: newQuote.category,
+              user_id: newQuote.user_id,
+              user: {
+                id: 'pending', // This will be updated later when we get user details
+                username: 'pending',
+                name: 'User',
+                avatar_url: '',
+                status: 'offline'
+              }
+            };
+            addNewQuote(quoteWithUser);
           } else if (payload.eventType === 'UPDATE') {
-            updateExistingQuote(payload.new);
+            const updatedQuote = payload.new as any;
+            // Transform to QuoteWithUser type
+            const quoteWithUser: QuoteWithUser = {
+              ...updatedQuote,
+              user: quotes.find(q => q.id === updatedQuote.id)?.user || {
+                id: 'pending',
+                username: 'pending',
+                name: 'User',
+                avatar_url: '',
+                status: 'offline'
+              }
+            };
+            updateExistingQuote(quoteWithUser);
           } else if (payload.eventType === 'DELETE') {
             removeQuote(payload.old.id);
           }
@@ -54,7 +84,20 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
         .limit(10);
 
       if (error) throw error;
-      setQuotes(data || []);
+      
+      // Transform the data to match the QuoteWithUser type
+      const quotesWithUser: QuoteWithUser[] = (data || []).map(quote => ({
+        ...quote,
+        user: quote.user || {
+          id: 'unknown',
+          username: 'unknown',
+          name: 'Unknown User',
+          avatar_url: '',
+          status: 'offline'
+        }
+      }));
+      
+      setQuotes(quotesWithUser);
     } catch (error) {
       console.error('Error fetching quotes:', error);
     } finally {

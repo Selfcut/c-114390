@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation } from '@/components/chat/types';
@@ -56,11 +57,10 @@ export const useConversations = () => {
     if (!user) return null;
     
     try {
-      const newConversation = {
+      const newConversation: Conversation = {
         id: `conv-${Date.now()}`,
         name,
         isGroup,
-        // No longer including participants property since it's not in the type
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };

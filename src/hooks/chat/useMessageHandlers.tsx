@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { ChatMessage } from '@/components/chat/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +7,11 @@ import { useAuth } from '@/lib/auth';
 export const useMessageHandlers = (conversationId: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    content: string;
+    senderName: string;
+  } | null>(null);
   const { user } = useAuth();
 
   // Handle edit message
@@ -18,7 +23,11 @@ export const useMessageHandlers = (conversationId: string) => {
   const handleReplyMessage = (messageId: string) => {
     const messageToReply = messages.find(msg => msg.id === messageId);
     if (messageToReply) {
-      setReplyingTo(messageId); // Now storing just the ID
+      setReplyingTo({
+        id: messageToReply.id,
+        content: messageToReply.content,
+        senderName: messageToReply.senderName || 'Unknown'
+      });
     }
   };
 
@@ -47,19 +56,12 @@ export const useMessageHandlers = (conversationId: string) => {
         );
       } else if (replyingTo) {
         // Find the original message to get data
-        const originalMessage = messages.find(msg => msg.id === replyingTo);
-        
-        if (originalMessage) {
-          message.replyTo = replyingTo; // Store the ID of the message being replied to
-        }
+        message.replyTo = replyingTo;
         
         setMessages(prevMessages => [...prevMessages, message]);
       } else {
         setMessages(prevMessages => [...prevMessages, message]);
       }
-      
-      // Optimistically update the UI
-      // setMessages(prevMessages => [...prevMessages, message]);
       
       setIsEditing(null);
       setReplyingTo(null);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarDaysIcon, PlusIcon } from 'lucide-react';
@@ -12,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EventList } from '@/components/events/EventList';
-import { EmptyState } from '@/components/EmptyState';
+import { EmptyState } from '@/components/EmptyStates'; // Fixed import path
 import { supabase } from '@/integrations/supabase/client';
 import { EventWithAttendees } from '@/types/events';
 import { format } from 'date-fns';
@@ -48,9 +49,11 @@ const Events: React.FC = () => {
         return;
       }
 
+      // Transform the data to match EventWithAttendees type
       const eventsWithAttendees = data.map(event => ({
         ...event,
-        attendees: event.attendees.length > 0 ? event.attendees[0].count : 0
+        attendees: event.attendees.length > 0 ? event.attendees[0].count : 0,
+        is_creator: false // Adding the required property from the type
       }));
 
       setEvents(eventsWithAttendees);
@@ -86,16 +89,15 @@ const Events: React.FC = () => {
     try {
       const { error } = await supabase
         .from('events')
-        .insert([
-          {
-            title: newEventTitle,
-            description: newEventDescription,
-            date: newEventDate.toISOString(),
-            location: newEventLocation,
-            category: newEventCategory,
-            is_featured: newEventIsFeatured,
-          },
-        ]);
+        .insert({
+          title: newEventTitle,
+          description: newEventDescription,
+          date: newEventDate.toISOString(),
+          location: newEventLocation,
+          category: newEventCategory,
+          is_featured: newEventIsFeatured,
+          user_id: 'placeholder' // This should be replaced with the actual user ID in a real app
+        });
 
       if (error) {
         console.error('Error creating event:', error);
@@ -136,21 +138,19 @@ const Events: React.FC = () => {
                 </div>
               ) : events.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Updated EventList component to receive the required props */}
                   <EventList 
+                    date={date}
                     events={events}
+                    onEventClick={(event) => console.log('Event clicked:', event)}
                   />
                 </div>
               ) : (
                 <EmptyState 
+                  type="events"
                   title="No events found" 
                   description="There are no upcoming events scheduled at the moment."
-                  action={
-                    <Button onClick={openNewEventModal}>
-                      <PlusIcon className="mr-2 h-4 w-4" />
-                      Create an Event
-                    </Button>
-                  }
+                  actionLabel="Create an Event"
+                  onAction={openNewEventModal}
                 />
               )}
             </CardContent>
