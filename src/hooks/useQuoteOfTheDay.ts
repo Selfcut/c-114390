@@ -13,6 +13,15 @@ export const DEFAULT_USER = {
   status: 'offline'
 };
 
+// Helper interface for the user data in Supabase response
+interface UserResponse {
+  id: string | null;
+  username: string;
+  name: string;
+  avatar_url: string | null;
+  status: string;
+}
+
 // Helper interface to properly type Supabase response
 interface QuoteResponse {
   id: string;
@@ -26,13 +35,7 @@ interface QuoteResponse {
   created_at: string;
   user_id: string;
   category?: string;
-  user?: {
-    id: string | null;
-    username: string;
-    name: string;
-    avatar_url: string | null;
-    status: string;
-  } | null;
+  user: UserResponse | null;
 }
 
 export function useQuoteOfTheDay() {
@@ -54,8 +57,8 @@ export function useQuoteOfTheDay() {
           .eq('featured_date', today)
           .limit(1);
         
-        // Safely cast data for TypeScript
-        const typedFeaturedData = featuredData as QuoteResponse[] | null;
+        // Convert data to our known types using type assertion with unknown as intermediate step
+        const typedFeaturedData = featuredData ? (featuredData as unknown as QuoteResponse[]) : null;
         
         // Check if we have a valid featured quote for today
         if (typedFeaturedData && typedFeaturedData.length > 0 && isValidQuote(typedFeaturedData[0])) {
@@ -74,8 +77,8 @@ export function useQuoteOfTheDay() {
             .order('likes', { ascending: false })
             .limit(10);
             
-          // Safely cast data for TypeScript  
-          const typedPopularData = popularData as QuoteResponse[] | null;
+          // Convert data to our known types using type assertion with unknown as intermediate step
+          const typedPopularData = popularData ? (popularData as unknown as QuoteResponse[]) : null;
           const popularQuotes = typedPopularData || [];
           
           if (popularQuotes.length > 0) {
@@ -97,8 +100,8 @@ export function useQuoteOfTheDay() {
                 .limit(1)
                 .order('created_at', { ascending: false });
                 
-              // Safely cast data for TypeScript
-              const typedRandomData = randomData as QuoteResponse[] | null;
+              // Convert data to our known types using type assertion with unknown as intermediate step
+              const typedRandomData = randomData ? (randomData as unknown as QuoteResponse[]) : null;
               const randomQuote = typedRandomData && typedRandomData.length > 0 ? typedRandomData[0] : null;
               
               if (randomQuote && isValidQuote(randomQuote)) {
