@@ -1,19 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Comment } from '@/lib/quotes/types';
+import { QuoteComment } from '@/lib/quotes/types';
 import { formatDistanceToNow } from 'date-fns';
 
 interface QuoteCommentsProps {
   quoteId: string;
-  updateQuoteCommentCount: (id: string) => Promise<void>;
 }
 
-export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuoteCommentCount }) => {
-  const [comments, setComments] = useState<Comment[]>([]);
+export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
+  const [comments, setComments] = useState<QuoteComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,22 +42,34 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
       }
 
       // Transform the data to include user information correctly
-      const formattedComments = data.map(comment => ({
-        id: comment.id,
-        content: comment.content,
-        quote_id: comment.quote_id,
-        user_id: comment.user_id,
-        created_at: comment.created_at,
-        updated_at: comment.updated_at,
-        // Create proper user object from profiles data
-        user: {
-          id: comment.user_id,
-          name: comment.profiles?.name || 'Unknown',
-          username: comment.profiles?.username || 'unknown',
-          avatar_url: comment.profiles?.avatar_url || '',
-          status: comment.profiles?.status || 'offline'
-        }
-      }));
+      const formattedComments = data.map(comment => {
+        // Check if profiles is a valid object and not an error
+        const userProfile = typeof comment.profiles === 'object' && comment.profiles !== null 
+          ? comment.profiles 
+          : {
+              id: 'unknown',
+              name: 'Unknown',
+              username: 'unknown',
+              avatar_url: '',
+              status: 'offline'
+            };
+        
+        return {
+          id: comment.id,
+          content: comment.content,
+          quote_id: comment.quote_id,
+          user_id: comment.user_id,
+          created_at: comment.created_at,
+          updated_at: comment.updated_at,
+          user: {
+            id: comment.user_id,
+            name: userProfile.name || 'Unknown',
+            username: userProfile.username || 'unknown',
+            avatar_url: userProfile.avatar_url || '',
+            status: userProfile.status || 'offline'
+          }
+        };
+      });
 
       setComments(formattedComments);
     } catch (error) {
@@ -90,7 +102,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
 
       if (data && data[0]) {
         // Create a properly formatted comment object
-        const newComment = {
+        const newComment: QuoteComment = {
           id: data[0].id,
           content: data[0].content,
           quote_id: data[0].quote_id,
@@ -109,8 +121,16 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
         // Add to comment list
         setComments(prevComments => [...prevComments, newComment]);
         
-        // Update quote comment count
-        updateQuoteCommentCount(quoteId);
+        // Update quote comment count using the increment_counter function
+        try {
+          await supabase.rpc('increment_counter', {
+            row_id: quoteId,
+            column_name: 'comments',
+            table_name: 'quotes'
+          });
+        } catch (error) {
+          console.error('Error updating comment count:', error);
+        }
         
         // Clear input
         setNewComment('');
@@ -119,17 +139,6 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
       console.error('Error:', error);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Updated function with proper parameters
-  const updateQuoteCommentCount = async (id: string) => {
-    try {
-      await supabase.rpc('increment_comment_count', {
-        quote_id: id
-      });
-    } catch (error) {
-      console.error('Error updating comment count:', error);
     }
   };
 

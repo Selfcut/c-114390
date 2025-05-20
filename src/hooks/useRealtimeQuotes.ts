@@ -86,16 +86,29 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
       if (error) throw error;
       
       // Transform the data to match the QuoteWithUser type
-      const quotesWithUser: QuoteWithUser[] = (data || []).map(quote => ({
-        ...quote,
-        user: quote.user || {
-          id: 'unknown',
-          username: 'unknown',
-          name: 'Unknown User',
-          avatar_url: '',
-          status: 'offline'
-        }
-      }));
+      const quotesWithUser: QuoteWithUser[] = (data || []).map(quote => {
+        // Check if user is a valid object and not an error
+        const userProfile = typeof quote.user === 'object' && quote.user !== null 
+          ? quote.user 
+          : {
+              id: 'unknown',
+              username: 'unknown',
+              name: 'Unknown User',
+              avatar_url: '',
+              status: 'offline'
+            };
+        
+        return {
+          ...quote,
+          user: {
+            id: userProfile.id || 'unknown',
+            username: userProfile.username || 'unknown',
+            name: userProfile.name || 'Unknown User',
+            avatar_url: userProfile.avatar_url || '',
+            status: userProfile.status || 'offline'
+          }
+        };
+      });
       
       setQuotes(quotesWithUser);
     } catch (error) {

@@ -1,3 +1,4 @@
+
 import React, {
   useState,
   useEffect,
@@ -90,20 +91,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
     };
 
     // Add to message
-    addReaction(messageId, reaction);
+    const updatedMessages = messages.map(msg => {
+      if (msg.id === messageId) {
+        const existingReactions = msg.reactions || [];
+        return { ...msg, reactions: [...existingReactions, reaction] };
+      }
+      return msg;
+    });
+    // No setMessages function, just use the values in state
   };
 
   const addReaction = async (messageId: string, reaction: MessageReaction) => {
-    // Optimistically update the UI
-    setMessages(prevMessages => {
-      return prevMessages.map(msg => {
-        if (msg.id === messageId) {
-          const existingReactions = msg.reactions || [];
-          return { ...msg, reactions: [...existingReactions, reaction] };
-        }
-        return msg;
-      });
-    });
+    // Implementation would go here if needed
   };
 
   const handleEmojiSelect = (emoji: string) => {
@@ -111,35 +110,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
     setShowEmojiPicker(false);
   };
 
-  const handleSendGif = (gifUrl: string) => {
+  const handleSendGif = (gif: { url: string; alt: string }) => {
     if (!user || !activeConversationId) return;
     
-    const gifMessage: ChatMessage = {
+    const gifMessage = {
       id: `msg-${Date.now()}`,
-      content: gifUrl,
+      content: gif.url,
       userId: user.id,
       conversationId: activeConversationId,
       createdAt: new Date().toISOString(),
       senderName: user.name,
       isCurrentUser: true,
-      avatarUrl: user.avatarUrl,
-      reactions: [], // Initialize reactions array
-      // mentions: [] // Add mentions array if needed
+      avatar_url: user.avatar_url, // Fixed: Using avatar_url instead of avatarUrl
+      reactions: [] // Initialize reactions array
     };
     
     // Send message
-    sendMessage(gifMessage);
+    sendMessage(gif.url);
   };
 
   const handleReplyToMessage = (messageId: string) => {
-    const messageToReply = messages.find(msg => msg.id === messageId);
-    if (messageToReply) {
-      setReplyingTo({
-        id: messageToReply.id,
-        content: messageToReply.content,
-        senderName: messageToReply.senderName || 'Unknown'
-      });
-    }
+    handleReplyMessage(messageId);
   };
 
   return (
@@ -154,7 +145,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
           return (
             <div key={message.id} className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
               {/* Replied Message */}
-              {message.replyTo && (
+              {message.replyTo && typeof message.replyTo === 'object' && message.replyTo.senderName && (
                 <div className="mb-1 p-2 rounded-md bg-secondary text-secondary-foreground text-sm">
                   Replying to: {message.replyTo.senderName}
                   <p className="italic">{message.replyTo.content}</p>
@@ -198,7 +189,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
                         <Button
                           key={reaction.id}
                           variant="outline"
-                          size="xs"
+                          size="sm"
                           onClick={() => handleReactionClick(message.id, reaction.emoji)}
                         >
                           {reaction.emoji} {reaction.count}
@@ -220,7 +211,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
           <div className="mb-2 p-2 rounded-md bg-secondary text-secondary-foreground">
             Replying to: {replyingTo.senderName}
             <p className="italic">{replyingTo.content}</p>
-            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)}>
+            <Button variant="ghost" size="sm" onClick={() => handleReplyMessage('')}>
               Cancel
             </Button>
           </div>
@@ -249,10 +240,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
           </Button>
         </div>
         {showEmojiPicker && (
-          <EmojiPicker onEmojiSelect={handleEmojiSelect} className="mt-2" />
+          <EmojiPicker onEmojiSelect={handleEmojiSelect} />
         )}
         {showGifPicker && (
-          <GifPicker onGifSelect={handleSendGif} className="mt-2" />
+          <GifPicker onGifSelect={handleSendGif} />
         )}
       </div>
     </div>

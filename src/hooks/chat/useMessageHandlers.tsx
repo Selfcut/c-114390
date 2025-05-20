@@ -4,14 +4,16 @@ import { ChatMessage } from '@/components/chat/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 
+interface ReplyTo {
+  id: string;
+  content: string;
+  senderName: string;
+}
+
 export const useMessageHandlers = (conversationId: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [replyingTo, setReplyingTo] = useState<{
-    id: string;
-    content: string;
-    senderName: string;
-  } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ReplyTo | null>(null);
   const { user } = useAuth();
 
   // Handle edit message
@@ -21,6 +23,12 @@ export const useMessageHandlers = (conversationId: string) => {
 
   // Handle reply to message
   const handleReplyMessage = (messageId: string) => {
+    if (messageId === '') {
+      // Clear reply if empty messageId is passed (for cancel action)
+      setReplyingTo(null);
+      return;
+    }
+    
     const messageToReply = messages.find(msg => msg.id === messageId);
     if (messageToReply) {
       setReplyingTo({

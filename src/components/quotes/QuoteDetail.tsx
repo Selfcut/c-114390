@@ -48,7 +48,7 @@ export const QuoteDetail = () => {
         setBookmarkCount(quoteData.bookmarks || 0);
 
         // Track quote view
-        trackQuoteView(id);
+        trackQuoteView();
 
         // Check if user liked or bookmarked this quote
         if (isAuthenticated) {
