@@ -45,19 +45,18 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
       // Transform the data to include user information correctly
       const formattedComments: QuoteComment[] = data.map(comment => {
         // Fix: First check if profiles exists and has the expected shape
-        const profilesData = comment.profiles || null;
+        const profilesData = comment.profiles;
         
-        const userProfile = profilesData && 
-          typeof profilesData === 'object' && 
-          !('error' in profilesData)
-            ? {
-                id: profilesData.id ?? 'unknown',
-                name: profilesData.name ?? 'Unknown',
-                username: profilesData.username ?? 'unknown',
-                avatar_url: profilesData.avatar_url ?? null,
-                status: profilesData.status ?? 'offline'
-              }
-            : null;
+        // Fix all TypeScript null issues by proper null checking
+        const userProfile = profilesData && typeof profilesData === 'object' 
+          ? {
+              id: profilesData?.id ?? 'unknown',
+              name: profilesData?.name ?? 'Unknown',
+              username: profilesData?.username ?? 'unknown',
+              avatar_url: profilesData?.avatar_url ?? null,
+              status: profilesData?.status ?? 'offline'
+            }
+          : null;
         
         return {
           id: comment.id,

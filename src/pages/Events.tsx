@@ -91,7 +91,8 @@ const Events: React.FC = () => {
       location: newEventLocation,
       category: newEventCategory,
       is_featured: newEventIsFeatured,
-      max_attendees: null
+      max_attendees: null,
+      image_url: null  // Add missing required field with null value
     };
 
     const success = await createEvent(eventData);
