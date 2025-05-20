@@ -20,6 +20,7 @@ const fetchResearchPapers = async (): Promise<ResearchItem[]> => {
     
     // If no data is found, return empty array
     if (!data || data.length === 0) {
+      console.log('No research papers found. The hourly cron job should fetch them.');
       return [];
     }
     
@@ -37,8 +38,9 @@ export const useResearchData = (searchQuery: string, selectedCategory: string | 
   const { data: researchPapers = [], isLoading, error, refetch } = useQuery({
     queryKey: ['research-papers'],
     queryFn: fetchResearchPapers,
-    refetchInterval: 60 * 60 * 1000, // Auto-refresh every hour
-    refetchOnWindowFocus: false
+    refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes (more frequent for user experience)
+    staleTime: 60 * 60 * 1000, // Data becomes stale after 1 hour
+    refetchOnWindowFocus: true
   });
   
   // Update lastUpdateTime whenever data is successfully fetched

@@ -72,6 +72,16 @@ export const ChatMessage = ({
     }
   };
 
+  // Safely format the timestamp, ensuring it's a valid date
+  const safeFormattedTime = React.useMemo(() => {
+    try {
+      return formatTime(message.createdAt);
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Unknown time';
+    }
+  }, [message.createdAt, formatTime]);
+
   return (
     <div className={`flex flex-col mb-4 group ${message.isSystem ? 'px-4' : ''}`}>
       {/* Reply reference */}

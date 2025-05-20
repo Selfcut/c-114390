@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,12 +21,8 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
     try {
       setIsLoading(true);
       
-      let query = supabase
-        .from('events')
-        .select(`
-          *,
-          profiles!events_user_id_fkey (name, avatar_url, username)
-        `);
+      // Construct a basic query first
+      let query = supabase.from('events').select('*');
 
       // Apply filters
       if (filter.searchTerm) {
@@ -92,51 +87,92 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
       // Order by date
       query = query.order('date', { ascending: true });
 
+      // Execute the query
       const { data: eventsData, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching events:', error);
+        throw error;
+      }
 
-      // Get attendees count for each event
+      // Process events and add attendee information
       const eventsWithAttendees = await Promise.all((eventsData || []).map(async (event: any) => {
-        // Get attendee count
-        const { count, error: countError } = await supabase
-          .from('event_attendees')
-          .select('*', { count: 'exact', head: true })
-          .eq('event_id', event.id)
-          .eq('status', 'attending');
-        
-        if (countError) console.error('Error getting attendee count:', countError);
-        
-        // Check if the current user is attending
-        let userStatus: EventStatus | undefined = undefined;
-        let isCreator = false;
-        
-        if (user) {
-          isCreator = event.user_id === user.id;
-          
-          const { data: attendeeData } = await supabase
+        try {
+          // Get attendee count
+          const { count: attendeeCount, error: countError } = await supabase
             .from('event_attendees')
-            .select('status')
+            .select('*', { count: 'exact', head: true })
             .eq('event_id', event.id)
-            .eq('user_id', user.id)
-            .single();
+            .eq('status', 'attending');
           
-          if (attendeeData) {
-            userStatus = attendeeData.status as EventStatus;
+          if (countError) {
+            console.error('Error getting attendee count:', countError);
           }
+          
+          // Check if the current user is attending
+          let userStatus: EventStatus | undefined = undefined;
+          let isCreator = false;
+          
+          if (user) {
+            isCreator = event.user_id === user.id;
+            
+            const { data: attendeeData, error: attendeeError } = await supabase
+              .from('event_attendees')
+              .select('status')
+              .eq('event_id', event.id)
+              .eq('user_id', user.id)
+              .maybeSingle();
+            
+            if (attendeeError) {
+              console.error('Error checking attendance status:', attendeeError);
+            }
+            
+            if (attendeeData) {
+              userStatus = attendeeData.status as EventStatus;
+            }
+          }
+          
+          // Try to get organizer info
+          let organizerName = "Unknown";
+          let organizerAvatar = null;
+          
+          try {
+            const { data: organizerData, error: organizerError } = await supabase
+              .from('profiles')
+              .select('name, username, avatar_url')
+              .eq('id', event.user_id)
+              .maybeSingle();
+            
+            if (!organizerError && organizerData) {
+              organizerName = organizerData.name || organizerData.username || "Unknown";
+              organizerAvatar = organizerData.avatar_url;
+            }
+          } catch (e) {
+            console.error("Error fetching organizer data:", e);
+          }
+          
+          return {
+            ...event,
+            attendees: attendeeCount || 0,
+            user_status: userStatus,
+            is_creator: isCreator,
+            organizer_name: organizerName,
+            organizer_avatar: organizerAvatar
+          };
+        } catch (e) {
+          console.error(`Error processing event ${event.id}:`, e);
+          return {
+            ...event,
+            attendees: 0,
+            user_status: undefined,
+            is_creator: false
+          };
         }
-        
-        return {
-          ...event,
-          attendees: count || 0,
-          user_status: userStatus,
-          is_creator: isCreator
-        };
       }));
       
       setEvents(eventsWithAttendees);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error in fetchEvents:', error);
       toast.error('Failed to load events');
     } finally {
       setIsLoading(false);
@@ -146,7 +182,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
   // Fetch events when filter changes
   useEffect(() => {
     fetchEvents();
-  }, [filter, user]);
+  }, [filter, user?.id]);
 
   // RSVP to an event
   const rsvpToEvent = async (eventId: string, status: EventStatus) => {
@@ -157,13 +193,17 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
 
     try {
       // Check if user already has an RSVP
-      const { data: existingRsvp } = await supabase
+      const { data: existingRsvp, error: findError } = await supabase
         .from('event_attendees')
         .select('*')
         .eq('event_id', eventId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
+      if (findError) {
+        throw findError;
+      }
+      
       let result;
       
       if (existingRsvp) {
@@ -194,7 +234,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
                 user_status: status,
                 attendees: status === 'attending' 
                   ? (event.user_status !== 'attending' ? event.attendees + 1 : event.attendees) 
-                  : (event.user_status === 'attending' ? event.attendees - 1 : event.attendees)
+                  : (event.user_status === 'attending' ? Math.max(0, event.attendees - 1) : event.attendees)
               } 
             : event
         )
