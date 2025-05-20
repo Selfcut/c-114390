@@ -8,21 +8,14 @@ import { QuoteWithUser } from '@/lib/quotes/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
 
-// Create a safer type for handling possible error responses
-interface QuoteResponse {
-  id: string;
-  text: string;
-  author: string;
-  source?: string;
-  tags?: string[];
-  likes?: number;
-  comments?: number;
-  bookmarks?: number;
-  created_at: string;
-  user_id: string;
-  category?: string;
-  user: any; // We'll validate this before using it
-}
+// Define a default user object to use when user data is invalid
+const DEFAULT_USER = {
+  id: '',
+  username: 'unknown',
+  name: 'Unknown User',
+  avatar_url: null,
+  status: 'offline'
+};
 
 export function QuoteOfTheDay() {
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
@@ -54,10 +47,13 @@ export function QuoteOfTheDay() {
           .maybeSingle();
         
         // If no quote is featured for today, get a random popular one
-        if (featuredQuote && isValidQuoteWithUser(featuredQuote)) {
-          setQuote(featuredQuote as QuoteWithUser);
-          if (featuredQuote.id) {
-            trackQuoteView(featuredQuote.id);
+        if (featuredQuote && isValidQuote(featuredQuote)) {
+          // Ensure user data is properly formatted
+          const safeQuote = sanitizeQuoteUser(featuredQuote);
+          setQuote(safeQuote);
+          
+          if (safeQuote.id) {
+            trackQuoteView(safeQuote.id);
           }
         } else {
           // Get a random popular quote (with more likes)
@@ -78,14 +74,16 @@ export function QuoteOfTheDay() {
             .limit(10);
             
           if (popularQuotes && popularQuotes.length > 0) {
-            // Find the first valid quote with user from the top 10 most liked
-            const validQuote = popularQuotes.find(isValidQuoteWithUser);
+            // Find the first valid quote from the top 10 most liked
+            const validQuote = popularQuotes.find(isValidQuote);
             
             if (validQuote) {
-              // Select a valid quote
-              setQuote(validQuote as QuoteWithUser);
-              if (validQuote.id) {
-                trackQuoteView(validQuote.id);
+              // Ensure user data is properly formatted
+              const safeQuote = sanitizeQuoteUser(validQuote);
+              setQuote(safeQuote);
+              
+              if (safeQuote.id) {
+                trackQuoteView(safeQuote.id);
               }
             } else {
               // Get any random quote as fallback
@@ -104,13 +102,12 @@ export function QuoteOfTheDay() {
                 .limit(1)
                 .order('created_at', { ascending: false });
                 
-              if (randomQuotes && randomQuotes.length > 0) {
-                const validRandomQuote = randomQuotes.find(isValidQuoteWithUser);
-                if (validRandomQuote) {
-                  setQuote(validRandomQuote as QuoteWithUser);
-                  if (validRandomQuote.id) {
-                    trackQuoteView(validRandomQuote.id);
-                  }
+              if (randomQuotes && randomQuotes.length > 0 && isValidQuote(randomQuotes[0])) {
+                const safeQuote = sanitizeQuoteUser(randomQuotes[0]);
+                setQuote(safeQuote);
+                
+                if (safeQuote.id) {
+                  trackQuoteView(safeQuote.id);
                 }
               }
             }
@@ -126,15 +123,32 @@ export function QuoteOfTheDay() {
     fetchQuoteOfTheDay();
   }, [trackQuoteView]);
   
-  // Helper function to validate quote with user
-  function isValidQuoteWithUser(quote: any): quote is QuoteWithUser {
+  // Helper function to validate quotes
+  function isValidQuote(quote: any): boolean {
     return quote && 
-      typeof quote.user === 'object' && 
-      quote.user !== null &&
-      !quote.user.error &&
-      typeof quote.user.id === 'string' && 
-      typeof quote.user.username === 'string' && 
-      typeof quote.user.name === 'string';
+      typeof quote.id === 'string' && 
+      typeof quote.text === 'string' && 
+      typeof quote.author === 'string';
+  }
+  
+  // Helper function to sanitize user data in a quote
+  function sanitizeQuoteUser(quote: any): QuoteWithUser {
+    // Create a safe copy of the quote
+    const safeQuote = { ...quote };
+    
+    // Check if user property exists and has valid data
+    if (
+      typeof quote.user !== 'object' || 
+      quote.user === null || 
+      quote.user.error || 
+      typeof quote.user.username !== 'string' ||
+      typeof quote.user.name !== 'string'
+    ) {
+      // Replace with default user data if invalid
+      safeQuote.user = DEFAULT_USER;
+    }
+    
+    return safeQuote as QuoteWithUser;
   }
   
   if (isLoading) {
