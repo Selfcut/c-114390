@@ -8,10 +8,12 @@ import { CollectionManagement } from '@/components/saved-quotes/CollectionManage
 import { useSavedQuotes } from '@/hooks/useSavedQuotes';
 import { useAuth } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
+import { ChevronRight, BookmarkIcon, Home } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const SavedQuotes = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     savedQuotes,
     filteredQuotes,
@@ -29,7 +31,7 @@ const SavedQuotes = () => {
   // Find active collection object
   const activeCollectionObject = collections.find(c => c.id === activeCollection);
   
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return (
       <PageLayout>
         <div className="container mx-auto py-12 px-4">
@@ -50,6 +52,31 @@ const SavedQuotes = () => {
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center text-sm text-muted-foreground mb-6">
+          <Button 
+            variant="link" 
+            onClick={() => navigate('/')}
+            className="p-0 h-auto font-normal"
+          >
+            <Home className="h-4 w-4 mr-1" />
+            Home
+          </Button>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <Button 
+            variant="link" 
+            onClick={() => navigate('/quotes')}
+            className="p-0 h-auto font-normal"
+          >
+            Quotes
+          </Button>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <span className="font-medium text-foreground flex items-center">
+            <BookmarkIcon className="h-4 w-4 mr-1" />
+            Saved Quotes
+          </span>
+        </nav>
+        
         <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
           {/* Sidebar */}
           <div className="md:border-r pr-4">
@@ -106,7 +133,7 @@ const SavedQuotes = () => {
             <SavedQuotesGrid
               quotes={filteredQuotes}
               collections={collections}
-              isLoading={isLoading}
+              isLoading={isLoading || authLoading}
               onAddToCollection={addQuoteToCollection}
               onRemoveFromCollection={removeQuoteFromCollection}
             />

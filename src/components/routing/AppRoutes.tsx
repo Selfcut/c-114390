@@ -1,3 +1,4 @@
+
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -22,6 +23,7 @@ import ProblemDetail from '@/pages/ProblemDetail';
 import Events from '@/pages/Events';
 import Quotes from '@/pages/Quotes';
 import QuoteDetail from '@/pages/QuoteDetail';
+import SavedQuotes from '@/pages/SavedQuotes';
 import Wiki from '@/pages/Wiki';
 import WikiArticle from '@/components/wiki/WikiArticlePage';
 import NotFound from '@/pages/NotFound';
@@ -90,6 +92,9 @@ export function AppRoutes() {
       {/* Quotes routes */}
       <Route path="/quotes" element={<Quotes />} />
       <Route path="/quotes/:id" element={<QuoteDetail />} />
+      
+      {/* Saved Quotes route */}
+      <Route path="/saved-quotes" element={<SavedQuotes />} />
       
       {/* Wiki routes */}
       <Route path="/wiki" element={<Wiki />} />

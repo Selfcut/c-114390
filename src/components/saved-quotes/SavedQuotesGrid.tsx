@@ -3,6 +3,7 @@ import { QuoteWithUser } from '@/lib/quotes/types';
 import { SavedQuoteCard } from './SavedQuoteCard';
 import { QuoteCollection } from '@/hooks/useSavedQuotes';
 import { useAuth } from '@/lib/auth';
+import { Loader2 } from 'lucide-react';
 
 interface SavedQuoteWithCollection {
   quote: QuoteWithUser;
@@ -13,8 +14,8 @@ interface SavedQuotesGridProps {
   quotes: SavedQuoteWithCollection[];
   collections: QuoteCollection[];
   isLoading?: boolean;
-  onRemoveFromCollection: (quoteId: string, collectionId: string) => void;
-  onAddToCollection: (quoteId: string, collectionId: string) => void;
+  onRemoveFromCollection: (quoteId: string, collectionId: string) => Promise<boolean>;
+  onAddToCollection: (quoteId: string, collectionId: string) => Promise<boolean>;
 }
 
 export function SavedQuotesGrid({
@@ -24,17 +25,23 @@ export function SavedQuotesGrid({
   onRemoveFromCollection,
   onAddToCollection
 }: SavedQuotesGridProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array(6).fill(0).map((_, i) => (
-          <div 
-            key={i} 
-            className="h-48 bg-muted/30 rounded-lg animate-pulse"
-          />
-        ))}
+      <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array(6).fill(0).map((_, i) => (
+            <div 
+              key={i} 
+              className="h-48 bg-muted/30 rounded-lg animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="flex justify-center items-center mt-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading quotes...</span>
+        </div>
       </div>
     );
   }
@@ -52,11 +59,14 @@ export function SavedQuotesGrid({
 
   if (quotes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-background/50">
         <h3 className="text-xl font-semibold mb-2">No Saved Quotes</h3>
-        <p className="text-muted-foreground text-center">
+        <p className="text-muted-foreground text-center mb-4">
           You haven't saved any quotes yet. Browse quotes and bookmark the ones you like.
         </p>
+        <a href="/quotes" className="text-primary hover:underline">
+          Browse All Quotes
+        </a>
       </div>
     );
   }

@@ -2,9 +2,26 @@
 import { PlusCircle, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/lib/auth';
+import { toast } from "@/hooks/use-toast";
 
 export const QuotesHeader = ({ onSubmitClick }: { onSubmitClick: () => void }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  const handleSavedQuotesClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to view your saved quotes",
+        variant: "default",
+      });
+      navigate('/auth');
+      return;
+    }
+    
+    navigate('/saved-quotes');
+  };
   
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
@@ -18,7 +35,8 @@ export const QuotesHeader = ({ onSubmitClick }: { onSubmitClick: () => void }) =
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
-          onClick={() => navigate('/saved-quotes')}
+          onClick={handleSavedQuotesClick}
+          className="flex items-center"
         >
           <Bookmark className="h-4 w-4 mr-2" />
           Saved Quotes

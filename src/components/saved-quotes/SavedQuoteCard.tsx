@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, MessageSquare, FolderPlus, Check } from 'lucide-react';
+import { MoreHorizontal, MessageSquare, FolderPlus, Check, BookmarkX, Loader2 } from 'lucide-react';
 
 import { QuoteWithUser } from '@/lib/quotes/types';
 import { Button } from '@/components/ui/button';
@@ -24,13 +24,14 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { QuoteCollection } from '@/hooks/useSavedQuotes';
+import { useToast } from '@/hooks/use-toast';
 
 interface SavedQuoteCardProps {
   quote: QuoteWithUser;
   collections: QuoteCollection[];
   quoteCollections: string[];
-  onRemoveFromCollection?: (quoteId: string, collectionId: string) => void;
-  onAddToCollection?: (quoteId: string, collectionId: string) => void;
+  onRemoveFromCollection?: (quoteId: string, collectionId: string) => Promise<boolean>;
+  onAddToCollection?: (quoteId: string, collectionId: string) => Promise<boolean>;
 }
 
 export function SavedQuoteCard({ 
@@ -41,10 +42,62 @@ export function SavedQuoteCard({
   onAddToCollection
 }: SavedQuoteCardProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
+  const [processingCollections, setProcessingCollections] = useState<Record<string, boolean>>({});
   
   const handleQuoteClick = () => {
     navigate(`/quotes/${quote.id}`);
+  };
+  
+  const handleAddToCollection = async (collectionId: string) => {
+    if (!onAddToCollection) return;
+    
+    try {
+      setProcessingCollections(prev => ({ ...prev, [collectionId]: true }));
+      const result = await onAddToCollection(quote.id, collectionId);
+      
+      if (result) {
+        toast({
+          title: "Added to collection",
+          description: "Quote has been added to the collection",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding to collection:", error);
+      toast({
+        title: "Failed to add",
+        description: "Could not add quote to collection",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingCollections(prev => ({ ...prev, [collectionId]: false }));
+    }
+  };
+  
+  const handleRemoveFromCollection = async (collectionId: string) => {
+    if (!onRemoveFromCollection) return;
+    
+    try {
+      setProcessingCollections(prev => ({ ...prev, [collectionId]: true }));
+      const result = await onRemoveFromCollection(quote.id, collectionId);
+      
+      if (result) {
+        toast({
+          title: "Removed from collection",
+          description: "Quote has been removed from the collection",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing from collection:", error);
+      toast({
+        title: "Failed to remove",
+        description: "Could not remove quote from collection",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingCollections(prev => ({ ...prev, [collectionId]: false }));
+    }
   };
   
   return (
@@ -171,6 +224,7 @@ export function SavedQuoteCard({
               <div className="space-y-2">
                 {collections.map((collection) => {
                   const isInCollection = quoteCollections.includes(collection.id);
+                  const isProcessing = processingCollections[collection.id];
                   
                   return (
                     <div
@@ -184,13 +238,22 @@ export function SavedQuoteCard({
                         )}
                       </div>
                       
-                      {isInCollection ? (
+                      {isProcessing ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={true}
+                        >
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </Button>
+                      ) : isInCollection ? (
                         <Button
                           size="sm"
                           variant="ghost"
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onRemoveFromCollection && onRemoveFromCollection(quote.id, collection.id)}
+                          onClick={() => handleRemoveFromCollection(collection.id)}
                         >
+                          <BookmarkX className="h-4 w-4 mr-1" />
                           Remove
                         </Button>
                       ) : (
@@ -198,7 +261,7 @@ export function SavedQuoteCard({
                           size="sm"
                           variant="ghost"
                           className="text-primary hover:text-primary hover:bg-primary/10"
-                          onClick={() => onAddToCollection && onAddToCollection(quote.id, collection.id)}
+                          onClick={() => handleAddToCollection(collection.id)}
                         >
                           <Check className="h-4 w-4 mr-1" />
                           Add
