@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +18,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
   const { user } = useAuth();
 
   // Fetch events function
-  const fetchEvents = useCallback(async (conversationId: string = 'global', options = {}) => {
+  const fetchEvents = useCallback(async (conversationId: string = 'global', options: any = {}) => {
     setIsLoading(true);
     try {
       // Construct a basic query first
@@ -182,7 +183,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
     } finally {
       setIsLoading(false);
     }
-  });
+  }, [filter, user?.id]);
 
   // Fetch events when filter changes
   useEffect(() => {
