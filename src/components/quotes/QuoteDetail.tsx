@@ -62,7 +62,7 @@ export function QuoteDetail() {
         }
         
         // Format the quote data
-        const userObj = data.user && typeof data.user === 'object' && !data.user.error
+        const userObj = data.user && typeof data.user === 'object' && !('error' in data.user)
           ? {
               id: data.user?.id || 'unknown',
               username: data.user?.username || 'unknown',

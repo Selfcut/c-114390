@@ -114,13 +114,13 @@ export const useQuotes = (): UseQuotesResult => {
 
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data
-        const userObj = quote.user && typeof quote.user === 'object' && !quote.user.error
+        const userObj = quote.user && typeof quote.user === 'object' && !('error' in quote.user)
           ? {
-              id: quote.user.id || 'unknown',
-              username: quote.user.username || 'unknown',
-              name: quote.user.name || 'Unknown User',
-              avatar_url: quote.user.avatar_url,
-              status: quote.user.status || 'offline'
+              id: quote.user?.id || 'unknown',
+              username: quote.user?.username || 'unknown',
+              name: quote.user?.name || 'Unknown User',
+              avatar_url: quote.user?.avatar_url || null,
+              status: quote.user?.status || 'offline'
             }
           : null;
 
@@ -192,13 +192,13 @@ export const useQuotes = (): UseQuotesResult => {
 
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data by explicitly checking for valid user object
-        const userObj = quote.profiles && typeof quote.profiles === 'object' && !quote.profiles.error
+        const userObj = quote.profiles && typeof quote.profiles === 'object' && !('error' in quote.profiles)
           ? {
-              id: quote.profiles.id || 'unknown',
-              username: quote.profiles.username || 'unknown',
-              name: quote.profiles.name || 'Unknown User',
-              avatar_url: quote.profiles.avatar_url,
-              status: quote.profiles.status || 'offline'
+              id: quote.profiles?.id || 'unknown',
+              username: quote.profiles?.username || 'unknown',
+              name: quote.profiles?.name || 'Unknown User',
+              avatar_url: quote.profiles?.avatar_url || null,
+              status: quote.profiles?.status || 'offline'
             }
           : null;
 
@@ -343,13 +343,13 @@ export const useQuotes = (): UseQuotesResult => {
       }
 
       // Handle potentially missing user data
-      const userObj = data.profiles && typeof data.profiles === 'object' && !data.profiles.error
+      const userObj = data.profiles && typeof data.profiles === 'object' && !('error' in data.profiles)
         ? {
-            id: data.profiles.id || 'unknown',
-            username: data.profiles.username || 'unknown',
-            name: data.profiles.name || 'Unknown User',
-            avatar_url: data.profiles.avatar_url,
-            status: data.profiles.status || 'offline'
+            id: data.profiles?.id || 'unknown',
+            username: data.profiles?.username || 'unknown',
+            name: data.profiles?.name || 'Unknown User',
+            avatar_url: data.profiles?.avatar_url || null,
+            status: data.profiles?.status || 'offline'
           }
         : null;
 
@@ -409,13 +409,13 @@ export const useQuotes = (): UseQuotesResult => {
       }
 
       // Handle potentially missing user data
-      const userObj = data.profiles && typeof data.profiles === 'object' && !data.profiles.error
+      const userObj = data.profiles && typeof data.profiles === 'object' && !('error' in data.profiles)
         ? {
-            id: data.profiles.id || 'unknown',
-            username: data.profiles.username || 'unknown',
-            name: data.profiles.name || 'Unknown User',
-            avatar_url: data.profiles.avatar_url,
-            status: data.profiles.status || 'offline'
+            id: data.profiles?.id || 'unknown',
+            username: data.profiles?.username || 'unknown',
+            name: data.profiles?.name || 'Unknown User',
+            avatar_url: data.profiles?.avatar_url || null,
+            status: data.profiles?.status || 'offline'
           }
         : null;
 

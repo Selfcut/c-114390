@@ -45,7 +45,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
       // Transform the data to include user information correctly
       const formattedComments: QuoteComment[] = data.map(comment => {
         // Check if profiles is a valid object and not an error
-        const userProfile = comment.profiles && typeof comment.profiles === 'object' && !comment.profiles.error 
+        const userProfile = comment.profiles && typeof comment.profiles === 'object' && !('error' in comment.profiles)
           ? comment.profiles 
           : {
               id: 'unknown',
@@ -112,8 +112,8 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           updated_at: data[0].updated_at,
           user: {
             id: user.id,
-            name: user.name,
-            username: user.username,
+            name: user.name || 'Unknown',
+            username: user.username || 'unknown',
             avatar_url: user.avatar_url || null,
             status: user.status || 'online'
           }
@@ -152,11 +152,11 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           {comments.map(comment => (
             <div key={comment.id} className="flex items-start space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.user?.avatar_url || undefined} alt={comment.user?.name} />
-                <AvatarFallback>{comment.user?.name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={comment.user?.avatar_url || undefined} alt={comment.user?.name || "Unknown"} />
+                <AvatarFallback>{(comment.user?.name || "U").charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="space-y-1">
-                <div className="text-sm font-medium">{comment.user?.name}</div>
+                <div className="text-sm font-medium">{comment.user?.name || "Unknown User"}</div>
                 <p className="text-sm text-muted-foreground">{comment.content}</p>
                 <div className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
