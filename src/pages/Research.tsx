@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -186,7 +187,7 @@ const Research = () => {
     <PageLayout>
       <div className="container mx-auto max-w-7xl py-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-          <ResearchHeader onCreateResearch={null} />
+          <ResearchHeader onCreateResearch={handleCreateResearch} />
           
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <div className="text-sm text-muted-foreground whitespace-nowrap">
@@ -207,7 +208,7 @@ const Research = () => {
               <Button 
                 size="sm"
                 onClick={handleCreateResearch} 
-                className="whitespace-nowrap ml-2"
+                className="whitespace-nowrap"
               >
                 Add Research Paper
               </Button>
@@ -219,7 +220,7 @@ const Research = () => {
                 size="sm"
                 onClick={handleSetupCronJob} 
                 disabled={isSetupLoading}
-                className="whitespace-nowrap ml-2"
+                className="whitespace-nowrap"
               >
                 {isSetupLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -268,22 +269,21 @@ const Research = () => {
           </form>
         </div>
         
-        {/* Domains Tabs */}
-        <Tabs 
-          value={selectedDomain || "All Categories"} 
-          onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
-          className="mb-6"
-        >
-          <div className="border-b">
-            <ScrollableTabsList>
+        {/* Domains Tabs - Improved scrollable tabs */}
+        <div className="mb-6 border-b overflow-x-auto scrollbar-hide">
+          <Tabs 
+            value={selectedDomain || "All Categories"} 
+            onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
+          >
+            <TabsList className="inline-flex w-max min-w-full bg-transparent">
               {RESEARCH_DOMAINS.map(domain => (
-                <TabsTrigger key={domain} value={domain}>
+                <TabsTrigger key={domain} value={domain} className="py-2">
                   {domain}
                 </TabsTrigger>
               ))}
-            </ScrollableTabsList>
-          </div>
-        </Tabs>
+            </TabsList>
+          </Tabs>
+        </div>
         
         {isLoading ? (
           <ResearchLoadingIndicator />
@@ -333,17 +333,6 @@ const Research = () => {
         onSuccess={handleResearchCreated}
       />
     </PageLayout>
-  );
-};
-
-// Custom scrollable tabs list for horizontal scrolling on mobile
-const ScrollableTabsList: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  return (
-    <div className="overflow-auto scrollbar-hide">
-      <TabsList className="inline-flex w-max min-w-full">
-        {children}
-      </TabsList>
-    </div>
   );
 };
 
