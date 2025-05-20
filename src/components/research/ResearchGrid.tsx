@@ -2,9 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Microscope, Eye, ThumbsUp, Calendar } from "lucide-react";
+import { Microscope, Eye, ThumbsUp, Calendar, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ResearchItem } from './types';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface ResearchGridProps {
   searchQuery: string;
@@ -34,10 +35,10 @@ export const ResearchGrid = ({ researchPapers }: ResearchGridProps) => {
       {researchPapers.map((research) => (
         <Card 
           key={research.id} 
-          className="hover:shadow-md transition-shadow cursor-pointer"
+          className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden border border-border"
           onClick={() => handleCardClick(research.id)}
         >
-          {research.imageUrl && (
+          {research.imageUrl ? (
             <div className="aspect-video w-full overflow-hidden">
               <img 
                 src={research.imageUrl} 
@@ -45,16 +46,22 @@ export const ResearchGrid = ({ researchPapers }: ResearchGridProps) => {
                 className="w-full h-full object-cover"
               />
             </div>
+          ) : (
+            <div className="aspect-video w-full flex items-center justify-center bg-muted/30">
+              <Microscope className="h-12 w-12 text-muted-foreground/50" />
+            </div>
           )}
-          <CardHeader className="py-4 px-4">
-            <div className="flex justify-between">
-              <Badge variant="outline">{research.category}</Badge>
+          <CardHeader className="py-4 px-4 space-y-2">
+            <div className="flex justify-between items-start">
+              <Badge variant="outline" className="px-2 py-0.5 text-xs">
+                {research.category}
+              </Badge>
               <div className="flex items-center text-muted-foreground text-xs">
-                <Calendar className="h-3 w-3 mr-1" />
-                {research.date.toLocaleDateString()}
+                <Clock className="h-3 w-3 mr-1" />
+                {formatDistanceToNow(research.date, { addSuffix: true })}
               </div>
             </div>
-            <h3 className="text-xl font-semibold mt-2 line-clamp-2">{research.title}</h3>
+            <h3 className="text-lg font-semibold mt-2 line-clamp-2">{research.title}</h3>
             <p className="text-sm text-muted-foreground">by {research.author}</p>
           </CardHeader>
           <CardContent className="py-2 px-4">

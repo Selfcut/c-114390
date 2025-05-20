@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
@@ -16,7 +16,7 @@ import { ResearchLoadingIndicator } from "@/components/research/ResearchLoadingI
 import { CreateResearchDialog } from "@/components/research/CreateResearchDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -24,6 +24,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 // Hooks and Types
 import { useResearchData } from "@/hooks/useResearchData";
 import { ResearchItem } from "@/components/research/types";
+import { useToast } from "@/hooks/use-toast";
 
 // Domain categories for research papers
 const RESEARCH_DOMAINS = [
@@ -49,11 +50,13 @@ const Research = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin, isModerator } = useAdminStatus();
+  const { toast: showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<Date>(new Date());
   const [sortByDate, setSortByDate] = useState(true);
+  const [isSetupLoading, setIsSetupLoading] = useState(false);
   
   // Use our research data hook
   const { 
@@ -64,7 +67,7 @@ const Research = () => {
     lastUpdateTime 
   } = useResearchData(searchQuery, selectedDomain);
 
-  // Sort papers by date (newest first)
+  // Sort papers by date (newest first) or alphabetically
   const sortedPapers = React.useMemo(() => {
     if (!researchPapers) return [];
     
@@ -78,20 +81,6 @@ const Research = () => {
     });
   }, [researchPapers, sortByDate]);
   
-  // Get unique domains from the fetched papers
-  const availableDomains = React.useMemo(() => {
-    if (!researchPapers) return [];
-    
-    const domains = new Set<string>();
-    researchPapers.forEach(paper => {
-      if (paper.category) {
-        domains.add(paper.category);
-      }
-    });
-    
-    return Array.from(domains).sort();
-  }, [researchPapers]);
-  
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,10 +91,50 @@ const Research = () => {
     setSearchQuery("");
   };
   
+  // Set up cron job and fetch initial research data
+  const handleSetupCronJob = async () => {
+    try {
+      setIsSetupLoading(true);
+      
+      showToast({
+        title: "Setting up research automation",
+        description: "Setting up scheduled fetching of research papers..."
+      });
+      
+      // Call the setup-cron-jobs edge function
+      const { data, error } = await supabase.functions.invoke('setup-cron-jobs');
+      
+      if (error) {
+        throw error;
+      }
+      
+      showToast({
+        title: "Setup successful",
+        description: "Research papers will now be automatically fetched regularly"
+      });
+      
+      // Also fetch papers immediately
+      await handleFetchLatestResearch();
+      
+    } catch (err: any) {
+      showToast({
+        title: "Setup failed",
+        description: `Failed to set up automation: ${err.message}`,
+        variant: "destructive"
+      });
+      console.error('Error setting up cron job:', err);
+    } finally {
+      setIsSetupLoading(false);
+    }
+  };
+  
   // Manually fetch latest research papers
   const handleFetchLatestResearch = async () => {
     try {
-      toast.loading("Fetching latest research papers...");
+      showToast({
+        title: "Fetching papers",
+        description: "Getting the latest research papers...",
+      });
       
       const { data, error } = await supabase.functions.invoke('fetch-research');
       
@@ -113,16 +142,21 @@ const Research = () => {
         throw error;
       }
       
-      toast.dismiss();
-      toast.success(`Successfully fetched ${data?.count || 0} research papers`);
+      showToast({
+        title: "Fetch successful",
+        description: `Successfully fetched ${data?.count || 0} research papers`
+      });
       
       // Trigger a refresh
       setRefreshTrigger(new Date());
       refetch();
       
     } catch (err: any) {
-      toast.dismiss();
-      toast.error(`Failed to fetch research papers: ${err.message}`);
+      showToast({
+        title: "Fetch failed",
+        description: `Failed to fetch papers: ${err.message}`,
+        variant: "destructive"
+      });
       console.error('Error fetching research:', err);
     }
   };
@@ -130,7 +164,11 @@ const Research = () => {
   // Handle creating new research
   const handleCreateResearch = () => {
     if (!user) {
-      toast.error("Please sign in to create research entries");
+      showToast({
+        title: "Authentication required",
+        description: "Please sign in to create research entries",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -139,23 +177,17 @@ const Research = () => {
   
   const handleResearchCreated = async (id: string) => {
     refetch();
-    toast.success("Research paper published successfully");
-    
-    // Generate embeddings for the new research paper
-    try {
-      await supabase.functions.invoke('generate-embeddings', {
-        body: { contentType: 'research', contentId: id }
-      });
-    } catch (err) {
-      console.error('Failed to generate embeddings:', err);
-    }
+    showToast({
+      title: "Paper published",
+      description: "Research paper published successfully"
+    });
   };
 
   return (
     <PageLayout>
       <div className="container mx-auto max-w-7xl py-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-          <ResearchHeader onCreateResearch={null} /> {/* No button in the header */}
+          <ResearchHeader onCreateResearch={null} />
           
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <div className="text-sm text-muted-foreground whitespace-nowrap">
@@ -179,6 +211,23 @@ const Research = () => {
                 className="whitespace-nowrap ml-2"
               >
                 Add Research Paper
+              </Button>
+            )}
+            
+            {(isAdmin) && (
+              <Button 
+                variant="secondary"
+                size="sm"
+                onClick={handleSetupCronJob} 
+                disabled={isSetupLoading}
+                className="whitespace-nowrap ml-2"
+              >
+                {isSetupLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                )}
+                Setup Auto-Fetch
               </Button>
             )}
           </div>
@@ -264,9 +313,16 @@ const Research = () => {
                   ? "Try adjusting your search terms or filters" 
                   : "Research papers from top journals and publications will appear here"}
               </p>
-              <Button onClick={handleFetchLatestResearch}>
-                Fetch Latest Research
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button onClick={handleFetchLatestResearch}>
+                  Fetch Latest Research
+                </Button>
+                {isAdmin && (
+                  <Button variant="outline" onClick={handleSetupCronJob} disabled={isSetupLoading}>
+                    Setup Automated Fetching
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}

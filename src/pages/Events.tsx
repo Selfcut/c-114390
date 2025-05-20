@@ -82,6 +82,7 @@ const Events: React.FC = () => {
     // Calculate end date (default to 1 hour after start)
     const endDate = addHours(newEventDate, 1);
     
+    // Fixed by adding image_url field that was missing
     const eventData = {
       title: newEventTitle,
       description: newEventDescription,
@@ -91,7 +92,7 @@ const Events: React.FC = () => {
       category: newEventCategory,
       is_featured: newEventIsFeatured,
       max_attendees: null,
-      image_url: null  // Add missing required field with null value
+      image_url: null  // Add the required field with null value
     };
 
     const success = await createEvent(eventData);

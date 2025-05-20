@@ -1,60 +1,26 @@
 
 import React from 'react';
-import { AlertCircle, RotateCw } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-export interface ErrorMessageProps {
-  title?: string;
+interface ErrorMessageProps {
+  title: string;
   message: string;
   retry?: () => void;
-  isRetrying?: boolean;
-  variant?: 'default' | 'destructive';
-  className?: string;
-  action?: React.ReactNode;
 }
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({
-  title = 'Error',
-  message,
-  retry,
-  isRetrying = false,
-  variant = 'destructive',
-  className = '',
-  action,
-}) => {
+export const ErrorMessage: React.FC<ErrorMessageProps> = ({ title, message, retry }) => {
   return (
-    <Alert variant={variant} className={cn(className, "animate-in fade-in-50")}>
-      <AlertCircle className="h-5 w-5" />
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription className="flex flex-col gap-4">
-        <p>{message}</p>
-        <div className="flex items-center gap-2 flex-wrap">
-          {retry && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={retry} 
-              disabled={isRetrying}
-              className="w-fit flex items-center gap-2"
-            >
-              {isRetrying ? (
-                <>
-                  <RotateCw className="h-4 w-4 animate-spin" />
-                  Retrying...
-                </>
-              ) : (
-                <>
-                  <RotateCw className="h-4 w-4" />
-                  Retry
-                </>
-              )}
-            </Button>
-          )}
-          {action}
-        </div>
-      </AlertDescription>
-    </Alert>
+    <div className="flex flex-col items-center text-center py-8">
+      <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+      <h3 className="text-lg font-medium mb-2">{title}</h3>
+      <p className="text-muted-foreground mb-6 max-w-md">{message}</p>
+      {retry && (
+        <Button onClick={retry} variant="outline" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </Button>
+      )}
+    </div>
   );
 };
