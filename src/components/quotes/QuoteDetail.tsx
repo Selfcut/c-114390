@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,11 +63,11 @@ export function QuoteDetail() {
         // Format the quote data
         const userObj = data.user && typeof data.user === 'object'
           ? {
-              id: data.user?.id || 'unknown',
-              username: data.user?.username || 'unknown',
-              name: data.user?.name || 'Unknown User',
-              avatar_url: data.user?.avatar_url || null,
-              status: data.user?.status || 'offline'
+              id: data.user.id || 'unknown',
+              username: data.user.username || 'unknown',
+              name: data.user.name || 'Unknown User',
+              avatar_url: data.user.avatar_url || null,
+              status: data.user.status || 'offline'
             }
           : null;
         
@@ -82,6 +81,7 @@ export function QuoteDetail() {
           comments: data.comments || 0,
           bookmarks: data.bookmarks || 0,
           created_at: data.created_at,
+          updated_at: data.updated_at,
           user_id: data.user_id,
           category: data.category,
           featured_date: data.featured_date,

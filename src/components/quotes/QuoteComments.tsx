@@ -56,13 +56,13 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           user_id: comment.user_id,
           created_at: comment.created_at,
           updated_at: comment.updated_at,
-          user: {
-            id: comment.user_id,
-            name: userProfile?.name || 'Unknown',
-            username: userProfile?.username || 'unknown',
-            avatar_url: userProfile?.avatar_url || null,
-            status: userProfile?.status || 'offline'
-          }
+          user: userProfile ? {
+            id: userProfile.id || 'unknown',
+            name: userProfile.name || 'Unknown',
+            username: userProfile.username || 'unknown',
+            avatar_url: userProfile.avatar_url || null,
+            status: userProfile.status || 'offline'
+          } : null
         };
       });
 

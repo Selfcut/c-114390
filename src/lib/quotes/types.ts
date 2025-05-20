@@ -9,6 +9,7 @@ export interface QuoteWithUser {
   comments?: number;
   bookmarks?: number;
   created_at: string;
+  updated_at?: string;
   user_id: string;
   category?: string;
   featured_date?: string | null;
@@ -29,22 +30,6 @@ export interface QuoteComment {
   created_at: string;
   updated_at: string;
   user: {
-    id: string;
-    username: string;
-    name: string;
-    avatar_url: string | null;
-    status: string;
-  } | null;
-}
-
-export interface Comment {
-  id: string;
-  quote_id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  user?: {
     id: string;
     username: string;
     name: string;
