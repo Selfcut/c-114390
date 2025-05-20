@@ -43,8 +43,8 @@ export function useQuoteOfTheDay() {
         
         // If no quote is featured for today, get a random popular one
         if (featuredQuote && isValidQuote(featuredQuote)) {
-          // Process the quote with safe user data
-          const processedQuote = processQuote(featuredQuote);
+          // Create a safely processed quote object
+          const processedQuote = createSafeQuote(featuredQuote);
           setQuote(processedQuote);
           
           if (processedQuote.id) {
@@ -73,8 +73,8 @@ export function useQuoteOfTheDay() {
             const validQuote = popularQuotes.find(isValidQuote);
             
             if (validQuote) {
-              // Process the quote with safe user data
-              const processedQuote = processQuote(validQuote);
+              // Create a safely processed quote object
+              const processedQuote = createSafeQuote(validQuote);
               setQuote(processedQuote);
               
               if (processedQuote.id) {
@@ -98,7 +98,7 @@ export function useQuoteOfTheDay() {
                 .order('created_at', { ascending: false });
                 
               if (randomQuotes && randomQuotes.length > 0 && isValidQuote(randomQuotes[0])) {
-                const processedQuote = processQuote(randomQuotes[0]);
+                const processedQuote = createSafeQuote(randomQuotes[0]);
                 setQuote(processedQuote);
                 
                 if (processedQuote.id) {
@@ -132,34 +132,33 @@ export function isValidQuote(quote: any): boolean {
     typeof quote.author === 'string';
 }
 
-// Process quote and ensure it has valid user data
-export function processQuote(quote: any): QuoteWithUser {
-  // Create a new object with explicit properties to avoid deep type inference issues
+// Create a safe quote object without deep type inference issues
+export function createSafeQuote(rawQuote: any): QuoteWithUser {
+  // Create a clean quote object with explicit types
   const safeQuote: QuoteWithUser = {
-    id: quote.id || '',
-    text: quote.text || '',
-    author: quote.author || '',
-    source: quote.source || null,
-    tags: Array.isArray(quote.tags) ? quote.tags : [],
-    likes: typeof quote.likes === 'number' ? quote.likes : 0,
-    comments: typeof quote.comments === 'number' ? quote.comments : 0,
-    bookmarks: typeof quote.bookmarks === 'number' ? quote.bookmarks : 0,
-    created_at: quote.created_at || new Date().toISOString(),
-    user_id: quote.user_id || '',
-    // Use type assertion to avoid excessive type checking
+    id: typeof rawQuote.id === 'string' ? rawQuote.id : '',
+    text: typeof rawQuote.text === 'string' ? rawQuote.text : '',
+    author: typeof rawQuote.author === 'string' ? rawQuote.author : '',
+    source: rawQuote.source || null,
+    tags: Array.isArray(rawQuote.tags) ? rawQuote.tags : [],
+    likes: typeof rawQuote.likes === 'number' ? rawQuote.likes : 0,
+    comments: typeof rawQuote.comments === 'number' ? rawQuote.comments : 0,
+    bookmarks: typeof rawQuote.bookmarks === 'number' ? rawQuote.bookmarks : 0,
+    created_at: typeof rawQuote.created_at === 'string' ? rawQuote.created_at : new Date().toISOString(),
+    user_id: typeof rawQuote.user_id === 'string' ? rawQuote.user_id : '',
+    // Set default user
     user: DEFAULT_USER
   };
   
-  // Handle user separately as a simple assignment to avoid deep type inference
-  if (quote.user && 
-      typeof quote.user === 'object' && 
-      typeof quote.user.username === 'string') {
+  // Handle user separately with minimal nesting
+  if (rawQuote.user && typeof rawQuote.user === 'object') {
+    // Create a new user object with explicit properties
     safeQuote.user = {
-      id: quote.user.id || '',
-      username: quote.user.username,
-      name: quote.user.name || 'Unknown User',
-      avatar_url: quote.user.avatar_url || null,
-      status: quote.user.status || 'offline'
+      id: typeof rawQuote.user.id === 'string' ? rawQuote.user.id : '',
+      username: typeof rawQuote.user.username === 'string' ? rawQuote.user.username : 'unknown',
+      name: typeof rawQuote.user.name === 'string' ? rawQuote.user.name : 'Unknown User',
+      avatar_url: rawQuote.user.avatar_url || null,
+      status: typeof rawQuote.user.status === 'string' ? rawQuote.user.status : 'offline'
     };
   }
   
