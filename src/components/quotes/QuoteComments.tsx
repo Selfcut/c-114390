@@ -154,11 +154,11 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           {comments.map(comment => (
             <div key={comment.id} className="flex items-start space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.user?.avatar_url || undefined} alt={comment.user?.name || "Unknown"} />
-                <AvatarFallback>{(comment.user?.name || "U").charAt(0)}</AvatarFallback>
+                <AvatarImage src={comment.user?.avatar_url ?? undefined} alt={comment.user?.name ?? "Unknown"} />
+                <AvatarFallback>{(comment.user?.name ?? "U").charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="space-y-1">
-                <div className="text-sm font-medium">{comment.user?.name || "Unknown User"}</div>
+                <div className="text-sm font-medium">{comment.user?.name ?? "Unknown User"}</div>
                 <p className="text-sm text-muted-foreground">{comment.content}</p>
                 <div className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
