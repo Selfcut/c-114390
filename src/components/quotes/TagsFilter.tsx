@@ -8,13 +8,23 @@ interface TagsFilterProps {
   tags: string[];
   selectedTag: string | null;
   onSelectTag: (tag: string | null) => void;
+  // Adding these as optional for backward compatibility 
+  activeTag?: string | null;
+  onTagClick?: (tag: string | null) => void;
 }
 
 export const TagsFilter: React.FC<TagsFilterProps> = ({
   tags,
   selectedTag,
-  onSelectTag
+  onSelectTag,
+  // Support for legacy prop names
+  activeTag,
+  onTagClick
 }) => {
+  // Use either the new or legacy prop names
+  const currentTag = selectedTag ?? activeTag ?? null;
+  const handleTagSelect = onSelectTag || onTagClick || (() => {});
+  
   return (
     <div className="mb-6">
       <h2 className="text-sm font-medium mb-2 flex items-center">
@@ -26,10 +36,10 @@ export const TagsFilter: React.FC<TagsFilterProps> = ({
           {tags.map(tag => (
             <Button
               key={tag}
-              variant={selectedTag === tag ? "default" : "outline"} 
+              variant={currentTag === tag ? "default" : "outline"} 
               size="sm"
               className="h-8"
-              onClick={() => onSelectTag(selectedTag === tag ? null : tag)}
+              onClick={() => handleTagSelect(currentTag === tag ? null : tag)}
             >
               {tag}
             </Button>

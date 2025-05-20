@@ -8,6 +8,22 @@ import { QuoteWithUser } from '@/lib/quotes/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
 
+// Create a safer type for handling possible error responses
+interface QuoteResponse {
+  id: string;
+  text: string;
+  author: string;
+  source?: string;
+  tags?: string[];
+  likes?: number;
+  comments?: number;
+  bookmarks?: number;
+  created_at: string;
+  user_id: string;
+  category?: string;
+  user: any; // We'll validate this before using it
+}
+
 export function QuoteOfTheDay() {
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +54,12 @@ export function QuoteOfTheDay() {
           .maybeSingle();
         
         // If no quote is featured for today, get a random popular one
-        if (!featuredQuote) {
+        if (featuredQuote && isValidQuoteWithUser(featuredQuote)) {
+          setQuote(featuredQuote as QuoteWithUser);
+          if (featuredQuote.id) {
+            trackQuoteView(featuredQuote.id);
+          }
+        } else {
           // Get a random popular quote (with more likes)
           const { data: popularQuotes, error: popularError } = await supabase
             .from('quotes')
@@ -57,46 +78,41 @@ export function QuoteOfTheDay() {
             .limit(10);
             
           if (popularQuotes && popularQuotes.length > 0) {
-            // Select a random quote from the top 10 most liked
-            const randomIndex = Math.floor(Math.random() * popularQuotes.length);
-            const selectedQuote = popularQuotes[randomIndex];
+            // Find the first valid quote with user from the top 10 most liked
+            const validQuote = popularQuotes.find(isValidQuoteWithUser);
             
-            if (selectedQuote && selectedQuote.user !== null) {
-              setQuote(selectedQuote as QuoteWithUser);
-              if (selectedQuote.id) {
-                trackQuoteView(selectedQuote.id);
+            if (validQuote) {
+              // Select a valid quote
+              setQuote(validQuote as QuoteWithUser);
+              if (validQuote.id) {
+                trackQuoteView(validQuote.id);
               }
-            }
-          }
-        } else if (featuredQuote && featuredQuote.user !== null) {
-          // Handle featured quote if found
-          setQuote(featuredQuote as QuoteWithUser);
-          if (featuredQuote.id) {
-            trackQuoteView(featuredQuote.id);
-          }
-        }
-        
-        // If we still don't have a quote, just get any random quote
-        if (!quote) {
-          const { data: randomQuotes, error: randomError } = await supabase
-            .from('quotes')
-            .select(`
-              *,
-              user:profiles(
-                id, 
-                username, 
-                name, 
-                avatar_url, 
-                status
-              )
-            `)
-            .limit(1)
-            .order('created_at', { ascending: false });
-            
-          if (randomQuotes && randomQuotes.length > 0 && randomQuotes[0].user !== null) {
-            setQuote(randomQuotes[0] as QuoteWithUser);
-            if (randomQuotes[0].id) {
-              trackQuoteView(randomQuotes[0].id);
+            } else {
+              // Get any random quote as fallback
+              const { data: randomQuotes, error: randomError } = await supabase
+                .from('quotes')
+                .select(`
+                  *,
+                  user:profiles(
+                    id, 
+                    username, 
+                    name, 
+                    avatar_url, 
+                    status
+                  )
+                `)
+                .limit(1)
+                .order('created_at', { ascending: false });
+                
+              if (randomQuotes && randomQuotes.length > 0) {
+                const validRandomQuote = randomQuotes.find(isValidQuoteWithUser);
+                if (validRandomQuote) {
+                  setQuote(validRandomQuote as QuoteWithUser);
+                  if (validRandomQuote.id) {
+                    trackQuoteView(validRandomQuote.id);
+                  }
+                }
+              }
             }
           }
         }
@@ -109,6 +125,17 @@ export function QuoteOfTheDay() {
     
     fetchQuoteOfTheDay();
   }, [trackQuoteView]);
+  
+  // Helper function to validate quote with user
+  function isValidQuoteWithUser(quote: any): quote is QuoteWithUser {
+    return quote && 
+      typeof quote.user === 'object' && 
+      quote.user !== null &&
+      !quote.user.error &&
+      typeof quote.user.id === 'string' && 
+      typeof quote.user.username === 'string' && 
+      typeof quote.user.name === 'string';
+  }
   
   if (isLoading) {
     return (

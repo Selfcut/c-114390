@@ -48,8 +48,8 @@ const Quotes = () => {
       {/* Tags scroller */}
       <TagsFilter 
         tags={allTags}
-        activeTag={filterTag}
-        onTagClick={setFilterTag}
+        selectedTag={filterTag}
+        onSelectTag={setFilterTag}
       />
 
       {/* Quotes grid */}
@@ -69,7 +69,7 @@ const Quotes = () => {
         <QuoteSubmissionModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSubmit={handleQuoteSubmitted}
+          onQuoteAdded={refreshQuotes}
         />
       )}
     </main>
