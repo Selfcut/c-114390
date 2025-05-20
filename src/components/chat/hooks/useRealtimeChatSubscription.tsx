@@ -38,8 +38,8 @@ export const useRealtimeChatSubscription = ({
       };
       
       // Check if the message has a special effect
-      if (payload.new.effect_type && handleSpecialEffect) {
-        handleSpecialEffect(payload.new.effect_type, payload.new.content);
+      if (message.effectType && handleSpecialEffect) {
+        handleSpecialEffect(message.effectType, message.content);
       }
       
       addMessage(message);

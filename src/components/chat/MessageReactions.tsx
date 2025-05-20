@@ -10,9 +10,30 @@ interface MessageReactionsProps {
 export const MessageReactions = ({ messageId }: MessageReactionsProps) => {
   // In a real app, this data would come from the database
   const [reactions, setReactions] = useState<MessageReaction[]>([
-    { id: '1', emoji: '👍', count: 1, messageId, userId: 'system', users: ['system'] },
-    { id: '2', emoji: '❤️', count: 0, messageId, userId: 'system', users: [] },
-    { id: '3', emoji: '😂', count: 0, messageId, userId: 'system', users: [] },
+    { 
+      id: '1', 
+      emoji: '👍', 
+      count: 1, 
+      messageId, 
+      userId: 'system', 
+      users: ['system'] 
+    },
+    { 
+      id: '2', 
+      emoji: '❤️', 
+      count: 0, 
+      messageId, 
+      userId: 'system', 
+      users: [] 
+    },
+    { 
+      id: '3', 
+      emoji: '😂', 
+      count: 0, 
+      messageId, 
+      userId: 'system', 
+      users: [] 
+    },
   ]);
 
   const toggleReaction = (emoji: string) => {

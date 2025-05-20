@@ -20,6 +20,7 @@ export interface ChatMessage {
   isAdmin?: boolean;
   effectType?: string;
   isEdited?: boolean;
+  replyTo?: string; // ID of the message this is replying to
 }
 
 export interface MessageReaction {
@@ -28,23 +29,24 @@ export interface MessageReaction {
   userId: string;
   username?: string;
   messageId: string;
-  users: string[];
-  count: number;
+  users: string[]; // Array of user IDs who reacted with this emoji
+  count: number;   // Count of reactions
 }
 
 export interface Conversation {
   id: string;
   name: string;
   lastMessage?: string;
-  updatedAt: string;
+  updatedAt?: string; // Make this optional to accommodate existing code
+  lastActivityAt?: string;
   isGlobal?: boolean;
   isGroup?: boolean;
+  createdAt?: string;
 }
 
 export interface ConversationItem extends Conversation {
   avatar?: string;
   unreadCount?: number;
-  lastActivityAt?: string;
 }
 
 export interface ChatUser {

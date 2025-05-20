@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { DayContentProps } from 'react-day-picker';
@@ -5,16 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { EventList } from './EventList';
 import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 
 const DayContent = (props: DayContentProps) => {
-  const { date, activeMonth } = props;
-  const isSameMonth = date?.getMonth() === activeMonth?.getMonth();
-  const day = date?.getDate();
+  const { date } = props;
   const { events } = useEvents();
   const navigate = useNavigate();
 
@@ -35,8 +33,10 @@ const DayContent = (props: DayContentProps) => {
           variant="secondary" 
           className="absolute top-1 right-1 text-[10px] px-1 py-0.5 rounded-md"
           onClick={() => {
-            const formattedDate = format(date as Date, 'yyyy-MM-dd');
-            navigate(`/events?date=${formattedDate}`);
+            if (date) {
+              const formattedDate = format(date, 'yyyy-MM-dd');
+              navigate(`/events?date=${formattedDate}`);
+            }
           }}
         >
           {eventCount}
@@ -76,7 +76,7 @@ export const EventCalendar = () => {
           onSelect={setDate}
           className="border-none shadow-none"
           components={{
-            DayContent: DayContent,
+            DayContent,
             IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
             IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
           }}
@@ -88,7 +88,7 @@ export const EventCalendar = () => {
           {isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} height={40} />
+                <Skeleton key={index} className="h-10 w-full" />
               ))}
             </div>
           ) : (
