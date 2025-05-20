@@ -134,21 +134,35 @@ export function isValidQuote(quote: any): boolean {
 
 // Process quote and ensure it has valid user data
 export function processQuote(quote: any): QuoteWithUser {
-  // Create a safe copy of the quote
-  const safeQuote: Partial<QuoteWithUser> = { ...quote };
+  // Create a simple object first - avoid deep cloning which can cause type issues
+  const safeQuote = {
+    id: quote.id,
+    text: quote.text,
+    author: quote.author,
+    source: quote.source || null,
+    tags: quote.tags || [],
+    likes: quote.likes || 0,
+    comments: quote.comments || 0,
+    bookmarks: quote.bookmarks || 0,
+    created_at: quote.created_at || new Date().toISOString(),
+    user_id: quote.user_id || ''
+  } as QuoteWithUser;
   
-  // Check if user property exists and has valid data
-  if (
-    typeof quote.user !== 'object' || 
-    quote.user === null || 
-    !quote.user || 
-    typeof quote.user.username !== 'string' ||
-    typeof quote.user.name !== 'string'
-  ) {
-    // Replace with default user data if invalid
+  // Handle user separately to avoid deep nested properties
+  if (quote.user && 
+      typeof quote.user === 'object' && 
+      typeof quote.user.username === 'string' && 
+      typeof quote.user.name === 'string') {
+    safeQuote.user = {
+      id: quote.user.id || '',
+      username: quote.user.username,
+      name: quote.user.name,
+      avatar_url: quote.user.avatar_url || null,
+      status: quote.user.status || 'offline'
+    };
+  } else {
     safeQuote.user = DEFAULT_USER;
   }
   
-  // Ensure we return a properly typed object
-  return safeQuote as QuoteWithUser;
+  return safeQuote;
 }
