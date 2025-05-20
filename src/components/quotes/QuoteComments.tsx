@@ -64,10 +64,10 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           updated_at: comment.updated_at,
           user: {
             id: comment.user_id,
-            name: userProfile.name || 'Unknown',
-            username: userProfile.username || 'unknown',
-            avatar_url: userProfile.avatar_url || null,
-            status: userProfile.status || 'offline'
+            name: userProfile?.name || 'Unknown',
+            username: userProfile?.username || 'unknown',
+            avatar_url: userProfile?.avatar_url || null,
+            status: userProfile?.status || 'offline'
           }
         };
       });

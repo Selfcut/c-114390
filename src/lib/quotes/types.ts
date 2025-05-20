@@ -1,3 +1,4 @@
+
 export interface QuoteWithUser {
   id: string;
   text: string;

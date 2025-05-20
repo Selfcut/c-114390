@@ -12,19 +12,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteQuote } from '@/lib/quotes';
-
-interface DeleteQuoteDialogProps {
-  quoteId: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}
+import { DeleteQuoteDialogProps } from '@/lib/quotes/types';
 
 export const DeleteQuoteDialog: React.FC<DeleteQuoteDialogProps> = ({
   quoteId,
   isOpen,
   onClose,
-  onSuccess,
+  onQuoteDeleted,
 }) => {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -39,7 +33,7 @@ export const DeleteQuoteDialog: React.FC<DeleteQuoteDialogProps> = ({
           title: 'Quote deleted',
           description: 'The quote has been deleted successfully',
         });
-        onSuccess();
+        onQuoteDeleted();
       } else {
         toast({
           title: 'Error',

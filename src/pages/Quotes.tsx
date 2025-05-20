@@ -37,13 +37,11 @@ const Quotes = () => {
 
   // Wrapper functions to handle the boolean return value from useQuotes hook
   const onLike = async (quoteId: string) => {
-    const result = await handleLike(quoteId);
-    return result;
+    return await handleLike(quoteId);
   };
   
   const onBookmark = async (quoteId: string) => {
-    const result = await handleBookmark(quoteId);
-    return result;
+    return await handleBookmark(quoteId);
   };
 
   return (
