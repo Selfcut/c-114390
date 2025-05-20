@@ -48,11 +48,11 @@ export function useQuoteOfTheDay() {
         const today = new Date().toISOString().split('T')[0];
         
         // Try to get a quote specifically selected for today first
-        const { data: featuredData } = await supabase
+        const { data: featuredData, error: featuredError } = await supabase
           .from('quotes')
           .select('*, user:profiles(id, username, name, avatar_url, status)')
           .eq('featured_date', today)
-          .limit(1);
+          .limit(1) as { data: QuoteResponse[] | null, error: any };
         
         // Check if we have a valid featured quote for today
         if (featuredData && featuredData.length > 0 && isValidQuote(featuredData[0])) {
@@ -64,12 +64,12 @@ export function useQuoteOfTheDay() {
           }
         } else {
           // Get a random popular quote (with more likes)
-          const { data: popularData } = await supabase
+          const { data: popularData, error: popularError } = await supabase
             .from('quotes')
             .select('*, user:profiles(id, username, name, avatar_url, status)')
             .gt('likes', 0)
             .order('likes', { ascending: false })
-            .limit(10);
+            .limit(10) as { data: QuoteResponse[] | null, error: any };
             
           const popularQuotes = popularData || [];
           
@@ -86,11 +86,11 @@ export function useQuoteOfTheDay() {
               }
             } else {
               // Get any random quote as fallback
-              const { data: randomData } = await supabase
+              const { data: randomData, error: randomError } = await supabase
                 .from('quotes')
                 .select('*, user:profiles(id, username, name, avatar_url, status)')
                 .limit(1)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false }) as { data: QuoteResponse[] | null, error: any };
                 
               const randomQuote = randomData && randomData.length > 0 ? randomData[0] : null;
               
