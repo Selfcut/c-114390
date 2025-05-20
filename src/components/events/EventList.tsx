@@ -9,9 +9,10 @@ import { CalendarDays, MapPin, Users } from 'lucide-react';
 interface EventListProps {
   date?: Date;
   events: EventWithAttendees[];
+  onEventClick?: (event: EventWithAttendees) => void;
 }
 
-export const EventList: React.FC<EventListProps> = ({ date, events }) => {
+export const EventList: React.FC<EventListProps> = ({ date, events, onEventClick }) => {
   // Filter events for the selected date if a date is provided
   const filteredEvents = date 
     ? events.filter(event => {
@@ -35,7 +36,11 @@ export const EventList: React.FC<EventListProps> = ({ date, events }) => {
   return (
     <div className="space-y-3">
       {filteredEvents.map(event => (
-        <Card key={event.id} className="overflow-hidden">
+        <Card 
+          key={event.id} 
+          className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => onEventClick && onEventClick(event)}
+        >
           <CardContent className="p-3">
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">

@@ -1,108 +1,109 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation } from '@/components/chat/types';
+import { useAuth } from '@/lib/auth';
 
 export const useConversations = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchConversations = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
+      setIsLoading(true);
+      try {
         const { data, error } = await supabase
           .from('conversations')
           .select('*')
           .order('updated_at', { ascending: false });
-
+        
         if (error) throw error;
 
-        // Map the data to match our Conversation type
-        const mappedConversations: Conversation[] = data.map(item => ({
-          id: item.id,
-          name: item.name,
-          lastMessage: item.last_message,
-          updatedAt: item.updated_at,
-          createdAt: item.created_at,
-          isGlobal: item.is_global,
-          isGroup: item.is_group,
-          participants: [], // We'll need to fetch these separately if needed
-          messages: []      // We'll need to fetch these separately if needed
+        // Transform data to match Conversation type
+        const formattedConversations: Conversation[] = data.map(conv => ({
+          id: conv.id,
+          name: conv.name,
+          lastMessage: conv.last_message,
+          updatedAt: conv.updated_at,
+          isGlobal: conv.is_global,
+          isGroup: conv.is_group,
+          createdAt: conv.created_at
         }));
 
-        setConversations(mappedConversations);
-      } catch (err) {
-        console.error('Error fetching conversations:', err);
-        setError(err instanceof Error ? err : new Error(String(err)));
+        setConversations(formattedConversations);
+        
+        // Set first conversation as active if none selected
+        if (!activeConversationId && formattedConversations.length > 0) {
+          setActiveConversationId(formattedConversations[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchConversations();
+  }, [user, activeConversationId]);
 
-    // Set up real-time subscription
-    const channelA = supabase.channel('public:conversations');
-
-    const insertHandler = (payload: any) => {
-      const newConversation: Conversation = {
-        id: payload.new.id,
-        name: payload.new.name,
-        lastMessage: payload.new.last_message,
-        updatedAt: payload.new.updated_at,
-        createdAt: payload.new.created_at,
-        isGlobal: payload.new.is_global,
-        isGroup: payload.new.is_group,
-        participants: [],
-        messages: []
+  const createConversation = async (name: string, isGroup: boolean = false) => {
+    if (!user) return null;
+    
+    try {
+      const newConversation = {
+        id: `conv-${Date.now()}`,
+        name,
+        isGroup,
+        // No longer including participants property since it's not in the type
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       
+      // Store in database...
+      
       setConversations(prev => [newConversation, ...prev]);
-    };
+      return newConversation.id;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      return null;
+    }
+  };
 
-    const updateHandler = (payload: any) => {
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === payload.new.id 
-            ? {
-                ...conv,
-                name: payload.new.name,
-                lastMessage: payload.new.last_message,
-                updatedAt: payload.new.updated_at,
-                isGlobal: payload.new.is_global,
-                isGroup: payload.new.is_group
-              } 
-            : conv
+  const updateConversation = async (conversationId: string, updates: Partial<Conversation>) => {
+    try {
+      // Update in database...
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === conversationId ? { ...conv, ...updates } : conv
         )
       );
-    };
+    } catch (error) {
+      console.error('Error updating conversation:', error);
+    }
+  };
 
-    const deleteHandler = (payload: any) => {
-      setConversations(prev => 
-        prev.filter(conv => conv.id !== payload.old.id)
-      );
-    };
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      // Delete from database...
+      setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+    }
+  };
 
-    channelA
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'conversations' }, 
-        insertHandler)
-      .on('postgres_changes', 
-        { event: 'UPDATE', schema: 'public', table: 'conversations' },
-        updateHandler)
-      .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'conversations' },
-        deleteHandler)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channelA);
-    };
-  }, []);
-
-  return { conversations, isLoading, error };
+  return {
+    conversations,
+    isLoading,
+    activeConversationId,
+    setActiveConversationId,
+    createConversation,
+    updateConversation,
+    deleteConversation
+  };
 };

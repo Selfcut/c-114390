@@ -79,11 +79,25 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "Hey there! How's it going?",
       senderName: "Jane Smith",
       userId: "user2",
-      createdAt: new Date(now.getTime() - 60 * 60 * 1000).toISOString(), // 1 hour ago
+      createdAt: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
       conversationId: "chat1",
       reactions: [
-        { emoji: "👍", count: 2, users: ["user1", "user3"] },
-        { emoji: "❤️", count: 1, users: ["user1"] }
+        { 
+          id: "reaction1",
+          emoji: "👍", 
+          count: 2, 
+          users: ["user1", "user3"],
+          userId: "user1",
+          messageId: "msg1" 
+        },
+        { 
+          id: "reaction2",
+          emoji: "❤️", 
+          count: 1, 
+          users: ["user1"],
+          userId: "user1",
+          messageId: "msg1" 
+        }
       ]
     },
     {
@@ -91,7 +105,7 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "I'm doing well, thanks for asking! Just working on some new ideas.",
       senderName: "John Doe",
       userId: "user1",
-      createdAt: new Date(now.getTime() - 55 * 60 * 1000).toISOString(), // 55 mins ago
+      createdAt: new Date(now.getTime() - 55 * 60 * 1000).toISOString(),
       conversationId: "chat1"
     },
     {
@@ -99,7 +113,7 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "That's great to hear! What kind of ideas are you working on?",
       senderName: "Jane Smith",
       userId: "user2",
-      createdAt: new Date(now.getTime() - 50 * 60 * 1000).toISOString(), // 50 mins ago
+      createdAt: new Date(now.getTime() - 50 * 60 * 1000).toISOString(),
       conversationId: "chat1"
     },
     {
@@ -107,10 +121,17 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "I've been exploring some concepts around consciousness and how it relates to artificial intelligence. It's fascinating to think about the parallels and differences between human and machine cognition.",
       senderName: "John Doe",
       userId: "user1",
-      createdAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(), // 45 mins ago
+      createdAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(),
       conversationId: "chat1",
       reactions: [
-        { emoji: "🤔", count: 1, users: ["user2"] }
+        { 
+          id: "reaction3",
+          emoji: "🤔", 
+          count: 1, 
+          users: ["user2"],
+          userId: "user2",
+          messageId: "msg4" 
+        }
       ]
     },
     {
@@ -118,7 +139,7 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "That sounds really interesting! Have you read any good papers on the topic lately?",
       senderName: "Jane Smith",
       userId: "user2",
-      createdAt: new Date(now.getTime() - 40 * 60 * 1000).toISOString(), // 40 mins ago
+      createdAt: new Date(now.getTime() - 40 * 60 * 1000).toISOString(),
       conversationId: "chat1"
     },
     {
@@ -126,11 +147,18 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "Yes! I just finished reading a paper by @davidchalmers on the 'hard problem' of consciousness. I can share it with you if you're interested.",
       senderName: "John Doe",
       userId: "user1",
-      createdAt: new Date(now.getTime() - 35 * 60 * 1000).toISOString(), // 35 mins ago
+      createdAt: new Date(now.getTime() - 35 * 60 * 1000).toISOString(),
       conversationId: "chat1",
       mentions: ["davidchalmers"],
       reactions: [
-        { emoji: "👍", count: 1, users: ["user2"] }
+        { 
+          id: "reaction4",
+          emoji: "👍", 
+          count: 1, 
+          users: ["user2"],
+          userId: "user2",
+          messageId: "msg6" 
+        }
       ]
     },
     {
@@ -138,7 +166,7 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "That would be great! I've been meaning to explore that topic more deeply.",
       senderName: "Jane Smith",
       userId: "user2",
-      createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // 30 mins ago
+      createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
       conversationId: "chat1"
     },
     {
@@ -146,10 +174,17 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "Here's the link: https://example.com/consciousness-paper. Let me know what you think after reading it!",
       senderName: "John Doe",
       userId: "user1",
-      createdAt: new Date(now.getTime() - 25 * 60 * 1000).toISOString(), // 25 mins ago
+      createdAt: new Date(now.getTime() - 25 * 60 * 1000).toISOString(),
       conversationId: "chat1",
       reactions: [
-        { emoji: "🙏", count: 1, users: ["user2"] }
+        { 
+          id: "reaction5",
+          emoji: "🙏", 
+          count: 1, 
+          users: ["user2"],
+          userId: "user2",
+          messageId: "msg8" 
+        }
       ]
     },
     {
@@ -157,7 +192,7 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "Thanks! I'll check it out and get back to you. Also, have you seen the latest research on quantum consciousness by Penrose?",
       senderName: "Jane Smith",
       userId: "user2",
-      createdAt: new Date(now.getTime() - 20 * 60 * 1000).toISOString(), // 20 mins ago
+      createdAt: new Date(now.getTime() - 20 * 60 * 1000).toISOString(),
       conversationId: "chat1"
     },
     {
@@ -165,7 +200,7 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "I have! The Orchestrated Objective Reduction theory is quite fascinating, though controversial. I'm not entirely convinced by all aspects of it yet.",
       senderName: "John Doe",
       userId: "user1",
-      createdAt: new Date(now.getTime() - 15 * 60 * 1000).toISOString(), // 15 mins ago
+      createdAt: new Date(now.getTime() - 15 * 60 * 1000).toISOString(),
       conversationId: "chat1"
     },
     {
@@ -173,10 +208,17 @@ const generateMockMessages = (): ChatMessageType[] => {
       content: "I agree. It's an interesting approach, but needs more empirical evidence. Maybe we can discuss it more after I read this paper you shared!",
       senderName: "Jane Smith",
       userId: "user2",
-      createdAt: new Date(now.getTime() - 10 * 60 * 1000).toISOString(), // 10 mins ago
+      createdAt: new Date(now.getTime() - 10 * 60 * 1000).toISOString(),
       conversationId: "chat1",
       reactions: [
-        { emoji: "👍", count: 1, users: ["user1"] }
+        { 
+          id: "reaction6",
+          emoji: "👍", 
+          count: 1, 
+          users: ["user1"],
+          userId: "user1",
+          messageId: "msg11" 
+        }
       ]
     }
   ];
@@ -345,11 +387,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               : r
           );
         } else {
-          // Add new reaction
+          // Add new reaction with required fields
           updatedReactions.push({
+            id: `reaction-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             emoji,
             count: 1,
-            users: [currentUserId]
+            users: [currentUserId],
+            userId: currentUserId,
+            messageId
           });
         }
 

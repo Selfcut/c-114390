@@ -20,7 +20,7 @@ export interface ChatMessage {
   isAdmin?: boolean;
   effectType?: string;
   isEdited?: boolean;
-  replyTo?: string; // ID of the message this is replying to
+  replyTo?: string | { id: string; content: string; senderName: string }; // Support both string ID and object reference
 }
 
 export interface MessageReaction {
@@ -37,11 +37,12 @@ export interface Conversation {
   id: string;
   name: string;
   lastMessage?: string;
-  updatedAt?: string; // Make this optional to accommodate existing code
+  updatedAt?: string; 
   lastActivityAt?: string;
   isGlobal?: boolean;
   isGroup?: boolean;
   createdAt?: string;
+  participants?: string[]; // Add participants property
 }
 
 export interface ConversationItem extends Conversation {

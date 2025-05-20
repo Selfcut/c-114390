@@ -1,71 +1,81 @@
-
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth';
-import { subscribeToQuoteUpdates, subscribeToQuoteInteractions } from '@/lib/quotes';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser } from '@/lib/quotes/types';
 
-interface UseRealtimeQuotesOptions {
-  quoteId?: string | null;
-  onQuoteUpdate?: (updatedQuote: QuoteWithUser) => void;
-  onInteractionUpdate?: (type: 'like' | 'bookmark', quoteId: string, isActive: boolean) => void;
+interface UseRealtimeQuotesResult {
+  quotes: QuoteWithUser[];
+  isLoading: boolean;
 }
 
-export const useRealtimeQuotes = ({
-  quoteId = null,
-  onQuoteUpdate,
-  onInteractionUpdate
-}: UseRealtimeQuotesOptions = {}) => {
-  const { user, isAuthenticated } = useAuth();
-  const [isSubscribed, setIsSubscribed] = useState(false);
+export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
+  const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let cleanupFunctions: Array<() => void> = [];
+    fetchQuotes();
 
-    // Subscribe to quote updates
-    const quoteUnsubscribe = subscribeToQuoteUpdates(quoteId, (payload) => {
-      if (payload.eventType === 'UPDATE' && onQuoteUpdate) {
-        onQuoteUpdate(payload.new as QuoteWithUser);
-      }
-    });
-    
-    cleanupFunctions.push(quoteUnsubscribe);
-
-    // Subscribe to interactions if user is authenticated
-    if (isAuthenticated && user?.id) {
-      const interactionsUnsubscribe = subscribeToQuoteInteractions(
-        user.id,
-        // Handle like updates
-        (payload) => {
-          if (onInteractionUpdate) {
-            if (payload.eventType === 'INSERT') {
-              onInteractionUpdate('like', payload.new.quote_id, true);
-            } else if (payload.eventType === 'DELETE') {
-              onInteractionUpdate('like', payload.old.quote_id, false);
-            }
-          }
+    const channel = supabase
+      .channel('quotes_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quotes',
         },
-        // Handle bookmark updates
         (payload) => {
-          if (onInteractionUpdate) {
-            if (payload.eventType === 'INSERT') {
-              onInteractionUpdate('bookmark', payload.new.quote_id, true);
-            } else if (payload.eventType === 'DELETE') {
-              onInteractionUpdate('bookmark', payload.old.quote_id, false);
-            }
+          // Handle different realtime events
+          if (payload.eventType === 'INSERT') {
+            addNewQuote(payload.new);
+          } else if (payload.eventType === 'UPDATE') {
+            updateExistingQuote(payload.new);
+          } else if (payload.eventType === 'DELETE') {
+            removeQuote(payload.old.id);
           }
         }
-      );
-      
-      cleanupFunctions.push(interactionsUnsubscribe);
-    }
+      )
+      .subscribe();
 
-    setIsSubscribed(true);
-
-    // Clean up subscriptions on unmount
     return () => {
-      cleanupFunctions.forEach(cleanup => cleanup());
+      supabase.removeChannel(channel);
     };
-  }, [quoteId, user?.id, isAuthenticated, onQuoteUpdate, onInteractionUpdate]);
+  }, []);
 
-  return { isSubscribed };
+  const fetchQuotes = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select(`
+          *,
+          user:user_id (id, name, username, avatar_url, status)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setQuotes(data || []);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Updated function to take just the ID
+  const removeQuote = (quoteId: string) => {
+    setQuotes(current => current.filter(quote => quote.id !== quoteId));
+  };
+
+  const addNewQuote = (newQuote: QuoteWithUser) => {
+    setQuotes(current => [newQuote, ...current]);
+  };
+
+  const updateExistingQuote = (updatedQuote: QuoteWithUser) => {
+    setQuotes(current =>
+      current.map(quote => (quote.id === updatedQuote.id ? updatedQuote : quote))
+    );
+  };
+
+  return { quotes, isLoading };
 };

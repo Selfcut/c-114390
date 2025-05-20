@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -145,8 +146,8 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       return;
     }
     
-    const { user } = await supabase.auth.getSession();
-    const userId = user?.session?.user?.id;
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id;
     
     if (!userId) {
       toast({
@@ -184,8 +185,8 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       return;
     }
     
-    const { user } = await supabase.auth.getSession();
-    const userId = user?.session?.user?.id;
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id;
     
     if (!userId) {
       toast({

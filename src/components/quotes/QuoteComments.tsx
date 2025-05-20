@@ -34,7 +34,23 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
     setIsLoading(true);
     try {
       const fetchedComments = await fetchComments(quoteId);
-      setComments(fetchedComments);
+      // Transform the data to match the QuoteComment type required
+      const formattedComments: QuoteComment[] = fetchedComments.map(comment => ({
+        id: comment.id,
+        quote_id: comment.quote_id,
+        user_id: comment.user_id,
+        content: comment.content,
+        created_at: comment.created_at,
+        updated_at: comment.updated_at,
+        user: comment.profiles ? {
+          id: comment.user_id,
+          name: comment.profiles.name || 'Anonymous',
+          username: comment.profiles.username || 'user',
+          avatar_url: comment.profiles.avatar_url,
+          status: comment.profiles.status || 'offline'
+        } : null
+      }));
+      setComments(formattedComments);
     } catch (error) {
       console.error('Error loading comments:', error);
       toast({
@@ -99,7 +115,8 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
     
     setIsSubmitting(true);
     try {
-      const result = await createComment(quoteId, newComment);
+      // Fix: Pass the complete user ID from auth context
+      const result = await createComment(quoteId, newComment, user?.id || '');
       
       if (result) {
         setNewComment('');
@@ -109,7 +126,22 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
         });
         
         // Add the new comment to the list (optimistic update)
-        setComments(prevComments => [result, ...prevComments]);
+        // Make sure to include the user property to match the QuoteComment type
+        setComments(prevComments => [{
+          id: result.id,
+          quote_id: result.quote_id,
+          user_id: result.user_id,
+          content: result.content,
+          created_at: result.created_at,
+          updated_at: result.updated_at,
+          user: user ? {
+            id: user.id,
+            name: user.name || 'Anonymous',
+            username: user.username || 'user',
+            avatar_url: user.avatarUrl,
+            status: user.status || 'online'
+          } : null
+        }, ...prevComments]);
       }
     } catch (error) {
       console.error('Error submitting comment:', error);
@@ -128,6 +160,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
     if (!commentToDelete) return;
     
     try {
+      // Fix: Only pass the comment ID
       const success = await deleteComment(commentToDelete);
       
       if (success) {

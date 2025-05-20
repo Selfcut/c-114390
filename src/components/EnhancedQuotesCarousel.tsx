@@ -138,8 +138,8 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
       return;
     }
     
-    const { user } = await supabase.auth.getSession();
-    const userId = user?.session?.user?.id;
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id;
     
     if (!userId) {
       toast({
