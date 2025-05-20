@@ -64,11 +64,11 @@ export function QuoteDetail() {
         const userData = data?.user || null;
         const userObj = userData && typeof userData === 'object'
           ? {
-              id: userData?.id ?? 'unknown',
-              username: userData?.username ?? 'unknown',
-              name: userData?.name ?? 'Unknown User',
-              avatar_url: userData?.avatar_url ?? null,
-              status: userData?.status ?? 'offline'
+              id: (userData as any).id || 'unknown',
+              username: (userData as any).username || 'unknown',
+              name: (userData as any).name || 'Unknown User',
+              avatar_url: (userData as any).avatar_url || null,
+              status: (userData as any).status || 'offline'
             }
           : null;
         

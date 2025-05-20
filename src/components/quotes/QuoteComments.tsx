@@ -47,14 +47,15 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
         // Fix: First check if profiles exists and has the expected shape
         const profilesData = comment.profiles;
         
-        // Fix all TypeScript null issues by proper null checking
+        // Fix all TypeScript null issues by proper null checking and type assertion
+        // Define default values to use when profilesData or its properties are null
         const userProfile = profilesData && typeof profilesData === 'object' 
           ? {
-              id: profilesData?.id ?? 'unknown',
-              name: profilesData?.name ?? 'Unknown',
-              username: profilesData?.username ?? 'unknown',
-              avatar_url: profilesData?.avatar_url ?? null,
-              status: profilesData?.status ?? 'offline'
+              id: (profilesData as any)?.id || 'unknown',
+              name: (profilesData as any)?.name || 'Unknown',
+              username: (profilesData as any)?.username || 'unknown',
+              avatar_url: (profilesData as any)?.avatar_url || null,
+              status: (profilesData as any)?.status || 'offline'
             }
           : null;
         

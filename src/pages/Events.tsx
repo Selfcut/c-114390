@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'lucide-react';
