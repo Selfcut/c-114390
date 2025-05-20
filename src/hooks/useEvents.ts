@@ -17,7 +17,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
   const { user } = useAuth();
 
   // Fetch events function
-  const fetchEvents = useCallback(async (conversationId: string = 'global') => {
+  const fetchEvents = useCallback(async (conversationId: string = 'global', options = {}) => {
     setIsLoading(true);
     try {
       // Construct a basic query first

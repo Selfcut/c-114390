@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from 'lucide-react';
 import { EventWithAttendees, CalendarView } from '@/types/events';
-import { format, isToday, isSameDay, isSameMonth } from 'date-fns';
+import { format, isToday, isSameDay, isSameMonth, isValid } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

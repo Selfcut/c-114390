@@ -601,13 +601,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <ChatMessage
               key={message.id}
               message={message}
-              formatTime={formatTime}
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
               onReply={handleReplyMessage}
               onReactionAdd={handleAddReaction}
               onReactionRemove={handleRemoveReaction}
               isCurrentUser={message.userId === currentUserId}
+              currentUserId={currentUserId}
             />
           ))}
           <div ref={messagesEndRef} />
