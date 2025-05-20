@@ -44,14 +44,16 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
 
       // Transform the data to include user information correctly
       const formattedComments: QuoteComment[] = data.map(comment => {
-        // Explicitly type and check the userProfile with proper type assertion
-        const userProfile = comment.profiles as {
-          id: string; 
-          name: string; 
-          username: string; 
-          avatar_url: string | null; 
-          status: string; 
-        } | null;
+        // Fix: First check if profiles exists and has the expected shape
+        const userProfile = comment.profiles && typeof comment.profiles === 'object' && !('error' in comment.profiles)
+          ? comment.profiles as {
+              id: string; 
+              name: string; 
+              username: string; 
+              avatar_url: string | null; 
+              status: string; 
+            }
+          : null;
         
         return {
           id: comment.id,
