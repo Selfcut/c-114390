@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/ui/button';
 import { CollectionSelector } from '@/components/saved-quotes/CollectionSelector';
@@ -10,10 +10,12 @@ import { useAuth } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, BookmarkIcon, Home } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
 
 const SavedQuotes = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { trackCollectionView } = useQuoteAnalytics();
   const {
     savedQuotes,
     filteredQuotes,
@@ -30,6 +32,13 @@ const SavedQuotes = () => {
   
   // Find active collection object
   const activeCollectionObject = collections.find(c => c.id === activeCollection);
+  
+  // Track page view when collection changes
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      trackCollectionView(activeCollection);
+    }
+  }, [activeCollection, authLoading, isAuthenticated, trackCollectionView]);
   
   if (!isAuthenticated && !authLoading) {
     return (

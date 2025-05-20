@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, MessageSquare, FolderPlus, Check, BookmarkX, Loader2 } from 'lucide-react';
+import { MoreHorizontal, MessageSquare, FolderPlus, Check, BookmarkX, Loader2, Share } from 'lucide-react';
 
 import { QuoteWithUser } from '@/lib/quotes/types';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { QuoteCollection } from '@/hooks/useSavedQuotes';
 import { useToast } from '@/hooks/use-toast';
+import { ShareQuoteDialog } from '@/components/quotes/ShareQuoteDialog';
+import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
 
 interface SavedQuoteCardProps {
   quote: QuoteWithUser;
@@ -43,7 +45,9 @@ export function SavedQuoteCard({
 }: SavedQuoteCardProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { trackQuoteInteraction } = useQuoteAnalytics();
   const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [processingCollections, setProcessingCollections] = useState<Record<string, boolean>>({});
   
   const handleQuoteClick = () => {
@@ -61,6 +65,10 @@ export function SavedQuoteCard({
         toast({
           title: "Added to collection",
           description: "Quote has been added to the collection",
+        });
+        
+        trackQuoteInteraction(quote.id, 'collection_add', { 
+          collectionId 
         });
       }
     } catch (error) {
@@ -87,6 +95,10 @@ export function SavedQuoteCard({
           title: "Removed from collection",
           description: "Quote has been removed from the collection",
         });
+        
+        trackQuoteInteraction(quote.id, 'collection_remove', { 
+          collectionId 
+        });
       }
     } catch (error) {
       console.error("Error removing from collection:", error);
@@ -98,6 +110,12 @@ export function SavedQuoteCard({
     } finally {
       setProcessingCollections(prev => ({ ...prev, [collectionId]: false }));
     }
+  };
+  
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsShareDialogOpen(true);
+    trackQuoteInteraction(quote.id, 'share', { source: 'saved_quotes' });
   };
   
   return (
@@ -171,6 +189,15 @@ export function SavedQuoteCard({
               >
                 <MessageSquare className="h-4 w-4" />
                 <span className="sr-only">Comments</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleShareClick}
+              >
+                <Share className="h-4 w-4" />
+                <span className="sr-only">Share</span>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -275,6 +302,15 @@ export function SavedQuoteCard({
           </ScrollArea>
         </DialogContent>
       </Dialog>
+      
+      {/* Share Dialog */}
+      {isShareDialogOpen && (
+        <ShareQuoteDialog
+          quote={quote}
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+        />
+      )}
     </>
   );
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Bookmark, Share, Edit, Trash2, AlertTriangle } from 'lucide-react';
@@ -16,12 +15,15 @@ import { useRealtimeQuotes } from '@/hooks/useRealtimeQuotes';
 import { EditQuoteModal } from './EditQuoteModal';
 import { DeleteQuoteDialog } from './DeleteQuoteDialog';
 import { QuoteComments } from './QuoteComments';
+import { ShareQuoteDialog } from './ShareQuoteDialog';
+import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
 
 export const QuoteDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
+  const { trackQuoteView, trackQuoteInteraction } = useQuoteAnalytics();
 
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +33,7 @@ export const QuoteDetail = () => {
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   // Fetch quote details
   const fetchQuoteData = useCallback(async () => {
@@ -43,6 +46,9 @@ export const QuoteDetail = () => {
         setQuote(quoteData);
         setLikeCount(quoteData.likes || 0);
         setBookmarkCount(quoteData.bookmarks || 0);
+
+        // Track quote view
+        trackQuoteView(id);
 
         // Check if user liked or bookmarked this quote
         if (isAuthenticated) {
@@ -64,7 +70,7 @@ export const QuoteDetail = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id, isAuthenticated, toast]);
+  }, [id, isAuthenticated, toast, trackQuoteView]);
 
   useEffect(() => {
     fetchQuoteData();
@@ -109,6 +115,9 @@ export const QuoteDetail = () => {
       setIsLiked(result);
       setLikeCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
       
+      // Track interaction
+      trackQuoteInteraction(id, 'like', { added: result });
+      
       toast({
         title: result ? 'Quote Liked' : 'Like Removed',
         description: result ? 'You have liked this quote' : 'You have removed your like from this quote'
@@ -139,6 +148,9 @@ export const QuoteDetail = () => {
       setIsBookmarked(result);
       setBookmarkCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
       
+      // Track interaction
+      trackQuoteInteraction(id, 'bookmark', { added: result });
+      
       toast({
         title: result ? 'Quote Bookmarked' : 'Bookmark Removed',
         description: result ? 'This quote has been added to your bookmarks' : 'This quote has been removed from your bookmarks'
@@ -155,23 +167,8 @@ export const QuoteDetail = () => {
 
   // Handle share action
   const handleShare = () => {
-    if (!quote) return;
-    
-    const quoteText = `"${quote.text}" - ${quote.author}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: 'Quote Share',
-        text: quoteText,
-        url: window.location.href
-      }).catch(err => {
-        console.error('Error sharing:', err);
-        // Fallback to clipboard
-        copyToClipboard();
-      });
-    } else {
-      copyToClipboard();
-    }
+    setIsShareDialogOpen(true);
+    trackQuoteInteraction(id!, 'share', { method: 'share_dialog' });
   };
   
   const copyToClipboard = () => {
@@ -414,6 +411,15 @@ export const QuoteDetail = () => {
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
           onSuccess={handleDeleteSuccess}
+        />
+      )}
+
+      {/* Share Dialog */}
+      {isShareDialogOpen && quote && (
+        <ShareQuoteDialog
+          quote={quote}
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
         />
       )}
     </div>

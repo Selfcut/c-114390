@@ -1,17 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PageLayout } from '@/components/layouts/PageLayout';
-import { QuoteSubmissionModal } from "@/components/QuoteSubmissionModal";
-import { useQuotes } from "@/hooks/useQuotes";
-import { QuotesHeader } from "@/components/quotes/QuotesHeader";
-import { QuotesSearch } from "@/components/quotes/QuotesSearch";
-import { TagsFilter } from "@/components/quotes/TagsFilter";
-import { QuotesGrid } from "@/components/quotes/QuotesGrid";
-import { QuotePagination } from "@/components/quotes/QuotePagination";
-import { QuotesSorting } from "@/components/quotes/QuotesSorting";
+import { QuotesHeader } from '@/components/quotes/QuotesHeader';
+import { QuotesGrid } from '@/components/quotes/QuotesGrid';
+import { QuotePagination } from '@/components/quotes/QuotePagination';
+import { QuotesSearch } from '@/components/quotes/QuotesSearch';
+import { TagsFilter } from '@/components/quotes/TagsFilter';
+import { QuotesSorting } from '@/components/quotes/QuotesSorting';
+import { QuoteSubmissionModal } from '@/components/QuoteSubmissionModal';
+import { useQuotes } from '@/hooks/useQuotes';
+import { QuoteOfTheDay } from '@/components/quotes/QuoteOfTheDay';
 
 const Quotes = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   
   const {
     quotes,
@@ -32,74 +33,84 @@ const Quotes = () => {
     currentPage,
     totalPages,
     handlePageChange
-  } = useQuotes({ initialLimit: 12 });
+  } = useQuotes();
 
-  // Handle successful quote submission
-  const handleQuoteSubmitted = async () => {
-    await refreshQuotes();
-    setIsModalOpen(false);
-  };
-  
   return (
     <PageLayout>
-      <main className="container mx-auto py-8 px-4">
-        {/* Header with title and create button */}
-        <QuotesHeader onSubmitClick={() => setIsModalOpen(true)} />
+      <div className="container mx-auto py-8 px-4">
+        <QuotesHeader 
+          onSubmitClick={() => setIsSubmitModalOpen(true)} 
+        />
         
-        {/* Search and filters */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <QuotesSearch 
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            filterTag={filterTag}
-            onTagClear={() => setFilterTag(null)}
-          />
-          
-          <QuotesSorting 
-            value={sortOption} 
-            onChange={setSortOption}
-          />
+        {/* Add Quote of the Day at the top on larger screens */}
+        <div className="hidden lg:block mb-8">
+          <QuoteOfTheDay />
         </div>
-
-        {/* Tags scroller */}
-        <TagsFilter 
-          tags={allTags}
-          activeTag={filterTag}
-          onTagClick={setFilterTag}
-        />
-
-        {/* Quotes grid */}
-        <QuotesGrid 
-          quotes={quotes}
-          isLoading={isLoading}
-          userLikes={userLikes}
-          userBookmarks={userBookmarks}
-          onLike={handleLike}
-          onBookmark={handleBookmark}
-          onTagClick={setFilterTag}
-          onResetFilters={resetFilters}
-        />
         
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <QuotePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
+          {/* Sidebar Filters */}
+          <aside className="space-y-8">
+            {/* Add Quote of the Day on mobile */}
+            <div className="lg:hidden mb-4">
+              <QuoteOfTheDay />
+            </div>
+            
+            <QuotesSearch 
+              search={searchQuery}
+              onSearchChange={setSearchQuery}
             />
+            
+            <TagsFilter 
+              tags={allTags}
+              selectedTag={filterTag}
+              onSelectTag={setFilterTag}
+            />
+            
+            <QuotesSorting
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+            />
+            
+            <div className="pt-4">
+              <button
+                onClick={resetFilters}
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                Reset all filters
+              </button>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <div>
+            <QuotesGrid
+              quotes={quotes}
+              isLoading={isLoading}
+              userLikes={userLikes}
+              userBookmarks={userBookmarks}
+              onLike={handleLike}
+              onBookmark={handleBookmark}
+            />
+            
+            <div className="mt-8">
+              <QuotePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
           </div>
-        )}
+        </div>
         
-        {/* Quote submission modal */}
-        {isModalOpen && (
-          <QuoteSubmissionModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSubmit={handleQuoteSubmitted}
-          />
-        )}
-      </main>
+        <QuoteSubmissionModal
+          isOpen={isSubmitModalOpen}
+          onClose={() => setIsSubmitModalOpen(false)}
+          onSuccess={() => {
+            setIsSubmitModalOpen(false);
+            refreshQuotes();
+          }}
+        />
+      </div>
     </PageLayout>
   );
 };
