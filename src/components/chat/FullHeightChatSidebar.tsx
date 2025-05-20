@@ -14,22 +14,11 @@ export const FullHeightChatSidebar = () => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Use our hook to manage all chat sidebar state
+  // Use our new hook to manage all chat sidebar state
   const chatState = useChatSidebarState({
     isOpen,
     messagesEndRef
   });
-
-  // Update CSS variable for chat sidebar width when open/closed
-  React.useEffect(() => {
-    document.documentElement.style.setProperty(
-      '--content-margin-right', 
-      isOpen ? 'var(--chat-sidebar-width)' : '0'
-    );
-    return () => {
-      document.documentElement.style.setProperty('--content-margin-right', '0');
-    };
-  }, [isOpen]);
   
   return (
     <>

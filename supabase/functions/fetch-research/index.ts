@@ -1,206 +1,298 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.23.0';
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
-// Sample research papers to use as fallback
-const SAMPLE_RESEARCH_PAPERS = [
-  {
-    title: "Advances in Neural Network Research for Artificial Intelligence",
-    summary: "This paper presents recent advancements in neural network architectures and their applications in artificial intelligence systems. We introduce a novel approach that improves performance in image recognition tasks by 15%.",
-    author: "Dr. Alexandra Chen",
-    category: "Artificial Intelligence",
-    content: "Full content of the research paper about neural network advances...",
-    image_url: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1965&auto=format&fit=crop",
-    source: "Journal of AI Research",
-    source_url: "https://example.com/journal-ai-research",
-    published_date: new Date().toISOString(),
-    is_auto_fetched: true
-  },
-  {
-    title: "Quantum Computing: Breaking the Computational Barrier",
-    summary: "Our research demonstrates how quantum computers can solve previously intractable problems in polynomial time. We provide experimental evidence using a 64-qubit quantum processor.",
-    author: "Prof. James Wilson",
-    category: "Quantum Computing",
-    content: "Full content of the quantum computing research paper...",
-    image_url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2070&auto=format&fit=crop",
-    source: "Quantum Information Processing",
-    source_url: "https://example.com/quantum-info",
-    published_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    is_auto_fetched: true
-  },
-  {
-    title: "Natural Language Processing for Medical Applications",
-    summary: "This study explores how NLP techniques can improve medical diagnosis accuracy. Our model achieved 92% accuracy in identifying early signs of disease from clinical notes.",
-    author: "Dr. Maria Rodriguez",
-    category: "Computational Linguistics",
-    content: "Full content of the medical NLP research paper...",
-    image_url: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop",
-    source: "Journal of Medical AI",
-    source_url: "https://example.com/medical-ai",
-    published_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    is_auto_fetched: true
-  },
-  {
-    title: "Reinforcement Learning for Autonomous Robotics",
-    summary: "We present a novel reinforcement learning algorithm that enables robots to learn complex tasks with minimal human intervention. Our approach shows a 40% reduction in training time.",
-    author: "Dr. Thomas Lee",
-    category: "Machine Learning",
-    content: "Full content of the reinforcement learning research paper...",
-    image_url: "https://images.unsplash.com/photo-1555255707-c07966088b7b?q=80&w=2036&auto=format&fit=crop",
-    source: "Robotics and AI Conference",
-    source_url: "https://example.com/robotics-conf",
-    published_date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    is_auto_fetched: true
-  },
-  {
-    title: "Cybersecurity Threat Detection Using Graph Neural Networks",
-    summary: "This paper introduces a graph-based approach to detect network intrusions. Our method outperforms traditional techniques by identifying 95% of sophisticated attacks with minimal false positives.",
-    author: "Dr. Sarah Johnson",
-    category: "Cybersecurity",
-    content: "Full content of the cybersecurity research paper...",
-    image_url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=2070&auto=format&fit=crop",
-    source: "International Cybersecurity Conference",
-    source_url: "https://example.com/cybersec-conf",
-    published_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    is_auto_fetched: true
-  }
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Categories to fetch - expanded list of research domains
+const categories = [
+  'cs.AI', // Artificial Intelligence
+  'cs.CL', // Computational Linguistics
+  'cs.LG', // Machine Learning
+  'stat.ML', // Statistics - Machine Learning
+  'q-bio.NC', // Quantitative Biology - Neurons and Cognition
+  'q-fin.ST', // Quantitative Finance
+  'physics.soc-ph', // Physics - Society and Physics
+  'cs.CV', // Computer Vision
+  'cs.RO', // Robotics
+  'cs.CR', // Cryptography and Security
+  'cs.SE', // Software Engineering
+  'q-bio.BM', // Quantitative Biology - Biomolecules
+  'cs.NE', // Neural and Evolutionary Computing
+  'physics.med-ph', // Medical Physics
+  'cs.CY' // Computers and Society
 ];
 
-serve(async (req) => {
-  // Handle CORS
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+// Map category codes to human-readable names
+const categoryNames = {
+  'cs.AI': 'Artificial Intelligence',
+  'cs.CL': 'Computational Linguistics',
+  'cs.LG': 'Machine Learning',
+  'stat.ML': 'Statistics - Machine Learning',
+  'q-bio.NC': 'Neuroscience',
+  'q-fin.ST': 'Quantitative Finance',
+  'physics.soc-ph': 'Social Physics',
+  'cs.CV': 'Computer Vision',
+  'cs.RO': 'Robotics',
+  'cs.CR': 'Cybersecurity',
+  'cs.SE': 'Software Engineering',
+  'q-bio.BM': 'Biomolecular Research',
+  'cs.NE': 'Neural Computing',
+  'physics.med-ph': 'Medical Physics',
+  'cs.CY': 'Computing and Society'
+};
 
+// Function to fetch recent papers from arXiv
+async function fetchArxivPapers(category: string, maxResults: number = 20) {
   try {
-    // Parse request body if any
-    let requestData = {};
-    try {
-      requestData = await req.json();
-    } catch (e) {
-      requestData = {};
+    const url = `http://export.arxiv.org/api/query?search_query=cat:${category}&sortBy=submittedDate&sortOrder=descending&max_results=${maxResults}`;
+    
+    console.log(`Fetching papers from ${category}...`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch arXiv papers: ${response.status} ${response.statusText}`);
     }
     
-    const forceSample = requestData.force_sample === true;
-    const source = requestData.source || 'manual';
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, "text/xml");
     
-    console.log(`Fetching research papers. Source: ${source}, Force Sample: ${forceSample}`);
+    if (!doc) {
+      throw new Error("Failed to parse XML response");
+    }
     
-    // Create a Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const entries = Array.from(doc.querySelectorAll("entry"));
     
-    let insertedPapers = 0;
-    let errors = [];
+    return entries.map(entry => {
+      const title = entry.querySelector("title")?.textContent?.trim() || "Untitled Paper";
+      const summary = entry.querySelector("summary")?.textContent?.trim() || "";
+      const published = entry.querySelector("published")?.textContent || "";
+      const id = entry.querySelector("id")?.textContent || "";
+      const arxivId = id.split('/').pop()?.split('v')[0] || "";
+      
+      // Get all authors
+      const authorNodes = Array.from(entry.querySelectorAll("author name"));
+      const authors = authorNodes.map(node => node.textContent || "").join(", ");
+      
+      // Convert category code to human-readable name
+      const displayCategory = categoryNames[category as keyof typeof categoryNames] || category;
+      
+      return {
+        title,
+        summary: summary.substring(0, 500) + (summary.length > 500 ? "..." : ""),
+        author: authors,
+        published_date: published,
+        source: "arXiv",
+        source_url: `https://arxiv.org/abs/${arxivId}`,
+        category: displayCategory,
+        is_auto_fetched: true
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching ${category} papers:`, error);
+    return [];
+  }
+}
+
+// Function to store papers in the database
+async function storePapers(papers: any[]) {
+  if (papers.length === 0) {
+    return [];
+  }
+  
+  try {
+    console.log(`Attempting to store ${papers.length} papers...`);
     
-    // Use sample data for quick testing
-    if (forceSample) {
-      console.log("Using sample data as requested");
-      
-      // Check if we already have any papers first to avoid duplicates
-      const { count, error: countError } = await supabaseClient
-        .from('research_papers')
-        .select('*', { count: 'exact', head: true });
-      
-      if (countError) {
-        console.error("Error checking existing papers:", countError);
-        errors.push(`Count error: ${countError.message}`);
-      }
-      
-      // Only insert sample data if we have fewer than 5 papers
-      if (!countError && (count === null || count < 5)) {
-        // Insert sample research papers
-        const { data, error } = await supabaseClient
-          .from('research_papers')
-          .insert(SAMPLE_RESEARCH_PAPERS);
-        
-        if (error) {
-          console.error("Error inserting sample papers:", error);
-          errors.push(`Insert error: ${error.message}`);
-        } else {
-          console.log("Successfully inserted sample papers");
-          insertedPapers = SAMPLE_RESEARCH_PAPERS.length;
-        }
-      } else {
-        console.log("Skipping sample data insert as there are already papers in the database");
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          message: "Sample research papers fetched successfully",
-          count: insertedPapers,
-          errors: errors.length > 0 ? errors : undefined
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200 
-        }
+    const { data, error } = await supabase
+      .from('research_papers')
+      .upsert(
+        papers.map(paper => ({
+          title: paper.title,
+          summary: paper.summary,
+          author: paper.author,
+          published_date: paper.published_date,
+          source: paper.source,
+          source_url: paper.source_url,
+          category: paper.category,
+          is_auto_fetched: paper.is_auto_fetched
+        })),
+        { onConflict: 'source_url' }
       );
+    
+    if (error) {
+      throw new Error(`Failed to store papers: ${error.message}`);
     }
     
-    // For real implementation, this would connect to research APIs like arXiv
-    // For now, we'll just use sample data regardless
-    console.log("No real API implementation yet, using sample data");
+    console.log(`Successfully stored papers in the database`);
+    return data;
+  } catch (error) {
+    console.error('Error storing papers:', error);
+    throw error;
+  }
+}
+
+// Function to add sample papers
+async function addSamplePapers() {
+  try {
+    console.log("Adding sample research papers...");
     
-    // Check if we already have any papers to avoid duplicates
-    const { count, error: countError } = await supabaseClient
+    const samplePapers = [
+      {
+        title: "Advances in Neural Network Architectures for Image Recognition",
+        author: "Research Team A",
+        summary: "This paper presents novel neural network architectures that improve image recognition accuracy by 15% through the introduction of adaptive attention mechanisms and sparse connectivity patterns inspired by biological visual systems.",
+        published_date: new Date().toISOString(),
+        category: "Artificial Intelligence",
+        source: "Journal of Machine Learning Research",
+        source_url: "https://example.com/research1",
+        is_auto_fetched: true
+      },
+      {
+        title: "Climate Change Impact on Coastal Biodiversity",
+        author: "Environmental Studies Group",
+        summary: "Analysis of five years of data shows accelerating impact of rising sea levels on coastal ecosystem diversity. Our findings indicate a 23% reduction in species variety in monitored regions, with cascading effects on ecological stability.",
+        published_date: new Date().toISOString(),
+        category: "Environment",
+        source: "Environmental Science Journal",
+        source_url: "https://example.com/research2",
+        is_auto_fetched: true
+      },
+      {
+        title: "Emerging Antibiotic Resistance Patterns",
+        author: "Medical Research Institute",
+        summary: "This study catalogs new patterns of antibiotic resistance across different bacterial strains and geographic regions. We identify novel genetic markers associated with resistance and propose targeted intervention strategies.",
+        published_date: new Date().toISOString(),
+        category: "Health",
+        source: "Journal of Medical Research",
+        source_url: "https://example.com/research3",
+        is_auto_fetched: true
+      },
+      {
+        title: "Quantum Computing Approaches to Optimization Problems",
+        author: "Quantum Research Collaborative",
+        summary: "We demonstrate a quantum algorithm that provides quadratic speedup for a class of NP-hard optimization problems. Experimental validation on a 20-qubit system shows promising results compared to classical methods.",
+        published_date: new Date().toISOString(),
+        category: "Quantum Computing",
+        source: "Quantum Information Processing",
+        source_url: "https://example.com/research4",
+        is_auto_fetched: true
+      },
+      {
+        title: "Neural Correlates of Consciousness in Dream States",
+        author: "Neuroscience Institute",
+        summary: "Using advanced fMRI techniques during REM sleep, we identify specific brain activation patterns associated with self-awareness in dreams. Results suggest a distributed network rather than centralized mechanism for conscious experience.",
+        published_date: new Date().toISOString(),
+        category: "Neuroscience",
+        source: "Cognitive Neuroscience Journal",
+        source_url: "https://example.com/research5",
+        is_auto_fetched: true
+      }
+    ];
+    
+    await storePapers(samplePapers);
+    console.log("Added sample papers successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in addSamplePapers:", error);
+    return false;
+  }
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+  
+  try {
+    console.log("Fetch research job started");
+    let requestBody = {};
+    
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      requestBody = {};
+    }
+    
+    const forceSample = requestBody.force_sample === true;
+    const papers = [];
+    const startTime = Date.now();
+    
+    // First check if we already have research papers
+    const { count, error: countError } = await supabase
       .from('research_papers')
       .select('*', { count: 'exact', head: true });
     
     if (countError) {
       console.error("Error checking existing papers:", countError);
-      errors.push(`Count error: ${countError.message}`);
     }
     
-    // Only insert sample data if we have fewer than 5 papers
-    if (!countError && (count === null || count < 5)) {
-      // Insert sample research papers
-      const { data, error } = await supabaseClient
-        .from('research_papers')
-        .insert(SAMPLE_RESEARCH_PAPERS);
-      
-      if (error) {
-        console.error("Error inserting sample papers:", error);
-        errors.push(`Insert error: ${error.message}`);
-      } else {
-        console.log("Successfully inserted sample papers");
-        insertedPapers = SAMPLE_RESEARCH_PAPERS.length;
-      }
+    // If we already have papers and force_sample isn't set, proceed normally
+    if ((count && count > 0) && !forceSample) {
+      console.log(`Already have ${count} papers in database.`);
     } else {
-      console.log("Skipping sample data insert as there are already papers in the database");
+      // First try to fetch papers from arXiv
+      let fetchSuccess = false;
+      
+      try {
+        // Fetch papers for each category
+        for (const category of categories) {
+          try {
+            console.log(`Fetching papers for ${category}...`);
+            const categoryPapers = await fetchArxivPapers(category, 10);
+            console.log(`Fetched ${categoryPapers.length} papers from ${category}`);
+            papers.push(...categoryPapers);
+            
+            if (categoryPapers.length > 0) {
+              fetchSuccess = true;
+            }
+          } catch (categoryError) {
+            console.error(`Error processing category ${category}:`, categoryError);
+            // Continue with other categories even if one fails
+          }
+        }
+      } catch (fetchError) {
+        console.error("Error fetching papers from API:", fetchError);
+      }
+      
+      // Store papers in the database if we got any
+      if (papers.length > 0) {
+        await storePapers(papers);
+      } else {
+        console.log("No papers fetched from API. Adding sample papers as fallback...");
+        await addSamplePapers();
+      }
     }
     
-    return new Response(
-      JSON.stringify({ 
-        success: errors.length === 0,
-        message: insertedPapers > 0 
-          ? `Successfully fetched ${insertedPapers} research papers`
-          : "No new papers added",
-        count: insertedPapers,
-        errors: errors.length > 0 ? errors : undefined
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
-      }
-    );
-  } catch (error) {
-    console.error("Error fetching research papers:", error);
+    const duration = (Date.now() - startTime) / 1000;
+    console.log(`Fetch research job completed in ${duration.toFixed(2)}s. Fetched ${papers.length} papers.`);
     
-    return new Response(
-      JSON.stringify({ 
-        success: false,
-        message: "Error fetching research papers",
-        error: error.message
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500 
-      }
-    );
+    return new Response(JSON.stringify({ 
+      success: true, 
+      count: papers.length,
+      duration: `${duration.toFixed(2)}s`,
+      categories: categories.length,
+      existing_count: count || 0,
+      added_samples: papers.length === 0,
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Error in fetch-research function:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });

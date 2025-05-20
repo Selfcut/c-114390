@@ -13,7 +13,7 @@ interface ResearchGridProps {
   researchPapers: ResearchItem[];
 }
 
-export const ResearchGrid = ({ researchPapers, searchQuery, selectedCategory }: ResearchGridProps) => {
+export const ResearchGrid = ({ researchPapers }: ResearchGridProps) => {
   const navigate = useNavigate();
   
   const handleCardClick = (id: string) => {
@@ -31,7 +31,7 @@ export const ResearchGrid = ({ researchPapers, searchQuery, selectedCategory }: 
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {researchPapers.map((research) => (
         <Card 
           key={research.id} 
@@ -51,7 +51,7 @@ export const ResearchGrid = ({ researchPapers, searchQuery, selectedCategory }: 
               <Microscope className="h-12 w-12 text-muted-foreground/50" />
             </div>
           )}
-          <CardHeader className="py-3 px-4 space-y-2 flex-grow">
+          <CardHeader className="py-4 px-4 space-y-2 flex-grow">
             <div className="flex justify-between items-start flex-wrap gap-2">
               <Badge variant="outline" className="px-2 py-0.5 text-xs">
                 {research.category}
@@ -61,24 +61,24 @@ export const ResearchGrid = ({ researchPapers, searchQuery, selectedCategory }: 
                 {formatDistanceToNow(research.date, { addSuffix: true })}
               </div>
             </div>
-            <h3 className="text-base md:text-lg font-semibold mt-1 line-clamp-2">{research.title}</h3>
-            <p className="text-xs md:text-sm text-muted-foreground">by {research.author}</p>
+            <h3 className="text-lg font-semibold mt-2 line-clamp-2">{research.title}</h3>
+            <p className="text-sm text-muted-foreground">by {research.author}</p>
           </CardHeader>
           <CardContent className="py-2 px-4 flex-grow-0">
-            <p className="text-xs md:text-sm text-muted-foreground line-clamp-3">{research.summary}</p>
+            <p className="text-sm text-muted-foreground line-clamp-3">{research.summary}</p>
           </CardContent>
           <CardFooter className="py-3 px-4 border-t flex justify-between mt-auto">
-            <div className="flex items-center space-x-3 md:space-x-4">
-              <div className="flex items-center text-muted-foreground text-xs">
-                <Eye className="h-3 w-3 mr-1" />
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center text-muted-foreground text-sm">
+                <Eye className="h-4 w-4 mr-1" />
                 {research.views}
               </div>
-              <div className="flex items-center text-muted-foreground text-xs">
-                <ThumbsUp className="h-3 w-3 mr-1" />
+              <div className="flex items-center text-muted-foreground text-sm">
+                <ThumbsUp className="h-4 w-4 mr-1" />
                 {research.likes}
               </div>
             </div>
-            <span className="text-xs md:text-sm text-primary hover:underline">Read more</span>
+            <span className="text-sm text-primary hover:underline">Read more</span>
           </CardFooter>
         </Card>
       ))}

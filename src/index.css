@@ -1,71 +1,89 @@
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* This file imports all the CSS partials */
+@import './styles/variables.css';
+@import './styles/tailwind.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/components.css';
+@import './styles/animations.css';
+@import './styles/effects.css';
+@import './styles/stagger.css';
+@import './styles/light-mode.css';
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
-  }
+/* Global dark mode overrides */
+.dark body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+.dark .sidebar {
+  background-color: hsl(var(--sidebar-background));
+  border-color: hsl(var(--sidebar-border));
 }
 
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+/* Fix for white borders in various components */
+.dark .bg-background {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark .bg-card {
+  background-color: hsl(var(--card)) !important;
+}
+
+.dark .border {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix for borders in dark mode */
+.dark .border-white {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .border-gray-100, 
+.dark .border-gray-200, 
+.dark .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .border-l,
+.dark .border-r,
+.dark .border-t,
+.dark .border-b {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix for PromoBar in dark mode */
+.dark .bg-purple-800 {
+  background-color: hsl(var(--promo)) !important;
+}
+
+/* Ensure proper contrast in dark mode */
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-800 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Fix for header and footer borders in dark mode */
+.dark .header,
+.dark .footer {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Remove hover underlines from buttons and nav items */
+button, .button, [role="button"], .no-underline,
+.nav-link, nav a, .sidebar a, .navigation a {
+  text-decoration: none !important;
+}
+
+button:hover, .button:hover, [role="button"]:hover,
+.nav-link:hover, nav a:hover, .sidebar a:hover, .navigation a:hover {
+  text-decoration: none !important;
+}
+
+/* Only apply underline hover effect to specific text links */
+article a:not(.button):not([role="button"]):hover,
+p a:not(.button):not([role="button"]):hover,
+.text-link:hover {
+  text-decoration: underline;
 }

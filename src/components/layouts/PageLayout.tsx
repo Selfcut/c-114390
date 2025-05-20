@@ -19,6 +19,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   const location = useLocation();
   
   // Don't render the header for specific routes that handle their own headers
+  // We're removing '/forum' from this array so the standard header will be shown
   const pathsWithOwnHeaders: string[] = []; 
   const shouldShowHeader = !hideHeader && !pathsWithOwnHeaders.includes(location.pathname);
 
@@ -28,10 +29,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       <CollapsibleSidebar />
       
       {/* Main content */}
-      <div className="flex-1 relative ml-[var(--sidebar-width)] transition-all duration-300" style={{ 
-        marginRight: 'var(--content-margin-right, 0)',
-        width: 'calc(100% - var(--sidebar-width) - var(--content-margin-right, 0))'
-      }}>
+      <div className="flex-1 relative ml-[var(--sidebar-width)] transition-[margin-right] duration-300" style={{ marginRight: 'var(--content-margin-right, 0)' }}>
         {shouldShowHeader && <Header />}
         <div className="min-h-[calc(100vh-4rem)] p-4">
           {children}

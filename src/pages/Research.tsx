@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Loader2, ArrowDownUp, Calendar, ExternalLink } from "lucide-react";
 
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 
 // Hooks and Types
@@ -47,6 +49,7 @@ const RESEARCH_DOMAINS = [
 const Research = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, isModerator } = useAdminStatus();
   const { toast: showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
@@ -201,7 +204,7 @@ const Research = () => {
               Fetch Latest Research
             </Button>
             
-            {user && (
+            {(isAdmin || isModerator) && (
               <Button 
                 size="sm"
                 onClick={handleCreateResearch} 
@@ -211,21 +214,22 @@ const Research = () => {
               </Button>
             )}
             
-            {/* Show this button to everyone for now */}
-            <Button 
-              variant="secondary"
-              size="sm"
-              onClick={handleSetupCronJob} 
-              disabled={isSetupLoading}
-              className="whitespace-nowrap"
-            >
-              {isSetupLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <ExternalLink className="h-4 w-4 mr-2" />
-              )}
-              Setup Auto-Fetch
-            </Button>
+            {(isAdmin) && (
+              <Button 
+                variant="secondary"
+                size="sm"
+                onClick={handleSetupCronJob} 
+                disabled={isSetupLoading}
+                className="whitespace-nowrap"
+              >
+                {isSetupLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                )}
+                Setup Auto-Fetch
+              </Button>
+            )}
           </div>
         </div>
         
@@ -265,23 +269,20 @@ const Research = () => {
           </form>
         </div>
         
-        {/* Domains Tabs - Fixed scrolling issues */}
-        <div className="mb-6 border-b">
-          <div className="overflow-x-auto no-scrollbar">
-            <Tabs 
-              value={selectedDomain || "All Categories"} 
-              onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
-              className="w-full"
-            >
-              <TabsList className="inline-flex w-max min-w-full bg-transparent">
-                {RESEARCH_DOMAINS.map(domain => (
-                  <TabsTrigger key={domain} value={domain} className="py-2">
-                    {domain}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
+        {/* Domains Tabs - Improved scrollable tabs */}
+        <div className="mb-6 border-b overflow-x-auto scrollbar-hide">
+          <Tabs 
+            value={selectedDomain || "All Categories"} 
+            onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
+          >
+            <TabsList className="inline-flex w-max min-w-full bg-transparent">
+              {RESEARCH_DOMAINS.map(domain => (
+                <TabsTrigger key={domain} value={domain} className="py-2">
+                  {domain}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
         
         {isLoading ? (
@@ -315,9 +316,11 @@ const Research = () => {
                 <Button onClick={handleFetchLatestResearch}>
                   Fetch Latest Research
                 </Button>
-                <Button variant="outline" onClick={handleSetupCronJob} disabled={isSetupLoading}>
-                  Setup Automated Fetching
-                </Button>
+                {isAdmin && (
+                  <Button variant="outline" onClick={handleSetupCronJob} disabled={isSetupLoading}>
+                    Setup Automated Fetching
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

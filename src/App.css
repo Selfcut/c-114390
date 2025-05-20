@@ -15,6 +15,7 @@ a {
   text-decoration: none;
 }
 
+/* Only apply underline to text links, not navigation or buttons */
 a.text-link {
   text-decoration: none;
   color: hsl(var(--primary));
