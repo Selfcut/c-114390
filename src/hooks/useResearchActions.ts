@@ -22,12 +22,25 @@ export const useResearchActions = () => {
     
     setIsLoading(true);
     try {
+      // Ensure all required fields are present
+      const paperData = {
+        title: paper.title,
+        summary: paper.summary || "", // Make sure summary is not undefined
+        author: paper.author,
+        category: paper.category,
+        content: paper.content,
+        image_url: paper.image_url,
+        source: paper.source,
+        source_url: paper.source_url,
+        published_date: paper.published_date,
+        is_auto_fetched: paper.is_auto_fetched,
+        is_embedded: paper.is_embedded,
+        user_id: user.id
+      };
+      
       const { data, error } = await supabase
         .from('research_papers')
-        .insert({
-          ...paper,
-          user_id: user.id
-        })
+        .insert(paperData)
         .select() as { data: ResearchPaper | null, error: any };
       
       if (error) {

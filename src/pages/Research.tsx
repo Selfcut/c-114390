@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +90,7 @@ const Research = () => {
     setSearchQuery("");
   };
   
-  // Set up cron job and fetch initial research data
+  // Handle setting up cron job and fetch initial research data
   const handleSetupCronJob = async () => {
     try {
       setIsSetupLoading(true);
