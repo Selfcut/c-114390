@@ -13,31 +13,7 @@ export const DEFAULT_USER = {
   status: 'offline'
 };
 
-// Helper interface for the user data in Supabase response
-interface UserResponse {
-  id: string | null;
-  username: string;
-  name: string;
-  avatar_url: string | null;
-  status: string;
-}
-
-// Helper interface to properly type Supabase response
-interface QuoteResponse {
-  id: string;
-  text: string;
-  author: string;
-  source?: string | null;
-  tags?: string[];
-  likes?: number;
-  comments?: number;
-  bookmarks?: number;
-  created_at: string;
-  user_id: string;
-  category?: string;
-  user: UserResponse | null;
-}
-
+// Helper function to safely process quote data
 export function useQuoteOfTheDay() {
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,13 +33,13 @@ export function useQuoteOfTheDay() {
           .eq('featured_date', today)
           .limit(1);
         
-        // Process data without complex type assertions
-        if (featuredData && featuredData.length > 0 && isValidQuote(featuredData[0])) {
-          const processedQuote = createSafeQuote(featuredData[0]);
-          setQuote(processedQuote);
+        // Process featured quote if available
+        if (featuredData && featuredData.length > 0 && isQuoteDataValid(featuredData[0])) {
+          const safeQuote = processSafeQuote(featuredData[0]);
+          setQuote(safeQuote);
           
-          if (processedQuote.id) {
-            trackQuoteView(processedQuote.id);
+          if (safeQuote.id) {
+            trackQuoteView(safeQuote.id);
           }
         } else {
           // Get a random popular quote (with more likes)
@@ -74,19 +50,19 @@ export function useQuoteOfTheDay() {
             .order('likes', { ascending: false })
             .limit(10);
             
-          // Process popular quotes without complex type assertions
+          // Process popular quotes
           const popularQuotes = popularData || [];
           
           if (popularQuotes.length > 0) {
             // Find the first valid quote from the top 10 most liked
-            const validQuote = popularQuotes.find(isValidQuote);
+            const validQuote = popularQuotes.find(isQuoteDataValid);
             
             if (validQuote) {
-              const processedQuote = createSafeQuote(validQuote);
-              setQuote(processedQuote);
+              const safeQuote = processSafeQuote(validQuote);
+              setQuote(safeQuote);
               
-              if (processedQuote.id) {
-                trackQuoteView(processedQuote.id);
+              if (safeQuote.id) {
+                trackQuoteView(safeQuote.id);
               }
             } else {
               // Get any random quote as fallback
@@ -96,15 +72,15 @@ export function useQuoteOfTheDay() {
                 .limit(1)
                 .order('created_at', { ascending: false });
                 
-              // Process random quote without complex type assertions
+              // Process random quote
               const randomQuote = randomData && randomData.length > 0 ? randomData[0] : null;
               
-              if (randomQuote && isValidQuote(randomQuote)) {
-                const processedQuote = createSafeQuote(randomQuote);
-                setQuote(processedQuote);
+              if (randomQuote && isQuoteDataValid(randomQuote)) {
+                const safeQuote = processSafeQuote(randomQuote);
+                setQuote(safeQuote);
                 
-                if (processedQuote.id) {
-                  trackQuoteView(processedQuote.id);
+                if (safeQuote.id) {
+                  trackQuoteView(safeQuote.id);
                 }
               }
             }
@@ -126,39 +102,39 @@ export function useQuoteOfTheDay() {
   };
 }
 
-// Helper function to validate quotes
-export function isValidQuote(quote: any): boolean {
-  return quote && 
-    typeof quote.id === 'string' && 
-    typeof quote.text === 'string' && 
-    typeof quote.author === 'string';
+// Simple validation function without complex types
+function isQuoteDataValid(quoteData: any): boolean {
+  return quoteData && 
+    typeof quoteData.id === 'string' && 
+    typeof quoteData.text === 'string' && 
+    typeof quoteData.author === 'string';
 }
 
-// Create a safe quote object without deep type inference issues
-export function createSafeQuote(rawQuote: any): QuoteWithUser {
-  // Explicitly create a new object with typed properties to avoid deep type inference
+// Process raw data into a safe QuoteWithUser object
+function processSafeQuote(rawData: any): QuoteWithUser {
+  // Create a new object with explicit types to avoid deep inference issues
   const safeQuote: QuoteWithUser = {
-    id: typeof rawQuote.id === 'string' ? rawQuote.id : '',
-    text: typeof rawQuote.text === 'string' ? rawQuote.text : '',
-    author: typeof rawQuote.author === 'string' ? rawQuote.author : '',
-    source: rawQuote.source || null,
-    tags: Array.isArray(rawQuote.tags) ? rawQuote.tags : [],
-    likes: typeof rawQuote.likes === 'number' ? rawQuote.likes : 0,
-    comments: typeof rawQuote.comments === 'number' ? rawQuote.comments : 0,
-    bookmarks: typeof rawQuote.bookmarks === 'number' ? rawQuote.bookmarks : 0,
-    created_at: typeof rawQuote.created_at === 'string' ? rawQuote.created_at : new Date().toISOString(),
-    user_id: typeof rawQuote.user_id === 'string' ? rawQuote.user_id : '',
+    id: typeof rawData.id === 'string' ? rawData.id : '',
+    text: typeof rawData.text === 'string' ? rawData.text : '',
+    author: typeof rawData.author === 'string' ? rawData.author : '',
+    source: rawData.source || null,
+    tags: Array.isArray(rawData.tags) ? rawData.tags : [],
+    likes: typeof rawData.likes === 'number' ? rawData.likes : 0,
+    comments: typeof rawData.comments === 'number' ? rawData.comments : 0,
+    bookmarks: typeof rawData.bookmarks === 'number' ? rawData.bookmarks : 0,
+    created_at: typeof rawData.created_at === 'string' ? rawData.created_at : new Date().toISOString(),
+    user_id: typeof rawData.user_id === 'string' ? rawData.user_id : '',
     user: DEFAULT_USER // Set default user first
   };
   
   // Handle user data separately to avoid deep type inference issues
-  if (rawQuote.user && typeof rawQuote.user === 'object') {
+  if (rawData.user && typeof rawData.user === 'object') {
     safeQuote.user = {
-      id: typeof rawQuote.user.id === 'string' ? rawQuote.user.id : '',
-      username: typeof rawQuote.user.username === 'string' ? rawQuote.user.username : 'unknown',
-      name: typeof rawQuote.user.name === 'string' ? rawQuote.user.name : 'Unknown User',
-      avatar_url: rawQuote.user.avatar_url || null,
-      status: typeof rawQuote.user.status === 'string' ? rawQuote.user.status : 'offline'
+      id: typeof rawData.user.id === 'string' ? rawData.user.id : '',
+      username: typeof rawData.user.username === 'string' ? rawData.user.username : 'unknown',
+      name: typeof rawData.user.name === 'string' ? rawData.user.name : 'Unknown User',
+      avatar_url: rawData.user.avatar_url || null,
+      status: typeof rawData.user.status === 'string' ? rawData.user.status : 'offline'
     };
   }
   
