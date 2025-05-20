@@ -134,34 +134,33 @@ export function isValidQuote(quote: any): boolean {
 
 // Process quote and ensure it has valid user data
 export function processQuote(quote: any): QuoteWithUser {
-  // Create a simple object first - avoid deep cloning which can cause type issues
-  const safeQuote = {
-    id: quote.id,
-    text: quote.text,
-    author: quote.author,
+  // Create a new object with explicit properties to avoid deep type inference issues
+  const safeQuote: QuoteWithUser = {
+    id: quote.id || '',
+    text: quote.text || '',
+    author: quote.author || '',
     source: quote.source || null,
-    tags: quote.tags || [],
-    likes: quote.likes || 0,
-    comments: quote.comments || 0,
-    bookmarks: quote.bookmarks || 0,
+    tags: Array.isArray(quote.tags) ? quote.tags : [],
+    likes: typeof quote.likes === 'number' ? quote.likes : 0,
+    comments: typeof quote.comments === 'number' ? quote.comments : 0,
+    bookmarks: typeof quote.bookmarks === 'number' ? quote.bookmarks : 0,
     created_at: quote.created_at || new Date().toISOString(),
-    user_id: quote.user_id || ''
-  } as QuoteWithUser;
+    user_id: quote.user_id || '',
+    // Use type assertion to avoid excessive type checking
+    user: DEFAULT_USER
+  };
   
-  // Handle user separately to avoid deep nested properties
+  // Handle user separately as a simple assignment to avoid deep type inference
   if (quote.user && 
       typeof quote.user === 'object' && 
-      typeof quote.user.username === 'string' && 
-      typeof quote.user.name === 'string') {
+      typeof quote.user.username === 'string') {
     safeQuote.user = {
       id: quote.user.id || '',
       username: quote.user.username,
-      name: quote.user.name,
+      name: quote.user.name || 'Unknown User',
       avatar_url: quote.user.avatar_url || null,
       status: quote.user.status || 'offline'
     };
-  } else {
-    safeQuote.user = DEFAULT_USER;
   }
   
   return safeQuote;
