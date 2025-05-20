@@ -434,7 +434,7 @@ export function QuoteDetail() {
           <div className="flex items-center mt-6 pt-4 border-t">
             <Avatar className="h-10 w-10">
               <AvatarImage src={quote?.user?.avatar_url || undefined} alt={quote?.user?.name || 'User'} />
-              <AvatarFallback>{quote?.user?.name?.charAt(0) || 'U'}</AvatarFallback>
+              <AvatarFallback>{(quote?.user?.name?.charAt(0) || 'U')}</AvatarFallback>
             </Avatar>
             <div className="ml-3">
               <p className="text-sm font-medium">{quote?.user?.name || 'Unknown User'}</p>
