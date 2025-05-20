@@ -133,7 +133,9 @@ const Research = () => {
         description: "Getting the latest research papers...",
       });
       
-      const { data, error } = await supabase.functions.invoke('fetch-research');
+      const { data, error } = await supabase.functions.invoke('fetch-research', {
+        body: { force_sample: true }
+      });
       
       if (error) {
         throw error;
@@ -211,7 +213,7 @@ const Research = () => {
               </Button>
             )}
             
-            {/* Show this button to everyone for now */}
+            {/* Show this button to everyone */}
             <Button 
               variant="secondary"
               size="sm"

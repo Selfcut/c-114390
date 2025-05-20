@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { X, Send } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
-import { createQuoteSubmission, QuoteSubmission } from "@/lib/quotes-service";
+import { createQuote, QuoteSubmission } from "@/lib/quotes";
 import { QuoteForm } from "@/components/quotes/QuoteForm";
 
 interface QuoteSubmissionModalProps {
@@ -38,8 +37,8 @@ export const QuoteSubmissionModal = ({
     try {
       setIsSubmitting(true);
       
-      // Create the quote using the renamed service function
-      const success = await createQuoteSubmission(quoteSubmission);
+      // Create the quote using the corrected service function
+      const success = await createQuote(quoteSubmission);
       
       if (success) {
         // Notify parent component

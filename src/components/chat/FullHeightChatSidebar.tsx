@@ -22,10 +22,12 @@ export const FullHeightChatSidebar = () => {
 
   // Update CSS variable for chat sidebar width when open/closed
   React.useEffect(() => {
-    document.documentElement.style.setProperty(
-      '--content-margin-right', 
-      isOpen ? 'var(--chat-sidebar-width)' : '0'
-    );
+    if (isOpen) {
+      document.documentElement.style.setProperty('--content-margin-right', 'var(--chat-sidebar-width)');
+    } else {
+      document.documentElement.style.setProperty('--content-margin-right', '0');
+    }
+    
     return () => {
       document.documentElement.style.setProperty('--content-margin-right', '0');
     };

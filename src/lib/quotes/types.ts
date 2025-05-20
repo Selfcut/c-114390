@@ -1,80 +1,34 @@
 
-export interface QuoteWithUser {
-  id: string;
+// Define the base QuoteSubmission type
+export interface QuoteSubmission {
   text: string;
   author: string;
-  source?: string | null;
+  source?: string;
+  category: string;
   tags?: string[];
+}
+
+// Define the full Quote type that extends QuoteSubmission with server-generated fields
+export interface Quote extends QuoteSubmission {
+  id: string;
+  user_id: string;
   likes?: number;
   comments?: number;
   bookmarks?: number;
   created_at: string;
   updated_at?: string;
-  user_id: string;
-  category?: string;
-  featured_date?: string | null;
-  user: {
-    id: string;
-    username: string;
-    name: string;
-    avatar_url: string | null;
-    status: string;
-  } | null;
+  featured_date?: string;
 }
 
-export interface QuoteComment {
-  id: string;
-  quote_id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  user: {
-    id: string;
-    username: string;
-    name: string;
-    avatar_url: string | null;
-    status: string;
-  } | null;
-}
+// Define the filter types for fetching quotes
+export type QuoteSortOption = 'newest' | 'oldest' | 'popular' | 'featured';
 
-export type QuoteSubmission = {
-  text: string;
-  author: string;
-  source?: string;
-  category?: string;
-  tags?: string[];
-};
-
-export type QuoteSortOption = 'newest' | 'oldest' | 'most_liked' | 'most_bookmarked';
-
-export type QuoteFilterOptions = {
-  searchTerm?: string;
+export interface QuotesFilter {
+  page?: number;
+  pageSize?: number;
+  sortBy?: QuoteSortOption;
   tag?: string;
-  limit?: number;
-  offset?: number;
-  sortColumn?: string;
-  sortAscending?: boolean;
-};
-
-export interface PaginationResult<T> {
-  data: T[];
-  totalCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface EditQuoteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  quote: QuoteWithUser;
-  onQuoteUpdated: (updatedQuote: QuoteWithUser) => void;
-}
-
-export interface DeleteQuoteDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  quoteId: string;
-  onQuoteDeleted: () => void;
+  search?: string;
+  authorId?: string;
+  category?: string;
 }
