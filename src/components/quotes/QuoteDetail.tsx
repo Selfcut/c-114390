@@ -1,427 +1,495 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Bookmark, Share, Edit, Trash2, AlertTriangle } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
-import { fetchQuoteById, likeQuote, bookmarkQuote, checkUserLikedQuote, checkUserBookmarkedQuote } from '@/lib/quotes';
-import { QuoteWithUser } from '@/lib/quotes/types';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
+import { HeartIcon, BookmarkIcon, Share2Icon, MessageCircleIcon } from 'lucide-react';
+import { QuoteWithUser } from '@/lib/quotes/types';
+import { ShareQuoteDialog } from './ShareQuoteDialog';
+import { QuoteComments } from './QuoteComments';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { UserHoverCard } from '@/components/UserHoverCard';
-import { useRealtimeQuotes } from '@/hooks/useRealtimeQuotes';
+import { useAuth } from '@/lib/auth';
 import { EditQuoteModal } from './EditQuoteModal';
 import { DeleteQuoteDialog } from './DeleteQuoteDialog';
-import { QuoteComments } from './QuoteComments';
-import { ShareQuoteDialog } from './ShareQuoteDialog';
-import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
+import { PageLayout } from '@/components/layouts/PageLayout';
 
-export const QuoteDetail = () => {
+export function QuoteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
-  const { trackQuoteView, trackQuoteInteraction } = useQuoteAnalytics();
-
+  const { user } = useAuth();
+  
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [bookmarkCount, setBookmarkCount] = useState(0);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('quote');
+  
   // Fetch quote details
-  const fetchQuoteData = useCallback(async () => {
-    setIsLoading(true);
-    if (!id) return;
-
-    try {
-      const quoteData = await fetchQuoteById(id);
-      if (quoteData) {
-        setQuote(quoteData);
-        setLikeCount(quoteData.likes || 0);
-        setBookmarkCount(quoteData.bookmarks || 0);
-
-        // Track quote view
-        trackQuoteView();
-
-        // Check if user liked or bookmarked this quote
-        if (isAuthenticated) {
-          const [liked, bookmarked] = await Promise.all([
-            checkUserLikedQuote(id),
-            checkUserBookmarkedQuote(id)
-          ]);
-          setIsLiked(liked);
-          setIsBookmarked(bookmarked);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading quote:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load the quote',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, isAuthenticated, toast, trackQuoteView]);
-
   useEffect(() => {
-    fetchQuoteData();
-  }, [fetchQuoteData]);
-
-  // Subscribe to real-time updates
-  const handleQuoteUpdate = (updatedQuote: QuoteWithUser) => {
-    setQuote(prev => ({ ...prev, ...updatedQuote } as QuoteWithUser));
-    setLikeCount(updatedQuote.likes || 0);
-    setBookmarkCount(updatedQuote.bookmarks || 0);
-  };
-
-  const handleInteractionUpdate = (type: 'like' | 'bookmark', quoteId: string, isActive: boolean) => {
-    if (id === quoteId) {
-      if (type === 'like') {
-        setIsLiked(isActive);
-      } else if (type === 'bookmark') {
-        setIsBookmarked(isActive);
+    if (!id) return;
+    
+    const fetchQuote = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch quote with user data
+        const { data, error } = await supabase
+          .from('quotes')
+          .select(`
+            *,
+            user:profiles(id, username, name, avatar_url, status)
+          `)
+          .eq('id', id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching quote:', error);
+          toast({
+            title: 'Error',
+            description: 'Quote not found',
+            variant: 'destructive',
+          });
+          navigate('/quotes');
+          return;
+        }
+        
+        // Format the quote data
+        const userObj = data.user && typeof data.user === 'object' && !data.user.error
+          ? data.user
+          : {
+              id: 'unknown',
+              username: 'unknown',
+              name: 'Unknown User',
+              avatar_url: '',
+              status: 'offline'
+            };
+        
+        const formattedQuote: QuoteWithUser = {
+          id: data.id,
+          text: data.text,
+          author: data.author,
+          source: data.source,
+          tags: data.tags || [],
+          likes: data.likes || 0,
+          comments: data.comments || 0,
+          bookmarks: data.bookmarks || 0,
+          created_at: data.created_at,
+          user_id: data.user_id,
+          category: data.category,
+          featured_date: data.featured_date,
+          user: userObj
+        };
+        
+        setQuote(formattedQuote);
+        
+        // Check if user has liked or bookmarked this quote
+        if (user) {
+          checkUserInteractions(id);
+        }
+        
+      } catch (err) {
+        console.error('Error:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to load quote',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
       }
+    };
+    
+    fetchQuote();
+  }, [id, navigate, toast, user]);
+  
+  // Check if user has liked or bookmarked this quote
+  const checkUserInteractions = async (quoteId: string) => {
+    if (!user) return;
+    
+    try {
+      // Check likes
+      const { data: likeData } = await supabase
+        .from('quote_likes')
+        .select()
+        .eq('quote_id', quoteId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setIsLiked(!!likeData);
+      
+      // Check bookmarks
+      const { data: bookmarkData } = await supabase
+        .from('quote_bookmarks')
+        .select()
+        .eq('quote_id', quoteId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setIsBookmarked(!!bookmarkData);
+      
+    } catch (err) {
+      console.error('Error checking interactions:', err);
     }
   };
-
-  useRealtimeQuotes({
-    quoteId: id,
-    onQuoteUpdate: handleQuoteUpdate,
-    onInteractionUpdate: handleInteractionUpdate
-  });
-
-  // Handle like action
+  
+  // Like a quote
   const handleLike = async () => {
-    if (!id || !isAuthenticated || !user?.id) {
+    if (!user) {
       toast({
         title: 'Authentication Required',
         description: 'Please log in to like quotes',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
-
+    
+    if (!quote) return;
+    
     try {
-      const result = await likeQuote(id, user.id);
-      setIsLiked(result);
-      setLikeCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
-      
-      // Track interaction
-      trackQuoteInteraction(id, 'like', { added: result });
-      
-      toast({
-        title: result ? 'Quote Liked' : 'Like Removed',
-        description: result ? 'You have liked this quote' : 'You have removed your like from this quote'
-      });
+      if (isLiked) {
+        // Unlike the quote
+        await supabase
+          .from('quote_likes')
+          .delete()
+          .eq('quote_id', quote.id)
+          .eq('user_id', user.id);
+        
+        // Update quote counter
+        await supabase.rpc('decrement_counter', {
+          row_id: quote.id,
+          column_name: 'likes',
+          table_name: 'quotes'
+        });
+        
+        setIsLiked(false);
+        setQuote(prev => prev ? { 
+          ...prev, 
+          likes: Math.max(0, (prev.likes || 0) - 1) 
+        } : null);
+        
+      } else {
+        // Like the quote
+        await supabase
+          .from('quote_likes')
+          .insert({
+            quote_id: quote.id,
+            user_id: user.id
+          });
+        
+        // Update quote counter
+        await supabase.rpc('increment_counter', {
+          row_id: quote.id,
+          column_name: 'likes',
+          table_name: 'quotes'
+        });
+        
+        setIsLiked(true);
+        setQuote(prev => prev ? { 
+          ...prev, 
+          likes: (prev.likes || 0) + 1 
+        } : null);
+      }
     } catch (error) {
       console.error('Error liking quote:', error);
       toast({
         title: 'Error',
         description: 'Failed to update like status',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
-
-  // Handle bookmark action
+  
+  // Bookmark a quote
   const handleBookmark = async () => {
-    if (!id || !isAuthenticated || !user?.id) {
+    if (!user) {
       toast({
         title: 'Authentication Required',
         description: 'Please log in to bookmark quotes',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
-
+    
+    if (!quote) return;
+    
     try {
-      const result = await bookmarkQuote(id, user.id);
-      setIsBookmarked(result);
-      setBookmarkCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
-      
-      // Track interaction
-      trackQuoteInteraction(id, 'bookmark', { added: result });
-      
-      toast({
-        title: result ? 'Quote Bookmarked' : 'Bookmark Removed',
-        description: result ? 'This quote has been added to your bookmarks' : 'This quote has been removed from your bookmarks'
-      });
+      if (isBookmarked) {
+        // Remove bookmark
+        await supabase
+          .from('quote_bookmarks')
+          .delete()
+          .eq('quote_id', quote.id)
+          .eq('user_id', user.id);
+        
+        // Update quote counter
+        await supabase.rpc('decrement_counter', {
+          row_id: quote.id,
+          column_name: 'bookmarks',
+          table_name: 'quotes'
+        });
+        
+        setIsBookmarked(false);
+        setQuote(prev => prev ? { 
+          ...prev, 
+          bookmarks: Math.max(0, (prev.bookmarks || 0) - 1) 
+        } : null);
+        
+      } else {
+        // Add bookmark
+        await supabase
+          .from('quote_bookmarks')
+          .insert({
+            quote_id: quote.id,
+            user_id: user.id
+          });
+        
+        // Update quote counter
+        await supabase.rpc('increment_counter', {
+          row_id: quote.id,
+          column_name: 'bookmarks',
+          table_name: 'quotes'
+        });
+        
+        setIsBookmarked(true);
+        setQuote(prev => prev ? { 
+          ...prev, 
+          bookmarks: (prev.bookmarks || 0) + 1 
+        } : null);
+      }
     } catch (error) {
       console.error('Error bookmarking quote:', error);
       toast({
         title: 'Error',
         description: 'Failed to update bookmark status',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
-
-  // Handle share action
-  const handleShare = () => {
-    setIsShareDialogOpen(true);
-    trackQuoteInteraction(id!, 'share', { method: 'share_dialog' });
+  
+  // Function to handle quote updates from the edit modal
+  const handleQuoteUpdated = (updatedQuote: QuoteWithUser) => {
+    setQuote(updatedQuote);
+    setShowEditModal(false);
+    toast({
+      title: 'Success',
+      description: 'Quote updated successfully',
+    });
   };
   
-  const copyToClipboard = () => {
+  // Function to handle quote deletion
+  const handleQuoteDeleted = () => {
+    toast({
+      title: 'Success',
+      description: 'Quote deleted successfully',
+    });
+    navigate('/quotes');
+  };
+
+  // Function to update comment count
+  const updateQuoteCommentCount = (increment: boolean) => {
     if (!quote) return;
     
-    const textToCopy = `"${quote.text}" - ${quote.author}\n${window.location.href}`;
-    navigator.clipboard.writeText(textToCopy);
-    
-    toast({
-      title: 'Quote Copied',
-      description: 'The quote has been copied to your clipboard'
+    setQuote(prev => {
+      if (!prev) return null;
+      
+      const newCount = increment 
+        ? (prev.comments || 0) + 1 
+        : Math.max(0, (prev.comments || 0) - 1);
+        
+      return {
+        ...prev,
+        comments: newCount
+      };
     });
   };
-
-  // Check if the current user is the owner of the quote
-  const isOwner = quote && user && quote.user_id === user.id;
-
-  // Handle back navigation
-  const goBack = () => {
-    navigate('/quotes');
-  };
-
-  // Handle quote edit
-  const handleEditSuccess = () => {
-    setIsEditModalOpen(false);
-    fetchQuoteData();
-    toast({
-      title: 'Success',
-      description: 'Quote updated successfully'
-    });
-  };
-
-  // Handle quote deletion
-  const handleDeleteSuccess = () => {
-    toast({
-      title: 'Success',
-      description: 'Quote deleted successfully'
-    });
-    navigate('/quotes');
-  };
-
+  
   if (isLoading) {
     return (
-      <div className="container max-w-3xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <Button variant="ghost" size="sm" onClick={goBack} className="flex items-center gap-1">
-            <ArrowLeft size={16} />
-            Back to Quotes
-          </Button>
+      <PageLayout>
+        <div className="container mx-auto py-8 px-4 animate-pulse">
+          <Card className="p-6">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
+            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          </Card>
         </div>
-        
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <Skeleton className="h-20 w-full" />
-            <div className="flex items-center space-x-2">
-              <Skeleton className="h-12 w-12 rounded-full" />
-              <div>
-                <Skeleton className="h-4 w-40 mb-2" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Skeleton className="h-6 w-16 rounded-full" />
-              <Skeleton className="h-6 w-24 rounded-full" />
-              <Skeleton className="h-6 w-20 rounded-full" />
-            </div>
-          </CardContent>
-          <CardFooter className="border-t p-4 flex justify-between">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-28" />
-          </CardFooter>
-        </Card>
-      </div>
+      </PageLayout>
     );
   }
-
+  
   if (!quote) {
     return (
-      <div className="container max-w-3xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <Button variant="ghost" size="sm" onClick={goBack} className="flex items-center gap-1">
-            <ArrowLeft size={16} />
-            Back to Quotes
-          </Button>
+      <PageLayout>
+        <div className="container mx-auto py-8 px-4">
+          <Card className="p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4">Quote Not Found</h2>
+            <p className="mb-4">Sorry, the quote you're looking for doesn't exist or has been removed.</p>
+            <Button onClick={() => navigate('/quotes')}>Back to Quotes</Button>
+          </Card>
         </div>
-        
-        <Card className="border-destructive">
-          <CardContent className="p-6 flex flex-col items-center justify-center py-12 text-center">
-            <AlertTriangle size={48} className="text-destructive mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Quote Not Found</h2>
-            <p className="text-muted-foreground mb-6">The quote you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={goBack}>Return to Quotes</Button>
-          </CardContent>
-        </Card>
-      </div>
+      </PageLayout>
     );
   }
-
+  
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4 animate-fade-in">
-      <div className="mb-6">
-        <Button variant="ghost" size="sm" onClick={goBack} className="flex items-center gap-1">
-          <ArrowLeft size={16} />
-          Back to Quotes
-        </Button>
-      </div>
-      
-      <Card className="overflow-hidden">
-        <CardContent className="p-6">
-          {/* Quote text */}
-          <div className="relative mb-8 pt-6">
-            <span className="absolute top-0 left-0 text-5xl text-primary/20 font-serif">"</span>
-            <p className="text-2xl font-serif italic leading-relaxed">{quote.text}</p>
-            <span className="absolute bottom-0 right-0 text-5xl text-primary/20 font-serif">"</span>
-          </div>
-          
-          {/* Author info */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
+    <PageLayout>
+      <div className="container mx-auto py-8 px-4">
+        <Card className="p-6 mb-6">
+          {/* Quote Content */}
+          <div className="mb-6">
+            <blockquote className="text-2xl font-serif italic mb-4">
+              "{quote.text}"
+            </blockquote>
+            
+            <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-xl font-medium">{quote.author}</h3>
-                {quote.source && <p className="text-sm text-muted-foreground">{quote.source}</p>}
+                <p className="text-lg font-semibold">— {quote.author}</p>
+                {quote.source && (
+                  <p className="text-sm text-muted-foreground">from {quote.source}</p>
+                )}
               </div>
+              
+              {user && quote.user_id === user.id && (
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
+                    Edit
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+                    Delete
+                  </Button>
+                </div>
+              )}
             </div>
-            <Badge variant="outline" className="bg-primary/10 text-primary">
-              {quote.category || 'Other'}
-            </Badge>
           </div>
           
-          {/* Tags */}
-          {quote.tags && quote.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {quote.tags.map((tag, index) => (
-                <Badge key={index} variant="secondary">
-                  #{tag}
+          {/* Actions & Stats */}
+          <div className="flex flex-wrap justify-between items-center border-t pt-4 mt-4">
+            <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+              <Button 
+                variant={isLiked ? "default" : "outline"} 
+                size="sm"
+                onClick={handleLike}
+                className="flex items-center space-x-1"
+              >
+                <HeartIcon size={16} className={isLiked ? "fill-white" : ""} />
+                <span>{quote.likes || 0}</span>
+              </Button>
+              
+              <Button 
+                variant={isBookmarked ? "default" : "outline"} 
+                size="sm"
+                onClick={handleBookmark}
+                className="flex items-center space-x-1"
+              >
+                <BookmarkIcon size={16} className={isBookmarked ? "fill-white" : ""} />
+                <span>{quote.bookmarks || 0}</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowShareDialog(true)}
+                className="flex items-center space-x-1"
+              >
+                <Share2Icon size={16} />
+                <span>Share</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setActiveTab('comments')}
+                className="flex items-center space-x-1"
+              >
+                <MessageCircleIcon size={16} />
+                <span>{quote.comments || 0}</span>
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {quote.tags && quote.tags.map(tag => (
+                <Badge key={tag} variant="secondary" className="mr-1">
+                  {tag}
                 </Badge>
               ))}
+              {quote.category && (
+                <Badge variant="outline" className="bg-primary/10 text-primary">
+                  {quote.category}
+                </Badge>
+              )}
             </div>
-          )}
+          </div>
           
-          {/* User info */}
-          {quote.user && (
-            <div className="flex items-center border-t pt-4 mt-6">
-              <Avatar className="h-10 w-10 mr-3">
-                <AvatarImage src={quote.user.avatar_url || undefined} alt={quote.user.name} />
-                <AvatarFallback>{quote.user.name?.charAt(0) || '?'}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium">
-                  <UserHoverCard
-                    username={quote.user.username}
-                    displayName={quote.user.name}
-                    avatar={quote.user.avatar_url || ""}
-                    isOnline={quote.user.status === "online"}
-                  >
-                    <span className="font-medium cursor-pointer hover:text-foreground">
-                      {quote.user.name}
-                    </span>
-                  </UserHoverCard>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(quote.created_at).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
+          {/* User Info */}
+          <div className="flex items-center mt-6 pt-4 border-t">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={quote.user?.avatar_url || undefined} alt={quote.user?.name || 'User'} />
+              <AvatarFallback>{quote.user?.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{quote.user?.name || 'Unknown User'}</p>
+              <p className="text-xs text-muted-foreground">
+                Shared {formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
+              </p>
             </div>
-          )}
-        </CardContent>
+          </div>
+        </Card>
         
-        <CardFooter className="border-t p-4 flex justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className={`transition-all ${isLiked ? 'text-red-500' : ''}`}
-              onClick={handleLike}
-            >
-              <Heart size={16} className={`mr-1 transition-transform ${isLiked ? 'fill-red-500 scale-110' : ''}`} />
-              {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`transition-all ${isBookmarked ? 'text-yellow-500' : ''}`}
-              onClick={handleBookmark}
-            >
-              <Bookmark size={16} className={`mr-1 transition-transform ${isBookmarked ? 'fill-yellow-500 scale-110' : ''}`} />
-              {bookmarkCount} {bookmarkCount === 1 ? 'Save' : 'Saves'}
-            </Button>
-          </div>
+        {/* Tabs for Comments */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="quote">Quote</TabsTrigger>
+            <TabsTrigger value="comments">Comments ({quote.comments || 0})</TabsTrigger>
+          </TabsList>
           
-          <div className="flex items-center gap-2">
-            {isOwner && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsEditModalOpen(true)}
-                >
-                  <Edit size={16} className="mr-1" /> Edit
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-destructive hover:bg-destructive/10"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
-                  <Trash2 size={16} className="mr-1" /> Delete
-                </Button>
-              </>
-            )}
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share size={16} className="mr-1" /> Share
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-
-      {/* Comments Section */}
-      {id && <QuoteComments quoteId={id} />}
-
-      {/* Edit Modal */}
-      {isEditModalOpen && quote && (
-        <EditQuoteModal
-          quote={quote}
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {isDeleteDialogOpen && id && (
-        <DeleteQuoteDialog
-          quoteId={id}
-          isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          onSuccess={handleDeleteSuccess}
-        />
-      )}
-
-      {/* Share Dialog */}
-      {isShareDialogOpen && quote && (
+          <TabsContent value="quote">
+            {/* Additional quote context could go here */}
+          </TabsContent>
+          
+          <TabsContent value="comments">
+            <QuoteComments 
+              quoteId={quote.id} 
+              updateQuoteCommentCount={updateQuoteCommentCount}
+            />
+          </TabsContent>
+        </Tabs>
+        
+        {/* Share Dialog */}
         <ShareQuoteDialog
+          isOpen={showShareDialog}
+          onClose={() => setShowShareDialog(false)}
           quote={quote}
-          isOpen={isShareDialogOpen}
-          onClose={() => setIsShareDialogOpen(false)}
         />
-      )}
-    </div>
+        
+        {/* Edit Modal */}
+        {showEditModal && (
+          <EditQuoteModal 
+            isOpen={showEditModal} 
+            onClose={() => setShowEditModal(false)} 
+            quote={quote}
+            onQuoteUpdated={handleQuoteUpdated}
+          />
+        )}
+        
+        {/* Delete Dialog */}
+        {showDeleteDialog && (
+          <DeleteQuoteDialog
+            isOpen={showDeleteDialog}
+            onClose={() => setShowDeleteDialog(false)}
+            quoteId={quote.id}
+            onQuoteDeleted={handleQuoteDeleted}
+          />
+        )}
+      </div>
+    </PageLayout>
   );
-};
+}

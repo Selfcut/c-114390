@@ -1,3 +1,4 @@
+
 export interface QuoteWithUser {
   id: string;
   text: string;
@@ -59,6 +60,8 @@ export type QuoteSubmission = {
   category?: string;
   tags?: string[];
 };
+
+export type QuoteSortOption = 'newest' | 'oldest' | 'most_liked' | 'most_bookmarked';
 
 export type QuoteFilterOptions = {
   searchTerm?: string;

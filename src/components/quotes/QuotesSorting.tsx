@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { QuoteSortOption } from '@/hooks/useQuotes';
+import { QuoteSortOption } from '@/lib/quotes/types';
 
 interface QuotesSortingProps {
   value?: QuoteSortOption;

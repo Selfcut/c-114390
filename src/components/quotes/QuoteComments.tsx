@@ -10,9 +10,10 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface QuoteCommentsProps {
   quoteId: string;
+  updateQuoteCommentCount: (increment: boolean) => void;
 }
 
-export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
+export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuoteCommentCount }) => {
   const [comments, setComments] = useState<QuoteComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +43,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
       }
 
       // Transform the data to include user information correctly
-      const formattedComments = data.map(comment => {
+      const formattedComments: QuoteComment[] = data.map(comment => {
         // Check if profiles is a valid object and not an error
         const userProfile = typeof comment.profiles === 'object' && comment.profiles !== null 
           ? comment.profiles 
@@ -50,7 +51,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
               id: 'unknown',
               name: 'Unknown',
               username: 'unknown',
-              avatar_url: '',
+              avatar_url: null,
               status: 'offline'
             };
         
@@ -65,7 +66,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
             id: comment.user_id,
             name: userProfile.name || 'Unknown',
             username: userProfile.username || 'unknown',
-            avatar_url: userProfile.avatar_url || '',
+            avatar_url: userProfile.avatar_url || null,
             status: userProfile.status || 'offline'
           }
         };
@@ -113,7 +114,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
             id: user.id,
             name: user.name,
             username: user.username,
-            avatar_url: user.avatar_url || '',
+            avatar_url: user.avatar_url || null,
             status: user.status || 'online'
           }
         };
@@ -121,16 +122,15 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
         // Add to comment list
         setComments(prevComments => [...prevComments, newComment]);
         
-        // Update quote comment count using the increment_counter function
-        try {
-          await supabase.rpc('increment_counter', {
-            row_id: quoteId,
-            column_name: 'comments',
-            table_name: 'quotes'
-          });
-        } catch (error) {
-          console.error('Error updating comment count:', error);
-        }
+        // Update quote comment count
+        await supabase.rpc('increment_counter', {
+          row_id: quoteId,
+          column_name: 'comments',
+          table_name: 'quotes'
+        });
+
+        // Call the callback to update the comment count in the parent component
+        updateQuoteCommentCount(true);
         
         // Clear input
         setNewComment('');
@@ -152,7 +152,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
           {comments.map(comment => (
             <div key={comment.id} className="flex items-start space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.user?.avatar_url} alt={comment.user?.name} />
+                <AvatarImage src={comment.user?.avatar_url || undefined} alt={comment.user?.name} />
                 <AvatarFallback>{comment.user?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="space-y-1">
@@ -164,6 +164,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId }) => {
               </div>
             </div>
           ))}
+          {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet</p>}
         </div>
       )}
       <div className="flex space-x-2">

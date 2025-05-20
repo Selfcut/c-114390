@@ -1,34 +1,90 @@
-// This is a partial update focusing only on fixing the error
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { QuoteWithUser, QuoteFilterOptions, PaginationResult } from '@/lib/quotes/types';
+import { QuoteWithUser, QuoteFilterOptions, PaginationResult, QuoteSortOption } from '@/lib/quotes/types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface UseQuotesResult {
   quotes: QuoteWithUser[];
+  allTags: string[];
   isLoading: boolean;
   error: string | null;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  filterTag: string | null;
+  setFilterTag: (tag: string | null) => void;
+  sortOption: QuoteSortOption;
+  setSortOption: (option: QuoteSortOption) => void;
+  userLikes: Record<string, boolean>;
+  userBookmarks: Record<string, boolean>;
+  handleLike: (quoteId: string) => Promise<void>;
+  handleBookmark: (quoteId: string) => Promise<void>;
   fetchQuotes: (options?: QuoteFilterOptions) => Promise<void>;
+  refreshQuotes: () => Promise<void>;
+  resetFilters: () => void;
   createQuote: (quote: Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>) => Promise<QuoteWithUser | null>;
   updateQuote: (id: string, updates: Partial<Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>>) => Promise<QuoteWithUser | null>;
   deleteQuote: (id: string) => Promise<boolean>;
-  likeQuote: (id: string) => Promise<boolean>;
-  bookmarkQuote: (id: string) => Promise<boolean>;
   checkUserLikedQuote: (id: string) => Promise<boolean>;
   checkUserBookmarkedQuote: (id: string) => Promise<boolean>;
   fetchQuotesWithFilters: (options: QuoteFilterOptions) => Promise<PaginationResult<QuoteWithUser>>;
   trackQuoteView: () => void;
+  currentPage: number;
+  totalPages: number;
+  handlePageChange: (page: number) => void;
 }
 
 export const useQuotes = (): UseQuotesResult => {
   const [quotes, setQuotes] = useState<QuoteWithUser[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<QuoteSortOption>('newest');
+  const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
+  const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Fetch all available tags
+  const fetchAllTags = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('tags');
+      
+      if (error) {
+        console.error('Error fetching tags:', error);
+        return;
+      }
+      
+      // Extract unique tags
+      const uniqueTags = new Set<string>();
+      data.forEach(quote => {
+        if (quote.tags && Array.isArray(quote.tags)) {
+          quote.tags.forEach(tag => uniqueTags.add(tag));
+        }
+      });
+      
+      setAllTags(Array.from(uniqueTags));
+    } catch (err) {
+      console.error('Error fetching tags:', err);
+    }
+  }, []);
+
+  // Handle user interaction states
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchUserInteractions();
+    }
+  }, [isAuthenticated, user]);
 
   // Fetch quotes
   const fetchQuotes = useCallback(async (options: QuoteFilterOptions = {}) => {
@@ -40,9 +96,8 @@ export const useQuotes = (): UseQuotesResult => {
         .from('quotes')
         .select(`
           *,
-          user:user_id (id, name, username, avatar_url, status)
-        `)
-        .order('created_at', { ascending: false });
+          user:profiles(id, name, username, avatar_url, status)
+        `);
 
       if (options.limit) {
         query = query.limit(options.limit);
@@ -58,27 +113,34 @@ export const useQuotes = (): UseQuotesResult => {
         throw new Error(error.message);
       }
 
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => ({
-        id: quote.id,
-        text: quote.text,
-        author: quote.author,
-        source: quote.source || null,
-        tags: quote.tags || [],
-        likes: quote.likes || 0,
-        comments: quote.comments || 0,
-        bookmarks: quote.bookmarks || 0,
-        created_at: quote.created_at,
-        user_id: quote.user_id,
-        category: quote.category || 'Other',
-        featured_date: quote.featured_date || null,
-        user: quote.user || {
-          id: 'unknown',
-          username: 'unknown',
-          name: 'Unknown User',
-          avatar_url: '',
-          status: 'offline'
-        }
-      }));
+      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
+        // Handle potentially missing user data
+        const userObj = quote.user && typeof quote.user === 'object' && !quote.user.error
+          ? quote.user
+          : { 
+              id: 'unknown',
+              username: 'unknown',
+              name: 'Unknown User',
+              avatar_url: null,
+              status: 'offline'
+            };
+
+        return {
+          id: quote.id,
+          text: quote.text,
+          author: quote.author,
+          source: quote.source || null,
+          tags: quote.tags || [],
+          likes: quote.likes || 0,
+          comments: quote.comments || 0,
+          bookmarks: quote.bookmarks || 0,
+          created_at: quote.created_at,
+          user_id: quote.user_id,
+          category: quote.category || 'Other',
+          featured_date: quote.featured_date || null,
+          user: userObj
+        };
+      });
 
       setQuotes(formattedQuotes);
     } catch (err: any) {
@@ -103,7 +165,7 @@ export const useQuotes = (): UseQuotesResult => {
         .from('quotes')
         .select(`
           *,
-          user:user_id (id, name, username, avatar_url, status)
+          profiles:profiles(id, name, username, avatar_url, status)
         `, { count: 'exact' });
 
       if (options.searchTerm) {
@@ -129,31 +191,47 @@ export const useQuotes = (): UseQuotesResult => {
         throw new Error(error.message);
       }
 
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => ({
-        id: quote.id,
-        text: quote.text,
-        author: quote.author,
-        source: quote.source || null,
-        tags: quote.tags || [],
-        likes: quote.likes || 0,
-        comments: quote.comments || 0,
-        bookmarks: quote.bookmarks || 0,
-        created_at: quote.created_at,
-        user_id: quote.user_id,
-        category: quote.category || 'Other',
-        featured_date: quote.featured_date || null,
-        user: quote.user || {
-          id: 'unknown',
-          username: 'unknown',
-          name: 'Unknown User',
-          avatar_url: '',
-          status: 'offline'
-        }
-      }));
+      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
+        // Handle potentially missing user data by explicitly checking for valid user object
+        const userObj = quote.profiles && typeof quote.profiles === 'object' && !quote.profiles.error
+          ? {
+              id: quote.profiles.id,
+              username: quote.profiles.username,
+              name: quote.profiles.name,
+              avatar_url: quote.profiles.avatar_url,
+              status: quote.profiles.status
+            }
+          : {
+              id: 'unknown',
+              username: 'unknown',
+              name: 'Unknown User',
+              avatar_url: null,
+              status: 'offline'
+            };
+
+        return {
+          id: quote.id,
+          text: quote.text,
+          author: quote.author,
+          source: quote.source || null,
+          tags: quote.tags || [],
+          likes: quote.likes || 0,
+          comments: quote.comments || 0,
+          bookmarks: quote.bookmarks || 0,
+          created_at: quote.created_at,
+          user_id: quote.user_id,
+          category: quote.category || 'Other',
+          featured_date: quote.featured_date || null,
+          user: userObj
+        };
+      });
 
       const totalCount = count || 0;
       const totalPages = Math.ceil(totalCount / limit);
       const page = Math.floor(offset / limit) + 1;
+
+      setCurrentPage(page);
+      setTotalPages(totalPages);
 
       return {
         data: formattedQuotes,
@@ -181,6 +259,60 @@ export const useQuotes = (): UseQuotesResult => {
     }
   }, [toast]);
 
+  // Refresh quotes with current filters
+  const refreshQuotes = useCallback(async () => {
+    const options: QuoteFilterOptions = {
+      searchTerm: searchQuery,
+      tag: filterTag || undefined,
+      limit: 10,
+      offset: (currentPage - 1) * 10
+    };
+    
+    // Map sort option to proper column and direction
+    switch (sortOption) {
+      case 'newest':
+        options.sortColumn = 'created_at';
+        options.sortAscending = false;
+        break;
+      case 'oldest':
+        options.sortColumn = 'created_at';
+        options.sortAscending = true;
+        break;
+      case 'most_liked':
+        options.sortColumn = 'likes';
+        options.sortAscending = false;
+        break;
+      case 'most_bookmarked':
+        options.sortColumn = 'bookmarks';
+        options.sortAscending = false;
+        break;
+    }
+
+    const result = await fetchQuotesWithFilters(options);
+    setQuotes(result.data);
+    
+    // Also refresh all tags for filters
+    fetchAllTags();
+    
+    // Refresh user interactions
+    if (isAuthenticated && user) {
+      fetchUserInteractions();
+    }
+  }, [
+    fetchQuotesWithFilters, 
+    searchQuery, 
+    filterTag, 
+    currentPage, 
+    sortOption, 
+    fetchAllTags, 
+    isAuthenticated, 
+    user
+  ]);
+
+  useEffect(() => {
+    refreshQuotes();
+  }, [refreshQuotes]);
+
   // Create quote
   const createQuote = useCallback(async (quote: Omit<QuoteWithUser, 'id' | 'created_at' | 'user' | 'user_id'>): Promise<QuoteWithUser | null> => {
     if (!isAuthenticated || !user) {
@@ -197,23 +329,42 @@ export const useQuotes = (): UseQuotesResult => {
     setError(null);
 
     try {
+      // Ensure category is not undefined
+      const quoteWithCategory = {
+        ...quote,
+        category: quote.category || 'Other',
+        user_id: user.id
+      };
+      
       const { data, error } = await supabase
         .from('quotes')
-        .insert([
-          {
-            ...quote,
-            user_id: user.id,
-          },
-        ])
+        .insert(quoteWithCategory)
         .select(`
           *,
-          user:user_id (id, name, username, avatar_url, status)
+          profiles:profiles(id, name, username, avatar_url, status)
         `)
         .single();
 
       if (error) {
         throw new Error(error.message);
       }
+
+      // Handle potentially missing user data
+      const userObj = data.profiles && typeof data.profiles === 'object' && !data.profiles.error
+        ? {
+            id: data.profiles.id,
+            username: data.profiles.username,
+            name: data.profiles.name,
+            avatar_url: data.profiles.avatar_url,
+            status: data.profiles.status
+          }
+        : {
+            id: 'unknown',
+            username: 'unknown',
+            name: 'Unknown User',
+            avatar_url: null,
+            status: 'offline'
+          };
 
       const formattedQuote: QuoteWithUser = {
         id: data.id,
@@ -228,13 +379,7 @@ export const useQuotes = (): UseQuotesResult => {
         user_id: data.user_id,
         category: data.category || 'Other',
         featured_date: data.featured_date || null,
-        user: data.user || {
-          id: 'unknown',
-          username: 'unknown',
-          name: 'Unknown User',
-          avatar_url: '',
-          status: 'offline'
-        }
+        user: userObj
       };
 
       toast({
@@ -268,13 +413,30 @@ export const useQuotes = (): UseQuotesResult => {
         .eq('id', id)
         .select(`
           *,
-          user:user_id (id, name, username, avatar_url, status)
+          profiles:profiles(id, name, username, avatar_url, status)
         `)
         .single();
 
       if (error) {
         throw new Error(error.message);
       }
+
+      // Handle potentially missing user data
+      const userObj = data.profiles && typeof data.profiles === 'object' && !data.profiles.error
+        ? {
+            id: data.profiles.id,
+            username: data.profiles.username,
+            name: data.profiles.name,
+            avatar_url: data.profiles.avatar_url,
+            status: data.profiles.status
+          }
+        : {
+            id: 'unknown',
+            username: 'unknown',
+            name: 'Unknown User',
+            avatar_url: null,
+            status: 'offline'
+          };
 
       const formattedQuote: QuoteWithUser = {
         id: data.id,
@@ -289,13 +451,7 @@ export const useQuotes = (): UseQuotesResult => {
         user_id: data.user_id,
         category: data.category || 'Other',
         featured_date: data.featured_date || null,
-        user: data.user || {
-          id: 'unknown',
-          username: 'unknown',
-          name: 'Unknown User',
-          avatar_url: '',
-          status: 'offline'
-        }
+        user: userObj
       };
 
       toast({
@@ -353,8 +509,44 @@ export const useQuotes = (): UseQuotesResult => {
     }
   }, [toast]);
 
+  // Fetch user likes and bookmarks
+  const fetchUserInteractions = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      // Fetch likes
+      const { data: likesData } = await supabase
+        .from('quote_likes')
+        .select('quote_id')
+        .eq('user_id', user.id);
+        
+      // Fetch bookmarks
+      const { data: bookmarksData } = await supabase
+        .from('quote_bookmarks')
+        .select('quote_id')
+        .eq('user_id', user.id);
+        
+      // Create maps for quick lookup
+      const likes: Record<string, boolean> = {};
+      const bookmarks: Record<string, boolean> = {};
+      
+      likesData?.forEach(like => {
+        likes[like.quote_id] = true;
+      });
+      
+      bookmarksData?.forEach(bookmark => {
+        bookmarks[bookmark.quote_id] = true;
+      });
+      
+      setUserLikes(likes);
+      setUserBookmarks(bookmarks);
+    } catch (err) {
+      console.error('Error fetching user interactions:', err);
+    }
+  }, [user]);
+
   // Like quote
-  const likeQuote = useCallback(async (id: string): Promise<boolean> => {
+  const handleLike = useCallback(async (id: string): Promise<void> => {
     if (!isAuthenticated || !user) {
       toast({
         title: 'Authentication Required',
@@ -362,33 +554,85 @@ export const useQuotes = (): UseQuotesResult => {
         variant: 'destructive',
       });
       navigate('/login');
-      return false;
+      return;
     }
 
     try {
-      const { data, error } = await supabase.rpc('like_quote', {
-        quote_id: id,
-        user_id: user.id,
-      });
-
-      if (error) {
-        throw new Error(error.message);
+      // Use direct tables instead of RPC function
+      const isLiked = userLikes[id];
+      
+      if (isLiked) {
+        // Unlike: remove from the likes table
+        await supabase
+          .from('quote_likes')
+          .delete()
+          .eq('quote_id', id)
+          .eq('user_id', user.id);
+          
+        // Decrement the counter
+        await supabase.rpc('decrement_counter', {
+          row_id: id,
+          column_name: 'likes',
+          table_name: 'quotes'
+        });
+        
+        // Update local state
+        setUserLikes(prev => ({
+          ...prev,
+          [id]: false
+        }));
+        
+        // Update quote counter in local state
+        setQuotes(prevQuotes =>
+          prevQuotes.map(quote =>
+            quote.id === id
+              ? { ...quote, likes: Math.max(0, (quote.likes || 0) - 1) }
+              : quote
+          )
+        );
+      } else {
+        // Like: add to the likes table
+        await supabase
+          .from('quote_likes')
+          .insert({
+            quote_id: id,
+            user_id: user.id
+          });
+          
+        // Increment the counter
+        await supabase.rpc('increment_counter', {
+          row_id: id,
+          column_name: 'likes',
+          table_name: 'quotes'
+        });
+        
+        // Update local state
+        setUserLikes(prev => ({
+          ...prev,
+          [id]: true
+        }));
+        
+        // Update quote counter in local state
+        setQuotes(prevQuotes =>
+          prevQuotes.map(quote =>
+            quote.id === id
+              ? { ...quote, likes: (quote.likes || 0) + 1 }
+              : quote
+          )
+        );
       }
-
-      return data;
     } catch (err: any) {
       setError(err.message);
       toast({
         title: 'Error',
-        description: 'Failed to like quote',
+        description: 'Failed to process like',
         variant: 'destructive',
       });
-      return false;
     }
-  }, [isAuthenticated, navigate, toast, user]);
+  }, [isAuthenticated, navigate, toast, user, userLikes]);
 
   // Bookmark quote
-  const bookmarkQuote = useCallback(async (id: string): Promise<boolean> => {
+  const handleBookmark = useCallback(async (id: string): Promise<void> => {
     if (!isAuthenticated || !user) {
       toast({
         title: 'Authentication Required',
@@ -396,30 +640,82 @@ export const useQuotes = (): UseQuotesResult => {
         variant: 'destructive',
       });
       navigate('/login');
-      return false;
+      return;
     }
 
     try {
-      const { data, error } = await supabase.rpc('bookmark_quote', {
-        quote_id: id,
-        user_id: user.id,
-      });
-
-      if (error) {
-        throw new Error(error.message);
+      // Use direct tables instead of RPC function
+      const isBookmarked = userBookmarks[id];
+      
+      if (isBookmarked) {
+        // Remove bookmark
+        await supabase
+          .from('quote_bookmarks')
+          .delete()
+          .eq('quote_id', id)
+          .eq('user_id', user.id);
+          
+        // Decrement the counter
+        await supabase.rpc('decrement_counter', {
+          row_id: id,
+          column_name: 'bookmarks',
+          table_name: 'quotes'
+        });
+        
+        // Update local state
+        setUserBookmarks(prev => ({
+          ...prev,
+          [id]: false
+        }));
+        
+        // Update quote counter in local state
+        setQuotes(prevQuotes =>
+          prevQuotes.map(quote =>
+            quote.id === id
+              ? { ...quote, bookmarks: Math.max(0, (quote.bookmarks || 0) - 1) }
+              : quote
+          )
+        );
+      } else {
+        // Add bookmark
+        await supabase
+          .from('quote_bookmarks')
+          .insert({
+            quote_id: id,
+            user_id: user.id
+          });
+          
+        // Increment the counter
+        await supabase.rpc('increment_counter', {
+          row_id: id,
+          column_name: 'bookmarks',
+          table_name: 'quotes'
+        });
+        
+        // Update local state
+        setUserBookmarks(prev => ({
+          ...prev,
+          [id]: true
+        }));
+        
+        // Update quote counter in local state
+        setQuotes(prevQuotes =>
+          prevQuotes.map(quote =>
+            quote.id === id
+              ? { ...quote, bookmarks: (quote.bookmarks || 0) + 1 }
+              : quote
+          )
+        );
       }
-
-      return data;
     } catch (err: any) {
       setError(err.message);
       toast({
         title: 'Error',
-        description: 'Failed to bookmark quote',
+        description: 'Failed to process bookmark',
         variant: 'destructive',
       });
-      return false;
     }
-  }, [isAuthenticated, navigate, toast, user]);
+  }, [isAuthenticated, navigate, toast, user, userBookmarks]);
 
   // Check if user liked quote
   const checkUserLikedQuote = useCallback(async (id: string): Promise<boolean> => {
@@ -429,11 +725,11 @@ export const useQuotes = (): UseQuotesResult => {
 
     try {
       const { data, error } = await supabase
-        .from('likes')
+        .from('quote_likes')
         .select('*')
         .eq('quote_id', id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         return false;
@@ -454,11 +750,11 @@ export const useQuotes = (): UseQuotesResult => {
 
     try {
       const { data, error } = await supabase
-        .from('bookmarks')
+        .from('quote_bookmarks')
         .select('*')
         .eq('quote_id', id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         return false;
@@ -479,19 +775,46 @@ export const useQuotes = (): UseQuotesResult => {
     }
   }, []);
 
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  // Reset all filters
+  const resetFilters = useCallback(() => {
+    setSearchQuery('');
+    setFilterTag(null);
+    setSortOption('newest');
+    setCurrentPage(1);
+  }, []);
+
   return {
     quotes,
+    allTags,
     isLoading,
     error,
+    searchQuery,
+    setSearchQuery,
+    filterTag,
+    setFilterTag,
+    sortOption,
+    setSortOption,
+    userLikes,
+    userBookmarks,
+    handleLike,
+    handleBookmark,
     fetchQuotes,
     createQuote,
     updateQuote,
     deleteQuote,
-    likeQuote,
-    bookmarkQuote,
     checkUserLikedQuote,
     checkUserBookmarkedQuote,
     fetchQuotesWithFilters,
-    trackQuoteView
+    trackQuoteView,
+    refreshQuotes,
+    resetFilters,
+    currentPage,
+    totalPages,
+    handlePageChange
   };
 };
