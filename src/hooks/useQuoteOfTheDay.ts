@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { QuoteWithUser } from '@/lib/quotes/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuoteAnalytics } from '@/hooks/useQuoteAnalytics';
+import { format } from 'date-fns';
 
 // Define a default user object to use when user data is invalid
 export const DEFAULT_USER = {
@@ -27,9 +28,22 @@ export function useQuoteOfTheDay() {
         const today = new Date().toISOString().split('T')[0];
         
         // Try to get a quote specifically selected for today first
-        const { data: featuredData, error: featuredError } = await supabase
+        const { data: featuredQuotes, error: featuredError } = await supabase
           .from('quotes')
-          .select('*, user:profiles(id, username, name, avatar_url, status)')
+          .select(`
+            id,
+            text,
+            author,
+            source,
+            category,
+            tags,
+            likes,
+            comments,
+            bookmarks,
+            created_at,
+            user_id,
+            user:profiles (id, username, name, avatar_url, status)
+          `)
           .eq('featured_date', today)
           .limit(1);
         
@@ -38,24 +52,36 @@ export function useQuoteOfTheDay() {
         }
         
         // Process featured quote if available
-        if (featuredData && featuredData.length > 0) {
-          const quoteData = featuredData[0];
-          if (isValidQuote(quoteData)) {
-            const safeQuote = createSafeQuote(quoteData);
-            setQuote(safeQuote);
-            
-            if (safeQuote.id) {
-              trackQuoteView(safeQuote.id);
-            }
-            setIsLoading(false);
-            return;
+        if (featuredQuotes && featuredQuotes.length > 0) {
+          const quoteData = featuredQuotes[0];
+          const processedQuote = processQuoteData(quoteData);
+          
+          setQuote(processedQuote);
+          
+          if (processedQuote.id) {
+            trackQuoteView(processedQuote.id);
           }
+          setIsLoading(false);
+          return;
         }
         
         // Get a random popular quote (with more likes)
-        const { data: popularData, error: popularError } = await supabase
+        const { data: popularQuotes, error: popularError } = await supabase
           .from('quotes')
-          .select('*, user:profiles(id, username, name, avatar_url, status)')
+          .select(`
+            id,
+            text,
+            author, 
+            source,
+            category,
+            tags,
+            likes,
+            comments,
+            bookmarks,
+            created_at,
+            user_id,
+            user:profiles (id, username, name, avatar_url, status)
+          `)
           .gt('likes', 0)
           .order('likes', { ascending: false })
           .limit(10);
@@ -65,27 +91,39 @@ export function useQuoteOfTheDay() {
         }
             
         // Process popular quotes if available
-        if (popularData && popularData.length > 0) {
-          // Find the first valid quote from the popular quotes
-          const validQuote = popularData.find(isValidQuote);
-            
-          if (validQuote) {
-            const safeQuote = createSafeQuote(validQuote);
-            setQuote(safeQuote);
-            
-            if (safeQuote.id) {
-              trackQuoteView(safeQuote.id);
-            }
-            setIsLoading(false);
-            return;
+        if (popularQuotes && popularQuotes.length > 0) {
+          // Pick a random quote from the popular ones
+          const randomIndex = Math.floor(Math.random() * popularQuotes.length);
+          const quoteData = popularQuotes[randomIndex];
+          
+          const processedQuote = processQuoteData(quoteData);
+          setQuote(processedQuote);
+          
+          if (processedQuote.id) {
+            trackQuoteView(processedQuote.id);
           }
+          setIsLoading(false);
+          return;
         }
         
         // As a last resort, get any random quote
-        const { data: randomData, error: randomError } = await supabase
+        const { data: randomQuotes, error: randomError } = await supabase
           .from('quotes')
-          .select('*, user:profiles(id, username, name, avatar_url, status)')
-          .limit(1)
+          .select(`
+            id,
+            text,
+            author,
+            source,
+            category,
+            tags,
+            likes,
+            comments,
+            bookmarks,
+            created_at,
+            user_id,
+            user:profiles (id, username, name, avatar_url, status)
+          `)
+          .limit(5)
           .order('created_at', { ascending: false });
         
         if (randomError) {
@@ -93,16 +131,16 @@ export function useQuoteOfTheDay() {
         }
                 
         // Process random quote if available
-        if (randomData && randomData.length > 0) {
-          const randomQuote = randomData[0];
+        if (randomQuotes && randomQuotes.length > 0) {
+          // Pick one random quote from the results
+          const randomIndex = Math.floor(Math.random() * randomQuotes.length);
+          const quoteData = randomQuotes[randomIndex];
           
-          if (isValidQuote(randomQuote)) {
-            const safeQuote = createSafeQuote(randomQuote);
-            setQuote(safeQuote);
-            
-            if (safeQuote.id) {
-              trackQuoteView(safeQuote.id);
-            }
+          const processedQuote = processQuoteData(quoteData);
+          setQuote(processedQuote);
+          
+          if (processedQuote.id) {
+            trackQuoteView(processedQuote.id);
           }
         }
       } catch (error) {
@@ -121,41 +159,46 @@ export function useQuoteOfTheDay() {
   };
 }
 
-// Simple validation function with explicit type
-function isValidQuote(quoteData: any): boolean {
-  return quoteData && 
-    typeof quoteData.id === 'string' && 
-    typeof quoteData.text === 'string' && 
-    typeof quoteData.author === 'string';
-}
-
-// Create a safe QuoteWithUser object with explicit types
-function createSafeQuote(rawData: any): QuoteWithUser {
-  // Create base quote object with default values
-  const safeQuote: QuoteWithUser = {
-    id: typeof rawData.id === 'string' ? rawData.id : '',
-    text: typeof rawData.text === 'string' ? rawData.text : '',
-    author: typeof rawData.author === 'string' ? rawData.author : '',
-    source: rawData.source || null,
-    tags: Array.isArray(rawData.tags) ? rawData.tags : [],
-    likes: typeof rawData.likes === 'number' ? rawData.likes : 0,
-    comments: typeof rawData.comments === 'number' ? rawData.comments : 0,
-    bookmarks: typeof rawData.bookmarks === 'number' ? rawData.bookmarks : 0,
-    created_at: typeof rawData.created_at === 'string' ? rawData.created_at : new Date().toISOString(),
-    user_id: typeof rawData.user_id === 'string' ? rawData.user_id : '',
-    user: DEFAULT_USER // Set default user initially
-  };
-  
-  // Process user data if available
-  if (rawData.user && typeof rawData.user === 'object') {
-    safeQuote.user = {
-      id: typeof rawData.user.id === 'string' ? rawData.user.id : '',
-      username: typeof rawData.user.username === 'string' ? rawData.user.username : 'unknown',
-      name: typeof rawData.user.name === 'string' ? rawData.user.name : 'Unknown User',
-      avatar_url: rawData.user.avatar_url || null,
-      status: typeof rawData.user.status === 'string' ? rawData.user.status : 'offline'
+// Process a raw quote record into a safe QuoteWithUser object
+function processQuoteData(rawQuote: any): QuoteWithUser {
+  if (!rawQuote) {
+    return {
+      id: '',
+      text: '',
+      author: '',
+      source: null,
+      tags: [],
+      likes: 0,
+      comments: 0,
+      bookmarks: 0,
+      created_at: new Date().toISOString(),
+      user_id: '',
+      user: DEFAULT_USER
     };
   }
   
-  return safeQuote;
+  // Process user data
+  const userData = rawQuote.user || {};
+  const user = {
+    id: typeof userData.id === 'string' ? userData.id : '',
+    username: typeof userData.username === 'string' ? userData.username : 'unknown',
+    name: typeof userData.name === 'string' ? userData.name : 'Unknown User',
+    avatar_url: userData.avatar_url || null,
+    status: typeof userData.status === 'string' ? userData.status : 'offline'
+  };
+  
+  // Return the processed quote
+  return {
+    id: rawQuote.id || '',
+    text: rawQuote.text || '',
+    author: rawQuote.author || '',
+    source: rawQuote.source || null,
+    tags: Array.isArray(rawQuote.tags) ? rawQuote.tags : [],
+    likes: typeof rawQuote.likes === 'number' ? rawQuote.likes : 0,
+    comments: typeof rawQuote.comments === 'number' ? rawQuote.comments : 0,
+    bookmarks: typeof rawQuote.bookmarks === 'number' ? rawQuote.bookmarks : 0,
+    created_at: rawQuote.created_at || new Date().toISOString(),
+    user_id: rawQuote.user_id || '',
+    user: user
+  };
 }

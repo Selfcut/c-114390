@@ -726,6 +726,7 @@ export type Database = {
           category: string
           comments: number | null
           created_at: string | null
+          featured_date: string | null
           id: string
           likes: number | null
           source: string | null
@@ -740,6 +741,7 @@ export type Database = {
           category: string
           comments?: number | null
           created_at?: string | null
+          featured_date?: string | null
           id?: string
           likes?: number | null
           source?: string | null
@@ -754,6 +756,7 @@ export type Database = {
           category?: string
           comments?: number | null
           created_at?: string | null
+          featured_date?: string | null
           id?: string
           likes?: number | null
           source?: string | null
