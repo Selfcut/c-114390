@@ -45,15 +45,18 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
       // Transform the data to include user information correctly
       const formattedComments: QuoteComment[] = data.map(comment => {
         // Fix: First check if profiles exists and has the expected shape
-        const userProfile = comment.profiles && typeof comment.profiles === 'object' && !('error' in comment.profiles)
-          ? comment.profiles as {
-              id: string; 
-              name: string; 
-              username: string; 
-              avatar_url: string | null; 
-              status: string; 
-            }
-          : null;
+        const userProfile = comment.profiles && 
+          typeof comment.profiles === 'object' && 
+          comment.profiles !== null && 
+          !('error' in comment.profiles)
+            ? {
+                id: (comment.profiles as any).id ?? 'unknown',
+                name: (comment.profiles as any).name ?? 'Unknown',
+                username: (comment.profiles as any).username ?? 'unknown',
+                avatar_url: (comment.profiles as any).avatar_url ?? null,
+                status: (comment.profiles as any).status ?? 'offline'
+              }
+            : null;
         
         return {
           id: comment.id,
@@ -62,13 +65,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           user_id: comment.user_id,
           created_at: comment.created_at,
           updated_at: comment.updated_at,
-          user: userProfile ? {
-            id: userProfile.id,
-            name: userProfile.name,
-            username: userProfile.username,
-            avatar_url: userProfile.avatar_url,
-            status: userProfile.status
-          } : null
+          user: userProfile
         };
       });
 

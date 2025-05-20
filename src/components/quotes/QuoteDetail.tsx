@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,11 +63,11 @@ export function QuoteDetail() {
         // Format the quote data with proper null safety
         const userObj = data.user && typeof data.user === 'object'
           ? {
-              id: data.user.id ?? 'unknown',
-              username: data.user.username ?? 'unknown',
-              name: data.user.name ?? 'Unknown User',
-              avatar_url: data.user.avatar_url ?? null,
-              status: data.user.status ?? 'offline'
+              id: (data.user as any)?.id ?? 'unknown',
+              username: (data.user as any)?.username ?? 'unknown',
+              name: (data.user as any)?.name ?? 'Unknown User',
+              avatar_url: (data.user as any)?.avatar_url ?? null,
+              status: (data.user as any)?.status ?? 'offline'
             }
           : null;
         

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser, QuoteFilterOptions, PaginationResult, QuoteSortOption } from '@/lib/quotes/types';
@@ -117,11 +116,11 @@ export const useQuotes = (): UseQuotesResult => {
         // Handle potentially missing user data with null safety
         const user = quote.user && typeof quote.user === 'object' 
           ? {
-              id: quote.user?.id ?? 'unknown',
-              username: quote.user?.username ?? 'unknown',
-              name: quote.user?.name ?? 'Unknown User',
-              avatar_url: quote.user?.avatar_url ?? null,
-              status: quote.user?.status ?? 'offline'
+              id: (quote.user as any)?.id ?? 'unknown',
+              username: (quote.user as any)?.username ?? 'unknown',
+              name: (quote.user as any)?.name ?? 'Unknown User',
+              avatar_url: (quote.user as any)?.avatar_url ?? null,
+              status: (quote.user as any)?.status ?? 'offline'
             }
           : null;
 
@@ -168,7 +167,7 @@ export const useQuotes = (): UseQuotesResult => {
           *,
           profiles:profiles(id, name, username, avatar_url, status)
         `, { count: 'exact' });
-
+      
       if (options.searchTerm) {
         query = query.ilike('text', `%${options.searchTerm}%`);
       }
@@ -187,20 +186,21 @@ export const useQuotes = (): UseQuotesResult => {
       query = query.range(offset, offset + limit - 1);
 
       const { data, error, count } = await query;
-
+      
       if (error) {
         throw new Error(error.message);
       }
-
+      
+      // Transform the data to match our expected type
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data with null safety
         const profiles = quote.profiles && typeof quote.profiles === 'object' 
           ? {
-              id: quote.profiles?.id ?? 'unknown',
-              username: quote.profiles?.username ?? 'unknown',
-              name: quote.profiles?.name ?? 'Unknown User',
-              avatar_url: quote.profiles?.avatar_url ?? null,
-              status: quote.profiles?.status ?? 'offline'
+              id: (quote.profiles as any)?.id ?? 'unknown',
+              username: (quote.profiles as any)?.username ?? 'unknown',
+              name: (quote.profiles as any)?.name ?? 'Unknown User',
+              avatar_url: (quote.profiles as any)?.avatar_url ?? null,
+              status: (quote.profiles as any)?.status ?? 'offline'
             }
           : null;
 
@@ -233,7 +233,7 @@ export const useQuotes = (): UseQuotesResult => {
         data: formattedQuotes,
         totalCount,
         page,
-        limit,
+        limit: options.limit || 10,
         totalPages
       };
     } catch (err: any) {
@@ -348,11 +348,11 @@ export const useQuotes = (): UseQuotesResult => {
       // Handle potentially missing user data with null safety
       const profiles = data.profiles && typeof data.profiles === 'object'
         ? {
-            id: data.profiles?.id ?? 'unknown',
-            username: data.profiles?.username ?? 'unknown',
-            name: data.profiles?.name ?? 'Unknown User',
-            avatar_url: data.profiles?.avatar_url ?? null,
-            status: data.profiles?.status ?? 'offline'
+            id: (data.profiles as any)?.id ?? 'unknown',
+            username: (data.profiles as any)?.username ?? 'unknown',
+            name: (data.profiles as any)?.name ?? 'Unknown User',
+            avatar_url: (data.profiles as any)?.avatar_url ?? null,
+            status: (data.profiles as any)?.status ?? 'offline'
           }
         : null;
 
@@ -415,11 +415,11 @@ export const useQuotes = (): UseQuotesResult => {
       // Handle potentially missing user data with null safety
       const profiles = data.profiles && typeof data.profiles === 'object' 
         ? {
-            id: data.profiles?.id ?? 'unknown',
-            username: data.profiles?.username ?? 'unknown',
-            name: data.profiles?.name ?? 'Unknown User',
-            avatar_url: data.profiles?.avatar_url ?? null,
-            status: data.profiles?.status ?? 'offline'
+            id: (data.profiles as any)?.id ?? 'unknown',
+            username: (data.profiles as any)?.username ?? 'unknown',
+            name: (data.profiles as any)?.name ?? 'Unknown User',
+            avatar_url: (data.profiles as any)?.avatar_url ?? null,
+            status: (data.profiles as any)?.status ?? 'offline'
           }
         : null;
 
