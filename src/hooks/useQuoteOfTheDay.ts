@@ -43,12 +43,12 @@ export function useQuoteOfTheDay() {
         
         // If no quote is featured for today, get a random popular one
         if (featuredQuote && isValidQuote(featuredQuote)) {
-          // Ensure user data is properly formatted
-          const safeQuote = sanitizeQuoteUser(featuredQuote);
-          setQuote(safeQuote);
+          // Process the quote with safe user data
+          const processedQuote = processQuote(featuredQuote);
+          setQuote(processedQuote);
           
-          if (safeQuote.id) {
-            trackQuoteView(safeQuote.id);
+          if (processedQuote.id) {
+            trackQuoteView(processedQuote.id);
           }
         } else {
           // Get a random popular quote (with more likes)
@@ -73,12 +73,12 @@ export function useQuoteOfTheDay() {
             const validQuote = popularQuotes.find(isValidQuote);
             
             if (validQuote) {
-              // Ensure user data is properly formatted
-              const safeQuote = sanitizeQuoteUser(validQuote);
-              setQuote(safeQuote);
+              // Process the quote with safe user data
+              const processedQuote = processQuote(validQuote);
+              setQuote(processedQuote);
               
-              if (safeQuote.id) {
-                trackQuoteView(safeQuote.id);
+              if (processedQuote.id) {
+                trackQuoteView(processedQuote.id);
               }
             } else {
               // Get any random quote as fallback
@@ -98,11 +98,11 @@ export function useQuoteOfTheDay() {
                 .order('created_at', { ascending: false });
                 
               if (randomQuotes && randomQuotes.length > 0 && isValidQuote(randomQuotes[0])) {
-                const safeQuote = sanitizeQuoteUser(randomQuotes[0]);
-                setQuote(safeQuote);
+                const processedQuote = processQuote(randomQuotes[0]);
+                setQuote(processedQuote);
                 
-                if (safeQuote.id) {
-                  trackQuoteView(safeQuote.id);
+                if (processedQuote.id) {
+                  trackQuoteView(processedQuote.id);
                 }
               }
             }
@@ -132,10 +132,10 @@ export function isValidQuote(quote: any): boolean {
     typeof quote.author === 'string';
 }
 
-// Helper function to sanitize user data in a quote
-export function sanitizeQuoteUser(quote: any): QuoteWithUser {
-  // Create a safe copy of the quote to avoid mutation
-  const safeQuote = { ...quote };
+// Process quote and ensure it has valid user data
+export function processQuote(quote: any): QuoteWithUser {
+  // Create a safe copy of the quote
+  const safeQuote: Partial<QuoteWithUser> = { ...quote };
   
   // Check if user property exists and has valid data
   if (
@@ -149,5 +149,6 @@ export function sanitizeQuoteUser(quote: any): QuoteWithUser {
     safeQuote.user = DEFAULT_USER;
   }
   
+  // Ensure we return a properly typed object
   return safeQuote as QuoteWithUser;
 }
