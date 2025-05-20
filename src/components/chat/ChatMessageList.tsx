@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import { ChatMessage as ChatMessageType } from "./types";
 import { ChatMessage } from "./ChatMessage";
@@ -97,10 +98,7 @@ export const ChatMessageList = ({
             {groupedMessages[date].map((message) => (
               <ChatMessage
                 key={message.id}
-                message={{
-                  ...message,
-                  isCurrentUser: message.userId === currentUserId || message.isCurrentUser === true
-                }}
+                message={message}
                 formatTime={formatTime}
                 onEdit={onMessageEdit}
                 onDelete={onMessageDelete}

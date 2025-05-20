@@ -16,12 +16,13 @@ interface ChatMessageProps {
   currentUserId?: string | null;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, formatTime }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, formatTime, onEdit, onDelete, onReply, onReactionAdd, onReactionRemove, currentUserId }) => {
   return (
     <div className={`flex mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`flex ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'} max-w-[80%]`}>
         {!isCurrentUser && (
           <Avatar className="h-8 w-8 mr-2">
+            <AvatarImage src={message.avatar} alt={message.senderName || 'User'} />
             <AvatarFallback>
               {message.senderName?.[0] || '?'}
             </AvatarFallback>
@@ -44,6 +45,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser
         </div>
         {isCurrentUser && (
           <Avatar className="h-8 w-8 ml-2">
+            <AvatarImage src={message.avatar} alt={message.senderName || 'User'} />
             <AvatarFallback>
               {message.senderName?.[0] || '?'}
             </AvatarFallback>

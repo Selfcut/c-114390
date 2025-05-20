@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -188,7 +187,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
   // Fetch events when filter changes
   useEffect(() => {
     fetchEvents();
-  }, [filter, user?.id]);
+  }, [fetchEvents]);
 
   // RSVP to an event
   const rsvpToEvent = async (eventId: string, status: EventStatus) => {

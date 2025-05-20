@@ -100,7 +100,7 @@ export const incrementCounter = async (
   tableName: string
 ): Promise<void> => {
   try {
-    await supabase.rpc('increment_counter', {
+    await supabase.rpc('increment_counter_fn', {
       row_id: rowId,
       column_name: columnName,
       table_name: tableName
@@ -117,7 +117,7 @@ export const decrementCounter = async (
   tableName: string
 ): Promise<void> => {
   try {
-    await supabase.rpc('decrement_counter', {
+    await supabase.rpc('decrement_counter_fn', {
       row_id: rowId,
       column_name: columnName,
       table_name: tableName

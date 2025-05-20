@@ -18,6 +18,7 @@ export const useForumData = () => {
     const fetchDiscussions = async () => {
       setIsLoading(true);
       try {
+        // Use maybeSingle when fetching user profiles to handle potential missing data
         const { data, error } = await supabase
           .from('forum_posts')
           .select(`

@@ -28,7 +28,7 @@ export const useCounterOperations = () => {
   const decrement = async (tableId: string, columnName: string, tableName = 'quotes') => {
     try {
       await decrementCounter(tableId, columnName, tableName);
-      return false;
+      return true;
     } catch (error) {
       console.error(`Error decrementing ${columnName}:`, error);
       return false;

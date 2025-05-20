@@ -1,207 +1,195 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from 'lucide-react';
-import { EventWithAttendees, CalendarView } from '@/types/events';
-import { format, isToday, isSameDay, isSameMonth, isValid } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react';
+import { isValid, format, parseISO, isToday } from 'date-fns'; // Import isValid
+
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  image_url?: string;
+  category: string;
+}
 
 interface EventCalendarProps {
-  events: EventWithAttendees[];
-  onEventClick?: (event: EventWithAttendees) => void;
-  onDateSelect?: (date: Date) => void;
+  events: Event[];
+  isLoading: boolean;
+  onDateSelect?: (date: Date | undefined) => void;
+  onEventClick?: (eventId: string) => void;
+  selectedDate?: Date;
 }
 
 export const EventCalendar: React.FC<EventCalendarProps> = ({
   events,
+  isLoading,
+  onDateSelect,
   onEventClick,
-  onDateSelect
+  selectedDate
 }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<CalendarView>('month');
-  
-  // Filter events for the selected date in day view
-  const eventsForSelectedDate = selectedDate 
-    ? events.filter(event => {
-        if (!event.date) return false;
-        try {
-          const eventDate = new Date(event.date);
-          return isValid(eventDate) && isSameDay(eventDate, selectedDate);
-        } catch (error) {
-          console.error("Invalid event date:", event.date);
-          return false;
-        }
-      })
-    : [];
-  
-  // Function to handle date selection
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    if (date && onDateSelect) {
-      onDateSelect(date);
-    }
-  };
-  
-  // Function to check if a date has events
-  const hasEventsOnDay = (day: Date) => {
-    return events.some(event => {
-      if (!event.date) return false;
+  const [currentDate, setCurrentDate] = useState<Date | undefined>(selectedDate || new Date());
+  const [eventsOnDate, setEventsOnDate] = useState<Event[]>([]);
+
+  // Function to determine which dates have events
+  const eventsDateRenderer = (date: Date) => {
+    // Check if the date is valid before performing operations on it
+    if (!isValid(date)) return null;
+    
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const hasEvents = events.some(event => {
       try {
-        const eventDate = new Date(event.date);
-        return isValid(eventDate) && isSameDay(eventDate, day);
+        const eventDate = parseISO(event.date);
+        return isValid(eventDate) && format(eventDate, 'yyyy-MM-dd') === dateStr;
       } catch (error) {
+        console.error('Invalid event date:', event.date, error);
         return false;
       }
     });
+
+    return hasEvents ? (
+      <div className="relative">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+      </div>
+    ) : null;
   };
-  
-  // Function to render agenda view
-  const renderAgenda = () => {
-    const sortedEvents = [...events].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    
+
+  // Filter events for the selected date
+  useEffect(() => {
+    if (!currentDate || !isValid(currentDate)) {
+      setEventsOnDate([]);
+      return;
+    }
+
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    const filteredEvents = events.filter(event => {
+      try {
+        const eventDate = parseISO(event.date);
+        return isValid(eventDate) && format(eventDate, 'yyyy-MM-dd') === dateStr;
+      } catch (error) {
+        console.error('Invalid event date:', event.date, error);
+        return false;
+      }
+    });
+
+    setEventsOnDate(filteredEvents);
+  }, [currentDate, events]);
+
+  // Handle date selection
+  const handleDateSelect = (date: Date | undefined) => {
+    setCurrentDate(date);
+    if (onDateSelect) {
+      onDateSelect(date);
+    }
+  };
+
+  // Navigate to previous month
+  const goToPreviousMonth = () => {
+    if (currentDate) {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() - 1);
+      setCurrentDate(newDate);
+    }
+  };
+
+  // Navigate to next month
+  const goToNextMonth = () => {
+    if (currentDate) {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() + 1);
+      setCurrentDate(newDate);
+    }
+  };
+
+  // Navigate to current month
+  const goToCurrentMonth = () => {
+    setCurrentDate(new Date());
+  };
+
+  if (isLoading) {
     return (
-      <ScrollArea className="h-[500px]">
-        <div className="space-y-2 p-2">
-          {sortedEvents.length > 0 ? (
-            sortedEvents.map(event => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
-                onClick={() => onEventClick && onEventClick(event)}
-              />
-            ))
-          ) : (
-            <div className="text-center py-10 text-muted-foreground">
-              No events found
-            </div>
-          )}
+      <Card className="p-4">
+        <div className="flex justify-between mb-4">
+          <Skeleton className="h-8 w-20" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
         </div>
-      </ScrollArea>
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-12 w-full mt-4" />
+        <Skeleton className="h-12 w-full mt-2" />
+        <Skeleton className="h-12 w-full mt-2" />
+      </Card>
     );
-  };
-  
-  // Function to render day view
-  const renderDayView = () => {
-    return (
-      <div className="p-4">
-        <h3 className="text-lg font-semibold mb-4">
-          {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}
-        </h3>
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-2">
-            {eventsForSelectedDate.length > 0 ? (
-              eventsForSelectedDate
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                .map(event => (
-                  <EventCard 
-                    key={event.id} 
-                    event={event} 
-                    onClick={() => onEventClick && onEventClick(event)}
-                  />
-                ))
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="flex justify-between mb-4">
+        <h3 className="text-lg font-semibold">Calendar</h3>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={goToCurrentMonth}>
+            <CalendarIcon className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={goToNextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      <Calendar
+        mode="single"
+        selected={currentDate}
+        onSelect={handleDateSelect}
+        className="rounded-md border"
+        components={{
+          DayContent: (props) => (
+            <>
+              {props.day}
+              {eventsDateRenderer(props.date)}
+            </>
+          )
+        }}
+      />
+      
+      <div className="mt-4">
+        {currentDate && isValid(currentDate) ? (
+          <h4 className="text-md font-medium mb-2">
+            Events on {format(currentDate, 'MMMM d, yyyy')} 
+            {isToday(currentDate) && <span className="ml-1 text-primary">(Today)</span>}
+          </h4>
+        ) : (
+          <h4 className="text-md font-medium mb-2">Select a date</h4>
+        )}
+        
+        <ScrollArea className="h-[200px] rounded-md border">
+          <div className="p-4">
+            {eventsOnDate.length > 0 ? (
+              eventsOnDate.map(event => (
+                <div 
+                  key={event.id} 
+                  className="p-3 border rounded-md mb-2 hover:bg-muted cursor-pointer"
+                  onClick={() => onEventClick && onEventClick(event.id)}
+                >
+                  <div className="font-medium">{event.title}</div>
+                  <div className="text-sm text-muted-foreground">{event.category}</div>
+                </div>
+              ))
             ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                No events scheduled for this day
+              <div className="text-center text-muted-foreground py-8">
+                No events scheduled for this date
               </div>
             )}
           </div>
         </ScrollArea>
-      </div>
-    );
-  };
-  
-  return (
-    <Card className="w-full">
-      <Tabs defaultValue="month" value={view} onValueChange={(v) => setView(v as CalendarView)}>
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">Events Calendar</h2>
-          <div className="flex items-center space-x-2">
-            <TabsList>
-              <TabsTrigger value="month"><CalendarIcon className="h-4 w-4 mr-2" />Month</TabsTrigger>
-              <TabsTrigger value="agenda"><List className="h-4 w-4 mr-2" />Agenda</TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
-        
-        <TabsContent value="month" className="p-0 m-0">
-          <div className="p-4">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              className="rounded-md"
-              modifiers={{
-                hasEvents: hasEventsOnDay
-              }}
-              modifiersStyles={{
-                hasEvents: {
-                  fontWeight: 'bold',
-                  textDecoration: 'underline',
-                  color: 'var(--primary)'
-                }
-              }}
-            />
-          </div>
-          {selectedDate && (
-            <div className="border-t">
-              {renderDayView()}
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="agenda" className="p-4 m-0">
-          {renderAgenda()}
-        </TabsContent>
-      </Tabs>
-    </Card>
-  );
-};
-
-// Event card component
-interface EventCardProps {
-  event: EventWithAttendees;
-  onClick?: () => void;
-}
-
-const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
-  let eventDate: Date | null = null;
-  
-  try {
-    eventDate = event.date ? new Date(event.date) : null;
-    if (!isValid(eventDate)) eventDate = null;
-  } catch (e) {
-    console.error("Invalid date in event card:", e);
-  }
-  
-  return (
-    <Card 
-      className={cn(
-        "p-3 cursor-pointer hover:bg-muted/50 transition-colors",
-        event.is_featured && "border-primary"
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <h4 className="font-medium">{event.title}</h4>
-          <p className="text-sm text-muted-foreground line-clamp-1">{event.description}</p>
-        </div>
-        <div className="text-xs text-muted-foreground min-w-[60px] text-right">
-          {eventDate ? format(eventDate, 'h:mm a') : 'Time TBD'}
-        </div>
-      </div>
-      <div className="flex items-center mt-2 text-xs text-muted-foreground">
-        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-2">
-          {event.category}
-        </span>
-        <span>{event.attendees} attending</span>
       </div>
     </Card>
   );
