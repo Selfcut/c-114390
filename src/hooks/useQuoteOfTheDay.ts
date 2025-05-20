@@ -26,18 +26,9 @@ export function useQuoteOfTheDay() {
         const today = new Date().toISOString().split('T')[0];
         
         // Try to get a quote specifically selected for today first
-        const { data: featuredData, error: featuredError } = await supabase
+        const { data: featuredData } = await supabase
           .from('quotes')
-          .select(`
-            *,
-            user:profiles(
-              id, 
-              username, 
-              name, 
-              avatar_url, 
-              status
-            )
-          `)
+          .select('*, user:profiles(id, username, name, avatar_url, status)')
           .eq('featured_date', today)
           .limit(1);
         
@@ -54,18 +45,9 @@ export function useQuoteOfTheDay() {
           }
         } else {
           // Get a random popular quote (with more likes)
-          const { data: popularData, error: popularError } = await supabase
+          const { data: popularData } = await supabase
             .from('quotes')
-            .select(`
-              *,
-              user:profiles(
-                id, 
-                username, 
-                name, 
-                avatar_url, 
-                status
-              )
-            `)
+            .select('*, user:profiles(id, username, name, avatar_url, status)')
             .gt('likes', 0)
             .order('likes', { ascending: false })
             .limit(10);
@@ -86,18 +68,9 @@ export function useQuoteOfTheDay() {
               }
             } else {
               // Get any random quote as fallback
-              const { data: randomData, error: randomError } = await supabase
+              const { data: randomData } = await supabase
                 .from('quotes')
-                .select(`
-                  *,
-                  user:profiles(
-                    id, 
-                    username, 
-                    name, 
-                    avatar_url, 
-                    status
-                  )
-                `)
+                .select('*, user:profiles(id, username, name, avatar_url, status)')
                 .limit(1)
                 .order('created_at', { ascending: false });
                 
