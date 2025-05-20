@@ -50,11 +50,11 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           comment.profiles !== null && 
           !('error' in comment.profiles)
             ? {
-                id: (comment.profiles as any).id ?? 'unknown',
-                name: (comment.profiles as any).name ?? 'Unknown',
-                username: (comment.profiles as any).username ?? 'unknown',
-                avatar_url: (comment.profiles as any).avatar_url ?? null,
-                status: (comment.profiles as any).status ?? 'offline'
+                id: (comment.profiles as any)?.id ?? 'unknown',
+                name: (comment.profiles as any)?.name ?? 'Unknown',
+                username: (comment.profiles as any)?.username ?? 'unknown',
+                avatar_url: (comment.profiles as any)?.avatar_url ?? null,
+                status: (comment.profiles as any)?.status ?? 'offline'
               }
             : null;
         
