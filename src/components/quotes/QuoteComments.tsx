@@ -44,9 +44,15 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
 
       // Transform the data to include user information correctly
       const formattedComments: QuoteComment[] = data.map(comment => {
-        // Check if profiles is a valid object and not an error
+        // Explicitly type and check the userProfile
         const userProfile = comment.profiles && typeof comment.profiles === 'object' 
-          ? comment.profiles 
+          ? comment.profiles as { 
+              id?: string; 
+              name?: string; 
+              username?: string; 
+              avatar_url?: string | null; 
+              status?: string; 
+            }
           : null;
         
         return {
@@ -57,11 +63,11 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
           created_at: comment.created_at,
           updated_at: comment.updated_at,
           user: userProfile ? {
-            id: userProfile.id || 'unknown',
-            name: userProfile.name || 'Unknown',
-            username: userProfile.username || 'unknown',
-            avatar_url: userProfile.avatar_url || null,
-            status: userProfile.status || 'offline'
+            id: userProfile?.id || 'unknown',
+            name: userProfile?.name || 'Unknown',
+            username: userProfile?.username || 'unknown',
+            avatar_url: userProfile?.avatar_url || null,
+            status: userProfile?.status || 'offline'
           } : null
         };
       });
