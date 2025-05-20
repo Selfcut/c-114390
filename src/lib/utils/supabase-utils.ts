@@ -1,204 +1,94 @@
-import { supabase } from "@/integrations/supabase/client";
 
-// Helper functions for counter operations
+import { supabase } from '@/integrations/supabase/client';
+
 /**
- * Increment a counter column in a specified table for a specific row
+ * This file contains utility functions for working with Supabase
  */
-export const incrementCounter = async (rowId: string, columnName: string, tableName: string): Promise<boolean> => {
+
+// Function to initialize any Supabase-specific functionality
+export const initializeSupabaseUtils = async () => {
   try {
-    // Call the RPC function directly
-    const { error } = await supabase.rpc('increment_counter', {
-      row_id: rowId,
-      column_name: columnName,
-      table_name: tableName
-    });
+    // Set up the realtime listeners for specific tables
+    setupRealtimeSubscriptions();
+    
+    // Verify the connection to Supabase
+    const { data, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error(`Error incrementing ${columnName}:`, error);
-      return false;
+      console.error('Error initializing Supabase utils:', error);
+    } else {
+      console.log('Supabase utils initialized');
     }
-    
-    return true;
   } catch (error) {
-    console.error(`Error incrementing ${columnName}:`, error);
-    return false;
+    console.error('Error in initializeSupabaseUtils:', error);
   }
 };
 
-/**
- * Decrement a counter column in a specified table for a specific row
- */
-export const decrementCounter = async (rowId: string, columnName: string, tableName: string): Promise<boolean> => {
-  try {
-    // Call the RPC function directly
-    const { error } = await supabase.rpc('decrement_counter', {
-      row_id: rowId,
-      column_name: columnName,
-      table_name: tableName
-    });
+// Set up realtime subscriptions for key tables
+const setupRealtimeSubscriptions = () => {
+  // Subscribe to chat messages for realtime updates
+  const chatChannel = supabase
+    .channel('public:chat_messages')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'chat_messages' 
+    }, (payload) => {
+      console.log('Chat message update:', payload);
+    })
+    .subscribe();
     
-    if (error) {
-      console.error(`Error decrementing ${columnName}:`, error);
-      return false;
-    }
+  // Subscribe to events for realtime updates
+  const eventsChannel = supabase
+    .channel('public:events')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'events'
+    }, (payload) => {
+      console.log('Events update:', payload);
+    })
+    .subscribe();
     
-    return true;
-  } catch (error) {
-    console.error(`Error decrementing ${columnName}:`, error);
-    return false;
-  }
+  // Subscribe to research papers for realtime updates
+  const researchChannel = supabase
+    .channel('public:research_papers')
+    .on('postgres_changes', {
+      event: '*', 
+      schema: 'public',
+      table: 'research_papers'
+    }, (payload) => {
+      console.log('Research papers update:', payload);
+    })
+    .subscribe();
+    
+  // Return the cleanup function
+  return () => {
+    supabase.removeChannel(chatChannel);
+    supabase.removeChannel(eventsChannel);
+    supabase.removeChannel(researchChannel);
+  };
 };
 
-// Helper function to create a user activity
-export const createUserActivity = async (
-  userId: string, 
-  eventType: string, 
-  metadata: Record<string, any> = {}
+// Helper function to handle Supabase errors consistently
+export const handleSupabaseError = (error: any, context: string) => {
+  console.error(`Supabase error in ${context}:`, error);
+  return {
+    error: {
+      message: error.message || 'An unexpected error occurred',
+      details: error.details || null,
+      context
+    }
+  };
+};
+
+// Check if a user has permission to modify content
+export const hasEditPermission = (
+  userId: string | undefined, 
+  contentUserId: string | undefined, 
+  userRole: string = 'user'
 ) => {
-  try {
-    const { error } = await supabase
-      .from('user_activities')
-      .insert({
-        user_id: userId,
-        event_type: eventType,
-        metadata
-      });
-
-    if (error) {
-      console.error('Error creating user activity:', error);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error('Error in createUserActivity:', error);
-    return false;
-  }
-};
-
-// Helper function to create RPC functions in Supabase if they don't exist
-export const ensureRpcFunctionsExist = async () => {
-  try {
-    // We can't check if functions exist using RPC calls directly
-    // Instead, we'll try to use them and handle errors gracefully
-    
-    // First try to use the increment_counter function
-    try {
-      // TypeScript doesn't understand custom RPC functions by default
-      // We need to cast to any to bypass type checking for custom RPCs
-      await (supabase.rpc as any)('increment_counter', {
-        row_id: '00000000-0000-0000-0000-000000000000',
-        column_name: 'likes'
-      });
-      console.info("increment_counter function exists");
-    } catch (error) {
-      console.info("Creating increment_counter function...");
-      
-      // We can't create functions directly through the JavaScript API
-      // This would typically be done through migrations
-      console.warn("Could not find increment_counter function. Make sure it's created in your database migrations.");
-    }
-    
-    // Check if the decrement_counter function exists
-    try {
-      // TypeScript doesn't understand custom RPC functions by default
-      // We need to cast to any to bypass type checking for custom RPCs
-      await (supabase.rpc as any)('decrement_counter', {
-        row_id: '00000000-0000-0000-0000-000000000000',
-        column_name: 'likes'
-      });
-      console.info("decrement_counter function exists");
-    } catch (error) {
-      console.info("Creating decrement_counter function...");
-      
-      // We can't create functions directly through the JavaScript API
-      // This would typically be done through migrations
-      console.warn("Could not find decrement_counter function. Make sure it's created in your database migrations.");
-    }
-  } catch (error) {
-    console.error("Error ensuring RPC functions exist:", error);
-  }
-};
-
-// Call this function when the application starts
-export const initializeSupabaseUtils = () => {
-  ensureRpcFunctionsExist();
-};
-
-// Helper function to get user activity stats
-export const getUserActivityStats = async (userId: string) => {
-  try {
-    // Get user activities
-    const { data: activities, error } = await supabase
-      .from('user_activities')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      console.error("Error fetching user activities:", error);
-      return null;
-    }
-    
-    if (!activities || activities.length === 0) {
-      return {
-        streak: 0,
-        level: 1,
-        xp: 0,
-        nextLevelXp: 100,
-        badges: 0
-      };
-    }
-    
-    // Calculate streak
-    const dates = activities.map(a => new Date(a.created_at).toDateString());
-    const uniqueDates = [...new Set(dates)].sort();
-    
-    let streak = 0;
-    const today = new Date().toDateString();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayString = yesterday.toDateString();
-    
-    if (uniqueDates.includes(today)) {
-      streak = 1;
-      let checkDate = yesterday;
-      let dateString = checkDate.toDateString();
-      
-      while (uniqueDates.includes(dateString)) {
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-        dateString = checkDate.toDateString();
-      }
-    } else if (uniqueDates.includes(yesterdayString)) {
-      streak = 1;
-      let checkDate = new Date(yesterday);
-      checkDate.setDate(checkDate.getDate() - 1);
-      let dateString = checkDate.toDateString();
-      
-      while (uniqueDates.includes(dateString)) {
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-        dateString = checkDate.toDateString();
-      }
-    }
-    
-    // Calculate XP - 10 points per activity
-    const xp = activities.length * 10;
-    const level = Math.max(1, Math.floor(xp / 100) + 1);
-    const nextLevelXp = level * 100;
-    
-    // Count "achievements" as activities with type 'achievement'
-    const badgeCount = activities.filter(a => a.event_type === 'achievement').length;
-    
-    return {
-      streak,
-      level,
-      xp,
-      nextLevelXp,
-      badges: badgeCount
-    };
-  } catch (error) {
-    console.error("Error in getUserActivityStats:", error);
-    return null;
-  }
+  if (!userId) return false;
+  if (userRole === 'admin' || userRole === 'moderator') return true;
+  return userId === contentUserId;
 };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
@@ -28,8 +27,14 @@ export const EventCalendar: React.FC<EventCalendarProps> = ({
   // Filter events for the selected date in day view
   const eventsForSelectedDate = selectedDate 
     ? events.filter(event => {
-        const eventDate = new Date(event.date);
-        return isSameDay(eventDate, selectedDate);
+        if (!event.date) return false;
+        try {
+          const eventDate = new Date(event.date);
+          return isValid(eventDate) && isSameDay(eventDate, selectedDate);
+        } catch (error) {
+          console.error("Invalid event date:", event.date);
+          return false;
+        }
       })
     : [];
   
@@ -44,8 +49,13 @@ export const EventCalendar: React.FC<EventCalendarProps> = ({
   // Function to check if a date has events
   const hasEventsOnDay = (day: Date) => {
     return events.some(event => {
-      const eventDate = new Date(event.date);
-      return isSameDay(eventDate, day);
+      if (!event.date) return false;
+      try {
+        const eventDate = new Date(event.date);
+        return isValid(eventDate) && isSameDay(eventDate, day);
+      } catch (error) {
+        return false;
+      }
     });
   };
   
@@ -160,7 +170,14 @@ interface EventCardProps {
 }
 
 const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
-  const eventDate = new Date(event.date);
+  let eventDate: Date | null = null;
+  
+  try {
+    eventDate = event.date ? new Date(event.date) : null;
+    if (!isValid(eventDate)) eventDate = null;
+  } catch (e) {
+    console.error("Invalid date in event card:", e);
+  }
   
   return (
     <Card 
@@ -176,7 +193,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
           <p className="text-sm text-muted-foreground line-clamp-1">{event.description}</p>
         </div>
         <div className="text-xs text-muted-foreground min-w-[60px] text-right">
-          {format(eventDate, 'h:mm a')}
+          {eventDate ? format(eventDate, 'h:mm a') : 'Time TBD'}
         </div>
       </div>
       <div className="flex items-center mt-2 text-xs text-muted-foreground">

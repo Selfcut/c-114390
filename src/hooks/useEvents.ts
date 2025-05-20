@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,11 +16,10 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
   });
   const { user } = useAuth();
 
-  // Fetch events from Supabase based on filter
-  const fetchEvents = async () => {
+  // Fetch events function
+  const fetchEvents = useCallback(async (conversationId: string = 'global') => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
       // Construct a basic query first
       let query = supabase.from('events').select('*');
 
@@ -132,20 +131,24 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
             }
           }
           
-          // Try to get organizer info
+          // Try to get organizer info with error handling
           let organizerName = "Unknown";
           let organizerAvatar = null;
           
           try {
-            const { data: organizerData, error: organizerError } = await supabase
-              .from('profiles')
-              .select('name, username, avatar_url')
-              .eq('id', event.user_id)
-              .maybeSingle();
-            
-            if (!organizerError && organizerData) {
-              organizerName = organizerData.name || organizerData.username || "Unknown";
-              organizerAvatar = organizerData.avatar_url;
+            if (event.user_id) {
+              const { data: organizerData, error: organizerError } = await supabase
+                .from('profiles')
+                .select('name, username, avatar_url')
+                .eq('id', event.user_id)
+                .maybeSingle();
+              
+              if (!organizerError && organizerData) {
+                organizerName = organizerData.name || organizerData.username || "Unknown";
+                organizerAvatar = organizerData.avatar_url;
+              } else {
+                console.log(`Could not find profile for user ID: ${event.user_id}`);
+              }
             }
           } catch (e) {
             console.error("Error fetching organizer data:", e);
@@ -165,7 +168,9 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
             ...event,
             attendees: 0,
             user_status: undefined,
-            is_creator: false
+            is_creator: false,
+            organizer_name: "Unknown",
+            organizer_avatar: null
           };
         }
       }));
@@ -177,7 +182,7 @@ export const useEvents = (initialFilter?: Partial<EventsFilter>) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  });
 
   // Fetch events when filter changes
   useEffect(() => {
