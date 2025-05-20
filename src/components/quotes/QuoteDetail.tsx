@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -433,11 +432,11 @@ export function QuoteDetail() {
           {/* User Info */}
           <div className="flex items-center mt-6 pt-4 border-t">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={quote?.user?.avatar_url || undefined} alt={quote?.user?.name || 'User'} />
-              <AvatarFallback>{(quote?.user?.name?.charAt(0) || 'U')}</AvatarFallback>
+              <AvatarImage src={quote?.user?.avatar_url ?? undefined} alt={quote?.user?.name ?? 'User'} />
+              <AvatarFallback>{quote?.user?.name?.charAt(0) ?? 'U'}</AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <p className="text-sm font-medium">{quote?.user?.name || 'Unknown User'}</p>
+              <p className="text-sm font-medium">{quote?.user?.name ?? 'Unknown User'}</p>
               <p className="text-xs text-muted-foreground">
                 Shared {quote && formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
               </p>
