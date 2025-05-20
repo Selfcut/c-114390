@@ -142,29 +142,16 @@ async function storePapers(papers: any[]) {
   }
 }
 
-// Fallback function to add sample papers if API fetch fails
-async function addSamplePapersIfNeeded() {
+// Function to add sample papers
+async function addSamplePapers() {
   try {
-    // Check if we have any papers first
-    const { count, error } = await supabase
-      .from('research_papers')
-      .select('*', { count: 'exact', head: true });
-      
-    if (error) throw error;
-    
-    // If we already have papers, no need to add samples
-    if (count && count > 0) {
-      console.log(`Database already contains ${count} research papers. No samples needed.`);
-      return false;
-    }
-    
-    console.log("No papers found in database. Adding sample papers...");
+    console.log("Adding sample research papers...");
     
     const samplePapers = [
       {
         title: "Advances in Neural Network Architectures for Image Recognition",
         author: "Research Team A",
-        summary: "This paper presents novel neural network architectures that improve image recognition accuracy by 15%.",
+        summary: "This paper presents novel neural network architectures that improve image recognition accuracy by 15% through the introduction of adaptive attention mechanisms and sparse connectivity patterns inspired by biological visual systems.",
         published_date: new Date().toISOString(),
         category: "Artificial Intelligence",
         source: "Journal of Machine Learning Research",
@@ -174,7 +161,7 @@ async function addSamplePapersIfNeeded() {
       {
         title: "Climate Change Impact on Coastal Biodiversity",
         author: "Environmental Studies Group",
-        summary: "Analysis of five years of data shows accelerating impact of rising sea levels on coastal ecosystem diversity.",
+        summary: "Analysis of five years of data shows accelerating impact of rising sea levels on coastal ecosystem diversity. Our findings indicate a 23% reduction in species variety in monitored regions, with cascading effects on ecological stability.",
         published_date: new Date().toISOString(),
         category: "Environment",
         source: "Environmental Science Journal",
@@ -184,11 +171,31 @@ async function addSamplePapersIfNeeded() {
       {
         title: "Emerging Antibiotic Resistance Patterns",
         author: "Medical Research Institute",
-        summary: "This study catalogs new patterns of antibiotic resistance across different bacterial strains and geographic regions.",
+        summary: "This study catalogs new patterns of antibiotic resistance across different bacterial strains and geographic regions. We identify novel genetic markers associated with resistance and propose targeted intervention strategies.",
         published_date: new Date().toISOString(),
         category: "Health",
         source: "Journal of Medical Research",
         source_url: "https://example.com/research3",
+        is_auto_fetched: true
+      },
+      {
+        title: "Quantum Computing Approaches to Optimization Problems",
+        author: "Quantum Research Collaborative",
+        summary: "We demonstrate a quantum algorithm that provides quadratic speedup for a class of NP-hard optimization problems. Experimental validation on a 20-qubit system shows promising results compared to classical methods.",
+        published_date: new Date().toISOString(),
+        category: "Quantum Computing",
+        source: "Quantum Information Processing",
+        source_url: "https://example.com/research4",
+        is_auto_fetched: true
+      },
+      {
+        title: "Neural Correlates of Consciousness in Dream States",
+        author: "Neuroscience Institute",
+        summary: "Using advanced fMRI techniques during REM sleep, we identify specific brain activation patterns associated with self-awareness in dreams. Results suggest a distributed network rather than centralized mechanism for conscious experience.",
+        published_date: new Date().toISOString(),
+        category: "Neuroscience",
+        source: "Cognitive Neuroscience Journal",
+        source_url: "https://example.com/research5",
         is_auto_fetched: true
       }
     ];
@@ -197,7 +204,7 @@ async function addSamplePapersIfNeeded() {
     console.log("Added sample papers successfully");
     return true;
   } catch (error) {
-    console.error("Error in addSamplePapersIfNeeded:", error);
+    console.error("Error in addSamplePapers:", error);
     return false;
   }
 }
@@ -210,39 +217,62 @@ serve(async (req) => {
   
   try {
     console.log("Fetch research job started");
+    let requestBody = {};
+    
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      requestBody = {};
+    }
+    
+    const forceSample = requestBody.force_sample === true;
     const papers = [];
     const startTime = Date.now();
     
-    // First try to fetch papers from arXiv
-    let fetchSuccess = false;
+    // First check if we already have research papers
+    const { count, error: countError } = await supabase
+      .from('research_papers')
+      .select('*', { count: 'exact', head: true });
     
-    try {
-      // Fetch papers for each category
-      for (const category of categories) {
-        try {
-          console.log(`Fetching papers for ${category}...`);
-          const categoryPapers = await fetchArxivPapers(category, 10);
-          console.log(`Fetched ${categoryPapers.length} papers from ${category}`);
-          papers.push(...categoryPapers);
-          
-          if (categoryPapers.length > 0) {
-            fetchSuccess = true;
-          }
-        } catch (categoryError) {
-          console.error(`Error processing category ${category}:`, categoryError);
-          // Continue with other categories even if one fails
-        }
-      }
-    } catch (fetchError) {
-      console.error("Error fetching papers from API:", fetchError);
+    if (countError) {
+      console.error("Error checking existing papers:", countError);
     }
     
-    // Store papers in the database if we got any
-    if (papers.length > 0) {
-      await storePapers(papers);
+    // If we already have papers and force_sample isn't set, proceed normally
+    if ((count && count > 0) && !forceSample) {
+      console.log(`Already have ${count} papers in database.`);
     } else {
-      console.log("No papers fetched from API. Adding sample papers as fallback...");
-      await addSamplePapersIfNeeded();
+      // First try to fetch papers from arXiv
+      let fetchSuccess = false;
+      
+      try {
+        // Fetch papers for each category
+        for (const category of categories) {
+          try {
+            console.log(`Fetching papers for ${category}...`);
+            const categoryPapers = await fetchArxivPapers(category, 10);
+            console.log(`Fetched ${categoryPapers.length} papers from ${category}`);
+            papers.push(...categoryPapers);
+            
+            if (categoryPapers.length > 0) {
+              fetchSuccess = true;
+            }
+          } catch (categoryError) {
+            console.error(`Error processing category ${category}:`, categoryError);
+            // Continue with other categories even if one fails
+          }
+        }
+      } catch (fetchError) {
+        console.error("Error fetching papers from API:", fetchError);
+      }
+      
+      // Store papers in the database if we got any
+      if (papers.length > 0) {
+        await storePapers(papers);
+      } else {
+        console.log("No papers fetched from API. Adding sample papers as fallback...");
+        await addSamplePapers();
+      }
     }
     
     const duration = (Date.now() - startTime) / 1000;
@@ -253,7 +283,8 @@ serve(async (req) => {
       count: papers.length,
       duration: `${duration.toFixed(2)}s`,
       categories: categories.length,
-      fetchSuccess,
+      existing_count: count || 0,
+      added_samples: papers.length === 0,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

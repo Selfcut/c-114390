@@ -40,7 +40,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
             "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZXZveGV2ZXp3bmtpZ2VydHBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNzYxMDcsImV4cCI6MjA2Mjg1MjEwN30.pWgLkPyobQPhf2fgvI9suqWjDl_VvYEu7Y4coc5RzsM`
           },
-          body: JSON.stringify({ source: "setup" })
+          body: JSON.stringify({ source: "setup", force_sample: true })
         }
       );
       
