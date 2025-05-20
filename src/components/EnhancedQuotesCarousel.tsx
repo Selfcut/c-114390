@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { fetchQuotes, likeQuote, checkUserLikedQuote } from "@/lib/quotes-service";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 
 interface EnhancedQuotesCarouselProps {
   className?: string;
@@ -137,7 +138,19 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
       return;
     }
     
-    const result = await likeQuote(id);
+    const { user } = await supabase.auth.getSession();
+    const userId = user?.session?.user?.id;
+    
+    if (!userId) {
+      toast({
+        title: "Authentication error",
+        description: "Unable to identify user. Please try logging in again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const result = await likeQuote(id, userId);
     
     // Update local state
     if (result) {
@@ -145,7 +158,7 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
       // Update quote likes in UI
       setQuotes(prevQuotes => 
         prevQuotes.map(quote => 
-          quote.id === id ? { ...quote, likes: quote.likes + 1 } : quote
+          quote.id === id ? { ...quote, likes: (quote.likes || 0) + 1 } : quote
         )
       );
     } else {
@@ -153,7 +166,7 @@ export const EnhancedQuotesCarousel = ({ className }: EnhancedQuotesCarouselProp
       // Update quote likes in UI
       setQuotes(prevQuotes => 
         prevQuotes.map(quote => 
-          quote.id === id ? { ...quote, likes: Math.max(0, quote.likes - 1) } : quote
+          quote.id === id ? { ...quote, likes: Math.max(0, (quote.likes || 0) - 1) } : quote
         )
       );
     }

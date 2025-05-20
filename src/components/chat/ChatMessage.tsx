@@ -22,7 +22,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser
       <div className={`flex ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'} max-w-[80%]`}>
         {!isCurrentUser && (
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={message.avatar} alt={message.senderName || 'User'} />
+            <AvatarImage src={message.avatarUrl || message.sender?.avatarUrl} alt={message.senderName || 'User'} />
             <AvatarFallback>
               {message.senderName?.[0] || '?'}
             </AvatarFallback>
@@ -45,7 +45,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser
         </div>
         {isCurrentUser && (
           <Avatar className="h-8 w-8 ml-2">
-            <AvatarImage src={message.avatar} alt={message.senderName || 'User'} />
+            <AvatarImage src={message.avatarUrl || message.sender?.avatarUrl} alt={message.senderName || 'User'} />
             <AvatarFallback>
               {message.senderName?.[0] || '?'}
             </AvatarFallback>

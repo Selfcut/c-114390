@@ -101,7 +101,7 @@ export const QuoteDetail = () => {
 
   // Handle like action
   const handleLike = async () => {
-    if (!id || !isAuthenticated) {
+    if (!id || !isAuthenticated || !user?.id) {
       toast({
         title: 'Authentication Required',
         description: 'Please log in to like quotes',
@@ -111,7 +111,7 @@ export const QuoteDetail = () => {
     }
 
     try {
-      const result = await likeQuote(id);
+      const result = await likeQuote(id, user.id);
       setIsLiked(result);
       setLikeCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
       
@@ -134,7 +134,7 @@ export const QuoteDetail = () => {
 
   // Handle bookmark action
   const handleBookmark = async () => {
-    if (!id || !isAuthenticated) {
+    if (!id || !isAuthenticated || !user?.id) {
       toast({
         title: 'Authentication Required',
         description: 'Please log in to bookmark quotes',
@@ -144,7 +144,7 @@ export const QuoteDetail = () => {
     }
 
     try {
-      const result = await bookmarkQuote(id);
+      const result = await bookmarkQuote(id, user.id);
       setIsBookmarked(result);
       setBookmarkCount(prev => result ? prev + 1 : Math.max(prev - 1, 0));
       

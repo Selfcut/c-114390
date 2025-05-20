@@ -2,56 +2,42 @@
 export interface ChatMessage {
   id: string;
   content: string;
-  conversationId: string;
   userId: string;
-  senderName?: string;
+  conversationId: string;
   createdAt: string;
+  senderName?: string;
   isCurrentUser?: boolean;
-  isAdmin?: boolean;
-  effectType?: string;
-  replyTo?: {
-    id: string;
-    content: string;
-    senderName: string;
-  };
-  
-  reactions?: Array<{
-    emoji: string;
-    count: number;
-    users?: string[];
-  }>;
-  isSystem?: boolean;
-  isEdited?: boolean;
-  mentions?: string[];
-}
-
-export interface ConversationItem {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  lastActivityAt: string;
-  unreadCount: number;
-  participants?: Array<{
+  avatarUrl?: string;
+  sender?: {
     id: string;
     name: string;
-    avatar?: string;
-  }>;
-  
-  // Adding all properties that are used in the code
-  avatar?: string;
-  isGlobal?: boolean;
-  isGroup?: boolean;
-  updatedAt?: string;
+    username: string;
+    avatarUrl?: string;
+  };
+  reactions?: MessageReaction[];
+  replyToMessage?: ChatMessage;
+}
+
+export interface MessageReaction {
+  id: string;
+  emoji: string;
+  userId: string;
+  username?: string;
+  messageId: string;
 }
 
 export interface Conversation {
   id: string;
-  name?: string;
-  messages?: ChatMessage[];
-  participants?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  name: string;
   lastMessage?: string;
+  updatedAt: string;
   isGlobal?: boolean;
   isGroup?: boolean;
+}
+
+export interface ChatUser {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  status?: 'online' | 'offline' | 'away' | 'do-not-disturb';
 }

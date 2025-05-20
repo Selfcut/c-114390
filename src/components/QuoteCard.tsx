@@ -145,8 +145,20 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       return;
     }
     
+    const { user } = await supabase.auth.getSession();
+    const userId = user?.session?.user?.id;
+    
+    if (!userId) {
+      toast({
+        title: "Authentication error",
+        description: "Unable to identify user. Please try logging in again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
-      const result = await likeQuote(id);
+      const result = await likeQuote(id, userId);
       setIsLiked(result);
       setLikeCount(prev => result ? prev + 1 : prev - 1);
       
@@ -172,8 +184,20 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       return;
     }
     
+    const { user } = await supabase.auth.getSession();
+    const userId = user?.session?.user?.id;
+    
+    if (!userId) {
+      toast({
+        title: "Authentication error",
+        description: "Unable to identify user. Please try logging in again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
-      const result = await bookmarkQuote(id);
+      const result = await bookmarkQuote(id, userId);
       setIsBookmarked(result);
       setBookmarkCount(prev => result ? prev + 1 : prev - 1);
       

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -164,17 +163,17 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
 
   // Handle like button click
   const handleLike = async (quoteId: string) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication required",
         description: "Please log in to like quotes",
         variant: "destructive"
       });
-      return null;
+      return false;
     }
     
     try {
-      const result = await likeQuote(quoteId);
+      const result = await likeQuote(quoteId, user.id);
       
       // Update local state (will also be updated by realtime subscription)
       setUserLikes(prev => ({
@@ -202,23 +201,23 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
         description: "Failed to update like",
         variant: "destructive"
       });
-      return null;
+      return false;
     }
   };
 
   // Handle bookmark button click
   const handleBookmark = async (quoteId: string) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication required",
         description: "Please log in to bookmark quotes",
         variant: "destructive"
       });
-      return null;
+      return false;
     }
     
     try {
-      const result = await bookmarkQuote(quoteId);
+      const result = await bookmarkQuote(quoteId, user.id);
       
       // Update local state (will also be updated by realtime subscription)
       setUserBookmarks(prev => ({
@@ -246,7 +245,7 @@ export const useQuotes = (options: UseQuotesOptions = {}) => {
         description: "Failed to update bookmark",
         variant: "destructive"
       });
-      return null;
+      return false;
     }
   };
 
