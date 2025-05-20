@@ -33,56 +33,75 @@ export function useQuoteOfTheDay() {
           .eq('featured_date', today)
           .limit(1);
         
+        if (featuredError) {
+          console.error('Error fetching featured quote:', featuredError);
+        }
+        
         // Process featured quote if available
-        if (featuredData && featuredData.length > 0 && isQuoteDataValid(featuredData[0])) {
-          const safeQuote = processSafeQuote(featuredData[0]);
-          setQuote(safeQuote);
-          
-          if (safeQuote.id) {
-            trackQuoteView(safeQuote.id);
+        if (featuredData && featuredData.length > 0) {
+          const quoteData = featuredData[0];
+          if (isValidQuote(quoteData)) {
+            const safeQuote = createSafeQuote(quoteData);
+            setQuote(safeQuote);
+            
+            if (safeQuote.id) {
+              trackQuoteView(safeQuote.id);
+            }
+            setIsLoading(false);
+            return;
           }
-        } else {
-          // Get a random popular quote (with more likes)
-          const { data: popularData, error: popularError } = await supabase
-            .from('quotes')
-            .select('*, user:profiles(id, username, name, avatar_url, status)')
-            .gt('likes', 0)
-            .order('likes', { ascending: false })
-            .limit(10);
+        }
+        
+        // Get a random popular quote (with more likes)
+        const { data: popularData, error: popularError } = await supabase
+          .from('quotes')
+          .select('*, user:profiles(id, username, name, avatar_url, status)')
+          .gt('likes', 0)
+          .order('likes', { ascending: false })
+          .limit(10);
+        
+        if (popularError) {
+          console.error('Error fetching popular quotes:', popularError);
+        }
             
-          // Process popular quotes
-          const popularQuotes = popularData || [];
+        // Process popular quotes if available
+        if (popularData && popularData.length > 0) {
+          // Find the first valid quote from the popular quotes
+          const validQuote = popularData.find(isValidQuote);
+            
+          if (validQuote) {
+            const safeQuote = createSafeQuote(validQuote);
+            setQuote(safeQuote);
+            
+            if (safeQuote.id) {
+              trackQuoteView(safeQuote.id);
+            }
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // As a last resort, get any random quote
+        const { data: randomData, error: randomError } = await supabase
+          .from('quotes')
+          .select('*, user:profiles(id, username, name, avatar_url, status)')
+          .limit(1)
+          .order('created_at', { ascending: false });
+        
+        if (randomError) {
+          console.error('Error fetching random quote:', randomError);
+        }
+                
+        // Process random quote if available
+        if (randomData && randomData.length > 0) {
+          const randomQuote = randomData[0];
           
-          if (popularQuotes.length > 0) {
-            // Find the first valid quote from the top 10 most liked
-            const validQuote = popularQuotes.find(isQuoteDataValid);
+          if (isValidQuote(randomQuote)) {
+            const safeQuote = createSafeQuote(randomQuote);
+            setQuote(safeQuote);
             
-            if (validQuote) {
-              const safeQuote = processSafeQuote(validQuote);
-              setQuote(safeQuote);
-              
-              if (safeQuote.id) {
-                trackQuoteView(safeQuote.id);
-              }
-            } else {
-              // Get any random quote as fallback
-              const { data: randomData, error: randomError } = await supabase
-                .from('quotes')
-                .select('*, user:profiles(id, username, name, avatar_url, status)')
-                .limit(1)
-                .order('created_at', { ascending: false });
-                
-              // Process random quote
-              const randomQuote = randomData && randomData.length > 0 ? randomData[0] : null;
-              
-              if (randomQuote && isQuoteDataValid(randomQuote)) {
-                const safeQuote = processSafeQuote(randomQuote);
-                setQuote(safeQuote);
-                
-                if (safeQuote.id) {
-                  trackQuoteView(safeQuote.id);
-                }
-              }
+            if (safeQuote.id) {
+              trackQuoteView(safeQuote.id);
             }
           }
         }
@@ -102,17 +121,17 @@ export function useQuoteOfTheDay() {
   };
 }
 
-// Simple validation function without complex types
-function isQuoteDataValid(quoteData: any): boolean {
+// Simple validation function with explicit type
+function isValidQuote(quoteData: any): boolean {
   return quoteData && 
     typeof quoteData.id === 'string' && 
     typeof quoteData.text === 'string' && 
     typeof quoteData.author === 'string';
 }
 
-// Process raw data into a safe QuoteWithUser object
-function processSafeQuote(rawData: any): QuoteWithUser {
-  // Create a new object with explicit types to avoid deep inference issues
+// Create a safe QuoteWithUser object with explicit types
+function createSafeQuote(rawData: any): QuoteWithUser {
+  // Create base quote object with default values
   const safeQuote: QuoteWithUser = {
     id: typeof rawData.id === 'string' ? rawData.id : '',
     text: typeof rawData.text === 'string' ? rawData.text : '',
@@ -124,10 +143,10 @@ function processSafeQuote(rawData: any): QuoteWithUser {
     bookmarks: typeof rawData.bookmarks === 'number' ? rawData.bookmarks : 0,
     created_at: typeof rawData.created_at === 'string' ? rawData.created_at : new Date().toISOString(),
     user_id: typeof rawData.user_id === 'string' ? rawData.user_id : '',
-    user: DEFAULT_USER // Set default user first
+    user: DEFAULT_USER // Set default user initially
   };
   
-  // Handle user data separately to avoid deep type inference issues
+  // Process user data if available
   if (rawData.user && typeof rawData.user === 'object') {
     safeQuote.user = {
       id: typeof rawData.user.id === 'string' ? rawData.user.id : '',

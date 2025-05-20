@@ -1,9 +1,8 @@
-
 export interface QuoteWithUser {
   id: string;
   text: string;
   author: string;
-  source?: string;
+  source?: string | null;
   tags?: string[];
   likes?: number;
   comments?: number;
@@ -11,8 +10,8 @@ export interface QuoteWithUser {
   created_at: string;
   user_id: string;
   category?: string;
-  user?: {
-    id: string | null;
+  user: {
+    id: string;
     username: string;
     name: string;
     avatar_url: string | null;
