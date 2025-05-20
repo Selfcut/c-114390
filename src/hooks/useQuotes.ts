@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser, QuoteFilterOptions, PaginationResult, QuoteSortOption } from '@/lib/quotes/types';
@@ -19,8 +18,8 @@ interface UseQuotesResult {
   setSortOption: (option: QuoteSortOption) => void;
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
-  handleLike: (quoteId: string) => Promise<void>;
-  handleBookmark: (quoteId: string) => Promise<void>;
+  handleLike: (quoteId: string) => Promise<boolean>;
+  handleBookmark: (quoteId: string) => Promise<boolean>;
   fetchQuotes: (options?: QuoteFilterOptions) => Promise<void>;
   refreshQuotes: () => Promise<void>;
   resetFilters: () => void;
@@ -116,14 +115,14 @@ export const useQuotes = (): UseQuotesResult => {
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data
         const userObj = quote.user && typeof quote.user === 'object' && !quote.user.error
-          ? quote.user
-          : { 
-              id: 'unknown',
-              username: 'unknown',
-              name: 'Unknown User',
-              avatar_url: null,
-              status: 'offline'
-            };
+          ? {
+              id: quote.user.id || 'unknown',
+              username: quote.user.username || 'unknown',
+              name: quote.user.name || 'Unknown User',
+              avatar_url: quote.user.avatar_url,
+              status: quote.user.status || 'offline'
+            }
+          : null;
 
         return {
           id: quote.id,
@@ -195,19 +194,13 @@ export const useQuotes = (): UseQuotesResult => {
         // Handle potentially missing user data by explicitly checking for valid user object
         const userObj = quote.profiles && typeof quote.profiles === 'object' && !quote.profiles.error
           ? {
-              id: quote.profiles.id,
-              username: quote.profiles.username,
-              name: quote.profiles.name,
+              id: quote.profiles.id || 'unknown',
+              username: quote.profiles.username || 'unknown',
+              name: quote.profiles.name || 'Unknown User',
               avatar_url: quote.profiles.avatar_url,
-              status: quote.profiles.status
+              status: quote.profiles.status || 'offline'
             }
-          : {
-              id: 'unknown',
-              username: 'unknown',
-              name: 'Unknown User',
-              avatar_url: null,
-              status: 'offline'
-            };
+          : null;
 
         return {
           id: quote.id,
@@ -227,8 +220,8 @@ export const useQuotes = (): UseQuotesResult => {
       });
 
       const totalCount = count || 0;
-      const totalPages = Math.ceil(totalCount / limit);
-      const page = Math.floor(offset / limit) + 1;
+      const totalPages = Math.ceil(totalCount / (options.limit || 10));
+      const page = Math.floor((options.offset || 0) / (options.limit || 10)) + 1;
 
       setCurrentPage(page);
       setTotalPages(totalPages);
@@ -352,19 +345,13 @@ export const useQuotes = (): UseQuotesResult => {
       // Handle potentially missing user data
       const userObj = data.profiles && typeof data.profiles === 'object' && !data.profiles.error
         ? {
-            id: data.profiles.id,
-            username: data.profiles.username,
-            name: data.profiles.name,
+            id: data.profiles.id || 'unknown',
+            username: data.profiles.username || 'unknown',
+            name: data.profiles.name || 'Unknown User',
             avatar_url: data.profiles.avatar_url,
-            status: data.profiles.status
+            status: data.profiles.status || 'offline'
           }
-        : {
-            id: 'unknown',
-            username: 'unknown',
-            name: 'Unknown User',
-            avatar_url: null,
-            status: 'offline'
-          };
+        : null;
 
       const formattedQuote: QuoteWithUser = {
         id: data.id,
@@ -424,19 +411,13 @@ export const useQuotes = (): UseQuotesResult => {
       // Handle potentially missing user data
       const userObj = data.profiles && typeof data.profiles === 'object' && !data.profiles.error
         ? {
-            id: data.profiles.id,
-            username: data.profiles.username,
-            name: data.profiles.name,
+            id: data.profiles.id || 'unknown',
+            username: data.profiles.username || 'unknown',
+            name: data.profiles.name || 'Unknown User',
             avatar_url: data.profiles.avatar_url,
-            status: data.profiles.status
+            status: data.profiles.status || 'offline'
           }
-        : {
-            id: 'unknown',
-            username: 'unknown',
-            name: 'Unknown User',
-            avatar_url: null,
-            status: 'offline'
-          };
+        : null;
 
       const formattedQuote: QuoteWithUser = {
         id: data.id,
@@ -546,7 +527,7 @@ export const useQuotes = (): UseQuotesResult => {
   }, [user]);
 
   // Like quote
-  const handleLike = useCallback(async (id: string): Promise<void> => {
+  const handleLike = useCallback(async (id: string): Promise<boolean> => {
     if (!isAuthenticated || !user) {
       toast({
         title: 'Authentication Required',
@@ -554,7 +535,7 @@ export const useQuotes = (): UseQuotesResult => {
         variant: 'destructive',
       });
       navigate('/login');
-      return;
+      return false;
     }
 
     try {
@@ -590,6 +571,8 @@ export const useQuotes = (): UseQuotesResult => {
               : quote
           )
         );
+        
+        return false;
       } else {
         // Like: add to the likes table
         await supabase
@@ -620,6 +603,8 @@ export const useQuotes = (): UseQuotesResult => {
               : quote
           )
         );
+        
+        return true;
       }
     } catch (err: any) {
       setError(err.message);
@@ -628,11 +613,12 @@ export const useQuotes = (): UseQuotesResult => {
         description: 'Failed to process like',
         variant: 'destructive',
       });
+      return false;
     }
   }, [isAuthenticated, navigate, toast, user, userLikes]);
 
   // Bookmark quote
-  const handleBookmark = useCallback(async (id: string): Promise<void> => {
+  const handleBookmark = useCallback(async (id: string): Promise<boolean> => {
     if (!isAuthenticated || !user) {
       toast({
         title: 'Authentication Required',
@@ -640,7 +626,7 @@ export const useQuotes = (): UseQuotesResult => {
         variant: 'destructive',
       });
       navigate('/login');
-      return;
+      return false;
     }
 
     try {
@@ -676,6 +662,8 @@ export const useQuotes = (): UseQuotesResult => {
               : quote
           )
         );
+        
+        return false;
       } else {
         // Add bookmark
         await supabase
@@ -706,6 +694,8 @@ export const useQuotes = (): UseQuotesResult => {
               : quote
           )
         );
+        
+        return true;
       }
     } catch (err: any) {
       setError(err.message);
@@ -714,6 +704,7 @@ export const useQuotes = (): UseQuotesResult => {
         description: 'Failed to process bookmark',
         variant: 'destructive',
       });
+      return false;
     }
   }, [isAuthenticated, navigate, toast, user, userBookmarks]);
 

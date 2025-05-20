@@ -32,6 +32,15 @@ const Quotes = () => {
     setIsModalOpen(false);
   };
   
+  // Wrapper functions to handle the boolean return value from useQuotes hook
+  const onLike = async (quoteId: string) => {
+    await handleLike(quoteId);
+  };
+  
+  const onBookmark = async (quoteId: string) => {
+    await handleBookmark(quoteId);
+  };
+  
   return (
     <main className="container mx-auto py-8">
       {/* Header with title and create button */}
@@ -58,8 +67,8 @@ const Quotes = () => {
         isLoading={isLoading}
         userLikes={userLikes}
         userBookmarks={userBookmarks}
-        onLike={handleLike}
-        onBookmark={handleBookmark}
+        onLike={onLike}
+        onBookmark={onBookmark}
         onTagClick={setFilterTag}
         onResetFilters={resetFilters}
       />

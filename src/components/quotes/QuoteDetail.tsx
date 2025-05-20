@@ -63,14 +63,14 @@ export function QuoteDetail() {
         
         // Format the quote data
         const userObj = data.user && typeof data.user === 'object' && !data.user.error
-          ? data.user
-          : {
-              id: 'unknown',
-              username: 'unknown',
-              name: 'Unknown User',
-              avatar_url: '',
-              status: 'offline'
-            };
+          ? {
+              id: data.user?.id || 'unknown',
+              username: data.user?.username || 'unknown',
+              name: data.user?.name || 'Unknown User',
+              avatar_url: data.user?.avatar_url || '',
+              status: data.user?.status || 'offline'
+            }
+          : null;
         
         const formattedQuote: QuoteWithUser = {
           id: data.id,
@@ -347,18 +347,18 @@ export function QuoteDetail() {
           {/* Quote Content */}
           <div className="mb-6">
             <blockquote className="text-2xl font-serif italic mb-4">
-              "{quote.text}"
+              "{quote?.text}"
             </blockquote>
             
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-lg font-semibold">— {quote.author}</p>
-                {quote.source && (
+                <p className="text-lg font-semibold">— {quote?.author}</p>
+                {quote?.source && (
                   <p className="text-sm text-muted-foreground">from {quote.source}</p>
                 )}
               </div>
               
-              {user && quote.user_id === user.id && (
+              {user && quote?.user_id === user.id && (
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
                     Edit
@@ -381,7 +381,7 @@ export function QuoteDetail() {
                 className="flex items-center space-x-1"
               >
                 <HeartIcon size={16} className={isLiked ? "fill-white" : ""} />
-                <span>{quote.likes || 0}</span>
+                <span>{quote?.likes || 0}</span>
               </Button>
               
               <Button 
@@ -391,7 +391,7 @@ export function QuoteDetail() {
                 className="flex items-center space-x-1"
               >
                 <BookmarkIcon size={16} className={isBookmarked ? "fill-white" : ""} />
-                <span>{quote.bookmarks || 0}</span>
+                <span>{quote?.bookmarks || 0}</span>
               </Button>
               
               <Button 
@@ -411,17 +411,17 @@ export function QuoteDetail() {
                 className="flex items-center space-x-1"
               >
                 <MessageCircleIcon size={16} />
-                <span>{quote.comments || 0}</span>
+                <span>{quote?.comments || 0}</span>
               </Button>
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {quote.tags && quote.tags.map(tag => (
+              {quote?.tags && quote.tags.map(tag => (
                 <Badge key={tag} variant="secondary" className="mr-1">
                   {tag}
                 </Badge>
               ))}
-              {quote.category && (
+              {quote?.category && (
                 <Badge variant="outline" className="bg-primary/10 text-primary">
                   {quote.category}
                 </Badge>
@@ -432,13 +432,13 @@ export function QuoteDetail() {
           {/* User Info */}
           <div className="flex items-center mt-6 pt-4 border-t">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={quote.user?.avatar_url || undefined} alt={quote.user?.name || 'User'} />
-              <AvatarFallback>{quote.user?.name?.charAt(0) || 'U'}</AvatarFallback>
+              <AvatarImage src={quote?.user?.avatar_url || undefined} alt={quote?.user?.name || 'User'} />
+              <AvatarFallback>{quote?.user?.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <p className="text-sm font-medium">{quote.user?.name || 'Unknown User'}</p>
+              <p className="text-sm font-medium">{quote?.user?.name || 'Unknown User'}</p>
               <p className="text-xs text-muted-foreground">
-                Shared {formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
+                Shared {quote && formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
               </p>
             </div>
           </div>
@@ -448,7 +448,7 @@ export function QuoteDetail() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="quote">Quote</TabsTrigger>
-            <TabsTrigger value="comments">Comments ({quote.comments || 0})</TabsTrigger>
+            <TabsTrigger value="comments">Comments ({quote?.comments || 0})</TabsTrigger>
           </TabsList>
           
           <TabsContent value="quote">
@@ -456,22 +456,26 @@ export function QuoteDetail() {
           </TabsContent>
           
           <TabsContent value="comments">
-            <QuoteComments 
-              quoteId={quote.id} 
-              updateQuoteCommentCount={updateQuoteCommentCount}
-            />
+            {quote && (
+              <QuoteComments 
+                quoteId={quote.id} 
+                updateQuoteCommentCount={updateQuoteCommentCount}
+              />
+            )}
           </TabsContent>
         </Tabs>
         
         {/* Share Dialog */}
-        <ShareQuoteDialog
-          isOpen={showShareDialog}
-          onClose={() => setShowShareDialog(false)}
-          quote={quote}
-        />
+        {quote && (
+          <ShareQuoteDialog
+            isOpen={showShareDialog}
+            onClose={() => setShowShareDialog(false)}
+            quote={quote}
+          />
+        )}
         
         {/* Edit Modal */}
-        {showEditModal && (
+        {showEditModal && quote && (
           <EditQuoteModal 
             isOpen={showEditModal} 
             onClose={() => setShowEditModal(false)} 
@@ -481,7 +485,7 @@ export function QuoteDetail() {
         )}
         
         {/* Delete Dialog */}
-        {showDeleteDialog && (
+        {showDeleteDialog && quote && (
           <DeleteQuoteDialog
             isOpen={showDeleteDialog}
             onClose={() => setShowDeleteDialog(false)}

@@ -79,3 +79,17 @@ export interface PaginationResult<T> {
   limit: number;
   totalPages: number;
 }
+
+export interface EditQuoteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  quote: QuoteWithUser;
+  onQuoteUpdated: (updatedQuote: QuoteWithUser) => void;
+}
+
+export interface DeleteQuoteDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  quoteId: string;
+  onQuoteDeleted: () => void;
+}
