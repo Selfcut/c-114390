@@ -57,12 +57,9 @@ export function useQuoteOfTheDay() {
           .eq('featured_date', today)
           .limit(1);
         
-        // Convert data to our known types using type assertion with unknown as intermediate step
-        const typedFeaturedData = featuredData ? (featuredData as unknown as QuoteResponse[]) : null;
-        
-        // Check if we have a valid featured quote for today
-        if (typedFeaturedData && typedFeaturedData.length > 0 && isValidQuote(typedFeaturedData[0])) {
-          const processedQuote = createSafeQuote(typedFeaturedData[0]);
+        // Process data without complex type assertions
+        if (featuredData && featuredData.length > 0 && isValidQuote(featuredData[0])) {
+          const processedQuote = createSafeQuote(featuredData[0]);
           setQuote(processedQuote);
           
           if (processedQuote.id) {
@@ -77,9 +74,8 @@ export function useQuoteOfTheDay() {
             .order('likes', { ascending: false })
             .limit(10);
             
-          // Convert data to our known types using type assertion with unknown as intermediate step
-          const typedPopularData = popularData ? (popularData as unknown as QuoteResponse[]) : null;
-          const popularQuotes = typedPopularData || [];
+          // Process popular quotes without complex type assertions
+          const popularQuotes = popularData || [];
           
           if (popularQuotes.length > 0) {
             // Find the first valid quote from the top 10 most liked
@@ -100,9 +96,8 @@ export function useQuoteOfTheDay() {
                 .limit(1)
                 .order('created_at', { ascending: false });
                 
-              // Convert data to our known types using type assertion with unknown as intermediate step
-              const typedRandomData = randomData ? (randomData as unknown as QuoteResponse[]) : null;
-              const randomQuote = typedRandomData && typedRandomData.length > 0 ? typedRandomData[0] : null;
+              // Process random quote without complex type assertions
+              const randomQuote = randomData && randomData.length > 0 ? randomData[0] : null;
               
               if (randomQuote && isValidQuote(randomQuote)) {
                 const processedQuote = createSafeQuote(randomQuote);
