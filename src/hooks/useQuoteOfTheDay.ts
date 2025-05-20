@@ -52,11 +52,14 @@ export function useQuoteOfTheDay() {
           .from('quotes')
           .select('*, user:profiles(id, username, name, avatar_url, status)')
           .eq('featured_date', today)
-          .limit(1) as { data: QuoteResponse[] | null, error: any };
+          .limit(1);
+        
+        // Safely cast data for TypeScript
+        const typedFeaturedData = featuredData as QuoteResponse[] | null;
         
         // Check if we have a valid featured quote for today
-        if (featuredData && featuredData.length > 0 && isValidQuote(featuredData[0])) {
-          const processedQuote = createSafeQuote(featuredData[0]);
+        if (typedFeaturedData && typedFeaturedData.length > 0 && isValidQuote(typedFeaturedData[0])) {
+          const processedQuote = createSafeQuote(typedFeaturedData[0]);
           setQuote(processedQuote);
           
           if (processedQuote.id) {
@@ -69,9 +72,11 @@ export function useQuoteOfTheDay() {
             .select('*, user:profiles(id, username, name, avatar_url, status)')
             .gt('likes', 0)
             .order('likes', { ascending: false })
-            .limit(10) as { data: QuoteResponse[] | null, error: any };
+            .limit(10);
             
-          const popularQuotes = popularData || [];
+          // Safely cast data for TypeScript  
+          const typedPopularData = popularData as QuoteResponse[] | null;
+          const popularQuotes = typedPopularData || [];
           
           if (popularQuotes.length > 0) {
             // Find the first valid quote from the top 10 most liked
@@ -90,9 +95,11 @@ export function useQuoteOfTheDay() {
                 .from('quotes')
                 .select('*, user:profiles(id, username, name, avatar_url, status)')
                 .limit(1)
-                .order('created_at', { ascending: false }) as { data: QuoteResponse[] | null, error: any };
+                .order('created_at', { ascending: false });
                 
-              const randomQuote = randomData && randomData.length > 0 ? randomData[0] : null;
+              // Safely cast data for TypeScript
+              const typedRandomData = randomData as QuoteResponse[] | null;
+              const randomQuote = typedRandomData && typedRandomData.length > 0 ? typedRandomData[0] : null;
               
               if (randomQuote && isValidQuote(randomQuote)) {
                 const processedQuote = createSafeQuote(randomQuote);
