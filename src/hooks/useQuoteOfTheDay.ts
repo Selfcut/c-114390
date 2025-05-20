@@ -25,7 +25,7 @@ export function useQuoteOfTheDay() {
       setIsLoading(true);
       try {
         // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
+        const today = format(new Date(), 'yyyy-MM-dd');
         
         // Try to get a quote specifically selected for today first
         const { data: featuredQuotes, error: featuredError } = await supabase
@@ -40,6 +40,7 @@ export function useQuoteOfTheDay() {
             likes,
             comments,
             bookmarks,
+            featured_date,
             created_at,
             user_id,
             user:profiles (id, username, name, avatar_url, status)
@@ -78,6 +79,7 @@ export function useQuoteOfTheDay() {
             likes,
             comments,
             bookmarks,
+            featured_date,
             created_at,
             user_id,
             user:profiles (id, username, name, avatar_url, status)
@@ -119,6 +121,7 @@ export function useQuoteOfTheDay() {
             likes,
             comments,
             bookmarks,
+            featured_date,
             created_at,
             user_id,
             user:profiles (id, username, name, avatar_url, status)
@@ -198,7 +201,9 @@ function processQuoteData(rawQuote: any): QuoteWithUser {
     comments: typeof rawQuote.comments === 'number' ? rawQuote.comments : 0,
     bookmarks: typeof rawQuote.bookmarks === 'number' ? rawQuote.bookmarks : 0,
     created_at: rawQuote.created_at || new Date().toISOString(),
+    featured_date: rawQuote.featured_date || null,
     user_id: rawQuote.user_id || '',
+    category: rawQuote.category || '',
     user: user
   };
 }

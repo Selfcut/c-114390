@@ -13,5 +13,25 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     storage: localStorage,
+  },
+  global: {
+    // Add global error handler
+    fetch: (url, options) => {
+      const fetchPromise = fetch(url, options);
+      fetchPromise.catch(err => {
+        console.error('Supabase fetch error:', err);
+      });
+      return fetchPromise;
+    }
   }
 });
+
+// Initialize Supabase utilities
+import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
+
+// Initialize utilities on client load
+try {
+  initializeSupabaseUtils();
+} catch (error) {
+  console.error('Failed to initialize Supabase utilities:', error);
+}

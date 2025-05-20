@@ -1,3 +1,4 @@
+
 export interface QuoteWithUser {
   id: string;
   text: string;
@@ -10,6 +11,7 @@ export interface QuoteWithUser {
   created_at: string;
   user_id: string;
   category?: string;
+  featured_date?: string | null;
   user: {
     id: string;
     username: string;
