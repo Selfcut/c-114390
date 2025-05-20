@@ -114,7 +114,7 @@ export const useQuotes = (): UseQuotesResult => {
 
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data
-        const userObj = quote.user && typeof quote.user === 'object' && !('error' in quote.user)
+        const userObj = quote.user && typeof quote.user === 'object'
           ? {
               id: quote.user?.id || 'unknown',
               username: quote.user?.username || 'unknown',
@@ -192,7 +192,7 @@ export const useQuotes = (): UseQuotesResult => {
 
       const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
         // Handle potentially missing user data by explicitly checking for valid user object
-        const userObj = quote.profiles && typeof quote.profiles === 'object' && !('error' in quote.profiles)
+        const userObj = quote.profiles && typeof quote.profiles === 'object'
           ? {
               id: quote.profiles?.id || 'unknown',
               username: quote.profiles?.username || 'unknown',
@@ -343,7 +343,7 @@ export const useQuotes = (): UseQuotesResult => {
       }
 
       // Handle potentially missing user data
-      const userObj = data.profiles && typeof data.profiles === 'object' && !('error' in data.profiles)
+      const userObj = data.profiles && typeof data.profiles === 'object'
         ? {
             id: data.profiles?.id || 'unknown',
             username: data.profiles?.username || 'unknown',
@@ -409,7 +409,7 @@ export const useQuotes = (): UseQuotesResult => {
       }
 
       // Handle potentially missing user data
-      const userObj = data.profiles && typeof data.profiles === 'object' && !('error' in data.profiles)
+      const userObj = data.profiles && typeof data.profiles === 'object'
         ? {
             id: data.profiles?.id || 'unknown',
             username: data.profiles?.username || 'unknown',

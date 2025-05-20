@@ -62,12 +62,12 @@ export function QuoteDetail() {
         }
         
         // Format the quote data
-        const userObj = data.user && typeof data.user === 'object' && !('error' in data.user)
+        const userObj = data.user && typeof data.user === 'object'
           ? {
               id: data.user?.id || 'unknown',
               username: data.user?.username || 'unknown',
               name: data.user?.name || 'Unknown User',
-              avatar_url: data.user?.avatar_url || '',
+              avatar_url: data.user?.avatar_url || null,
               status: data.user?.status || 'offline'
             }
           : null;

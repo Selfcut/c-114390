@@ -45,15 +45,9 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
       // Transform the data to include user information correctly
       const formattedComments: QuoteComment[] = data.map(comment => {
         // Check if profiles is a valid object and not an error
-        const userProfile = comment.profiles && typeof comment.profiles === 'object' && !('error' in comment.profiles)
+        const userProfile = comment.profiles && typeof comment.profiles === 'object' 
           ? comment.profiles 
-          : {
-              id: 'unknown',
-              name: 'Unknown',
-              username: 'unknown',
-              avatar_url: null,
-              status: 'offline'
-            };
+          : null;
         
         return {
           id: comment.id,

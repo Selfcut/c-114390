@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { updateQuote } from '@/lib/quotes';
-import { QuoteWithUser, QuoteSubmission } from '@/lib/quotes/types';
+import { QuoteWithUser, QuoteSubmission, EditQuoteModalProps } from '@/lib/quotes/types';
 import { QuoteForm } from './QuoteForm';
 import {
   Dialog,
@@ -14,18 +14,11 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-interface EditQuoteModalProps {
-  quote: QuoteWithUser;
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
 export const EditQuoteModal: React.FC<EditQuoteModalProps> = ({
   quote,
   isOpen,
   onClose,
-  onSuccess,
+  onQuoteUpdated,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -40,7 +33,15 @@ export const EditQuoteModal: React.FC<EditQuoteModalProps> = ({
           title: 'Quote updated',
           description: 'Your quote has been updated successfully',
         });
-        onSuccess();
+        
+        // Create an updated quote object with the new data
+        const updatedQuote: QuoteWithUser = {
+          ...quote,
+          ...formData,
+          updated_at: new Date().toISOString()
+        };
+        
+        onQuoteUpdated(updatedQuote);
       } else {
         toast({
           title: 'Error',
