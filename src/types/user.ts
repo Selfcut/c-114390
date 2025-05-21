@@ -1,4 +1,17 @@
 
+// Define the user status type
+export type UserStatus = 'online' | 'away' | 'busy' | 'do-not-disturb' | 'invisible' | 'offline';
+
+// Define the user role type
+export type UserRole = 'admin' | 'moderator' | 'user';
+
+// Define notification settings type
+export interface UserNotificationSettings {
+  desktopNotifications: boolean;
+  soundNotifications: boolean;
+  emailNotifications: boolean;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -6,10 +19,13 @@ export interface UserProfile {
   email: string;
   avatar?: string;
   avatar_url?: string;
-  status: string;
+  bio?: string;
+  website?: string;
+  status: UserStatus;
   isGhostMode: boolean;
-  role: string;
+  role: UserRole;
   isAdmin: boolean;
+  notificationSettings?: UserNotificationSettings;
 }
 
 export interface UserSettings {

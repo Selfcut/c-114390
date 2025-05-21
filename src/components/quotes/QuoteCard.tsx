@@ -7,8 +7,28 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Bookmark, Share, Quote } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserHoverCard } from "@/components/UserHoverCard";
-import { QuoteWithUser } from "@/lib/quotes/types";
+import { UserStatus } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
+
+// Define a Quote type for this component
+export interface QuoteWithUser {
+  id: string;
+  text: string;
+  author: string;
+  source?: string;
+  category: string;
+  tags: string[];
+  likes: number;
+  comments: number;
+  bookmarks?: number;
+  user?: {
+    id?: string;
+    name: string;
+    username: string;
+    avatar_url?: string;
+    status?: UserStatus;
+  };
+}
 
 interface QuoteCardProps {
   quote: QuoteWithUser;

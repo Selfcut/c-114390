@@ -1,7 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile } from "@/types/user";
-import { UserStatus } from "@/types/user";
+import { UserProfile, UserStatus } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
 
 // Fetch user profile from Supabase
@@ -33,7 +31,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       avatar_url: avatarUrl,
       bio: profile?.bio || "",
       website: profile?.website || "",
-      role: profile?.role || "user",
+      role: profile?.role as UserRole || "user",
       isAdmin: profile?.role === "admin",
       status: (profile?.status as UserStatus) || "online",
       isGhostMode: profile?.is_ghost_mode || false,
@@ -55,7 +53,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       website: "",
       role: "user",
       isAdmin: false,
-      status: "online" as UserStatus,
+      status: "online",
       isGhostMode: false,
     };
   }

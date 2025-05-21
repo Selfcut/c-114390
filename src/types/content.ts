@@ -1,4 +1,3 @@
-
 export interface Author {
   id?: string;
   name: string;
@@ -78,6 +77,25 @@ export interface WikiArticle extends ContentBase {
   last_updated?: string;
 }
 
+// To fix the ContentBase extension error with Quote, create a special base interface for quotes
+export interface QuoteBase {
+  id: string;
+  title: string;
+  likes: number;
+  views?: number;
+  comments: number;
+  user_id: string;
+  created_at: string;
+  updated_at?: string;
+  text: string;
+  author: string;
+  source?: string;
+  category: string;
+  tags: string[];
+  bookmarks: number;
+}
+
+// Use this UserProfile definition here to avoid circular imports
 export interface UserProfile {
   id: string;
   username: string;
