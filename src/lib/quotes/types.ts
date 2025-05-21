@@ -1,4 +1,3 @@
-
 // Define the base QuoteSubmission type
 export interface QuoteSubmission {
   text: string;
