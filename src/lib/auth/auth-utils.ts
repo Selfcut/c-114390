@@ -65,7 +65,7 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
 }
 
 // Create a user profile if missing
-async function createUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
+export async function createUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
   try {
     console.log('Creating missing profile for user ID:', userId);
     

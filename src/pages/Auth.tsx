@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -140,26 +140,12 @@ const Auth = () => {
 
   // Already showing loading state during redirect
   if (isLoading) {
-    return (
-      <div className="container relative h-screen w-full flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading authentication state...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading authentication state..." />;
   }
 
   // Redirect immediately if authenticated
   if (isAuthenticated) {
-    return (
-      <div className="container relative h-screen w-full flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Redirecting to dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Redirecting to dashboard..." />;
   }
 
   return (
