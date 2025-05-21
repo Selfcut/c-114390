@@ -124,16 +124,8 @@ const Profile = () => {
       }
       
       // Call the updateUserProfile function from the auth context
-      // Since updateUserProfile returns Promise<{ error: Error | null }> we need to catch its errors
-      try {
-        const result = await updateUserProfile(updates);
-        // Check for errors in the result if it's the expected return type
-        if (result && typeof result === 'object' && 'error' in result && result.error) {
-          throw result.error;
-        }
-      } catch (err: any) {
-        console.error("Error from updateUserProfile:", err);
-        throw err;
+      if (updateUserProfile) {
+        await updateUserProfile(updates);
       }
       
       // Update local state
