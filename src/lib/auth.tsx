@@ -189,7 +189,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const result = await updateUserProfile(user.id, updates);
       
       if (!result.error) {
-        // Update local user state
+        // Update local state
         setUser(prev => prev ? { ...prev, ...updates } : null);
         toast({
           title: "Profile updated",
@@ -320,7 +320,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signIn: handleSignIn,
     signUp: handleSignUp,
     signOut: handleSignOut,
-    updateProfile: handleUpdateProfile,
+    updateUserProfile: handleUpdateProfile,
+    updateProfile: handleUpdateProfile, // Add this alias for backward compatibility
     updateUserStatus,
     toggleGhostMode,
     toggleDoNotDisturb,

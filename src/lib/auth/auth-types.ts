@@ -18,7 +18,8 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: AuthError | null }>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: AuthError | null }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: AuthError | null }>; // Adding this as an alias for backward compatibility
   updateUserStatus: (status: UserStatus) => Promise<void>;
   toggleGhostMode: () => Promise<void>;
   toggleDoNotDisturb: () => Promise<void>;

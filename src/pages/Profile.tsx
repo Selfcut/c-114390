@@ -13,7 +13,7 @@ import { trackActivity } from "@/lib/activity-tracker";
 
 const Profile = () => {
   const { username } = useParams();
-  const { user: currentUser, updateProfile } = useAuth();
+  const { user: currentUser, updateUserProfile } = useAuth();
   const [profileData, setProfileData] = useState<UserProfileType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +123,7 @@ const Profile = () => {
         };
       }
       
-      const { error: updateError } = await updateProfile(updates);
+      const { error: updateError } = await updateUserProfile(updates);
       
       if (updateError) {
         throw updateError;
