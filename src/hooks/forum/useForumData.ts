@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { DiscussionTopic } from "@/lib/discussions-utils";
+import { useToast } from "@/hooks/use-toast";
 
 export const useForumData = () => {
   const [discussions, setDiscussions] = useState<DiscussionTopic[]>([]);
@@ -13,6 +14,7 @@ export const useForumData = () => {
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<string[]>([]);
+  const { toast } = useToast();
   
   // Fetch data function that can be called to refetch
   const fetchDiscussions = useCallback(async () => {
@@ -32,6 +34,11 @@ export const useForumData = () => {
         console.error("Error fetching discussions:", error);
         setError("Failed to load discussions. Please try again later.");
         setIsError(true);
+        toast({
+          title: "Error",
+          description: "Failed to load discussions",
+          variant: "destructive"
+        });
         return;
       }
       
@@ -72,10 +79,15 @@ export const useForumData = () => {
       console.error("Exception in fetching discussions:", err);
       setError("An unexpected error occurred. Please try again later.");
       setIsError(true);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
   
   // Initial fetch on component mount
   useEffect(() => {

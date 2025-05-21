@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UpvoteButtonProps {
   count: number;
-  onUpvote: () => Promise<void>;
+  onUpvote: (e: React.MouseEvent) => Promise<void>;
   hasUpvoted?: boolean;
   disabled?: boolean;
   size?: 'sm' | 'default';
@@ -40,7 +40,7 @@ export const UpvoteButton: React.FC<UpvoteButtonProps> = ({
     }
 
     try {
-      await onUpvote();
+      await onUpvote(e);
     } catch (error) {
       console.error('Error upvoting:', error);
       toast({

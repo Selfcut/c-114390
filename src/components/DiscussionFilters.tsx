@@ -16,9 +16,9 @@ interface DiscussionFiltersProps {
   onFilterChange: (tag: string | null) => void;
   onSearchChange: (term: string) => void;
   availableTags: string[];
-  currentSort?: string;
-  currentTag?: string | null;
-  currentSearch?: string;
+  currentSort: string;
+  currentTag: string | null;
+  currentSearch: string;
   isLoading?: boolean;
 }
 
