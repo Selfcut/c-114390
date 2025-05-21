@@ -9,7 +9,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { ensureUserProfile } from '@/lib/auth/profiles-service';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -38,6 +37,7 @@ const Auth = () => {
   // Redirect authenticated users
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("User is authenticated, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
@@ -100,19 +100,12 @@ const Auth = () => {
           return;
         }
         
-        // Ensure user profile exists after login
-        if (result.data?.user) {
-          await ensureUserProfile(result.data.user.id, {
-            email: email,
-            name: result.data.user?.user_metadata?.name,
-            username: result.data.user?.user_metadata?.username
-          });
-        }
-        
         toast({
           title: "Signed in successfully",
           description: "Welcome back!"
         });
+        
+        navigate('/dashboard');
       } else {
         console.log("Signing up with email:", email);
         const result = await signUp(email, password, username, name);
@@ -128,6 +121,10 @@ const Auth = () => {
           title: "Sign up successful",
           description: "Please check your email to verify your account."
         });
+        
+        // Switch to login tab after successful registration
+        setActiveTab("login");
+        setLoading(false);
       }
     } catch (err: any) {
       console.error("Auth error:", err);
@@ -142,6 +139,18 @@ const Auth = () => {
   };
 
   // Already showing loading state during redirect
+  if (isLoading) {
+    return (
+      <div className="container relative h-screen w-full flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading authentication state...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect immediately if authenticated
   if (isAuthenticated) {
     return (
       <div className="container relative h-screen w-full flex items-center justify-center">
@@ -198,8 +207,8 @@ const Auth = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <Button className="w-full mt-6" type="submit" disabled={loading || isLoading}>
-                {loading || isLoading ? (
+              <Button className="w-full mt-6" type="submit" disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Logging in...
@@ -274,8 +283,8 @@ const Auth = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <Button className="w-full mt-6" type="submit" disabled={loading || isLoading}>
-                {loading || isLoading ? (
+              <Button className="w-full mt-6" type="submit" disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating Account...

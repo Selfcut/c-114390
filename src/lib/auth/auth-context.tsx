@@ -2,8 +2,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUserProfile, updateUserProfile as updateProfile } from './auth-utils';
+import { fetchUserProfile, updateUserProfile as updateProfile, signIn, signOut, signUp } from './auth-utils';
 import { UserProfile, UserStatus, UserRole, AuthContextType } from './auth-types';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -12,26 +13,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth listener first to avoid deadlocks
+    console.log("Setting up auth state listener");
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, currentSession?.user?.id);
         setSession(currentSession);
-
+        
         if (currentSession?.user) {
-          // Use setTimeout to avoid potential deadlocks with Supabase
+          // Don't fetch profile directly in the callback to avoid Supabase deadlocks
+          // Instead use setTimeout to run it on the next event loop tick
           setTimeout(async () => {
             try {
               // Fetch the user profile
               const profile = await fetchUserProfile(currentSession.user.id, currentSession);
               
               if (profile) {
+                console.log("User profile fetched:", profile.username);
                 setUser(profile);
                 setIsAuthenticated(true);
-              } else {
-                console.warn('No profile found for user after auth state change');
+              }
+              else {
+                console.error("No profile found for user after auth state change");
                 setUser(null);
                 setIsAuthenticated(false);
               }
@@ -42,17 +49,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }, 0);
         } else {
+          console.log("No user in session, setting user to null");
           setUser(null);
           setIsAuthenticated(false);
           setIsLoading(false);
         }
       }
     );
-
-    // Check for existing session
+    
+    // THEN check for existing session
     const initializeAuth = async () => {
       try {
         const { data } = await supabase.auth.getSession();
+        console.log("Initial session check:", data.session?.user?.id);
         setSession(data.session);
 
         if (data.session?.user) {
@@ -60,8 +69,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = await fetchUserProfile(data.session.user.id, data.session);
           
           if (profile) {
+            console.log("Initial profile fetch:", profile.username);
             setUser(profile);
             setIsAuthenticated(true);
+          } else {
+            console.warn('No profile found during initialization');
+            setUser(null);
+            setIsAuthenticated(false);
           }
         }
       } catch (error) {
@@ -82,18 +96,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      console.log("Signing in with email:", email);
+      const { data, error } = await signIn(email, password);
       
       if (error) {
+        console.error("Sign in error:", error);
+        toast({
+          title: "Sign in failed",
+          description: error.message,
+          variant: "destructive"
+        });
         return { error };
       }
       
+      toast({
+        title: "Signed in successfully",
+        description: "Welcome back!"
+      });
+      
       return { data };
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error("Error signing in:", error);
+      toast({
+        title: "Sign in failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
       return { error };
     } finally {
       setIsLoading(false);
@@ -104,24 +132,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignUp = async (email: string, password: string, username: string, name?: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username,
-            name: name || username
-          }
-        }
-      });
+      console.log("Signing up with email:", email);
+      const { data, error } = await signUp(email, password, username, name);
       
       if (error) {
+        console.error("Sign up error:", error);
+        toast({
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive"
+        });
         return { error };
       }
       
+      toast({
+        title: "Sign up successful",
+        description: "Please check your email to verify your account."
+      });
+      
       return { data };
     } catch (error) {
-      console.error('Error signing up:', error);
+      console.error("Error signing up:", error);
+      toast({
+        title: "Sign up failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
       return { error };
     } finally {
       setIsLoading(false);
@@ -132,12 +168,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-      await supabase.auth.signOut();
+      await signOut();
       setUser(null);
       setSession(null);
       setIsAuthenticated(false);
+      
+      toast({
+        title: "Signed out successfully"
+      });
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error signing out",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -155,11 +200,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!result.error) {
         setUser(prev => prev ? { ...prev, ...updates } : null);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated."
+        });
+      } else {
+        toast({
+          title: "Update failed",
+          description: result.error.message,
+          variant: "destructive"
+        });
       }
       
       return result;
     } catch (error) {
       console.error('Error updating user profile:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast({
+        title: "Update failed",
+        description: message,
+        variant: "destructive"
+      });
       return { error: error instanceof Error ? error : new Error('Unknown error') };
     } finally {
       setIsLoading(false);

@@ -3,123 +3,165 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserStatus, UserRole } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
 
-// Fetch user profile from Supabase
-export const fetchUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile> => {
+// Default user when profile is missing
+const DEFAULT_USER: Partial<UserProfile> = {
+  username: 'unknown',
+  name: 'Unknown User',
+  avatar_url: null,
+  status: 'offline',
+  role: 'user',
+  isGhostMode: false,
+};
+
+// Fetch a user's profile from the database
+export async function fetchUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
   try {
-    // Fetch the user profile from the profiles table
+    console.log('Fetching profile for user ID:', userId);
+    
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .maybeSingle();
-    
+      
     if (error) {
-      console.error("Error fetching user profile:", error);
-      throw error;
+      console.error('Error fetching user profile:', error);
+      return null;
     }
-
-    // Create avatar URL with fallback
-    const avatarUrl = profile?.avatar_url || userSession?.user?.user_metadata?.avatar_url || 
-      `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`;
-
-    // Create a merged profile with both auth and profile data
-    const fullProfile: UserProfile = {
-      id: userId,
-      email: userSession?.user?.email || "",
-      name: profile?.name || userSession?.user?.user_metadata?.name || "User",
-      username: profile?.username || userSession?.user?.user_metadata?.username || "user",
-      avatar: avatarUrl,
-      avatar_url: avatarUrl,
-      bio: profile?.bio || "",
-      website: profile?.website || "",
-      role: (profile?.role as UserRole) || "user",
-      isAdmin: profile?.role === "admin",
-      status: (profile?.status as UserStatus) || "online",
-      isGhostMode: profile?.is_ghost_mode || false,
+    
+    if (!profile) {
+      console.warn('No profile found for user ID:', userId);
+      // Attempt to create a profile automatically
+      return await createUserProfile(userId, session);
+    }
+    
+    // Get email from session if available
+    const email = session?.user?.email || '';
+    
+    // Map database profile to UserProfile type
+    return {
+      id: profile.id,
+      username: profile.username || DEFAULT_USER.username!,
+      name: profile.name || DEFAULT_USER.name!,
+      email,
+      avatar: profile.avatar_url,
+      avatar_url: profile.avatar_url,
+      bio: profile.bio || '',
+      website: profile.website || '',
+      status: (profile.status as UserStatus) || DEFAULT_USER.status!,
+      isGhostMode: profile.is_ghost_mode || false,
+      role: (profile.role as UserRole) || DEFAULT_USER.role!,
+      isAdmin: profile.role === 'admin',
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
         emailNotifications: true
       }
     };
+  } catch (err) {
+    console.error('Exception in fetchUserProfile:', err);
+    return null;
+  }
+}
 
-    return fullProfile;
-  } catch (error) {
-    console.error("Error in fetchUserProfile:", error);
+// Create a user profile if missing
+async function createUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
+  try {
+    console.log('Creating missing profile for user ID:', userId);
     
-    // Return a minimal profile in case of error
+    const email = session?.user?.email || '';
+    const name = session?.user?.user_metadata?.name || `User ${userId.substring(0, 4)}`;
+    const username = session?.user?.user_metadata?.username || `user_${userId.substring(0, 8)}`;
+    
+    const newProfile = {
+      id: userId,
+      username,
+      name,
+      avatar_url: `https://api.dicebear.com/6.x/initials/svg?seed=${username}`,
+      status: 'online' as UserStatus,
+      role: 'user' as UserRole,
+      is_ghost_mode: false,
+      bio: '',
+      website: ''
+    };
+    
+    const { error } = await supabase
+      .from('profiles')
+      .insert(newProfile);
+      
+    if (error) {
+      console.error('Error creating user profile:', error);
+      return null;
+    }
+    
     return {
       id: userId,
-      email: userSession?.user?.email || "",
-      name: userSession?.user?.user_metadata?.name || "User",
-      username: userSession?.user?.user_metadata?.username || "user",
-      avatar: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
-      avatar_url: userSession?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${userSession?.user?.email}`,
-      bio: "",
-      website: "",
-      role: "user",
-      isAdmin: false,
-      status: "online",
+      username,
+      name,
+      email,
+      avatar: newProfile.avatar_url,
+      avatar_url: newProfile.avatar_url,
+      bio: '',
+      website: '',
+      status: 'online',
       isGhostMode: false,
+      role: 'user',
+      isAdmin: false,
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
         emailNotifications: true
       }
     };
+  } catch (err) {
+    console.error('Error creating profile:', err);
+    return null;
   }
-};
+}
 
-// Update user profile in Supabase
-export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<{error: any}> => {
+// Update a user's profile
+export async function updateUserProfile(
+  userId: string,
+  updates: Partial<UserProfile>
+): Promise<{ error: Error | null }> {
   try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        name: updates.name,
-        username: updates.username,
-        avatar_url: updates.avatar_url || updates.avatar, // Handle both fields
-        bio: updates.bio,
-        website: updates.website,
-        status: updates.status,
-        is_ghost_mode: updates.isGhostMode,
-        role: updates.role
-      })
-      .eq('id', userId);
-
-    if (error) {
-      console.error("Error updating user profile:", error);
-      return { error };
+    // Convert from our app UserProfile type to database fields
+    const dbUpdates: any = {};
+    
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.username !== undefined) dbUpdates.username = updates.username;
+    if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+    if (updates.website !== undefined) dbUpdates.website = updates.website;
+    if (updates.avatar_url !== undefined) dbUpdates.avatar_url = updates.avatar_url;
+    if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar; // Map avatar to avatar_url
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.isGhostMode !== undefined) dbUpdates.is_ghost_mode = updates.isGhostMode;
+    
+    // Only update if there are changes
+    if (Object.keys(dbUpdates).length === 0) {
+      return { error: null };
     }
     
-    return { error: null };
-  } catch (error) {
-    console.error("Error in updateUserProfile:", error);
-    return { error };
-  }
-};
-
-// Update user status in Supabase
-export const updateUserStatus = async (userId: string, status: UserStatus): Promise<void> => {
-  try {
     const { error } = await supabase
       .from('profiles')
-      .update({ status })
+      .update(dbUpdates)
       .eq('id', userId);
-
+      
     if (error) {
-      console.error("Error updating user status:", error);
-      throw error;
+      return { error: new Error(error.message) };
     }
+      
+    return { error: null };
   } catch (error) {
-    console.error("Error in updateUserStatus:", error);
-    throw error;
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { error: new Error(message) };
   }
-};
+}
 
 // Authentication methods
 export const signIn = async (email: string, password: string) => {
   try {
+    console.log('Signing in with:', email);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -128,12 +170,14 @@ export const signIn = async (email: string, password: string) => {
     if (error) return { error };
     return { data, error: null };
   } catch (error) {
+    console.error('Sign in exception:', error);
     return { error };
   }
 };
 
 export const signUp = async (email: string, password: string, username: string, name?: string) => {
   try {
+    console.log('Signing up with:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -148,21 +192,18 @@ export const signUp = async (email: string, password: string, username: string, 
     if (error) return { error };
     return { data, error: null };
   } catch (error) {
+    console.error('Sign up exception:', error);
     return { error };
   }
 };
 
 export const signOut = async () => {
   try {
+    console.log('Signing out');
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   } catch (error) {
     console.error("Error signing out:", error);
     throw error;
   }
-};
-
-// Clear user data from local storage
-export const clearUserData = (): void => {
-  // Clear any additional user data from localStorage if needed
 };
