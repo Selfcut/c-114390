@@ -3,6 +3,7 @@ import React from 'react';
 import { useUserContentInteractions } from '@/hooks/useUserContentInteractions';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface PostFooterProps {
   post: {
@@ -11,9 +12,10 @@ interface PostFooterProps {
     views: number;
     comments: number;
   };
+  isAuthenticated?: boolean; // Added isAuthenticated prop
 }
 
-export const PostFooter: React.FC<PostFooterProps> = ({ post }) => {
+export const PostFooter: React.FC<PostFooterProps> = ({ post, isAuthenticated = false }) => {
   const { 
     isLiked, 
     isBookmarked, 
@@ -26,6 +28,8 @@ export const PostFooter: React.FC<PostFooterProps> = ({ post }) => {
     contentType: 'forum',
     initialLikeCount: post.upvotes
   });
+  
+  const { toast } = useToast();
 
   const handleShare = async () => {
     try {
@@ -36,7 +40,9 @@ export const PostFooter: React.FC<PostFooterProps> = ({ post }) => {
         });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
+        toast({
+          description: 'Link copied to clipboard!',
+        });
       }
     } catch (error) {
       console.error('Error sharing:', error);
@@ -62,7 +68,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({ post }) => {
           size="sm"
           className={`flex items-center gap-2 ${isLiked ? 'text-primary' : ''}`}
           onClick={toggleLike}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isAuthenticated}
           aria-label={isLiked ? "Unlike" : "Like"}
         >
           <ThumbsUp size={16} className={isLiked ? 'fill-primary' : ''} />
@@ -74,7 +80,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({ post }) => {
           size="sm"
           className={`flex items-center gap-2 ${isBookmarked ? 'text-primary' : ''}`}
           onClick={toggleBookmark}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isAuthenticated}
           aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
         >
           <Bookmark size={16} className={isBookmarked ? 'fill-primary' : ''} />
