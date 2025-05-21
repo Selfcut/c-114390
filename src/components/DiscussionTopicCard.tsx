@@ -52,11 +52,8 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     content.length > 120 ? content.slice(0, 120) + '...' : content
   ) : '';
 
-  // Handle upvote click
-  const onUpvote = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-
+  // Handle upvote click - update to match the expected signature
+  const onUpvote = async () => {
     if (!user) return;
     setIsUpvoting(true);
 

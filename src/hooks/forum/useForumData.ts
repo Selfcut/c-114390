@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { DiscussionTopic } from "@/lib/discussions-utils";
 
@@ -10,72 +10,77 @@ export const useForumData = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<string[]>([]);
   
-  // Fetch data
-  useEffect(() => {
-    const fetchDiscussions = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Query forum posts
-        const { data, error } = await supabase
-          .from('forum_posts')
-          .select(`
-            *,
-            profiles:user_id(name, username, avatar_url)
-          `);
-        
-        if (error) {
-          console.error("Error fetching discussions:", error);
-          setError("Failed to load discussions. Please try again later.");
-          return;
+  // Fetch data function that can be called to refetch
+  const fetchDiscussions = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setIsError(false);
+      
+      // Query forum posts
+      const { data, error } = await supabase
+        .from('forum_posts')
+        .select(`
+          *,
+          profiles:user_id(name, username, avatar_url)
+        `);
+      
+      if (error) {
+        console.error("Error fetching discussions:", error);
+        setError("Failed to load discussions. Please try again later.");
+        setIsError(true);
+        return;
+      }
+      
+      // Process the data and collect tags
+      const allTagsSet = new Set<string>();
+      const processedData: DiscussionTopic[] = data.map((post: any) => {
+        // Add tags to tag set
+        if (post.tags && Array.isArray(post.tags)) {
+          post.tags.forEach((tag: string) => allTagsSet.add(tag));
         }
         
-        // Process the data and collect tags
-        const allTagsSet = new Set<string>();
-        const processedData: DiscussionTopic[] = data.map((post: any) => {
-          // Add tags to tag set
-          if (post.tags && Array.isArray(post.tags)) {
-            post.tags.forEach((tag: string) => allTagsSet.add(tag));
-          }
-          
-          // Extract author info from the joined profiles data
-          const authorInfo = post.profiles;
-          
-          // Determine if post is popular based on views & comments
-          const isPopular = (post.views || 0) > 50 || (post.comments || 0) > 5;
-          
-          return {
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            authorId: post.user_id,
-            author: authorInfo?.name || authorInfo?.username || 'Unknown User',
-            authorAvatar: authorInfo?.avatar_url,
-            createdAt: new Date(post.created_at),
-            tags: post.tags || [],
-            views: post.views || 0,
-            upvotes: post.upvotes || 0,
-            comments: post.comments || 0,
-            isPinned: post.is_pinned || false,
-            isPopular: isPopular,
-          };
-        });
+        // Extract author info from the joined profiles data
+        const authorInfo = post.profiles;
         
-        setDiscussions(processedData);
-        setAllTags(Array.from(allTagsSet));
-      } catch (err) {
-        console.error("Exception in fetching discussions:", err);
-        setError("An unexpected error occurred. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchDiscussions();
+        // Determine if post is popular based on views & comments
+        const isPopular = (post.views || 0) > 50 || (post.comments || 0) > 5;
+        
+        return {
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          authorId: post.user_id,
+          author: authorInfo?.name || authorInfo?.username || 'Unknown User',
+          authorAvatar: authorInfo?.avatar_url,
+          createdAt: new Date(post.created_at),
+          tags: post.tags || [],
+          views: post.views || 0,
+          upvotes: post.upvotes || 0,
+          comments: post.comments || 0,
+          isPinned: post.is_pinned || false,
+          isPopular: isPopular,
+        };
+      });
+      
+      setDiscussions(processedData);
+      setAllTags(Array.from(allTagsSet));
+    } catch (err) {
+      console.error("Exception in fetching discussions:", err);
+      setError("An unexpected error occurred. Please try again later.");
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+  
+  // Initial fetch on component mount
+  useEffect(() => {
+    fetchDiscussions();
+  }, [fetchDiscussions]);
   
   // Apply filters and search
   useEffect(() => {
@@ -129,6 +134,11 @@ export const useForumData = () => {
     setFilteredDiscussions(result);
   }, [discussions, activeTag, searchTerm, sortOption]);
   
+  // Function to refetch the discussions
+  const refetch = useCallback(() => {
+    return fetchDiscussions();
+  }, [fetchDiscussions]);
+  
   return {
     discussions,
     filteredDiscussions,
@@ -139,7 +149,9 @@ export const useForumData = () => {
     searchTerm,
     setSearchTerm,
     isLoading,
+    isError,
     error,
+    refetch,
     allTags,
   };
 };

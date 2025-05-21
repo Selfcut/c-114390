@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Search, Filter, ArrowUpDown, Bookmark, Clock, ThumbsUp, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, ArrowUpDown, Bookmark, Clock, ThumbsUp, TrendingUp, Eye } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -12,23 +12,44 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
 interface DiscussionFiltersProps {
-  onSortChange: (sortOption: 'popular' | 'new' | 'upvotes') => void;
+  onSortChange: (sortOption: string) => void;
   onFilterChange: (tag: string | null) => void;
   onSearchChange: (term: string) => void;
   availableTags: string[];
+  currentSort?: string;
+  currentTag?: string | null;
+  currentSearch?: string;
+  isLoading?: boolean;
 }
 
 export const DiscussionFilters = ({ 
   onSortChange, 
   onFilterChange, 
   onSearchChange,
-  availableTags 
+  availableTags,
+  currentSort = 'popular',
+  currentTag = null,
+  currentSearch = '',
+  isLoading = false
 }: DiscussionFiltersProps) => {
-  const [sortOption, setSortOption] = useState<'popular' | 'new' | 'upvotes'>('popular');
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState<string>(currentSort);
+  const [activeTag, setActiveTag] = useState<string | null>(currentTag);
+  const [searchTerm, setSearchTerm] = useState(currentSearch);
   
-  const handleSortChange = (option: 'popular' | 'new' | 'upvotes') => {
+  // Update local state when props change
+  useEffect(() => {
+    setSortOption(currentSort);
+  }, [currentSort]);
+  
+  useEffect(() => {
+    setActiveTag(currentTag);
+  }, [currentTag]);
+  
+  useEffect(() => {
+    setSearchTerm(currentSearch);
+  }, [currentSearch]);
+  
+  const handleSortChange = (option: string) => {
     setSortOption(option);
     onSortChange(option);
   };
@@ -57,8 +78,9 @@ export const DiscussionFilters = ({
   const getSortIcon = () => {
     switch(sortOption) {
       case 'popular': return <TrendingUp size={16} />;
-      case 'new': return <Clock size={16} />;
+      case 'newest': case 'new': return <Clock size={16} />;
       case 'upvotes': return <ThumbsUp size={16} />;
+      case 'views': case 'most-viewed': return <Eye size={16} />;
       default: return <ArrowUpDown size={16} />;
     }
   };
@@ -75,6 +97,7 @@ export const DiscussionFilters = ({
               className="w-full pl-10"
               value={searchTerm}
               onChange={handleSearch}
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -85,6 +108,7 @@ export const DiscussionFilters = ({
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2"
+                disabled={isLoading}
               >
                 {getSortIcon()}
                 <span>{sortOption.charAt(0).toUpperCase() + sortOption.slice(1)}</span>
@@ -100,7 +124,7 @@ export const DiscussionFilters = ({
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="flex items-center gap-2"
-                onClick={() => handleSortChange('new')}
+                onClick={() => handleSortChange('newest')}
               >
                 <Clock size={16} />
                 <span>New</span>
@@ -112,6 +136,13 @@ export const DiscussionFilters = ({
                 <ThumbsUp size={16} />
                 <span>Most Upvoted</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => handleSortChange('views')}
+              >
+                <Eye size={16} />
+                <span>Most Viewed</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -120,6 +151,7 @@ export const DiscussionFilters = ({
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2"
+                disabled={isLoading}
               >
                 <Filter size={16} />
                 <span>Topics</span>
@@ -153,6 +185,7 @@ export const DiscussionFilters = ({
               variant="ghost" 
               size="sm"
               onClick={handleClearFilters}
+              disabled={isLoading}
             >
               Reset Filters
             </Button>
