@@ -22,13 +22,13 @@ export const useForumData = () => {
       setIsLoading(true);
       setIsError(false);
       
-      // Query forum posts without requiring a join for now to avoid foreign key issues
-      const { data, error } = await supabase
+      // Query forum posts
+      const { data: postsData, error: postsError } = await supabase
         .from('forum_posts')
         .select('*');
       
-      if (error) {
-        console.error("Error fetching discussions:", error);
+      if (postsError) {
+        console.error("Error fetching discussions:", postsError);
         setError("Failed to load discussions. Please try again later.");
         setIsError(true);
         toast({
@@ -39,11 +39,19 @@ export const useForumData = () => {
         return;
       }
       
-      // Fetch all profiles in a separate query to handle potential missing profiles
-      const { data: profilesData } = await supabase
+      // Get all unique user IDs from the posts
+      const userIds = [...new Set(postsData.map(post => post.user_id))].filter(Boolean);
+      
+      // Fetch all profiles in a separate query
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, username, avatar_url');
+        .select('id, name, username, avatar_url')
+        .in('id', userIds);
         
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+      }
+      
       // Create a map of profiles by ID for quick lookup
       const profilesMap: Record<string, any> = {};
       if (profilesData) {
@@ -54,7 +62,7 @@ export const useForumData = () => {
       
       // Process the data and collect tags
       const allTagsSet = new Set<string>();
-      const processedData: DiscussionTopic[] = data.map((post: any) => {
+      const processedData: DiscussionTopic[] = postsData.map((post: any) => {
         // Add tags to tag set
         if (post.tags && Array.isArray(post.tags)) {
           post.tags.forEach((tag: string) => allTagsSet.add(tag));
@@ -176,7 +184,7 @@ export const useForumData = () => {
     isLoading,
     isError,
     error,
-    refetch,
+    refetch: fetchDiscussions,
     allTags,
   };
 };

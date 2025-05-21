@@ -59,12 +59,12 @@ export function useForumPost(postId?: string) {
         return;
       }
 
-      // Fetch author profile separately to handle potential missing profiles
+      // Fetch author profile separately
       const { data: authorProfile, error: authorError } = await supabase
         .from('profiles')
-        .select('name, username, avatar_url')
+        .select('id, name, username, avatar_url')
         .eq('id', postData.user_id)
-        .maybeSingle();  // Use maybeSingle instead of single to handle missing profiles
+        .maybeSingle();
       
       // Process the data even if profile is missing
       const authorName = authorProfile?.name || authorProfile?.username || 'Unknown User';
@@ -139,7 +139,7 @@ export function useForumPost(postId?: string) {
       
       // Update view count
       try {
-        await supabase.rpc('increment_counter_fn', {
+        await supabase.rpc('increment_counter', {
           row_id: postId,
           column_name: 'views',
           table_name: 'forum_posts'

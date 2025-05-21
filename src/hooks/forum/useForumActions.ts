@@ -8,6 +8,7 @@ export interface ForumDiscussion {
   id: string;
   upvotes?: number;
   user_id?: string;
+  comments?: number;
 }
 
 export const useForumActions = (discussionId?: string) => {
@@ -103,10 +104,10 @@ export const useForumActions = (discussionId?: string) => {
         
       if (commentError) throw commentError;
       
-      // Update comment count - FIX: Use update directly instead of RPC function that returns a PostgrestFilterBuilder
+      // Update comment count - Use direct update instead of RPC function
       await supabase
         .from('forum_posts')
-        .update({ comments: (discussion as any).comments ? (discussion as any).comments + 1 : 1 })
+        .update({ comments: (discussion.comments || 0) + 1 })
         .eq('id', discussion.id);
         
       // Format and add the new comment to state if callback provided

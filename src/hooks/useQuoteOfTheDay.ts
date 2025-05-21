@@ -30,116 +30,73 @@ export function useQuoteOfTheDay() {
         // Try to get a quote specifically selected for today first
         const { data: featuredQuotes, error: featuredError } = await supabase
           .from('quotes')
-          .select(`
-            id,
-            text,
-            author,
-            source,
-            category,
-            tags,
-            likes,
-            comments,
-            bookmarks,
-            featured_date,
-            created_at,
-            user_id,
-            user:profiles (id, username, name, avatar_url, status)
-          `)
+          .select('*')
           .eq('featured_date', today)
           .limit(1);
         
         if (featuredError) {
           console.error('Error fetching featured quote:', featuredError);
+          setIsLoading(false);
+          return;
         }
+        
+        let quoteData = null;
         
         // Process featured quote if available
         if (featuredQuotes && featuredQuotes.length > 0) {
-          const quoteData = featuredQuotes[0];
-          const processedQuote = processQuoteData(quoteData);
+          quoteData = featuredQuotes[0];
+        } else {
+          // Get a random popular quote (with more likes)
+          const { data: popularQuotes, error: popularError } = await supabase
+            .from('quotes')
+            .select('*')
+            .gt('likes', 0)
+            .order('likes', { ascending: false })
+            .limit(10);
           
-          setQuote(processedQuote);
-          
-          if (processedQuote.id) {
-            trackQuoteView(processedQuote.id);
+          if (popularError) {
+            console.error('Error fetching popular quotes:', popularError);
+          } else if (popularQuotes && popularQuotes.length > 0) {
+            // Pick a random quote from the popular ones
+            const randomIndex = Math.floor(Math.random() * popularQuotes.length);
+            quoteData = popularQuotes[randomIndex];
           }
-          setIsLoading(false);
-          return;
         }
         
-        // Get a random popular quote (with more likes)
-        const { data: popularQuotes, error: popularError } = await supabase
-          .from('quotes')
-          .select(`
-            id,
-            text,
-            author, 
-            source,
-            category,
-            tags,
-            likes,
-            comments,
-            bookmarks,
-            featured_date,
-            created_at,
-            user_id,
-            user:profiles (id, username, name, avatar_url, status)
-          `)
-          .gt('likes', 0)
-          .order('likes', { ascending: false })
-          .limit(10);
-        
-        if (popularError) {
-          console.error('Error fetching popular quotes:', popularError);
+        if (!quoteData) {
+          // As a last resort, get any random quote
+          const { data: randomQuotes, error: randomError } = await supabase
+            .from('quotes')
+            .select('*')
+            .limit(5)
+            .order('created_at', { ascending: false });
+          
+          if (randomError) {
+            console.error('Error fetching random quote:', randomError);
+          } else if (randomQuotes && randomQuotes.length > 0) {
+            // Pick one random quote from the results
+            const randomIndex = Math.floor(Math.random() * randomQuotes.length);
+            quoteData = randomQuotes[randomIndex];
+          }
         }
+        
+        if (quoteData) {
+          // Fetch user profile separately
+          const { data: userProfile, error: userError } = await supabase
+            .from('profiles')
+            .select('id, username, name, avatar_url, status')
+            .eq('id', quoteData.user_id)
+            .maybeSingle();
             
-        // Process popular quotes if available
-        if (popularQuotes && popularQuotes.length > 0) {
-          // Pick a random quote from the popular ones
-          const randomIndex = Math.floor(Math.random() * popularQuotes.length);
-          const quoteData = popularQuotes[randomIndex];
-          
-          const processedQuote = processQuoteData(quoteData);
-          setQuote(processedQuote);
-          
-          if (processedQuote.id) {
-            trackQuoteView(processedQuote.id);
+          if (userError) {
+            console.error('Error fetching quote author profile:', userError);
           }
-          setIsLoading(false);
-          return;
-        }
-        
-        // As a last resort, get any random quote
-        const { data: randomQuotes, error: randomError } = await supabase
-          .from('quotes')
-          .select(`
-            id,
-            text,
-            author,
-            source,
-            category,
-            tags,
-            likes,
-            comments,
-            bookmarks,
-            featured_date,
-            created_at,
-            user_id,
-            user:profiles (id, username, name, avatar_url, status)
-          `)
-          .limit(5)
-          .order('created_at', { ascending: false });
-        
-        if (randomError) {
-          console.error('Error fetching random quote:', randomError);
-        }
-                
-        // Process random quote if available
-        if (randomQuotes && randomQuotes.length > 0) {
-          // Pick one random quote from the results
-          const randomIndex = Math.floor(Math.random() * randomQuotes.length);
-          const quoteData = randomQuotes[randomIndex];
           
-          const processedQuote = processQuoteData(quoteData);
+          const processedQuote: QuoteWithUser = {
+            ...quoteData,
+            user: userProfile || DEFAULT_USER
+          };
+          
           setQuote(processedQuote);
           
           if (processedQuote.id) {
@@ -163,13 +120,13 @@ export function useQuoteOfTheDay() {
 }
 
 // Process a raw quote record into a safe QuoteWithUser object
-function processQuoteData(rawQuote: any): QuoteWithUser {
+function processQuoteData(rawQuote: any, userProfile?: any): QuoteWithUser {
   if (!rawQuote) {
     return {
       id: '',
       text: '',
       author: '',
-      category: '', // Add the missing category field with default value
+      category: '',
       source: null,
       tags: [],
       likes: 0,
@@ -181,15 +138,8 @@ function processQuoteData(rawQuote: any): QuoteWithUser {
     };
   }
   
-  // Process user data
-  const userData = rawQuote.user || {};
-  const user = {
-    id: typeof userData.id === 'string' ? userData.id : '',
-    username: typeof userData.username === 'string' ? userData.username : 'unknown',
-    name: typeof userData.name === 'string' ? userData.name : 'Unknown User',
-    avatar_url: userData.avatar_url || null,
-    status: typeof userData.status === 'string' ? userData.status : 'offline'
-  };
+  // Use provided user profile or default
+  const user = userProfile || DEFAULT_USER;
   
   // Return the processed quote
   return {
@@ -197,7 +147,7 @@ function processQuoteData(rawQuote: any): QuoteWithUser {
     text: rawQuote.text || '',
     author: rawQuote.author || '',
     source: rawQuote.source || null,
-    category: rawQuote.category || '', // Ensure category is included
+    category: rawQuote.category || '',
     tags: Array.isArray(rawQuote.tags) ? rawQuote.tags : [],
     likes: typeof rawQuote.likes === 'number' ? rawQuote.likes : 0,
     comments: typeof rawQuote.comments === 'number' ? rawQuote.comments : 0,

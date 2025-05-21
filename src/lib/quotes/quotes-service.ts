@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser, QuoteFilterOptions, QuoteSubmission } from './types';
 
@@ -21,8 +22,28 @@ const formatUserData = (quoteUser: any) => {
 /**
  * Formats a quote with user data
  */
-const formatQuote = (quote: any): QuoteWithUser => {
-  const userObj = formatUserData(quote.user);
+const formatQuote = (quote: any, userProfileMap?: Record<string, any>): QuoteWithUser => {
+  let userObj;
+  
+  if (userProfileMap && quote.user_id) {
+    userObj = userProfileMap[quote.user_id] || {
+      id: null,
+      username: 'unknown',
+      name: 'Unknown User',
+      avatar_url: null,
+      status: 'offline'
+    };
+  } else if (quote.user) {
+    userObj = formatUserData(quote.user);
+  } else {
+    userObj = {
+      id: null,
+      username: 'unknown',
+      name: 'Unknown User',
+      avatar_url: null,
+      status: 'offline'
+    };
+  }
         
   return {
     ...quote,
@@ -35,24 +56,36 @@ const formatQuote = (quote: any): QuoteWithUser => {
  */
 export const fetchQuotes = async (): Promise<QuoteWithUser[]> => {
   try {
-    const { data, error } = await supabase
+    // First, fetch all quotes
+    const { data: quotesData, error: quotesError } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        user:profiles(
-          id, 
-          username, 
-          name, 
-          avatar_url, 
-          status
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (quotesError) throw quotesError;
+    if (!quotesData || quotesData.length === 0) return [];
     
-    // Transform the data to match our expected type
-    const formattedQuotes = (data || []).map(quote => formatQuote(quote));
+    // Get unique user IDs
+    const userIds = [...new Set(quotesData.map(quote => quote.user_id))].filter(Boolean);
+    
+    // Then fetch user profiles in a separate query
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, name, avatar_url, status')
+      .in('id', userIds);
+    
+    if (profilesError) throw profilesError;
+    
+    // Create a map of profiles by user ID
+    const profilesMap: Record<string, any> = {};
+    if (profilesData) {
+      profilesData.forEach(profile => {
+        profilesMap[profile.id] = profile;
+      });
+    }
+    
+    // Combine quotes with their user data
+    const formattedQuotes = quotesData.map(quote => formatQuote(quote, profilesMap));
     
     return formattedQuotes;
   } catch (error) {
@@ -68,18 +101,8 @@ export const fetchQuotesWithFilters = async (
   options: QuoteFilterOptions
 ): Promise<QuoteWithUser[]> => {
   try {
-    let query = supabase
-      .from('quotes')
-      .select(`
-        *,
-        user:profiles(
-          id, 
-          username, 
-          name, 
-          avatar_url, 
-          status
-        )
-      `);
+    // First, fetch filtered quotes
+    let query = supabase.from('quotes').select('*');
     
     // Apply filters if provided
     if (options.searchTerm) {
@@ -100,22 +123,39 @@ export const fetchQuotesWithFilters = async (
     
     // Apply pagination
     if (options.limit) {
-      query = query.limit(options.limit);
+      if (options.offset !== undefined) {
+        query = query.range(options.offset, options.offset + options.limit - 1);
+      } else {
+        query = query.limit(options.limit);
+      }
     }
     
-    if (options.offset) {
-      query = query.range(
-        options.offset, 
-        options.offset + (options.limit || 10) - 1
-      );
+    const { data: quotesData, error: quotesError } = await query;
+    
+    if (quotesError) throw quotesError;
+    if (!quotesData || quotesData.length === 0) return [];
+    
+    // Get unique user IDs
+    const userIds = [...new Set(quotesData.map(quote => quote.user_id))].filter(Boolean);
+    
+    // Then fetch user profiles in a separate query
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, name, avatar_url, status')
+      .in('id', userIds);
+    
+    if (profilesError) throw profilesError;
+    
+    // Create a map of profiles by user ID
+    const profilesMap: Record<string, any> = {};
+    if (profilesData) {
+      profilesData.forEach(profile => {
+        profilesMap[profile.id] = profile;
+      });
     }
     
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    // Transform the data to match our expected type
-    const formattedQuotes = (data || []).map(quote => formatQuote(quote));
+    // Combine quotes with their user data
+    const formattedQuotes = quotesData.map(quote => formatQuote(quote, profilesMap));
     
     return formattedQuotes;
   } catch (error) {
@@ -129,24 +169,41 @@ export const fetchQuotesWithFilters = async (
  */
 export const fetchQuoteById = async (id: string): Promise<QuoteWithUser | null> => {
   try {
-    const { data, error } = await supabase
+    // Fetch the quote
+    const { data: quoteData, error: quoteError } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        user:profiles(
-          id, 
-          username, 
-          name, 
-          avatar_url, 
-          status
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
     
-    if (error) throw error;
+    if (quoteError) throw quoteError;
+    if (!quoteData) return null;
     
-    return formatQuote(data);
+    // Fetch the user profile in a separate query
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username, name, avatar_url, status')
+      .eq('id', quoteData.user_id)
+      .maybeSingle();
+    
+    // Even if there's an error with the profile, we still want to return the quote
+    if (profileError) {
+      console.error('Error fetching quote author profile:', profileError);
+    }
+    
+    // Format the quote with the user data
+    const formattedQuote = {
+      ...quoteData,
+      user: profileData || {
+        id: null,
+        username: 'unknown',
+        name: 'Unknown User',
+        avatar_url: null,
+        status: 'offline'
+      }
+    };
+    
+    return formattedQuote;
   } catch (error) {
     console.error('Error fetching quote by ID:', error);
     return null;

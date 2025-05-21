@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { QuoteWithUser, QuoteFilterOptions, PaginationResult, QuoteSortOption, QuoteSubmission } from '@/lib/quotes/types';
+import { QuoteWithUser, QuoteFilterOptions, QuoteSortOption } from '@/lib/quotes/types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -52,13 +52,10 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     setIsLoading(true);
     try {
       // Apply filters and sorting
+      // First, fetch quotes
       let query = supabase
         .from('quotes')
-        .select(`
-          *,
-          user:profiles (id, username, name, avatar_url, status)
-        `, { count: 'exact' })
-        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
+        .select('*', { count: 'exact' });
 
       if (searchQuery) {
         query = query.ilike('text', `%${searchQuery}%`);
@@ -69,30 +66,48 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
       }
 
       const sortColumn = getSortColumn(sortOption);
-      query = query.order(sortColumn.column, { ascending: sortColumn.ascending });
+      query = query.order(sortColumn.column, { ascending: sortColumn.ascending })
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
-      const { data, error, count } = await query;
+      const { data: quotesData, error: quotesError, count } = await query;
 
-      if (error) {
-        throw error;
+      if (quotesError) {
+        throw quotesError;
       }
       
-      // Format the user object
-      const formattedQuotes: QuoteWithUser[] = (data || []).map(quote => {
-        const userData = quote.user;
-        const userObj = userData && typeof userData === 'object'
-          ? {
-              id: (userData as any).id || 'unknown',
-              username: (userData as any).username || 'unknown',
-              name: (userData as any).name || 'Unknown User',
-              avatar_url: (userData as any).avatar_url || null,
-              status: (userData as any).status || 'offline'
-            }
-          : null;
+      // Now fetch user profiles for the quotes in a separate query
+      const userIds = quotesData?.map(quote => quote.user_id).filter(Boolean) || [];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, name, avatar_url, status')
+        .in('id', userIds);
+      
+      if (profilesError) {
+        throw profilesError;
+      }
+      
+      // Create a map of user profiles by ID for quick lookup
+      const profilesMap: Record<string, any> = {};
+      if (profilesData) {
+        profilesData.forEach((profile: any) => {
+          profilesMap[profile.id] = profile;
+        });
+      }
+      
+      // Combine quotes with their user data
+      const formattedQuotes: QuoteWithUser[] = (quotesData || []).map(quote => {
+        const userData = profilesMap[quote.user_id] || {
+          id: 'unknown',
+          username: 'unknown',
+          name: 'Unknown User',
+          avatar_url: null,
+          status: 'offline'
+        };
         
         return {
           ...quote,
-          user: userObj
+          user: userData
         };
       });
 
@@ -209,7 +224,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   }, []);
 
-  // Handle like a quote - Fixed to use the RPC functions correctly
+  // Handle like a quote
   const handleLike = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -279,7 +294,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   };
 
-  // Handle bookmark a quote - Fixed to use the RPC functions correctly
+  // Handle bookmark a quote
   const handleBookmark = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
