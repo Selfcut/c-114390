@@ -169,6 +169,7 @@ function processQuoteData(rawQuote: any): QuoteWithUser {
       id: '',
       text: '',
       author: '',
+      category: '', // Add the missing category field with default value
       source: null,
       tags: [],
       likes: 0,
@@ -196,6 +197,7 @@ function processQuoteData(rawQuote: any): QuoteWithUser {
     text: rawQuote.text || '',
     author: rawQuote.author || '',
     source: rawQuote.source || null,
+    category: rawQuote.category || '', // Ensure category is included
     tags: Array.isArray(rawQuote.tags) ? rawQuote.tags : [],
     likes: typeof rawQuote.likes === 'number' ? rawQuote.likes : 0,
     comments: typeof rawQuote.comments === 'number' ? rawQuote.comments : 0,
@@ -203,7 +205,6 @@ function processQuoteData(rawQuote: any): QuoteWithUser {
     created_at: rawQuote.created_at || new Date().toISOString(),
     featured_date: rawQuote.featured_date || null,
     user_id: rawQuote.user_id || '',
-    category: rawQuote.category || '',
     user: user
   };
 }

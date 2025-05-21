@@ -229,13 +229,37 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
       }));
 
       // Update the like in the database
-      const { error } = await supabase.rpc('like_quote', {
-        quote_id: quoteId,
-        user_id: user.id,
-      });
-
-      if (error) {
-        throw error;
+      // Fix: Instead of using RPC, we'll implement the like functionality directly
+      if (userLikes[quoteId]) {
+        // Unlike: Delete the like and decrement the likes count
+        const { error: deleteLikeError } = await supabase
+          .from('quote_likes')
+          .delete()
+          .eq('quote_id', quoteId)
+          .eq('user_id', user.id);
+          
+        if (deleteLikeError) throw deleteLikeError;
+          
+        const { error: updateQuoteError } = await supabase
+          .from('quotes')
+          .update({ likes: supabase.raw('GREATEST(likes - 1, 0)') })
+          .eq('id', quoteId);
+          
+        if (updateQuoteError) throw updateQuoteError;
+      } else {
+        // Like: Add a new like and increment the likes count
+        const { error: insertLikeError } = await supabase
+          .from('quote_likes')
+          .insert({ quote_id: quoteId, user_id: user.id });
+          
+        if (insertLikeError) throw insertLikeError;
+          
+        const { error: updateQuoteError } = await supabase
+          .from('quotes')
+          .update({ likes: supabase.raw('COALESCE(likes, 0) + 1') })
+          .eq('id', quoteId);
+          
+        if (updateQuoteError) throw updateQuoteError;
       }
 
       return !userLikes[quoteId]; // Return the new like status
@@ -276,13 +300,37 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
       }));
 
       // Update the bookmark in the database
-      const { error } = await supabase.rpc('bookmark_quote', {
-        quote_id: quoteId,
-        user_id: user.id,
-      });
-
-      if (error) {
-        throw error;
+      // Fix: Instead of using RPC, we'll implement the bookmark functionality directly
+      if (userBookmarks[quoteId]) {
+        // Unbookmark: Delete the bookmark and decrement the bookmarks count
+        const { error: deleteBookmarkError } = await supabase
+          .from('quote_bookmarks')
+          .delete()
+          .eq('quote_id', quoteId)
+          .eq('user_id', user.id);
+          
+        if (deleteBookmarkError) throw deleteBookmarkError;
+          
+        const { error: updateQuoteError } = await supabase
+          .from('quotes')
+          .update({ bookmarks: supabase.raw('GREATEST(bookmarks - 1, 0)') })
+          .eq('id', quoteId);
+          
+        if (updateQuoteError) throw updateQuoteError;
+      } else {
+        // Bookmark: Add a new bookmark and increment the bookmarks count
+        const { error: insertBookmarkError } = await supabase
+          .from('quote_bookmarks')
+          .insert({ quote_id: quoteId, user_id: user.id });
+          
+        if (insertBookmarkError) throw insertBookmarkError;
+          
+        const { error: updateQuoteError } = await supabase
+          .from('quotes')
+          .update({ bookmarks: supabase.raw('COALESCE(bookmarks, 0) + 1') })
+          .eq('id', quoteId);
+          
+        if (updateQuoteError) throw updateQuoteError;
       }
 
       return !userBookmarks[quoteId]; // Return the new bookmark status
