@@ -1,4 +1,3 @@
-
 import { MessageSquare, ThumbsUp, Tag, Clock, Eye } from "lucide-react";
 import { formatTimeAgo, DiscussionTopic } from "../lib/discussions-utils";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +66,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   
   // Generate avatar fallback from author name if no avatar URL provided
   const getAvatarFallback = (name: string) => {
+    if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
   
@@ -90,15 +90,18 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     setIsUpvoting(true);
 
     try {
-      await handleUpvote(user, { id, upvotes: upvoteCount, user_id: authorId });
+      const success = await handleUpvote(user, { id, upvotes: upvoteCount, user_id: authorId });
       
-      // Toggle upvote state and count
-      if (hasUpvoted) {
-        setUpvoteCount(prev => Math.max(prev - 1, 0));
-      } else {
-        setUpvoteCount(prev => prev + 1);
+      // Toggle upvote state and count if operation was successful
+      if (success !== false) {
+        // Toggle upvote state and count
+        if (hasUpvoted) {
+          setUpvoteCount(prev => Math.max(prev - 1, 0));
+        } else {
+          setUpvoteCount(prev => prev + 1);
+        }
+        setHasUpvoted(prev => !prev);
       }
-      setHasUpvoted(prev => !prev);
     } catch (error) {
       console.error('Error upvoting:', error);
     } finally {
@@ -135,8 +138,10 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
         <div className="flex-1">
           <h3 className="font-medium text-lg mb-2">{title}</h3>
           
-          {displayText && (
-            <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{displayText}</p>
+          {content && (
+            <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+              {content.length > 120 ? content.slice(0, 120) + '...' : content}
+            </p>
           )}
           
           <div className="flex flex-wrap gap-2 mt-2 mb-3">
@@ -155,11 +160,11 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author}`} alt={author} />
-                <AvatarFallback>{getAvatarFallback(author)}</AvatarFallback>
+                <AvatarImage src={authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author}`} alt={author || 'Unknown'} />
+                <AvatarFallback>{getAvatarFallback(author || 'Unknown')}</AvatarFallback>
               </Avatar>
               <span className="text-sm text-muted-foreground flex items-center">
-                {author}
+                {author || 'Unknown'}
               </span>
             </div>
             

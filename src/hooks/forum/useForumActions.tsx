@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -64,6 +63,9 @@ export const useForumActions = (postId?: string) => {
           variant: 'default'
         });
       }
+      
+      // Return successful operation
+      return true;
     } catch (error) {
       console.error('Error upvoting:', error);
       toast({
@@ -71,6 +73,9 @@ export const useForumActions = (postId?: string) => {
         description: 'An error occurred while processing your request.',
         variant: 'destructive'
       });
+      
+      // Return failed operation
+      return false;
     } finally {
       setIsSubmitting(false);
     }

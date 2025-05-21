@@ -5,6 +5,7 @@ import { ThumbsUp } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface UpvoteButtonProps {
   count: number;
@@ -25,6 +26,7 @@ export const UpvoteButton: React.FC<UpvoteButtonProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = React.useState(false);
   const isAuthenticated = !!user;
 
   const handleClick = async (e: React.MouseEvent) => {
@@ -40,6 +42,7 @@ export const UpvoteButton: React.FC<UpvoteButtonProps> = ({
     }
 
     try {
+      setIsLoading(true);
       await onUpvote(e);
     } catch (error) {
       console.error('Error upvoting:', error);
@@ -48,6 +51,8 @@ export const UpvoteButton: React.FC<UpvoteButtonProps> = ({
         description: "Failed to upvote. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,14 +65,18 @@ export const UpvoteButton: React.FC<UpvoteButtonProps> = ({
             size={size} 
             className={`flex items-center gap-1 transition-all duration-200 ${hasUpvoted ? 'text-primary' : ''}`}
             onClick={handleClick}
-            disabled={disabled}
+            disabled={disabled || isLoading}
             aria-label={hasUpvoted ? "Remove upvote" : "Upvote this post"}
             aria-pressed={hasUpvoted}
           >
-            <ThumbsUp 
-              size={size === 'sm' ? 14 : 16} 
-              className={`transition-transform ${hasUpvoted ? 'fill-primary scale-110' : 'scale-100'}`} 
-            />
+            {isLoading ? (
+              <LoadingSpinner size="sm" />
+            ) : (
+              <ThumbsUp 
+                size={size === 'sm' ? 14 : 16} 
+                className={`transition-transform ${hasUpvoted ? 'fill-primary scale-110' : 'scale-100'}`} 
+              />
+            )}
             <span>{count}</span>
           </Button>
         </TooltipTrigger>
