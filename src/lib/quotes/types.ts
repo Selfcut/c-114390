@@ -32,7 +32,7 @@ export interface QuotesFilter {
   category?: string;
 }
 
-// Add back the missing types that other components rely on
+// Ensure tags is required in QuoteWithUser
 export interface QuoteWithUser extends Quote {
   user?: {
     id: string;
@@ -41,8 +41,7 @@ export interface QuoteWithUser extends Quote {
     avatar_url: string | null;
     status: string;
   } | null;
-  // Ensure tags is required to match the QuoteCard component's expected type
-  tags: string[];
+  tags: string[]; // Make tags required to match consuming components
 }
 
 export interface QuoteComment {

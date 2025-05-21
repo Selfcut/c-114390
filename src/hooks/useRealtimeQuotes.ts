@@ -36,7 +36,11 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
               created_at: newQuote.created_at,
               category: newQuote.category,
               user_id: newQuote.user_id,
-              tags: newQuote.tags || [], // Add tags property with fallback to empty array
+              tags: newQuote.tags || [], // Ensure tags is always defined
+              likes: newQuote.likes || 0,
+              comments: newQuote.comments || 0,
+              bookmarks: newQuote.bookmarks || 0,
+              source: newQuote.source || '',
               user: {
                 id: 'pending', // This will be updated later when we get user details
                 username: 'pending',
@@ -51,7 +55,11 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
             // Transform to QuoteWithUser type
             const quoteWithUser: QuoteWithUser = {
               ...updatedQuote,
-              tags: updatedQuote.tags || [], // Add tags property with fallback to empty array
+              tags: updatedQuote.tags || [], // Ensure tags is always defined
+              likes: updatedQuote.likes || 0,
+              comments: updatedQuote.comments || 0,
+              bookmarks: updatedQuote.bookmarks || 0,
+              source: updatedQuote.source || '',
               user: quotes.find(q => q.id === updatedQuote.id)?.user || {
                 id: 'pending',
                 username: 'pending',
@@ -102,7 +110,11 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
         
         return {
           ...quote,
-          tags: quote.tags || [], // Ensure tags is always defined, defaulting to empty array
+          tags: quote.tags || [], // Ensure tags is always defined
+          likes: quote.likes || 0,
+          comments: quote.comments || 0,
+          bookmarks: quote.bookmarks || 0,
+          source: quote.source || '',
           user: {
             id: userProfile.id || 'unknown',
             username: userProfile.username || 'unknown',

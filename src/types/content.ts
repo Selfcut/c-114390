@@ -58,14 +58,14 @@ export interface MediaPost extends ContentBase {
   url?: string;
 }
 
-// Don't extend ContentBase for Quote to avoid the author type mismatch
+// Modified to not extend ContentBase
 export interface Quote {
   id: string;
   text: string;
   author: string;
   source?: string;
   category: string;
-  tags: string[];
+  tags: string[]; // Make tags required to match QuoteWithUser interface
   likes: number;
   views?: number;
   comments: number;
