@@ -123,6 +123,7 @@ const Profile = () => {
         };
       }
       
+      // Call the updateUserProfile function from the auth context
       const result = await updateUserProfile(updates);
       
       if (result.error) {

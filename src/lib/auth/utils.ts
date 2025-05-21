@@ -60,7 +60,7 @@ export const fetchUserProfile = async (userId: string, userSession: any) => {
 };
 
 // Update user profile in Supabase
-export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<{error: any}> => {
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<{error: Error | null}> => {
   try {
     const { error } = await supabase
       .from('profiles')
@@ -78,13 +78,14 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
 
     if (error) {
       console.error("Error updating user profile:", error);
-      return { error };
+      return { error: new Error(error.message) };
     }
     
     return { error: null };
   } catch (error) {
     console.error("Error in updateUserProfile:", error);
-    return { error };
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { error: new Error(message) };
   }
 };
 

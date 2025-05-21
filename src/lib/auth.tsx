@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { AuthContextType, AuthError } from "./auth/auth-types";
+import { AuthContextType } from "./auth/auth-types";
 import { UserProfile, UserStatus } from "./auth/auth-types";
 import { fetchUserProfile, updateUserProfile } from "./auth/utils";
 import { signIn, signOut, signUp } from "./auth/utils";
@@ -179,7 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) {
-      return { error: { message: "User not authenticated" } };
+      return { error: new Error("User not authenticated") };
     }
     
     try {
@@ -202,7 +203,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       }
       
-      return { error: result.error ? { message: result.error.message } : null };
+      return { error: result.error };
     } catch (error) {
       console.error("Error updating profile:", error);
       const message = error instanceof Error ? error.message : 'An unexpected error occurred';
@@ -211,7 +212,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: message,
         variant: "destructive"
       });
-      return { error: { message } };
+      return { error: new Error(message) };
     } finally {
       setIsLoading(false);
     }
@@ -272,19 +273,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const deleteAccount = async (): Promise<{ error: AuthError | null }> => {
+  const deleteAccount = async (): Promise<{ error: Error | null }> => {
     try {
       setIsLoading(true);
       
       if (!user) {
-        return { error: { message: 'User not authenticated' } };
+        return { error: new Error('User not authenticated') };
       }
       
       // Delete the user account
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       
       if (error) {
-        return { error: { message: error.message || 'Failed to delete account' } };
+        return { error: new Error(error.message || 'Failed to delete account') };
       }
       
       // Sign out after deletion
@@ -305,7 +306,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: message,
         variant: "destructive"
       });
-      return { error: { message } };
+      return { error: new Error(message) };
     } finally {
       setIsLoading(false);
     }
