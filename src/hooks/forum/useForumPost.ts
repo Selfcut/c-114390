@@ -41,14 +41,10 @@ export function useForumPost(postId?: string) {
 
     setIsLoading(true);
     try {
-      // Fetch the forum post with proper join to profiles table
+      // Fetch the forum post
       const { data: postData, error: postError } = await supabase
         .from('forum_posts')
-        .select(`
-          id, title, content, tags, upvotes, views, comments, is_pinned,
-          created_at, user_id,
-          profiles:user_id (name, username, avatar_url)
-        `)
+        .select('*')
         .eq('id', postId)
         .single();
         
@@ -63,11 +59,16 @@ export function useForumPost(postId?: string) {
         return;
       }
 
-      // Process the data
-      const authorInfo = postData.profiles || {};
-      // Safely access properties that might not exist
-      const authorName = (authorInfo as any)?.name || (authorInfo as any)?.username || 'Unknown User';
-      const authorAvatar = (authorInfo as any)?.avatar_url || 
+      // Fetch author profile separately to handle potential missing profiles
+      const { data: authorProfile, error: authorError } = await supabase
+        .from('profiles')
+        .select('name, username, avatar_url')
+        .eq('id', postData.user_id)
+        .maybeSingle();  // Use maybeSingle instead of single to handle missing profiles
+      
+      // Process the data even if profile is missing
+      const authorName = authorProfile?.name || authorProfile?.username || 'Unknown User';
+      const authorAvatar = authorProfile?.avatar_url || 
         `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
         
       const processedPost: ForumPost = {
@@ -91,8 +92,7 @@ export function useForumPost(postId?: string) {
       const { data: commentsData, error: commentsError } = await supabase
         .from('content_comments')
         .select(`
-          id, comment, user_id, created_at,
-          profiles:user_id (name, username, avatar_url)
+          id, comment, user_id, created_at
         `)
         .eq('content_id', postId)
         .eq('content_type', 'forum')
@@ -101,12 +101,27 @@ export function useForumPost(postId?: string) {
       if (commentsError) {
         console.error("Error fetching comments:", commentsError);
       } else if (commentsData) {
+        // Fetch all comment author profiles in one batch
+        const userIds = commentsData.map(comment => comment.user_id);
+        const { data: commentProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name, username, avatar_url')
+          .in('id', userIds);
+          
+        // Create profiles map
+        const profilesMap: Record<string, any> = {};
+        if (commentProfiles) {
+          commentProfiles.forEach((profile: any) => {
+            profilesMap[profile.id] = profile;
+          });
+        }
+        
         // Process comments
         const processedComments: Comment[] = commentsData.map(comment => {
-          const commentAuthorInfo = comment.profiles || {};
-          // Safely access properties that might not exist
-          const commentAuthorName = (commentAuthorInfo as any)?.name || (commentAuthorInfo as any)?.username || 'Unknown User';
-          const commentAuthorAvatar = (commentAuthorInfo as any)?.avatar_url || 
+          const profile = profilesMap[comment.user_id];
+          // Generate a name even if profile is missing
+          const commentAuthorName = profile?.name || profile?.username || 'Unknown User';
+          const commentAuthorAvatar = profile?.avatar_url || 
             `https://api.dicebear.com/7.x/avataaars/svg?seed=${commentAuthorName}`;
             
           return {

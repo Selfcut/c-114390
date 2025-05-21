@@ -2,134 +2,137 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { UserProfile } from '@/types/user'; // Use the centralized type
+import { UserProfile } from '@/types/user';
 
-// Export the interface so it can be imported elsewhere
 export interface ForumDiscussion {
   id: string;
-  upvotes: number;
-  user_id: string;
+  upvotes?: number;
+  user_id?: string;
 }
 
-export const useForumActions = (postId?: string) => {
+export const useForumActions = (discussionId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleUpvote = async (user: UserProfile, discussion: ForumDiscussion) => {
-    if (!user || !postId) return undefined;
-
-    setIsSubmitting(true);
+  // Handle upvoting a post
+  const handleUpvote = async (currentUser: UserProfile, discussion: ForumDiscussion): Promise<boolean> => {
     try {
-      // Check if user already liked this post
-      const { data: existingLike, error: checkError } = await supabase
+      setIsSubmitting(true);
+
+      // Check if user has already upvoted
+      const { data: existingLike } = await supabase
         .from('content_likes')
         .select('*')
-        .eq('content_id', postId)
-        .eq('user_id', user.id)
+        .eq('content_id', discussion.id)
+        .eq('user_id', currentUser.id)
         .eq('content_type', 'forum')
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Error checking like:', checkError);
-        return undefined;
-      }
-
       if (existingLike) {
-        // User already liked, so remove the like
+        // User has already liked, remove the like
         await supabase
           .from('content_likes')
           .delete()
-          .eq('id', existingLike.id);
+          .eq('content_id', discussion.id)
+          .eq('user_id', currentUser.id)
+          .eq('content_type', 'forum');
 
-        // Decrement upvote count
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: postId,
-          column_name: 'upvotes',
-          table_name: 'forum_posts'
-        });
+        // Decrement the upvote count
+        await supabase
+          .from('forum_posts')
+          .update({ upvotes: Math.max((discussion.upvotes || 0) - 1, 0) })
+          .eq('id', discussion.id);
 
-        toast({
-          description: "You removed your upvote from this post",
-          variant: "default"
-        });
+        return true;
       } else {
-        // Add new like
-        await supabase.from('content_likes').insert({
-          content_id: postId,
-          user_id: user.id,
-          content_type: 'forum'
-        });
+        // User hasn't liked yet, add a new like
+        await supabase.from('content_likes').insert([
+          {
+            content_id: discussion.id,
+            user_id: currentUser.id,
+            content_type: 'forum'
+          }
+        ]);
 
-        // Increment upvote count
-        await supabase.rpc('increment_counter_fn', {
-          row_id: postId,
-          column_name: 'upvotes',
-          table_name: 'forum_posts'
-        });
+        // Increment the upvote count
+        await supabase
+          .from('forum_posts')
+          .update({ upvotes: (discussion.upvotes || 0) + 1 })
+          .eq('id', discussion.id);
 
-        toast({
-          description: "Post upvoted successfully",
-          variant: "default"
-        });
+        return true;
       }
-      
-      return true;
-    } catch (error) {
-      console.error('Error upvoting:', error);
+    } catch (error: any) {
+      console.error('Error toggling upvote:', error);
       toast({
-        title: "Failed to upvote",
-        description: "An error occurred while processing your request.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to process your upvote.',
+        variant: 'destructive'
       });
-      
-      return undefined;
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSubmitComment = async (user: UserProfile, comment: string, discussion: ForumDiscussion, setComments: any) => {
-    if (!comment.trim() || !user || !postId) return;
-
-    setIsSubmitting(true);
+  // Handle adding a comment
+  const handleSubmitComment = async (
+    currentUser: UserProfile,
+    commentText: string,
+    discussion: ForumDiscussion,
+    setComments?: any
+  ) => {
+    if (!commentText.trim()) return;
+    
     try {
-      // Add comment to database
-      const { data: newComment, error: commentError } = await supabase
+      setIsSubmitting(true);
+      
+      // Add the comment
+      const { data: commentData, error: commentError } = await supabase
         .from('content_comments')
-        .insert({
-          content_id: postId,
-          user_id: user.id,
-          comment,
-          content_type: 'forum'
-        })
+        .insert([
+          {
+            content_id: discussion.id,
+            user_id: currentUser.id,
+            content_type: 'forum',
+            comment: commentText
+          }
+        ])
         .select()
         .single();
-
-      if (commentError) {
-        console.error('Error adding comment:', commentError);
-        throw commentError;
+        
+      if (commentError) throw commentError;
+      
+      // Update comment count
+      await supabase
+        .from('forum_posts')
+        .update({ comments: supabase.rpc('increment_counter', { row_id: discussion.id, column_name: 'comments', table_name: 'forum_posts' }) })
+        .eq('id', discussion.id);
+        
+      // Format and add the new comment to state if callback provided
+      if (setComments) {
+        setComments((prevComments: any[]) => [
+          {
+            id: commentData.id,
+            content: commentData.comment,
+            author: currentUser.name || currentUser.username || 'You',
+            authorAvatar: currentUser.avatar_url || currentUser.avatar,
+            createdAt: new Date(commentData.created_at),
+            isAuthor: discussion.user_id === currentUser.id
+          },
+          ...prevComments
+        ]);
       }
-
-      // Increment comments count on the post
-      await supabase.rpc('increment_counter_fn', {
-        row_id: postId,
-        column_name: 'comments',
-        table_name: 'forum_posts'
-      });
-
-      // Update comments list
-      setComments((prev: any[]) => [...prev, { ...newComment, author_name: user.name }]);
-
+      
       toast({
-        description: "Your comment has been posted",
-        variant: "default"
+        description: 'Comment posted successfully!'
       });
-    } catch (error) {
-      console.error('Error submitting comment:', error);
+    } catch (error: any) {
+      console.error('Error posting comment:', error);
       toast({
-        title: "Failed to post comment",
-        description: "An error occurred while submitting your comment.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to post your comment.',
+        variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);

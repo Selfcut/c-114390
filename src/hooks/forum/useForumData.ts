@@ -22,13 +22,10 @@ export const useForumData = () => {
       setIsLoading(true);
       setIsError(false);
       
-      // Query forum posts with proper join to profiles
+      // Query forum posts without requiring a join for now to avoid foreign key issues
       const { data, error } = await supabase
         .from('forum_posts')
-        .select(`
-          *,
-          profiles:user_id(name, username, avatar_url)
-        `);
+        .select('*');
       
       if (error) {
         console.error("Error fetching discussions:", error);
@@ -42,6 +39,19 @@ export const useForumData = () => {
         return;
       }
       
+      // Fetch all profiles in a separate query to handle potential missing profiles
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, username, avatar_url');
+        
+      // Create a map of profiles by ID for quick lookup
+      const profilesMap: Record<string, any> = {};
+      if (profilesData) {
+        profilesData.forEach((profile: any) => {
+          profilesMap[profile.id] = profile;
+        });
+      }
+      
       // Process the data and collect tags
       const allTagsSet = new Set<string>();
       const processedData: DiscussionTopic[] = data.map((post: any) => {
@@ -50,8 +60,11 @@ export const useForumData = () => {
           post.tags.forEach((tag: string) => allTagsSet.add(tag));
         }
         
-        // Extract author info from the joined profiles data
-        const authorInfo = post.profiles;
+        // Look up author info from the profiles map
+        const authorProfile = profilesMap[post.user_id];
+        const authorName = authorProfile?.name || authorProfile?.username || 'Unknown User';
+        const authorAvatar = authorProfile?.avatar_url || 
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
         
         // Determine if post is popular based on views & comments
         const isPopular = (post.views || 0) > 50 || (post.comments || 0) > 5;
@@ -61,8 +74,8 @@ export const useForumData = () => {
           title: post.title,
           content: post.content,
           authorId: post.user_id,
-          author: authorInfo?.name || authorInfo?.username || 'Unknown User',
-          authorAvatar: authorInfo?.avatar_url,
+          author: authorName,
+          authorAvatar: authorAvatar,
           createdAt: new Date(post.created_at),
           tags: post.tags || [],
           views: post.views || 0,
