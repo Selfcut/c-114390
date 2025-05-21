@@ -126,7 +126,7 @@ const Profile = () => {
       // Call the updateUserProfile function from the auth context
       const response = await updateUserProfile(updates);
       
-      if (response?.error) {
+      if (response && response.error) {
         throw response.error;
       }
       
