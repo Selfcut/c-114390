@@ -30,7 +30,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
     }
     
     // Use appropriate type handling for UserRole
-    const role: UserRole = (profile.role || 'user') as UserRole;
+    const role = (profile.role || 'user') as UserRole;
     
     return {
       id: profile.id,
@@ -131,7 +131,9 @@ export async function ensureUserProfile(
       role: 'user' as UserRole,
       is_ghost_mode: false,
       bio: '',
-      website: ''
+      website: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     const { data: profile, error } = await supabase

@@ -2,9 +2,11 @@
 // Export auth context and types
 export * from './auth-context';
 
-// Export utility functions directly (not re-exporting from utils)
-export { signIn, signOut, signUp } from './utils';
+// Export utility functions without causing naming conflicts
+export { signIn, signOut, signUp } from './auth-utils';
 
-// Export profile service
+// Export profile service for direct access
 export * from './profiles-service';
 
+// Import the debugging utility
+export { runProfileDiagnostics } from '../debug/profile-diagnostics';

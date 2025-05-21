@@ -11,7 +11,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error("Error fetching user profile:", error);
@@ -36,6 +36,11 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       isAdmin: profile?.role === "admin",
       status: (profile?.status as UserStatus) || "online",
       isGhostMode: profile?.is_ghost_mode || false,
+      notificationSettings: {
+        desktopNotifications: true,
+        soundNotifications: true,
+        emailNotifications: true
+      }
     };
 
     return fullProfile;
@@ -56,6 +61,11 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       isAdmin: false,
       status: "online",
       isGhostMode: false,
+      notificationSettings: {
+        desktopNotifications: true,
+        soundNotifications: true,
+        emailNotifications: true
+      }
     };
   }
 };
@@ -107,7 +117,7 @@ export const updateUserStatus = async (userId: string, status: UserStatus): Prom
   }
 };
 
-// Authentication methods (from utils.ts)
+// Authentication methods
 export const signIn = async (email: string, password: string) => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
