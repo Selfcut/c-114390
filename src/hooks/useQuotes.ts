@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { QuoteWithUser, QuoteFilterOptions, QuoteSortOption } from '@/lib/quotes/types';
+import { QuoteWithUser, QuoteFilterOptions, QuoteSortOption, QuoteSubmission } from '@/lib/quotes/types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -378,7 +378,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     await fetchAllTags();
   };
   
-  // Fix the createQuote function to include all required fields
+  // Fix the createQuote function to include all required fields and use the properly imported QuoteSubmission type
   const createQuote = async (quoteData: QuoteSubmission) => {
     if (!user) {
       toast({
