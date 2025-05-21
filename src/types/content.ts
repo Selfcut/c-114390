@@ -86,34 +86,23 @@ export interface WikiArticle extends ContentBase {
   last_updated?: string;
 }
 
-// To fix the ContentBase extension error with Quote, create a special base interface for quotes
-export interface QuoteBase {
-  id: string;
-  title: string;
-  likes: number;
-  views?: number;
-  comments: number;
-  user_id: string;
-  created_at: string;
-  updated_at?: string;
-  text: string;
-  author: string;
-  source?: string;
-  category: string;
-  tags: string[];
-  bookmarks: number;
-}
+// Remove this unnecessary interface since we've fixed the Quote interface
+// export interface QuoteBase {
+//   id: string;
+//   title: string;
+//   likes: number;
+//   views?: number;
+//   comments: number;
+//   user_id: string;
+//   created_at: string;
+//   updated_at?: string;
+//   text: string;
+//   author: string;
+//   source?: string;
+//   category: string;
+//   tags: string[];
+//   bookmarks: number;
+// }
 
-// Use this UserProfile definition here to avoid circular imports
-export interface UserProfile {
-  id: string;
-  username: string;
-  name?: string;
-  email?: string;
-  avatar?: string;
-  avatar_url?: string;
-  status?: string;
-  isGhostMode?: boolean;
-  role?: string;
-  isAdmin?: boolean;
-}
+// Import UserProfile from user.ts instead of duplicating it here
+import { UserProfile } from '@/types/user';
