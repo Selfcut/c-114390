@@ -30,14 +30,18 @@ export async function runProfileDiagnostics() {
       console.log("Sample profiles:", profilesData);
     }
     
-    // Check trigger function
-    const { data: triggerData, error: triggerError } = await supabase
-      .rpc('check_trigger_exists', { trigger_name: 'on_auth_user_created' });
+    // Check if the trigger function exists using direct query
+    const { data: functionsData, error: functionsError } = await supabase
+      .from('pg_proc')
+      .select('proname')
+      .ilike('proname', 'handle_new_user')
+      .limit(1)
+      .maybeSingle();
       
-    if (triggerError) {
-      console.error("Error checking trigger:", triggerError);
+    if (functionsError) {
+      console.error("Error checking function:", functionsError);
     } else {
-      console.log("Trigger exists:", triggerData);
+      console.log("Handle new user function exists:", !!functionsData);
     }
     
     // Check user count 
@@ -59,24 +63,3 @@ export async function runProfileDiagnostics() {
     console.error("Diagnostic error:", err);
   }
 }
-
-// Add RPC function to check if trigger exists
-// NOTE: This needs to be added to the database
-/*
-CREATE OR REPLACE FUNCTION check_trigger_exists(trigger_name TEXT)
-RETURNS BOOLEAN
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  trigger_exists BOOLEAN;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1
-    FROM pg_trigger
-    WHERE tgname = trigger_name
-  ) INTO trigger_exists;
-  
-  RETURN trigger_exists;
-END;
-$$;
-*/

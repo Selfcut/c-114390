@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser, QuoteFilterOptions, QuoteSubmission } from './types';
 
@@ -105,19 +104,23 @@ export const fetchQuotesWithFilters = async (
     let query = supabase.from('quotes').select('*');
     
     // Apply filters if provided
-    if (options.searchTerm) {
+    if (options.searchQuery || options.searchTerm) {
+      const searchValue = options.searchQuery || options.searchTerm;
       query = query.or(
-        `text.ilike.%${options.searchTerm}%,author.ilike.%${options.searchTerm}%`
+        `text.ilike.%${searchValue}%,author.ilike.%${searchValue}%`
       );
     }
     
-    if (options.tag) {
-      query = query.contains('tags', [options.tag]);
+    if (options.filterTag || options.tag) {
+      const tagValue = options.filterTag || options.tag;
+      query = query.contains('tags', [tagValue]);
     }
     
     // Apply sorting
     const sortColumn = options.sortColumn || 'created_at';
-    const sortAscending = options.sortAscending !== undefined ? options.sortAscending : false;
+    const sortAscending = options.sortAscending !== undefined 
+      ? options.sortAscending 
+      : false;
     
     query = query.order(sortColumn, { ascending: sortAscending });
     
@@ -213,21 +216,25 @@ export const fetchQuoteById = async (id: string): Promise<QuoteWithUser | null> 
 /**
  * Count total quotes with filters
  */
-export const countQuotes = async (options?: Pick<QuoteFilterOptions, 'searchTerm' | 'tag'>): Promise<number> => {
+export const countQuotes = async (
+  options?: Pick<QuoteFilterOptions, 'searchQuery' | 'filterTag' | 'searchTerm' | 'tag'>
+): Promise<number> => {
   try {
     let query = supabase
       .from('quotes')
       .select('id', { count: 'exact', head: true });
     
     // Apply filters if provided
-    if (options?.searchTerm) {
+    if (options?.searchQuery || options?.searchTerm) {
+      const searchValue = options.searchQuery || options.searchTerm;
       query = query.or(
-        `text.ilike.%${options.searchTerm}%,author.ilike.%${options.searchTerm}%`
+        `text.ilike.%${searchValue}%,author.ilike.%${searchValue}%`
       );
     }
     
-    if (options?.tag) {
-      query = query.contains('tags', [options.tag]);
+    if (options?.filterTag || options?.tag) {
+      const tagValue = options.filterTag || options.tag;
+      query = query.contains('tags', [tagValue]);
     }
     
     const { count, error } = await query;

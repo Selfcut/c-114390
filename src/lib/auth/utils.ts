@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
-import { UserProfile, UserStatus } from '@/types/user';
+import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
 // Default user when profile is missing
 const DEFAULT_USER: Partial<UserProfile> = {
@@ -49,7 +49,7 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
       website: profile.website || '',
       status: (profile.status as UserStatus) || DEFAULT_USER.status!,
       isGhostMode: profile.is_ghost_mode || false,
-      role: profile.role || DEFAULT_USER.role!,
+      role: (profile.role as UserRole) || DEFAULT_USER.role!,
       isAdmin: profile.role === 'admin',
       notificationSettings: {
         desktopNotifications: true,

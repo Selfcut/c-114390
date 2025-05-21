@@ -1,35 +1,26 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { UserProfile, UserStatus } from '@/types/user';
+import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
-// Default user object for when profile data is unavailable
-export const DEFAULT_USER: UserProfile = {
-  id: '',
-  username: 'unknown',
-  name: 'Unknown User',
-  email: '',
-  avatar_url: null,
-  status: 'offline',
-  isGhostMode: false,
-  role: 'user',
-  isAdmin: false,
-  bio: '',
-  website: ''
-};
-
-// Fetch a user's profile from the database
+/**
+ * Fetch a user's profile by ID
+ * @param userId The user's ID
+ */
 export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   try {
-    console.log('Fetching profile for user ID:', userId);
+    if (!userId) {
+      console.warn('Cannot fetch profile without user ID');
+      return null;
+    }
     
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .maybeSingle();
-      
+    
     if (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Error fetching profile:', error);
       return null;
     }
     
@@ -38,42 +29,45 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
       return null;
     }
     
-    // Map database profile to UserProfile type
-    const userProfile: UserProfile = {
+    // Use appropriate type handling for UserRole
+    const role: UserRole = (profile.role || 'user') as UserRole;
+    
+    return {
       id: profile.id,
-      username: profile.username || 'unknown',
-      name: profile.name || 'Unknown User',
-      email: '', // Email is not stored in profiles table for security
+      username: profile.username || 'anonymous',
+      name: profile.name || 'Anonymous User',
+      email: '',  // Email needs to be fetched from auth session
       avatar: profile.avatar_url,
       avatar_url: profile.avatar_url,
       bio: profile.bio || '',
       website: profile.website || '',
-      status: profile.status || 'offline',
+      status: (profile.status as UserStatus) || 'offline',
       isGhostMode: profile.is_ghost_mode || false,
-      role: profile.role || 'user',
-      isAdmin: profile.role === 'admin',
+      role: role,
+      isAdmin: role === 'admin',
       notificationSettings: {
         desktopNotifications: true,
         soundNotifications: true,
         emailNotifications: true
       }
     };
-    
-    console.log('Fetched user profile:', userProfile);
-    return userProfile;
   } catch (err) {
-    console.error('Exception fetching user profile:', err);
+    console.error('Exception in fetchUserProfile:', err);
     return null;
   }
 }
 
-// Update a user's profile in the database
+/**
+ * Update a user's profile
+ * @param userId The user's ID
+ * @param updates The profile updates to apply
+ */
 export async function updateUserProfile(
-  userId: string, 
+  userId: string,
   updates: Partial<UserProfile>
 ): Promise<{ error: Error | null }> {
   try {
-    // Convert from our app's UserProfile type to database fields
+    // Convert from our app UserProfile type to database fields
     const dbUpdates: any = {};
     
     if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -81,7 +75,7 @@ export async function updateUserProfile(
     if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
     if (updates.website !== undefined) dbUpdates.website = updates.website;
     if (updates.avatar_url !== undefined) dbUpdates.avatar_url = updates.avatar_url;
-    if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar; // Map avatar to avatar_url
+    if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.isGhostMode !== undefined) dbUpdates.is_ghost_mode = updates.isGhostMode;
     
@@ -90,73 +84,90 @@ export async function updateUserProfile(
       return { error: null };
     }
     
-    // Add the updated_at timestamp
-    dbUpdates.updated_at = new Date().toISOString();
-    
     const { error } = await supabase
       .from('profiles')
       .update(dbUpdates)
       .eq('id', userId);
       
     if (error) {
-      console.error('Error updating profile:', error);
       return { error: new Error(error.message) };
     }
     
     return { error: null };
   } catch (err) {
-    console.error('Exception updating user profile:', err);
+    console.error('Exception in updateProfile:', err);
     const message = err instanceof Error ? err.message : 'Unknown error';
     return { error: new Error(message) };
   }
 }
 
-// Check if a profile exists and create one if it doesn't
-export async function ensureUserProfile(userId: string, userData?: {
-  email?: string;
-  username?: string;
-  name?: string;
-}): Promise<UserProfile | null> {
+/**
+ * Ensure a user profile exists, creating it if necessary
+ * @param userId The user's ID
+ * @param defaultProfile Default profile values to use if creating
+ */
+export async function ensureUserProfile(
+  userId: string, 
+  defaultProfile: Partial<UserProfile> = {}
+): Promise<UserProfile | null> {
   try {
-    // Check if profile exists
-    let { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-      
-    if (!profile) {
-      // Profile doesn't exist, create one
-      console.log('Creating profile for user ID:', userId);
-      
-      const newProfile = {
-        id: userId,
-        username: userData?.username || `user_${userId.substring(0, 8)}`,
-        name: userData?.name || `User ${userId.substring(0, 4)}`,
-        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${userData?.name || userId}`,
-        status: 'online' as UserStatus,
-        role: 'user',
-        is_ghost_mode: false,
-        bio: '',
-        website: ''
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .insert([newProfile]);
-        
-      if (error) {
-        console.error('Failed to create profile:', error);
-        return null;
-      }
-      
-      profile = newProfile;
+    // First check if profile exists
+    const existingProfile = await fetchUserProfile(userId);
+    
+    // If profile exists, return it
+    if (existingProfile) {
+      return existingProfile;
     }
     
-    // Convert to UserProfile format
-    return await fetchUserProfile(userId);
+    // If no profile, create one
+    console.log('Creating new profile for user:', userId);
+    
+    const newProfileData = {
+      id: userId,
+      username: defaultProfile.username || `user_${userId.substring(0, 8)}`,
+      name: defaultProfile.name || `User ${userId.substring(0, 4)}`,
+      avatar_url: defaultProfile.avatar_url || null,
+      status: 'online' as UserStatus,
+      role: 'user' as UserRole,
+      is_ghost_mode: false,
+      bio: '',
+      website: ''
+    };
+    
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .insert(newProfileData)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('Error creating user profile:', error);
+      return null;
+    }
+    
+    // Return the newly created profile
+    return {
+      id: profile.id,
+      username: profile.username,
+      name: profile.name,
+      email: '',  // Email needs to be fetched from auth
+      avatar: profile.avatar_url,
+      avatar_url: profile.avatar_url,
+      bio: profile.bio || '',
+      website: profile.website || '',
+      status: profile.status as UserStatus,
+      isGhostMode: profile.is_ghost_mode || false,
+      role: profile.role as UserRole,
+      isAdmin: profile.role === 'admin',
+      notificationSettings: {
+        desktopNotifications: true,
+        soundNotifications: true,
+        emailNotifications: true
+      }
+    };
+    
   } catch (err) {
-    console.error('Error ensuring user profile exists:', err);
+    console.error('Exception in ensureUserProfile:', err);
     return null;
   }
 }
