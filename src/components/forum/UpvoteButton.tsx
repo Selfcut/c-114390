@@ -58,11 +58,16 @@ export const UpvoteButton: React.FC<UpvoteButtonProps> = ({
           <Button 
             variant={variant} 
             size={size} 
-            className={`flex items-center gap-1 ${hasUpvoted ? 'text-primary' : ''}`}
+            className={`flex items-center gap-1 transition-all duration-200 ${hasUpvoted ? 'text-primary' : ''}`}
             onClick={handleClick}
             disabled={disabled}
+            aria-label={hasUpvoted ? "Remove upvote" : "Upvote this post"}
+            aria-pressed={hasUpvoted}
           >
-            <ThumbsUp size={size === 'sm' ? 14 : 16} className={hasUpvoted ? 'fill-primary' : ''} />
+            <ThumbsUp 
+              size={size === 'sm' ? 14 : 16} 
+              className={`transition-transform ${hasUpvoted ? 'fill-primary scale-110' : 'scale-100'}`} 
+            />
             <span>{count}</span>
           </Button>
         </TooltipTrigger>

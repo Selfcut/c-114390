@@ -34,15 +34,15 @@ export const useForumActions = (postId?: string) => {
           .eq('id', existingLike.id);
 
         // Decrement upvote count
-        await supabase.rpc('decrement_counter', {
+        await supabase.rpc('decrement_counter_fn', {
           row_id: postId,
           column_name: 'upvotes',
           table_name: 'forum_posts'
         });
 
         toast({
-          title: 'Upvote removed',
-          description: 'You removed your upvote from this post.'
+          description: 'You removed your upvote from this post',
+          variant: 'default'
         });
       } else {
         // Add new like
@@ -53,15 +53,15 @@ export const useForumActions = (postId?: string) => {
         });
 
         // Increment upvote count
-        await supabase.rpc('increment_counter', {
+        await supabase.rpc('increment_counter_fn', {
           row_id: postId,
           column_name: 'upvotes',
           table_name: 'forum_posts'
         });
 
         toast({
-          title: 'Post upvoted',
-          description: 'Thanks for your feedback!'
+          description: 'Post upvoted successfully',
+          variant: 'default'
         });
       }
     } catch (error) {
@@ -99,7 +99,7 @@ export const useForumActions = (postId?: string) => {
       }
 
       // Increment comments count on the post
-      await supabase.rpc('increment_counter', {
+      await supabase.rpc('increment_counter_fn', {
         row_id: postId,
         column_name: 'comments',
         table_name: 'forum_posts'
@@ -109,8 +109,8 @@ export const useForumActions = (postId?: string) => {
       setComments((prev: any[]) => [...prev, { ...newComment, author_name: user.name }]);
 
       toast({
-        title: 'Comment added',
-        description: 'Your comment has been posted.'
+        description: 'Your comment has been posted',
+        variant: 'default'
       });
     } catch (error) {
       console.error('Error submitting comment:', error);

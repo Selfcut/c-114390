@@ -1,43 +1,95 @@
 
 import React from 'react';
-import { CardFooter } from '@/components/ui/card';
+import { useUserContentInteractions } from '@/hooks/useUserContentInteractions';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, MessageSquare, Eye } from 'lucide-react';
+import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 
 interface PostFooterProps {
   post: {
     id: string;
     upvotes: number;
-    comments: number;
     views: number;
+    comments: number;
   };
-  isAuthenticated: boolean;
-  onUpvote: () => Promise<void>;
 }
 
-export const PostFooter = ({ post, isAuthenticated, onUpvote }: PostFooterProps) => {
+export const PostFooter: React.FC<PostFooterProps> = ({ post }) => {
+  const { 
+    isLiked, 
+    isBookmarked, 
+    likeCount, 
+    isSubmitting, 
+    toggleLike, 
+    toggleBookmark 
+  } = useUserContentInteractions({
+    contentId: post.id,
+    contentType: 'forum',
+    initialLikeCount: post.upvotes
+  });
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out this forum post',
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
   return (
-    <CardFooter className="border-t pt-4 flex justify-between">
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="flex items-center"
-          onClick={onUpvote}
-          disabled={!isAuthenticated}
-        >
-          <ThumbsUp size={16} className="mr-1" />
-          <span>{post.upvotes}</span>
-        </Button>
-        <div className="flex items-center">
-          <MessageSquare size={16} className="mr-1" />
-          <span>{post.comments}</span>
+    <div className="px-6 py-4 border-t flex flex-wrap justify-between items-center gap-2">
+      <div className="flex items-center gap-4 text-muted-foreground text-sm">
+        <div className="flex items-center gap-1">
+          <Eye size={16} className="text-muted-foreground" />
+          <span>{post.views || 0} views</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <MessageSquare size={16} className="text-muted-foreground" />
+          <span>{post.comments || 0} comments</span>
         </div>
       </div>
-      <div className="flex items-center text-sm text-muted-foreground">
-        <Eye size={16} className="mr-1" />
-        <span>{post.views} views</span>
+      
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`flex items-center gap-2 ${isLiked ? 'text-primary' : ''}`}
+          onClick={toggleLike}
+          disabled={isSubmitting}
+          aria-label={isLiked ? "Unlike" : "Like"}
+        >
+          <ThumbsUp size={16} className={isLiked ? 'fill-primary' : ''} />
+          <span>{likeCount}</span>
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`flex items-center gap-2 ${isBookmarked ? 'text-primary' : ''}`}
+          onClick={toggleBookmark}
+          disabled={isSubmitting}
+          aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+        >
+          <Bookmark size={16} className={isBookmarked ? 'fill-primary' : ''} />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={handleShare}
+          aria-label="Share"
+        >
+          <Share2 size={16} />
+        </Button>
       </div>
-    </CardFooter>
+    </div>
   );
 };

@@ -6,7 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UpvoteButton } from "./forum/UpvoteButton";
 import { useForumActions } from "@/hooks/forum/useForumActions"; 
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from '@/integrations/supabase/client';
 
 interface DiscussionTopicCardProps {
   discussion: DiscussionTopic;
@@ -34,6 +35,35 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   const { handleUpvote } = useForumActions(id);
   const [upvoteCount, setUpvoteCount] = useState(upvotes);
   const [isUpvoting, setIsUpvoting] = useState(false);
+  const [hasUpvoted, setHasUpvoted] = useState(false);
+  
+  // Check if the user has already upvoted this post
+  useEffect(() => {
+    const checkUserUpvote = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('content_likes')
+          .select('id')
+          .eq('content_id', id)
+          .eq('user_id', user.id)
+          .eq('content_type', 'forum')
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Error checking upvote status:', error);
+          return;
+        }
+        
+        setHasUpvoted(!!data);
+      } catch (error) {
+        console.error('Error checking upvote status:', error);
+      }
+    };
+    
+    checkUserUpvote();
+  }, [id, user]);
   
   // Generate avatar fallback from author name if no avatar URL provided
   const getAvatarFallback = (name: string) => {
@@ -52,7 +82,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     content.length > 120 ? content.slice(0, 120) + '...' : content
   ) : '';
 
-  // Handle upvote click - modify to match the expected signature
+  // Handle upvote click with proper toggling
   const onUpvote = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     
@@ -60,8 +90,15 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     setIsUpvoting(true);
 
     try {
-      await handleUpvote(user, { id, upvotes, user_id: authorId });
-      setUpvoteCount(prev => prev + 1);
+      await handleUpvote(user, { id, upvotes: upvoteCount, user_id: authorId });
+      
+      // Toggle upvote state and count
+      if (hasUpvoted) {
+        setUpvoteCount(prev => Math.max(prev - 1, 0));
+      } else {
+        setUpvoteCount(prev => prev + 1);
+      }
+      setHasUpvoted(prev => !prev);
     } catch (error) {
       console.error('Error upvoting:', error);
     } finally {
@@ -138,6 +175,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
                   count={upvoteCount || 0} 
                   onUpvote={onUpvote} 
                   disabled={isUpvoting}
+                  hasUpvoted={hasUpvoted}
                   size="sm"
                 />
               </span>
