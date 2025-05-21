@@ -36,6 +36,7 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
               created_at: newQuote.created_at,
               category: newQuote.category,
               user_id: newQuote.user_id,
+              tags: newQuote.tags || [], // Add tags property with fallback to empty array
               user: {
                 id: 'pending', // This will be updated later when we get user details
                 username: 'pending',
@@ -50,6 +51,7 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
             // Transform to QuoteWithUser type
             const quoteWithUser: QuoteWithUser = {
               ...updatedQuote,
+              tags: updatedQuote.tags || [], // Add tags property with fallback to empty array
               user: quotes.find(q => q.id === updatedQuote.id)?.user || {
                 id: 'pending',
                 username: 'pending',
@@ -100,6 +102,7 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
         
         return {
           ...quote,
+          tags: quote.tags || [], // Ensure tags is always defined, defaulting to empty array
           user: {
             id: userProfile.id || 'unknown',
             username: userProfile.username || 'unknown',
