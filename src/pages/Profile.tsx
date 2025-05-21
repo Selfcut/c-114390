@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,7 @@ import { UserProfileComponent } from "../components/profile/UserProfileComponent
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageLayout } from "../components/layouts/PageLayout";
-import { UserProfile as UserProfileType, UserStatus } from "../types/user";
+import { UserProfile as UserProfileType, UserStatus, UserRole } from "../types/user";
 import { useToast } from "@/hooks/use-toast";
 import { trackActivity } from "@/lib/activity-tracker";
 
@@ -56,7 +57,7 @@ const Profile = () => {
           website: data.website || "",
           status: (data.status as UserStatus) || "offline",
           isGhostMode: data.is_ghost_mode || false,
-          role: data.role || "user",
+          role: (data.role as UserRole) || "user",
           isAdmin: data.role === "admin",
           notificationSettings: {
             desktopNotifications: true,

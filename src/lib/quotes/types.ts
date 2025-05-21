@@ -1,4 +1,3 @@
-
 // Define the base QuoteSubmission type
 export interface QuoteSubmission {
   text: string;
@@ -42,6 +41,8 @@ export interface QuoteWithUser extends Quote {
     avatar_url: string | null;
     status: string;
   } | null;
+  // Ensure tags is required to match the QuoteCard component's expected type
+  tags: string[];
 }
 
 export interface QuoteComment {

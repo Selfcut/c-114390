@@ -1,3 +1,4 @@
+
 export interface Author {
   id?: string;
   name: string;
@@ -57,12 +58,20 @@ export interface MediaPost extends ContentBase {
   url?: string;
 }
 
-export interface Quote extends ContentBase {
+// Don't extend ContentBase for Quote to avoid the author type mismatch
+export interface Quote {
+  id: string;
   text: string;
   author: string;
   source?: string;
   category: string;
   tags: string[];
+  likes: number;
+  views?: number;
+  comments: number;
+  user_id: string;
+  created_at: string;
+  updated_at?: string;
   bookmarks: number;
 }
 

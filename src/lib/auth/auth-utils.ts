@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile, UserStatus } from "@/types/user";
+import { UserProfile, UserStatus, UserRole } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
 
 // Fetch user profile from Supabase
