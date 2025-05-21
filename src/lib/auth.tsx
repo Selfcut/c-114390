@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -321,7 +320,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signUp: handleSignUp,
     signOut: handleSignOut,
     updateUserProfile: handleUpdateProfile,
-    updateProfile: handleUpdateProfile, // Add this alias for backward compatibility
+    updateProfile: handleUpdateProfile, // Keeping this alias for backward compatibility
     updateUserStatus,
     toggleGhostMode,
     toggleDoNotDisturb,

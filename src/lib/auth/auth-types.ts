@@ -1,27 +1,24 @@
+import { User } from '@supabase/supabase-js';
+import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
-import { Session } from '@supabase/supabase-js';
-import { UserProfile, UserStatus } from '@/types/user';
-
-export type { UserProfile, UserStatus } from '@/types/user';
-export type { UserRole } from '@/types/user';
-
-export interface AuthError {
-  message: string;
-  status?: number;
-}
-
-export interface AuthContextType {
+export interface AuthState {
   user: UserProfile | null;
-  session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: AuthError | null }>;
+}
+
+export interface AuthContextValue extends AuthState {
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: AuthError | null }>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: AuthError | null }>; // Adding this as an alias for backward compatibility
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>; // Keeping this as an alias for backward compatibility
   updateUserStatus: (status: UserStatus) => Promise<void>;
   toggleGhostMode: () => Promise<void>;
   toggleDoNotDisturb: () => Promise<void>;
-  deleteAccount: () => Promise<{ error: AuthError | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
+  session?: any;
 }
+
+// This keeps compatibility with the auth-context.tsx file
+export type AuthContextType = AuthContextValue;

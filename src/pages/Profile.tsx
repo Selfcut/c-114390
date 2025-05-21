@@ -123,10 +123,10 @@ const Profile = () => {
         };
       }
       
-      const { error: updateError } = await updateUserProfile(updates);
+      const result = await updateUserProfile(updates);
       
-      if (updateError) {
-        throw updateError;
+      if (result.error) {
+        throw result.error;
       }
       
       // Update local state
