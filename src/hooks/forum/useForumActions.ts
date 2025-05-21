@@ -103,10 +103,10 @@ export const useForumActions = (discussionId?: string) => {
         
       if (commentError) throw commentError;
       
-      // Update comment count
+      // Update comment count - FIX: Use update directly instead of RPC function that returns a PostgrestFilterBuilder
       await supabase
         .from('forum_posts')
-        .update({ comments: supabase.rpc('increment_counter', { row_id: discussion.id, column_name: 'comments', table_name: 'forum_posts' }) })
+        .update({ comments: (discussion as any).comments ? (discussion as any).comments + 1 : 1 })
         .eq('id', discussion.id);
         
       // Format and add the new comment to state if callback provided
