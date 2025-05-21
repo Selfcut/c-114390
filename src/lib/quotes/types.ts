@@ -1,3 +1,4 @@
+
 // Define the base QuoteSubmission type
 export interface QuoteSubmission {
   text: string;
@@ -17,6 +18,7 @@ export interface Quote extends QuoteSubmission {
   created_at: string;
   updated_at?: string;
   featured_date?: string;
+  // Ensure tags is included from QuoteSubmission
 }
 
 // Define the filter types for fetching quotes
@@ -32,7 +34,7 @@ export interface QuotesFilter {
   category?: string;
 }
 
-// Ensure tags is required in QuoteWithUser
+// QuoteWithUser ensures tags is required
 export interface QuoteWithUser extends Quote {
   user?: {
     id: string;
@@ -41,7 +43,7 @@ export interface QuoteWithUser extends Quote {
     avatar_url: string | null;
     status: string;
   } | null;
-  tags: string[]; // Make tags required to match consuming components
+  tags: string[]; // Make tags required with a non-null value
 }
 
 export interface QuoteComment {

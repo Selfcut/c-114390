@@ -32,7 +32,7 @@ export const fetchUserProfile = async (userId: string, userSession: Session | nu
       avatar_url: avatarUrl,
       bio: profile?.bio || "",
       website: profile?.website || "",
-      role: profile?.role as UserRole || "user",
+      role: (profile?.role as UserRole) || "user",
       isAdmin: profile?.role === "admin",
       status: (profile?.status as UserStatus) || "online",
       isGhostMode: profile?.is_ghost_mode || false,

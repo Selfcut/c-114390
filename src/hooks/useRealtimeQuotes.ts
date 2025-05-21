@@ -34,13 +34,15 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
               text: newQuote.text,
               author: newQuote.author,
               created_at: newQuote.created_at,
-              category: newQuote.category,
+              category: newQuote.category || 'General', // Provide a default category
               user_id: newQuote.user_id,
-              tags: newQuote.tags || [], // Ensure tags is always defined
+              tags: Array.isArray(newQuote.tags) ? newQuote.tags : [], // Ensure tags is always an array
               likes: newQuote.likes || 0,
               comments: newQuote.comments || 0,
               bookmarks: newQuote.bookmarks || 0,
               source: newQuote.source || '',
+              updated_at: newQuote.updated_at,
+              featured_date: newQuote.featured_date,
               user: {
                 id: 'pending', // This will be updated later when we get user details
                 username: 'pending',
@@ -55,7 +57,7 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
             // Transform to QuoteWithUser type
             const quoteWithUser: QuoteWithUser = {
               ...updatedQuote,
-              tags: updatedQuote.tags || [], // Ensure tags is always defined
+              tags: Array.isArray(updatedQuote.tags) ? updatedQuote.tags : [], // Ensure tags is always an array
               likes: updatedQuote.likes || 0,
               comments: updatedQuote.comments || 0,
               bookmarks: updatedQuote.bookmarks || 0,
@@ -110,7 +112,7 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
         
         return {
           ...quote,
-          tags: quote.tags || [], // Ensure tags is always defined
+          tags: Array.isArray(quote.tags) ? quote.tags : [], // Ensure tags is always an array
           likes: quote.likes || 0,
           comments: quote.comments || 0,
           bookmarks: quote.bookmarks || 0,

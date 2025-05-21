@@ -1,3 +1,4 @@
+
 export interface Author {
   id?: string;
   name: string;
@@ -57,14 +58,14 @@ export interface MediaPost extends ContentBase {
   url?: string;
 }
 
-// Modified to not extend ContentBase
+// Make Quote consistent with the one in lib/quotes/types.ts
 export interface Quote {
   id: string;
   text: string;
   author: string;
   source?: string;
   category: string;
-  tags: string[]; // Make tags required to match QuoteWithUser interface
+  tags: string[]; // Make tags required as in QuoteWithUser
   likes: number;
   views?: number;
   comments: number;
