@@ -124,9 +124,9 @@ const Profile = () => {
       }
       
       // Call the updateUserProfile function from the auth context
+      // and handle the returned result correctly
       const result = await updateUserProfile(updates);
       
-      // Fixed: Check if result exists and has an error property
       if (result && result.error) {
         throw result.error;
       }

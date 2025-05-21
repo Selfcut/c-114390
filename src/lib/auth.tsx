@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Sign in exception:", error);
       const message = error instanceof Error ? error.message : 'An unexpected error occurred';
-      return { error: { message } };
+      return { error: new Error(message) };
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Sign up exception:", error);
       const message = error instanceof Error ? error.message : 'An unexpected error occurred';
-      return { error: { message } };
+      return { error: new Error(message) };
     } finally {
       setIsLoading(false);
     }
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
+  const handleUpdateProfile = async (updates: Partial<UserProfile>): Promise<{ error: Error | null }> => {
     if (!user) {
       return { error: new Error("User not authenticated") };
     }
