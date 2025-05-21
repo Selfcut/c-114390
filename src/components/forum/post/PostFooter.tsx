@@ -38,6 +38,15 @@ export const PostFooter: React.FC<PostFooterProps> = ({
 
   // Handle like with optional custom onUpvote handler
   const handleLike = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to upvote",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (onUpvote) {
       await onUpvote();
     } else {

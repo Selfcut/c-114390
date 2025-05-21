@@ -1,22 +1,30 @@
-export type UserStatus = "online" | "offline" | "away" | "busy" | "do-not-disturb" | "invisible";
-export type UserRole = "user" | "moderator" | "admin";
 
 export interface UserProfile {
   id: string;
-  name: string;
   username: string;
+  name?: string;
   email: string;
-  avatar: string;
-  avatar_url: string; // This was missing but referenced in components
-  bio?: string;
-  website?: string;
-  status: UserStatus;
+  avatar?: string;
+  avatar_url?: string;
+  status: string;
   isGhostMode: boolean;
-  role: UserRole | string;
+  role: string;
   isAdmin: boolean;
-  notificationSettings?: {
-    desktopNotifications: boolean;
-    soundNotifications: boolean;
-    emailNotifications: boolean;
-  };
+}
+
+export interface UserSettings {
+  id: string;
+  notifications_enabled: boolean;
+  theme: 'light' | 'dark' | 'system';
+  email_notifications: boolean;
+  language: string;
+  user_id: string;
+}
+
+export interface UserActivity {
+  id: string;
+  event_type: string;
+  created_at: string;
+  metadata?: Record<string, any>;
+  user_id: string;
 }

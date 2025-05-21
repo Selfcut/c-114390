@@ -3,11 +3,17 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface ForumDiscussion {
+  id: string;
+  upvotes?: number;
+  user_id?: string;
+}
+
 export const useForumActions = (postId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleUpvote = async (user: any, discussion: any) => {
+  const handleUpvote = async (user: any, discussion: ForumDiscussion): Promise<boolean | undefined> => {
     if (!user || !postId) return undefined;
 
     setIsSubmitting(true);
@@ -82,8 +88,8 @@ export const useForumActions = (postId?: string) => {
     }
   };
 
-  const handleSubmitComment = async (user: any, comment: string, discussion: any, setComments: any) => {
-    if (!comment.trim() || !user || !postId) return;
+  const handleSubmitComment = async (user: any, comment: string, discussion: ForumDiscussion, setComments: any): Promise<boolean> => {
+    if (!comment.trim() || !user || !postId) return false;
 
     setIsSubmitting(true);
     try {
@@ -118,6 +124,8 @@ export const useForumActions = (postId?: string) => {
         description: 'Your comment has been posted',
         variant: 'default'
       });
+      
+      return true;
     } catch (error) {
       console.error('Error submitting comment:', error);
       toast({
@@ -125,6 +133,7 @@ export const useForumActions = (postId?: string) => {
         description: 'An error occurred while submitting your comment.',
         variant: 'destructive'
       });
+      return false;
     } finally {
       setIsSubmitting(false);
     }

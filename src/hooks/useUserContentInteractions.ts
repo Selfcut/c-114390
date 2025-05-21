@@ -4,13 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 
+export type ContentType = 'forum' | 'quote' | 'media' | 'knowledge' | 'wiki' | 'ai';
+
 interface UseUserContentInteractionsProps {
   contentId: string;
-  contentType: 'forum' | 'quote' | 'media' | 'knowledge' | 'wiki';
+  contentType: ContentType;
   initialLikeCount?: number;
   initialBookmarkCount?: number;
 }
 
+/**
+ * Hook for handling user interactions with content (likes, bookmarks)
+ */
 export const useUserContentInteractions = ({
   contentId,
   contentType,
@@ -26,7 +31,7 @@ export const useUserContentInteractions = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get the table name for this content type
-  const getTableName = (type: string): string => {
+  const getTableName = (type: ContentType): string => {
     switch (type) {
       case 'forum':
         return 'forum_posts';
@@ -38,15 +43,22 @@ export const useUserContentInteractions = ({
         return 'knowledge_entries';
       case 'wiki':
         return 'wiki_articles';
+      case 'ai':
+        return 'ai_content';
       default:
         return 'forum_posts';
     }
   };
 
+  // Get the likes column name for this content type
+  const getLikeColumnName = (type: ContentType): string => {
+    return type === 'forum' ? 'upvotes' : 'likes';
+  };
+
   // Check if user has already liked or bookmarked
   useEffect(() => {
     const checkUserInteractions = async () => {
-      if (!user) return;
+      if (!user || !contentId) return;
       
       try {
         // Check likes
@@ -60,6 +72,8 @@ export const useUserContentInteractions = ({
           
         if (!likeError) {
           setIsLiked(!!likeData);
+        } else {
+          console.error('Error checking like status:', likeError);
         }
         
         // Check bookmarks
@@ -73,6 +87,8 @@ export const useUserContentInteractions = ({
           
         if (!bookmarkError) {
           setIsBookmarked(!!bookmarkData);
+        } else {
+          console.error('Error checking bookmark status:', bookmarkError);
         }
       } catch (err) {
         console.error('Error checking user interactions:', err);
@@ -83,18 +99,21 @@ export const useUserContentInteractions = ({
   }, [contentId, contentType, user]);
 
   // Handle like/unlike
-  const toggleLike = async () => {
+  const toggleLike = async (): Promise<boolean> => {
     if (!user) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to like content",
         variant: "destructive",
       });
-      return;
+      return false;
     }
     
     setIsSubmitting(true);
     try {
+      const likeColumnName = getLikeColumnName(contentType);
+      const tableName = getTableName(contentType);
+      
       if (isLiked) {
         // Unlike content
         const { data, error } = await supabase
@@ -109,8 +128,8 @@ export const useUserContentInteractions = ({
         // Decrement like count
         await supabase.rpc('decrement_counter_fn', {
           row_id: contentId,
-          column_name: 'likes',
-          table_name: getTableName(contentType)
+          column_name: likeColumnName,
+          table_name: tableName
         });
         
         setLikeCount(prev => Math.max(prev - 1, 0));
@@ -131,14 +150,16 @@ export const useUserContentInteractions = ({
         // Increment like count
         await supabase.rpc('increment_counter_fn', {
           row_id: contentId,
-          column_name: 'likes',
-          table_name: getTableName(contentType)
+          column_name: likeColumnName,
+          table_name: tableName
         });
         
         setLikeCount(prev => prev + 1);
         setIsLiked(true);
         toast({ description: 'Content liked!' });
       }
+      
+      return true;
     } catch (error) {
       console.error('Error toggling like:', error);
       toast({
@@ -146,24 +167,27 @@ export const useUserContentInteractions = ({
         description: "Failed to update like status",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // Handle bookmark/unbookmark
-  const toggleBookmark = async () => {
+  const toggleBookmark = async (): Promise<boolean> => {
     if (!user) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to bookmark content",
         variant: "destructive",
       });
-      return;
+      return false;
     }
     
     setIsSubmitting(true);
     try {
+      const tableName = getTableName(contentType);
+      
       if (isBookmarked) {
         // Remove bookmark
         const { data, error } = await supabase
@@ -180,7 +204,7 @@ export const useUserContentInteractions = ({
           await supabase.rpc('decrement_counter_fn', {
             row_id: contentId,
             column_name: 'bookmarks',
-            table_name: 'quotes'
+            table_name: tableName
           });
         }
         
@@ -204,7 +228,7 @@ export const useUserContentInteractions = ({
           await supabase.rpc('increment_counter_fn', {
             row_id: contentId,
             column_name: 'bookmarks',
-            table_name: 'quotes'
+            table_name: tableName
           });
         }
         
@@ -212,6 +236,8 @@ export const useUserContentInteractions = ({
         setIsBookmarked(true);
         toast({ description: 'Content bookmarked!' });
       }
+      
+      return true;
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       toast({
@@ -219,6 +245,7 @@ export const useUserContentInteractions = ({
         description: "Failed to update bookmark status",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSubmitting(false);
     }

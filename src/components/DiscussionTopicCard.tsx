@@ -8,6 +8,7 @@ import { useForumActions } from "@/hooks/forum/useForumActions";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
+import { ForumDiscussion } from "@/hooks/forum/useForumActions";
 
 interface DiscussionTopicCardProps {
   discussion: DiscussionTopic;
@@ -74,7 +75,8 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   // Determine if the post is new (less than 24 hours old)
   const isNew = (() => {
     const now = new Date();
-    const diffInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    const postDate = createdAt instanceof Date ? createdAt : new Date(createdAt);
+    const diffInHours = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
     return diffInHours < 24;
   })();
   
@@ -91,12 +93,19 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     setIsUpvoting(true);
 
     try {
+      // Create a ForumDiscussion object from the discussion
+      const forumDiscussion: ForumDiscussion = {
+        id,
+        upvotes: upvoteCount,
+        user_id: authorId
+      };
+      
       // Call handleUpvote and get the result
-      const result = await handleUpvote(user, { id, upvotes: upvoteCount, user_id: authorId });
+      const result = await handleUpvote(user, forumDiscussion);
       
       // Only toggle the upvote state if the operation was successful
       // The useForumActions hook returns true for success, undefined for failure
-      if (result !== undefined) {
+      if (result === true) {
         // Toggle upvote state and count
         if (hasUpvoted) {
           setUpvoteCount(prev => Math.max(prev - 1, 0));
@@ -188,7 +197,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
                 />
               </span>
               <span className="text-xs flex items-center gap-1">
-                <Clock size={12} /> {formatTimeAgo(createdAt)}
+                <Clock size={12} /> {formatTimeAgo(createdAt instanceof Date ? createdAt : new Date(createdAt))}
               </span>
             </div>
           </div>
