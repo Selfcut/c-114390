@@ -24,15 +24,15 @@
     --accent-foreground: 220 14% 30%;
     
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
     
     --border: 220 14% 90%;
     
     --input: 220 14% 90%;
-    --ring: 220 14% 20%;
+    --ring: 210 100% 50%;
     
     --sidebar-background: 0 0% 96%;
-    --sidebar-border: 240 5% 90%;
+    --sidebar-border: 0 0% 90%;
   }
 }
 

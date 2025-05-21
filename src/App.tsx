@@ -6,6 +6,7 @@ import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { AuthProvider } from "./lib/auth";
 import { QueryProvider } from './components/providers/QueryProvider';
 import { AppRoutes } from "./components/routing/AppRoutes";
+import "./styles/dark-mode.css";
 
 function App() {
   return (
