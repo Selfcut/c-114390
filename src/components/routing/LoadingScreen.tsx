@@ -2,16 +2,13 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-export const LoadingScreen: React.FC = () => {
+export function LoadingScreen() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="flex items-center space-x-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <div>
-          <h2 className="text-xl font-bold">Loading</h2>
-          <p className="text-muted-foreground">Please wait while we prepare your experience...</p>
-        </div>
+    <div className="flex items-center justify-center h-screen bg-background">
+      <div className="flex flex-col items-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Loading...</p>
       </div>
     </div>
   );
-};
+}

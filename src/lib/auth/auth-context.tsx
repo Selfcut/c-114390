@@ -1,20 +1,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUserProfile, ensureUserProfile } from './profiles-service';
-import { UserProfile } from '@/types/user';
-
-interface AuthContextType {
-  session: Session | null;
-  user: UserProfile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signOut: () => Promise<void>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ data: any; error: any }>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
-}
+import { fetchUserProfile, updateUserProfile as updateProfile } from './auth-utils';
+import { UserProfile, UserStatus, UserRole, AuthContextType } from './auth-types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -22,38 +11,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    // Set up auth listener first
+    // Set up auth listener first to avoid deadlocks
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log('Auth state changed:', event);
         setSession(currentSession);
 
         if (currentSession?.user) {
-          try {
-            // Fetch the user profile with a setTimeout to avoid potential deadlocks
-            setTimeout(async () => {
-              const profile = await fetchUserProfile(currentSession.user.id);
+          // Use setTimeout to avoid potential deadlocks with Supabase
+          setTimeout(async () => {
+            try {
+              // Fetch the user profile
+              const profile = await fetchUserProfile(currentSession.user.id, currentSession);
               
               if (profile) {
                 setUser(profile);
+                setIsAuthenticated(true);
               } else {
-                // If profile not found, try to create one
-                const newProfile = await ensureUserProfile(currentSession.user.id, {
-                  email: currentSession.user.email
-                });
-                setUser(newProfile);
+                console.warn('No profile found for user after auth state change');
+                setUser(null);
+                setIsAuthenticated(false);
               }
-              
+            } catch (error) {
+              console.error('Error fetching user profile:', error);
+            } finally {
               setIsLoading(false);
-            }, 0);
-          } catch (error) {
-            console.error('Error fetching user profile:', error);
-            setIsLoading(false);
-          }
+            }
+          }, 0);
         } else {
           setUser(null);
+          setIsAuthenticated(false);
           setIsLoading(false);
         }
       }
@@ -67,16 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (data.session?.user) {
           // Fetch the user profile
-          const profile = await fetchUserProfile(data.session.user.id);
+          const profile = await fetchUserProfile(data.session.user.id, data.session);
           
           if (profile) {
             setUser(profile);
-          } else {
-            // If profile not found, try to create one
-            const newProfile = await ensureUserProfile(data.session.user.id, {
-              email: data.session.user.email
-            });
-            setUser(newProfile);
+            setIsAuthenticated(true);
           }
         }
       } catch (error) {
@@ -94,19 +79,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Sign in with email and password
-  const signIn = async (email: string, password: string) => {
+  const handleSignIn = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      return await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        return { error };
+      }
+      
+      return { data };
     } catch (error) {
       console.error('Error signing in:', error);
-      return { data: null, error };
+      return { error };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Sign up with email and password
-  const signUp = async (email: string, password: string, username: string, name?: string) => {
+  const handleSignUp = async (email: string, password: string, username: string, name?: string) => {
+    setIsLoading(true);
     try {
-      return await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -116,51 +114,139 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       });
+      
+      if (error) {
+        return { error };
+      }
+      
+      return { data };
     } catch (error) {
       console.error('Error signing up:', error);
-      return { data: null, error };
+      return { error };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Sign out
-  const signOut = async () => {
+  const handleSignOut = async () => {
+    setIsLoading(true);
     try {
       await supabase.auth.signOut();
       setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
     } catch (error) {
       console.error('Error signing out:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Update user profile
-  const updateUserProfile = async (updates: Partial<UserProfile>) => {
-    if (!user) return;
-
+  const handleUpdateProfile = async (updates: Partial<UserProfile>): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error("User not authenticated") };
+    }
+    
+    setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-
-      if (error) {
-        throw error;
+      const result = await updateProfile(user.id, updates);
+      
+      if (!result.error) {
+        setUser(prev => prev ? { ...prev, ...updates } : null);
       }
-
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      
+      return result;
     } catch (error) {
       console.error('Error updating user profile:', error);
+      return { error: error instanceof Error ? error : new Error('Unknown error') };
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const value = {
-    session,
+  // Update user status
+  const updateUserStatus = async (status: UserStatus): Promise<void> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const result = await handleUpdateProfile({ status });
+    if (result.error) {
+      throw result.error;
+    }
+  };
+  
+  // Toggle ghost mode
+  const toggleGhostMode = async (): Promise<void> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const result = await handleUpdateProfile({ isGhostMode: !user.isGhostMode });
+    if (result.error) {
+      throw result.error;
+    }
+  };
+  
+  // Toggle do not disturb
+  const toggleDoNotDisturb = async (): Promise<void> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const newStatus: UserStatus = user.status === 'do-not-disturb' ? 'online' : 'do-not-disturb';
+    const result = await handleUpdateProfile({ status: newStatus });
+    if (result.error) {
+      throw result.error;
+    }
+  };
+  
+  // Delete account
+  const deleteAccount = async (): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error('User not authenticated') };
+    }
+    
+    setIsLoading(true);
+    try {
+      // Delete the user account
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) {
+        return { error: new Error(error.message) };
+      }
+      
+      // Sign out after deletion
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      return { error: error instanceof Error ? error : new Error('Unknown error') };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value: AuthContextType = {
     user,
-    isAuthenticated: !!user,
+    session,
     isLoading,
-    signIn,
-    signOut,
-    signUp,
-    updateUserProfile
+    isAuthenticated,
+    signIn: handleSignIn,
+    signUp: handleSignUp,
+    signOut: handleSignOut,
+    updateUserProfile: handleUpdateProfile,
+    updateProfile: handleUpdateProfile, // Alias for backward compatibility
+    updateUserStatus,
+    toggleGhostMode,
+    toggleDoNotDisturb,
+    deleteAccount
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
