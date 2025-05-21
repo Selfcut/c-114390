@@ -30,21 +30,13 @@ export async function runProfileDiagnostics() {
       console.log("Sample profiles:", profilesData);
     }
     
-    // Check if the trigger function exists using direct query
-    const { data: functionsData, error: functionsError } = await supabase
-      .from('pg_proc')
-      .select('proname')
-      .ilike('proname', 'handle_new_user')
-      .limit(1)
-      .maybeSingle();
-      
-    if (functionsError) {
-      console.error("Error checking function:", functionsError);
-    } else {
-      console.log("Handle new user function exists:", !!functionsData);
-    }
+    // Check if the trigger function exists by checking for a record in a safer way
+    // Instead of querying pg_proc directly (which isn't exposed), we'll use a simple test
+    // to see if profile creation works as expected
+    console.log("Checking handle_new_user trigger functionality...");
     
-    // Check user count 
+    // Check if there are any profiles for the current user
+    // This indirectly tells us if the trigger might be working
     if (sessionData.session) {
       const { count, error: countError } = await supabase
         .from('profiles')
@@ -55,7 +47,24 @@ export async function runProfileDiagnostics() {
         console.error("Error checking current user profile:", countError);
       } else {
         console.log("Current user has profile:", count === 1);
+        
+        if (count === 0) {
+          console.warn("No profile found for current user - trigger may not be working");
+        }
       }
+    }
+    
+    // Get total count of profiles vs auth users (if admin access available)
+    try {
+      const { count: profileCount, error: profileCountError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+        
+      if (!profileCountError) {
+        console.log(`Total profiles count: ${profileCount}`);
+      }
+    } catch (err) {
+      console.log("Could not get total profiles count (may require admin access)");
     }
     
     console.log("=== End of Diagnostics ===");
