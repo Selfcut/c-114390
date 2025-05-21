@@ -39,7 +39,7 @@ export interface ContentBase {
 
 export interface ForumPost extends ContentBase {
   content: string;
-  tags?: string[];
+  tags: string[]; // Making tags required
   upvotes: number;
   is_pinned?: boolean;
 }
@@ -58,14 +58,14 @@ export interface MediaPost extends ContentBase {
   url?: string;
 }
 
-// Make Quote consistent with the one in lib/quotes/types.ts
+// Make Quote consistent with QuoteWithUser in lib/quotes/types.ts
 export interface Quote {
   id: string;
   text: string;
   author: string;
   source?: string;
   category: string;
-  tags: string[]; // Make tags required as in QuoteWithUser
+  tags: string[]; // Making tags required
   likes: number;
   views?: number;
   comments: number;
@@ -79,7 +79,7 @@ export interface WikiArticle extends ContentBase {
   content: string;
   description: string;
   category: string;
-  tags?: string[];
+  tags: string[]; // Making tags required
   image_url?: string;
   author_name?: string;
   contributors?: number;

@@ -22,7 +22,7 @@ export const useForumData = () => {
       setIsLoading(true);
       setIsError(false);
       
-      // Query forum posts
+      // Query forum posts with proper join to profiles
       const { data, error } = await supabase
         .from('forum_posts')
         .select(`

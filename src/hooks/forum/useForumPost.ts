@@ -41,7 +41,7 @@ export function useForumPost(postId?: string) {
 
     setIsLoading(true);
     try {
-      // Fetch the forum post
+      // Fetch the forum post with proper join to profiles table
       const { data: postData, error: postError } = await supabase
         .from('forum_posts')
         .select(`
