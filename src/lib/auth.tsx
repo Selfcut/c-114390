@@ -1,10 +1,11 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContextType } from "./auth/auth-types";
 import { UserProfile, UserStatus } from "./auth/auth-types";
-import { fetchUserProfile, updateUserProfile } from "./auth/utils";
+import { fetchUserProfile, updateUserProfile as updateProfile } from "./auth/utils";
 import { signIn, signOut, signUp } from "./auth/utils";
 
 // Create the auth context
@@ -185,7 +186,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
-      const result = await updateUserProfile(user.id, updates);
+      const result = await updateProfile(user.id, updates);
       
       if (!result.error) {
         // Update local state
