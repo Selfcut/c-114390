@@ -2,6 +2,7 @@
 import React from 'react';
 import { SEO } from '../SEO';
 import { PageLayout } from './PageLayout';
+import { ScrollToTop } from '../ui/ScrollToTop';
 
 interface PageSEOProps {
   children: React.ReactNode;
@@ -11,8 +12,10 @@ interface PageSEOProps {
   ogImage?: string;
   ogUrl?: string;
   ogType?: 'website' | 'article';
+  canonicalUrl?: string;
   hideHeader?: boolean;
   allowGuests?: boolean;
+  noIndex?: boolean;
 }
 
 export const PageSEO: React.FC<PageSEOProps> = ({
@@ -23,8 +26,10 @@ export const PageSEO: React.FC<PageSEOProps> = ({
   ogImage,
   ogUrl,
   ogType,
+  canonicalUrl,
   hideHeader = false,
-  allowGuests = false
+  allowGuests = false,
+  noIndex = false
 }) => {
   return (
     <>
@@ -35,9 +40,12 @@ export const PageSEO: React.FC<PageSEOProps> = ({
         ogImage={ogImage}
         ogUrl={ogUrl}
         ogType={ogType}
+        canonicalUrl={canonicalUrl}
+        noIndex={noIndex}
       />
       <PageLayout hideHeader={hideHeader} allowGuests={allowGuests}>
         {children}
+        <ScrollToTop />
       </PageLayout>
     </>
   );

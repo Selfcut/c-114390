@@ -3,6 +3,10 @@ import { MessageSquare, ThumbsUp, Tag, Clock, Eye } from "lucide-react";
 import { formatTimeAgo, DiscussionTopic } from "../lib/discussions-utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UpvoteButton } from "./forum/UpvoteButton";
+import { useForumActions } from "@/hooks/forum/useForumActions"; 
+import { useAuth } from "@/lib/auth";
+import { useState } from "react";
 
 interface DiscussionTopicCardProps {
   discussion: DiscussionTopic;
@@ -13,6 +17,7 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   const { 
     title, 
     author, 
+    authorId,
     authorAvatar, 
     content,
     createdAt, 
@@ -21,8 +26,14 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     views,
     isPinned,
     isPopular,
-    comments
+    comments,
+    id
   } = discussion;
+
+  const { user } = useAuth();
+  const { handleUpvote } = useForumActions(id);
+  const [upvoteCount, setUpvoteCount] = useState(upvotes);
+  const [isUpvoting, setIsUpvoting] = useState(false);
   
   // Generate avatar fallback from author name if no avatar URL provided
   const getAvatarFallback = (name: string) => {
@@ -40,6 +51,24 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
   const displayText = content ? (
     content.length > 120 ? content.slice(0, 120) + '...' : content
   ) : '';
+
+  // Handle upvote click
+  const onUpvote = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!user) return;
+    setIsUpvoting(true);
+
+    try {
+      await handleUpvote(user, { id, upvotes, user_id: authorId });
+      setUpvoteCount(prev => prev + 1);
+    } catch (error) {
+      console.error('Error upvoting:', error);
+    } finally {
+      setIsUpvoting(false);
+    }
+  };
   
   return (
     <div 
@@ -105,8 +134,13 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
               <span className="text-xs flex items-center gap-1">
                 <MessageSquare size={12} /> {comments || 0}
               </span>
-              <span className="text-xs flex items-center gap-1">
-                <ThumbsUp size={12} /> {upvotes || 0}
+              <span className="text-xs flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <UpvoteButton 
+                  count={upvoteCount || 0} 
+                  onUpvote={onUpvote} 
+                  disabled={isUpvoting}
+                  size="sm"
+                />
               </span>
               <span className="text-xs flex items-center gap-1">
                 <Clock size={12} /> {formatTimeAgo(createdAt)}

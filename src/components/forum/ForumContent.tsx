@@ -1,15 +1,13 @@
 
 import React from 'react';
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DiscussionTopicCard } from "../DiscussionTopicCard";
 import { Badge } from "@/components/ui/badge";
+import { DiscussionTopicCard } from "../DiscussionTopicCard";
 import { DiscussionTopic } from "@/lib/discussions-utils";
 
 interface ForumContentProps {
-  isLoading: boolean;
   filteredDiscussions: DiscussionTopic[];
   activeTag: string | null;
   setActiveTag: (tag: string | null) => void;
@@ -18,13 +16,15 @@ interface ForumContentProps {
 }
 
 export const ForumContent = ({
-  isLoading,
   filteredDiscussions,
   activeTag,
   setActiveTag,
   setSearchTerm,
   onDiscussionClick
 }: ForumContentProps) => {
+  // Helper function to check if an array is empty
+  const isEmpty = (arr: any[]): boolean => !arr || arr.length === 0;
+
   return (
     <>
       {activeTag && (
@@ -35,6 +35,7 @@ export const ForumContent = ({
             <button
               className="ml-2 hover:text-foreground"
               onClick={() => setActiveTag(null)}
+              aria-label="Remove filter"
             >
               ×
             </button>
@@ -43,29 +44,39 @@ export const ForumContent = ({
       )}
       
       <div className="grid grid-cols-1 gap-4">
-        {isLoading ? (
-          // Skeleton UI for loading state
-          Array.from({ length: 5 }).map((_, index) => (
-            <Card key={index} className="bg-card rounded-lg p-5">
-              <div className="flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6 mb-3" />
-                  <div className="flex gap-2 mb-3">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-6 w-24 rounded-full" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-5 w-32" />
-                  </div>
+        {isEmpty(filteredDiscussions) ? (
+          <Card className="bg-card rounded-lg p-8 text-center">
+            <CardContent className="pt-6">
+              <div className="flex justify-center mb-4">
+                <div className="rounded-full bg-muted p-4">
+                  <AlertCircle size={32} className="text-muted-foreground" />
                 </div>
               </div>
-            </Card>
-          ))
-        ) : filteredDiscussions.length > 0 ? (
+              <h3 className="text-xl font-semibold mb-2">No discussions found</h3>
+              <p className="text-muted-foreground mb-4">
+                We couldn't find any discussions matching your criteria.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button 
+                  variant="outline" 
+                  className="mt-2"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setActiveTag(null);
+                  }}
+                >
+                  Reset Filters
+                </Button>
+                <Button 
+                  className="mt-2"
+                  onClick={() => document.getElementById('create-discussion-btn')?.click()}
+                >
+                  Start a Discussion
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
           filteredDiscussions.map((discussion) => (
             <DiscussionTopicCard 
               key={discussion.id} 
@@ -73,26 +84,6 @@ export const ForumContent = ({
               onClick={() => onDiscussionClick(discussion)}
             />
           ))
-        ) : (
-          <Card className="bg-card rounded-lg p-8 text-center">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <div className="rounded-full bg-muted p-4">
-                  <MessageSquare size={32} className="text-muted-foreground" />
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-4">No discussions found matching your criteria.</p>
-              <Button 
-                className="mt-4"
-                onClick={() => {
-                  setSearchTerm('');
-                  setActiveTag(null);
-                }}
-              >
-                Reset Filters
-              </Button>
-            </CardContent>
-          </Card>
         )}
       </div>
     </>

@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { PageLayout } from '@/components/layouts/PageLayout';
+import { PageSEO } from '@/components/layouts/PageSEO';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Share } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useForumPost } from '@/hooks/forum/useForumPost';
 import { useForumActions, ForumDiscussion } from '@/hooks/forum/useForumActions';
 import { formatTimeAgo } from '@/utils/formatters';
-import { UserProfile } from '@/types/user';  // Import from the central location
+import { UserProfile } from '@/types/user';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { UpvoteButton } from '@/components/forum/UpvoteButton';
+import { useToast } from '@/hooks/use-toast';
 
 // Create a type adapter between the hook's Comment type and our local Comment type
 interface ForumComment {
@@ -41,11 +44,11 @@ interface ForumPost {
 }
 
 // Function to convert hook Comment type to our local Comment type
-function adaptComments(comments: ForumComment[]): Comment[] {
+function adaptComments(comments: any[]): Comment[] {
   return comments.map(comment => ({
     id: comment.id,
     author_name: comment.author,
-    created_at: comment.createdAt.toISOString(), // Convert Date to string
+    created_at: comment.createdAt?.toISOString() || new Date().toISOString(), // Ensure date exists
     comment: comment.content
   }));
 }
@@ -71,9 +74,9 @@ const ForumPostDetails: React.FC<ForumPostDetailsProps> = ({ discussion }) => (
   <div className="space-y-6">
     <h1 className="text-3xl font-bold">{discussion.title}</h1>
     <div className="flex items-center text-sm text-muted-foreground">
-      <span>Posted by {discussion.author_name || 'Anonymous'}</span>
+      <span>Posted by {discussion.author || 'Anonymous'}</span>
     </div>
-    <div className="prose max-w-none">
+    <div className="prose max-w-none dark:prose-invert">
       <div dangerouslySetInnerHTML={{ __html: discussion.content }} />
     </div>
   </div>
@@ -83,15 +86,36 @@ interface ForumPostStatsProps {
   views: number;
   comments: number;
   upvotes: number;
-  createdAt: string | Date; // Updated to accept either string or Date
+  createdAt: string | Date;
   formatTimeAgo: (date: string) => string;
+  onUpvote: () => Promise<void>;
+  hasUpvoted?: boolean;
+  isAuthenticated: boolean;
+  onShare: () => void;
 }
-const ForumPostStats: React.FC<ForumPostStatsProps> = ({ views, comments, upvotes, createdAt, formatTimeAgo }) => (
-  <div className="flex flex-wrap gap-4 py-4 text-sm text-muted-foreground border-t border-b mt-6 mb-8">
-    <div>{upvotes} upvotes</div>
-    <div>{comments} comments</div>
-    <div>{views} views</div>
-    <div>{formatTimeAgo(typeof createdAt === 'string' ? createdAt : createdAt.toISOString())}</div>
+const ForumPostStats: React.FC<ForumPostStatsProps> = ({
+  views,
+  comments,
+  upvotes,
+  createdAt,
+  formatTimeAgo,
+  onUpvote,
+  hasUpvoted = false,
+  isAuthenticated,
+  onShare
+}) => (
+  <div className="flex flex-wrap items-center justify-between gap-4 py-4 border-t border-b mt-6 mb-8">
+    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+      <UpvoteButton count={upvotes} onUpvote={onUpvote} hasUpvoted={hasUpvoted} />
+      <div>{comments} comments</div>
+      <div>{views} views</div>
+      <div>{formatTimeAgo(typeof createdAt === 'string' ? createdAt : createdAt?.toISOString() || new Date().toISOString())}</div>
+    </div>
+    
+    <Button variant="outline" size="sm" onClick={onShare}>
+      <Share size={16} className="mr-2" />
+      Share
+    </Button>
   </div>
 );
 
@@ -124,7 +148,7 @@ const AddComment: React.FC<AddCommentProps> = ({ onSubmit, isSubmitting, user })
     <form onSubmit={handleSubmit} className="mb-8">
       <h2 className="text-lg font-semibold mb-2">Add a Comment</h2>
       <textarea
-        className="w-full p-3 border rounded-md resize-y min-h-[100px]"
+        className="w-full p-3 border rounded-md resize-y min-h-[100px] bg-background"
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder="Share your thoughts..."
@@ -182,10 +206,13 @@ const ForumPost = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Use custom hooks for forum state and actions
   const { isLoading, discussion, comments: hookComments, setComments } = useForumPost(id);
   const { isSubmitting, handleUpvote, handleSubmitComment } = useForumActions(id);
+
+  const [hasUpvoted, setHasUpvoted] = useState(false);
 
   // Handle upvoting the post
   const handleUpvotePost = async () => {
@@ -211,8 +238,57 @@ const ForumPost = () => {
         user_id: discussion.authorId, // Use authorId as the user_id
       };
       
-      await handleUpvote(userProfile, discussionWithUserId);
+      try {
+        await handleUpvote(userProfile, discussionWithUserId);
+        setHasUpvoted(true);
+        toast({
+          description: "You upvoted this post",
+        });
+      } catch (error) {
+        console.error('Error upvoting:', error);
+        toast({
+          title: "Error",
+          description: "Failed to upvote post",
+          variant: "destructive"
+        });
+      }
     }
+  };
+
+  // Handle sharing the post
+  const handleSharePost = useCallback(() => {
+    if (navigator.share) {
+      navigator.share({
+        title: discussion?.title || 'Forum Discussion',
+        text: 'Check out this discussion on Polymath Community',
+        url: window.location.href,
+      }).catch((error) => {
+        console.log('Error sharing:', error);
+        // Fallback to clipboard
+        copyToClipboard();
+      });
+    } else {
+      // Fallback to clipboard
+      copyToClipboard();
+    }
+  }, [discussion]);
+
+  // Copy URL to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        toast({
+          description: "Link copied to clipboard!",
+        });
+      })
+      .catch((error) => {
+        console.error('Error copying URL:', error);
+        toast({
+          title: "Error",
+          description: "Failed to copy link",
+          variant: "destructive"
+        });
+      });
   };
   
   // Handle adding a new comment
@@ -245,12 +321,17 @@ const ForumPost = () => {
 
   // Convert the hook's comments to our local Comment format
   const adaptedComments = React.useMemo(() => {
-    return adaptComments(hookComments as unknown as ForumComment[]);
+    return adaptComments(hookComments as any[] || []);
   }, [hookComments]);
 
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8">
+    <PageSEO
+      title={discussion ? `${discussion.title} | Forum` : 'Forum Post | Polymath Community'}
+      description={discussion ? `Join the discussion: ${discussion.title}` : 'View this forum post on Polymath Community'}
+      ogType="article"
+      canonicalUrl={discussion ? `https://polymathcommunity.com/forum/${discussion.id}` : undefined}
+    >
+      <div className="container mx-auto py-8 px-4">
         <Button
           variant="ghost"
           className="mb-6 flex items-center gap-2"
@@ -272,6 +353,10 @@ const ForumPost = () => {
               upvotes={discussion.upvotes}
               createdAt={discussion.createdAt} 
               formatTimeAgo={formatTimeAgo}
+              onUpvote={handleUpvotePost}
+              hasUpvoted={hasUpvoted}
+              isAuthenticated={!!user}
+              onShare={handleSharePost}
             />
             
             {/* Add comment */}
@@ -282,7 +367,9 @@ const ForumPost = () => {
             />
             
             {/* Comments */}
-            <h2 className="text-2xl font-semibold mb-4">Replies</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Replies {adaptedComments.length > 0 ? `(${adaptedComments.length})` : ''}
+            </h2>
             <CommentsList 
               comments={adaptedComments}
               formatTimeAgo={formatTimeAgo}
@@ -292,7 +379,7 @@ const ForumPost = () => {
           <NotFoundCard onNavigateBack={() => navigate('/forum')} />
         )}
       </div>
-    </PageLayout>
+    </PageSEO>
   );
 };
 

@@ -20,9 +20,9 @@ function App() {
           <QueryProvider>
             <AuthProvider>
               <Router>
+                <ScrollToTop />
                 <AppRoutes />
                 <Toaster />
-                <ScrollToTop />
               </Router>
             </AuthProvider>
           </QueryProvider>

@@ -8,6 +8,8 @@ interface SEOProps {
   ogImage?: string;
   ogUrl?: string;
   ogType?: 'website' | 'article';
+  canonicalUrl?: string;
+  noIndex?: boolean;
 }
 
 export const SEO: React.FC<SEOProps> = ({
@@ -16,7 +18,9 @@ export const SEO: React.FC<SEOProps> = ({
   keywords = 'polymath, knowledge, learning, community, forum, ideas',
   ogImage = '/og-image.jpg',
   ogUrl = 'https://polymathcommunity.com',
-  ogType = 'website'
+  ogType = 'website',
+  canonicalUrl,
+  noIndex = false
 }) => {
   const siteName = 'Polymath Community';
   
@@ -40,6 +44,12 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+      
+      {/* Canonical URL */}
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      
+      {/* No index directive if specified */}
+      {noIndex && <meta name="robots" content="noindex" />}
       
       {/* Other Important Meta Tags */}
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
