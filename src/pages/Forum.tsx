@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { PageLayout } from '@/components/layouts/PageLayout';
+import { PageSEO } from '@/components/layouts/PageSEO';
 import { DiscussionFilters } from "../components/DiscussionFilters";
 import { ForumHeader } from "../components/forum/ForumHeader";
 import { ForumContent } from "../components/forum/ForumContent";
@@ -46,7 +46,11 @@ const Forum = () => {
   };
   
   return (
-    <PageLayout>
+    <PageSEO 
+      title="Forum | Polymath Community"
+      description="Join discussions on topics across multiple disciplines. Share your insights and learn from others."
+      keywords="forum, discussions, polymath, community, knowledge sharing"
+    >
       <div className="container mx-auto py-8">
         <ForumHeader onCreateDiscussion={handleCreateDiscussion} />
         
@@ -74,7 +78,7 @@ const Forum = () => {
           onSuccess={handleDiscussionCreated}
         />
       </div>
-    </PageLayout>
+    </PageSEO>
   );
 };
 

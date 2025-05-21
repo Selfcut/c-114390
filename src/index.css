@@ -4,6 +4,10 @@
 @tailwind utilities;
 
 @layer base {
+  /* 
+   * Base CSS variables that get overridden by light-mode.css and dark-mode.css
+   * See src/styles/light-mode.css and src/styles/dark-mode.css for theme-specific overrides
+   */
   :root {
     --background: 0 0% 100%;
     --foreground: 220 14% 20%;
@@ -25,6 +29,10 @@
     --input: 220 14% 90%;
     --ring: 210 100% 50%;
     --radius: 0.5rem;
+    
+    /* Layout-specific variables */
+    --sidebar-width: 256px;
+    --header-height: 4rem;
   }
 
   .dark {
@@ -56,6 +64,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -67,5 +76,24 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 }

@@ -6,22 +6,29 @@ import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { AuthProvider } from "./lib/auth";
 import { QueryProvider } from './components/providers/QueryProvider';
 import { AppRoutes } from "./components/routing/AppRoutes";
+import { HelmetProvider } from 'react-helmet-async';
+import { ScrollToTop } from "./components/ui/ScrollToTop";
 import "./styles/dark-mode.css";
+import "./styles/light-mode.css";
+import "./styles/global.css";
 
 function App() {
   return (
-    <ThemeProvider>
-      <ErrorBoundary>
-        <QueryProvider>
-          <AuthProvider>
-            <Router>
-              <AppRoutes />
-              <Toaster />
-            </Router>
-          </AuthProvider>
-        </QueryProvider>
-      </ErrorBoundary>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <QueryProvider>
+            <AuthProvider>
+              <Router>
+                <AppRoutes />
+                <Toaster />
+                <ScrollToTop />
+              </Router>
+            </AuthProvider>
+          </QueryProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 
