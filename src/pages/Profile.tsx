@@ -91,7 +91,7 @@ const Profile = () => {
     }
   }, [username, currentUser, navigate]);
 
-  // Handle profile update
+  // Handle profile update - creating a wrapper to adapt between function signatures
   const handleUpdateProfile = async (updates: Partial<UserProfileType>): Promise<void> => {
     try {
       if (!currentUser?.id) {
@@ -125,7 +125,10 @@ const Profile = () => {
       
       // Call the updateUserProfile function from the auth context
       if (updateUserProfile) {
-        await updateUserProfile(updates);
+        const result = await updateUserProfile(updates);
+        if (result?.error) {
+          throw result.error;
+        }
       }
       
       // Update local state
