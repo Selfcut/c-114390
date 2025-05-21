@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Edit2, Link, MapPin, Calendar, BookOpen, MessageCircle, User, Globe } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Edit2, Link as LinkIcon, Calendar, BookOpen, MessageCircle, User, Globe, Loader2 } from "lucide-react";
 
 interface UserProfileComponentProps {
   profile: UserProfile;
@@ -21,11 +21,11 @@ interface UserProfileComponentProps {
 export const UserProfileComponent = ({ profile, isCurrentUser, onUpdateProfile }: UserProfileComponentProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: profile.name,
-    username: profile.username,
-    bio: profile.bio,
-    website: profile.website,
-    avatar: profile.avatar
+    name: profile.name || '',
+    username: profile.username || '',
+    bio: profile.bio || '',
+    website: profile.website || '',
+    avatar: profile.avatar_url || profile.avatar || ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,7 +44,7 @@ export const UserProfileComponent = ({ profile, isCurrentUser, onUpdateProfile }
         username: formData.username,
         bio: formData.bio,
         website: formData.website,
-        avatar: formData.avatar
+        avatar_url: formData.avatar
       });
       
       setIsEditing(false);
@@ -62,8 +62,8 @@ export const UserProfileComponent = ({ profile, isCurrentUser, onUpdateProfile }
           {/* Profile Avatar */}
           <div className="relative">
             <Avatar className="h-40 w-40 border-4 border-background shadow-lg">
-              <AvatarImage src={profile.avatar} alt={profile.name} />
-              <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={profile.avatar_url || profile.avatar} alt={profile.name} />
+              <AvatarFallback>{profile.name ? profile.name.charAt(0) : 'U'}</AvatarFallback>
             </Avatar>
             {profile.isGhostMode && (
               <Badge className="absolute bottom-2 right-2 bg-slate-700">Ghost Mode</Badge>
@@ -76,7 +76,7 @@ export const UserProfileComponent = ({ profile, isCurrentUser, onUpdateProfile }
           {/* Profile Info */}
           <div className="flex-1 space-y-4">
             <div>
-              <h1 className="text-3xl font-bold">{profile.name}</h1>
+              <h1 className="text-3xl font-bold">{profile.name || 'Unknown User'}</h1>
               <p className="text-muted-foreground">@{profile.username}</p>
               {profile.role === 'admin' && (
                 <Badge variant="destructive" className="mt-2">Admin</Badge>
@@ -102,7 +102,7 @@ export const UserProfileComponent = ({ profile, isCurrentUser, onUpdateProfile }
               )}
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                <span>Joined May 2023</span>
+                <span>Joined recently</span>
               </div>
             </div>
             
@@ -254,7 +254,14 @@ export const UserProfileComponent = ({ profile, isCurrentUser, onUpdateProfile }
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Changes"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </DialogFooter>
           </form>

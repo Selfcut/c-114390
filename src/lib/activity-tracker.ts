@@ -1,142 +1,63 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type ActivityType = 'view' | 'create' | 'update' | 'delete' | 'like' | 'bookmark' | 'comment' | 'interaction' | 'learned' | 'completed';
-
-// Track user activity
+/**
+ * Track user activity in the application
+ * @param userId The ID of the user performing the activity
+ * @param eventType The type of event (e.g., 'view', 'create', 'update', 'delete')
+ * @param metadata Additional data about the activity
+ */
 export const trackActivity = async (
   userId: string,
-  eventType: ActivityType,
+  eventType: string,
   metadata: Record<string, any> = {}
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('user_activities')
-      .insert({
-        user_id: userId,
-        event_type: eventType,
-        metadata
-      });
-      
-    if (error) throw error;
-    
+    if (!userId) {
+      console.warn('Cannot track activity without a user ID');
+      return false;
+    }
+
+    const { error } = await supabase.from('user_activities').insert({
+      user_id: userId,
+      event_type: eventType,
+      metadata
+    });
+
+    if (error) {
+      console.error('Error tracking activity:', error);
+      return false;
+    }
+
     return true;
-  } catch (error) {
-    console.error("Error tracking activity:", error);
+  } catch (err) {
+    console.error('Exception tracking activity:', err);
     return false;
   }
 };
 
-// Get user activity stats
-export const getUserActivityStats = async (userId: string) => {
+/**
+ * Fetch recent activities for a user
+ * @param userId The ID of the user to fetch activities for
+ * @param limit The maximum number of activities to fetch
+ */
+export const fetchUserActivities = async (userId: string, limit = 10) => {
   try {
     const { data, error } = await supabase
       .from('user_activities')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    
-    // Calculate streak
-    const today = new Date();
-    const dates = data.map(activity => {
-      const date = new Date(activity.created_at);
-      return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-    });
-    
-    const uniqueDates = [...new Set(dates)].sort();
-    
-    // Check if the user was active today
-    const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-    const wasActiveToday = uniqueDates.includes(todayString);
-    
-    // Calculate streak
-    let streak = 0;
-    
-    if (wasActiveToday) {
-      streak = 1;
-      
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      // Check for consecutive days backwards from yesterday
-      for (let i = 1; i < 100; i++) { // Limit to 100 days to prevent infinite loop
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        
-        const checkDateString = `${checkDate.getFullYear()}-${checkDate.getMonth() + 1}-${checkDate.getDate()}`;
-        
-        if (uniqueDates.includes(checkDateString)) {
-          streak++;
-        } else {
-          break;
-        }
-      }
-    } else {
-      // Check if the user was active yesterday
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayString = `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
-      
-      if (uniqueDates.includes(yesterdayString)) {
-        streak = 1;
-        
-        // Check for consecutive days backwards from the day before yesterday
-        for (let i = 2; i < 100; i++) { // Limit to 100 days
-          const checkDate = new Date(today);
-          checkDate.setDate(checkDate.getDate() - i);
-          
-          const checkDateString = `${checkDate.getFullYear()}-${checkDate.getMonth() + 1}-${checkDate.getDate()}`;
-          
-          if (uniqueDates.includes(checkDateString)) {
-            streak++;
-          } else {
-            break;
-          }
-        }
-      }
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching user activities:', error);
+      return [];
     }
-    
-    // Calculate XP - 10 points per activity
-    const xp = data.length * 10;
-    
-    // Calculate level - Every 100 XP is a new level
-    const level = Math.max(1, Math.floor(xp / 100) + 1);
-    
-    return {
-      activityCount: data.length,
-      streak,
-      level,
-      xp,
-      nextLevelXp: level * 100,
-      activityTypes: countActivityTypes(data)
-    };
-  } catch (error) {
-    console.error("Error getting user activity stats:", error);
-    throw error;
-  }
-};
 
-// Calculate activity streak for a user - add the missing export
-export const calculateActivityStreak = async (userId: string): Promise<number> => {
-  try {
-    const stats = await getUserActivityStats(userId);
-    return stats.streak;
-  } catch (error) {
-    console.error("Error calculating activity streak:", error);
-    return 0;
+    return data || [];
+  } catch (err) {
+    console.error('Exception fetching user activities:', err);
+    return [];
   }
-};
-
-// Count activity types
-const countActivityTypes = (activities: any[]) => {
-  const counts: Record<string, number> = {};
-  
-  activities.forEach(activity => {
-    const type = activity.event_type;
-    counts[type] = (counts[type] || 0) + 1;
-  });
-  
-  return counts;
 };

@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUserProfile } from './utils';
+import { fetchUserProfile, ensureUserProfile } from './profiles-service';
 import { UserProfile } from '@/types/user';
 
 interface AuthContextType {
@@ -34,8 +34,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             // Fetch the user profile with a setTimeout to avoid potential deadlocks
             setTimeout(async () => {
-              const profile = await fetchUserProfile(currentSession.user.id, currentSession);
-              setUser(profile);
+              const profile = await fetchUserProfile(currentSession.user.id);
+              
+              if (profile) {
+                setUser(profile);
+              } else {
+                // If profile not found, try to create one
+                const newProfile = await ensureUserProfile(currentSession.user.id, {
+                  email: currentSession.user.email
+                });
+                setUser(newProfile);
+              }
+              
               setIsLoading(false);
             }, 0);
           } catch (error) {
@@ -57,8 +67,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (data.session?.user) {
           // Fetch the user profile
-          const profile = await fetchUserProfile(data.session.user.id, data.session);
-          setUser(profile);
+          const profile = await fetchUserProfile(data.session.user.id);
+          
+          if (profile) {
+            setUser(profile);
+          } else {
+            // If profile not found, try to create one
+            const newProfile = await ensureUserProfile(data.session.user.id, {
+              email: data.session.user.email
+            });
+            setUser(newProfile);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);

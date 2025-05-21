@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { ensureUserProfile } from '@/lib/auth/profiles-service';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -94,7 +96,17 @@ const Auth = () => {
         if (result?.error) {
           console.error("Sign in error:", result.error);
           setError(result.error.message || 'Failed to sign in.');
+          setLoading(false);
           return;
+        }
+        
+        // Ensure user profile exists after login
+        if (result.data?.user) {
+          await ensureUserProfile(result.data.user.id, {
+            email: email,
+            name: result.data.user?.user_metadata?.name,
+            username: result.data.user?.user_metadata?.username
+          });
         }
         
         toast({
@@ -108,6 +120,7 @@ const Auth = () => {
         if (result?.error) {
           console.error("Sign up error:", result.error);
           setError(result.error.message || 'Failed to sign up.');
+          setLoading(false);
           return;
         }
         
@@ -119,7 +132,6 @@ const Auth = () => {
     } catch (err: any) {
       console.error("Auth error:", err);
       setError(err.message || 'An unexpected error occurred.');
-    } finally {
       setLoading(false);
     }
   };

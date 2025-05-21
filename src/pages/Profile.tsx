@@ -5,11 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { UserProfileComponent } from "../components/profile/UserProfileComponent";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { UserProfile as UserProfileType, UserStatus, UserRole } from "../types/user";
 import { useToast } from "@/hooks/use-toast";
 import { trackActivity } from "@/lib/activity-tracker";
+import { fetchUserProfile, ensureUserProfile } from "@/lib/auth/profiles-service";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
 const Profile = () => {
   const { username } = useParams();
@@ -21,68 +24,74 @@ const Profile = () => {
   const navigate = useNavigate();
 
   // Fetch profile data from Supabase
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // If username is provided, fetch that profile, otherwise fetch current user's profile
-        const query = supabase
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      let userData = null;
+      
+      // If username is provided, fetch that profile, otherwise fetch current user's profile
+      if (username) {
+        // Get user by username
+        const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('*');
-        
-        if (username) {
-          query.eq('username', username);
-        } else if (currentUser?.id) {
-          query.eq('id', currentUser.id);
-        } else {
-          throw new Error("No user ID or username available");
-        }
-        
-        const { data, error: fetchError } = await query.single();
+          .select('*')
+          .eq('username', username)
+          .maybeSingle();
         
         if (fetchError) throw fetchError;
         if (!data) throw new Error("Profile not found");
         
-        // Convert Supabase profile to our UserProfile type
-        const userProfile: UserProfileType = {
-          id: data.id,
-          name: data.name || "",
-          username: data.username,
-          email: currentUser?.email || "",
-          avatar: data.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${data.username}`,
-          avatar_url: data.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${data.username}`,
-          bio: data.bio || "",
-          website: data.website || "",
-          status: (data.status as UserStatus) || "offline",
-          isGhostMode: data.is_ghost_mode || false,
-          role: (data.role as UserRole) || "user",
-          isAdmin: data.role === "admin",
-          notificationSettings: {
-            desktopNotifications: true,
-            soundNotifications: true,
-            emailNotifications: true
-          }
-        };
-        
-        setProfileData(userProfile);
-        
-        // Track profile view if viewing someone else's profile
-        if (currentUser && username && username !== currentUser.username) {
-          await trackActivity(currentUser.id, 'view', { 
-            section: 'profile',
-            profile: username
-          });
-        }
-      } catch (err: any) {
-        console.error("Error fetching profile:", err);
-        setError(err.message);
-      } finally {
+        userData = data;
+      } else if (currentUser?.id) {
+        // For current user, we can use the profile from auth context
+        setProfileData(currentUser);
         setIsLoading(false);
+        return;
+      } else {
+        throw new Error("No user ID or username available");
       }
-    };
-    
+      
+      // Convert Supabase profile to our UserProfile type
+      const userProfile: UserProfileType = {
+        id: userData.id,
+        name: userData.name || "",
+        username: userData.username,
+        email: currentUser?.email || "",
+        avatar: userData.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${userData.username}`,
+        avatar_url: userData.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${userData.username}`,
+        bio: userData.bio || "",
+        website: userData.website || "",
+        status: (userData.status as UserStatus) || "offline",
+        isGhostMode: userData.is_ghost_mode || false,
+        role: (userData.role as UserRole) || "user",
+        isAdmin: userData.role === "admin",
+        notificationSettings: {
+          desktopNotifications: true,
+          soundNotifications: true,
+          emailNotifications: true
+        }
+      };
+      
+      setProfileData(userProfile);
+      
+      // Track profile view if viewing someone else's profile
+      if (currentUser && username && username !== currentUser.username) {
+        await trackActivity(currentUser.id, 'view', { 
+          section: 'profile',
+          profile: username
+        });
+      }
+    } catch (err: any) {
+      console.error("Error fetching profile:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     if (currentUser || username) {
       fetchProfile();
     } else {
@@ -155,6 +164,42 @@ const Profile = () => {
     }
   };
 
+  // Handle creation of missing profile
+  const handleCreateProfile = async () => {
+    if (!currentUser?.id) {
+      navigate('/auth');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const profile = await ensureUserProfile(currentUser.id, {
+        email: currentUser.email,
+        name: currentUser.name,
+        username: currentUser.username
+      });
+      
+      if (profile) {
+        setProfileData(profile);
+        toast({
+          title: "Profile created",
+          description: "Your profile has been successfully created.",
+        });
+      } else {
+        throw new Error("Failed to create profile");
+      }
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: "Failed to create your profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <PageLayout>
@@ -191,11 +236,27 @@ const Profile = () => {
     return (
       <PageLayout>
         <div className="container mx-auto py-8">
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
             <AlertDescription>
-              Error loading profile: {error}
+              {error}
             </AlertDescription>
           </Alert>
+          
+          {currentUser && !profileData && (
+            <div className="text-center p-8">
+              <h2 className="text-2xl font-bold mb-4">Create Your Profile</h2>
+              <p className="mb-6">Your profile information is missing. Would you like to create one now?</p>
+              <Button onClick={handleCreateProfile} className="mr-2">
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Create Profile
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/')}>
+                Go to Home
+              </Button>
+            </div>
+          )}
         </div>
       </PageLayout>
     );
