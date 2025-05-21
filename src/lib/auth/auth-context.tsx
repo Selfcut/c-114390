@@ -1,9 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchUserProfile, updateUserProfile as updateProfile, signIn, signOut, signUp } from './auth-utils';
-import { UserProfile, UserStatus, UserRole, AuthContextType } from './auth-types';
+import { UserProfile, UserStatus, UserRole } from '@/types/user';
+import { AuthContextType } from './auth-types';
 import { useToast } from '@/hooks/use-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -114,15 +114,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Welcome back!"
       });
       
-      return { data };
+      return { data, error: null };
     } catch (error) {
       console.error("Error signing in:", error);
+      const errorObj = error instanceof Error ? error : new Error("An unexpected error occurred");
       toast({
         title: "Sign in failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: errorObj.message,
         variant: "destructive"
       });
-      return { error };
+      return { error: errorObj };
     } finally {
       setIsLoading(false);
     }
@@ -150,15 +151,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Please check your email to verify your account."
       });
       
-      return { data };
+      return { data, error: null };
     } catch (error) {
       console.error("Error signing up:", error);
+      const errorObj = error instanceof Error ? error : new Error("An unexpected error occurred");
       toast({
         title: "Sign up failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: errorObj.message,
         variant: "destructive"
       });
-      return { error };
+      return { error: errorObj };
     } finally {
       setIsLoading(false);
     }

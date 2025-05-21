@@ -167,11 +167,11 @@ export const signIn = async (email: string, password: string) => {
       password
     });
 
-    if (error) return { error };
+    if (error) return { error: error as Error };
     return { data, error: null };
   } catch (error) {
     console.error('Sign in exception:', error);
-    return { error };
+    return { error: error as Error };
   }
 };
 
@@ -189,11 +189,11 @@ export const signUp = async (email: string, password: string, username: string, 
       }
     });
 
-    if (error) return { error };
+    if (error) return { error: error as Error };
     return { data, error: null };
   } catch (error) {
     console.error('Sign up exception:', error);
-    return { error };
+    return { error: error as Error };
   }
 };
 

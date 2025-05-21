@@ -1,6 +1,8 @@
 
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile, UserStatus } from '@/types/user';
+import { UserProfile, UserStatus, UserRole } from '@/types/user';
+
+export type { UserProfile, UserStatus, UserRole };
 
 export interface AuthState {
   user: UserProfile | null;

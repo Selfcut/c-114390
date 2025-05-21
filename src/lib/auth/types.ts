@@ -1,5 +1,7 @@
-import { User } from '@supabase/supabase-js';
+
 import { UserProfile, UserStatus, UserRole } from '@/types/user';
+
+export { UserProfile, UserStatus, UserRole };
 
 export interface AuthState {
   user: UserProfile | null;
@@ -8,8 +10,8 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; data?: any }>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null; data?: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;
