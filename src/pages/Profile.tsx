@@ -124,12 +124,13 @@ const Profile = () => {
       }
       
       // Call the updateUserProfile function from the auth context
-      // and properly handle the result
       const result = await updateUserProfile(updates);
       
-      // Type-safe error checking
-      if (result && typeof result === 'object' && 'error' in result && result.error) {
-        throw result.error;
+      // Check if the result contains an error
+      if (result && typeof result === 'object' && 'error' in result) {
+        if (result.error) {
+          throw result.error;
+        }
       }
       
       // Update local state
