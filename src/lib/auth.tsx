@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { AuthContextType, AuthError, UserProfile, UserStatus } from "./auth/auth-types";
+import { AuthContextType, AuthError } from "./auth/auth-types";
+import { UserProfile, UserStatus } from "./auth/auth-types";
 import { fetchUserProfile, updateUserProfile } from "./auth/utils";
 import { signIn, signOut, signUp } from "./auth/utils";
 
@@ -14,8 +16,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
 
@@ -45,23 +45,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(null);
                 setIsAuthenticated(false);
               }
-              setLoading(false);
               setIsLoading(false);
             })
             .catch(err => {
               console.error("Error fetching user profile:", err);
               setUser(null);
               setIsAuthenticated(false);
-              setLoading(false);
               setIsLoading(false);
-              setError(err instanceof Error ? err : new Error(String(err)));
             });
         }, 0);
       } else {
         console.log("No user in session, setting user to null");
         setUser(null);
         setIsAuthenticated(false);
-        setLoading(false);
         setIsLoading(false);
       }
     });
@@ -89,15 +85,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Error fetching initial profile:", err);
             setUser(null);
             setIsAuthenticated(false);
-            setError(err instanceof Error ? err : new Error(String(err)));
           })
           .finally(() => {
-            setLoading(false);
             setIsLoading(false);
           });
       } else {
         console.log("No initial session");
-        setLoading(false);
         setIsLoading(false);
       }
     });
@@ -109,7 +102,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSignIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
       setIsLoading(true);
       console.log("Signing in with email:", email);
       const { error } = await signIn(email, password);
@@ -130,14 +122,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const message = error instanceof Error ? error.message : 'An unexpected error occurred';
       return { error: { message } };
     } finally {
-      setLoading(false);
       setIsLoading(false);
     }
   };
 
   const handleSignUp = async (email: string, password: string, username: string, name?: string) => {
     try {
-      setLoading(true);
       setIsLoading(true);
       console.log("Signing up with email:", email);
       const { error } = await signUp(email, password, username, name);
@@ -158,14 +148,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const message = error instanceof Error ? error.message : 'An unexpected error occurred';
       return { error: { message } };
     } finally {
-      setLoading(false);
       setIsLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      setLoading(true);
       setIsLoading(true);
       console.log("Signing out");
       await signOut();
@@ -185,9 +173,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message,
         variant: "destructive"
       });
-      setError(error instanceof Error ? error : new Error(String(error)));
     } finally {
-      setLoading(false);
       setIsLoading(false);
     }
   };
@@ -198,7 +184,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     try {
-      setLoading(true);
       setIsLoading(true);
       
       const result = await updateUserProfile(user.id, updates);
@@ -229,7 +214,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       return { error: { message } };
     } finally {
-      setLoading(false);
       setIsLoading(false);
     }
   };
@@ -291,7 +275,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const deleteAccount = async (): Promise<{ error: AuthError | null }> => {
     try {
-      setLoading(true);
       setIsLoading(true);
       
       if (!user) {
@@ -325,7 +308,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       return { error: { message } };
     } finally {
-      setLoading(false);
       setIsLoading(false);
     }
   };

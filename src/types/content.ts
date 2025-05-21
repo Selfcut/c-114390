@@ -86,23 +86,5 @@ export interface WikiArticle extends ContentBase {
   last_updated?: string;
 }
 
-// Remove this unnecessary interface since we've fixed the Quote interface
-// export interface QuoteBase {
-//   id: string;
-//   title: string;
-//   likes: number;
-//   views?: number;
-//   comments: number;
-//   user_id: string;
-//   created_at: string;
-//   updated_at?: string;
-//   text: string;
-//   author: string;
-//   source?: string;
-//   category: string;
-//   tags: string[];
-//   bookmarks: number;
-// }
-
 // Import UserProfile from user.ts instead of duplicating it here
 import { UserProfile } from '@/types/user';

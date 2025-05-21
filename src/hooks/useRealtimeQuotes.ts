@@ -90,7 +90,7 @@ export const useRealtimeQuotes = (): UseRealtimeQuotesResult => {
         .from('quotes')
         .select(`
           *,
-          user:user_id (id, name, username, avatar_url, status)
+          user:profiles(id, name, username, avatar_url, status)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
