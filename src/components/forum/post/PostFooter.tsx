@@ -12,10 +12,15 @@ interface PostFooterProps {
     views: number;
     comments: number;
   };
-  isAuthenticated?: boolean; // Added isAuthenticated prop
+  isAuthenticated?: boolean;
+  onUpvote?: () => Promise<void>; // Added onUpvote prop
 }
 
-export const PostFooter: React.FC<PostFooterProps> = ({ post, isAuthenticated = false }) => {
+export const PostFooter: React.FC<PostFooterProps> = ({ 
+  post, 
+  isAuthenticated = false,
+  onUpvote 
+}) => {
   const { 
     isLiked, 
     isBookmarked, 
@@ -30,6 +35,15 @@ export const PostFooter: React.FC<PostFooterProps> = ({ post, isAuthenticated = 
   });
   
   const { toast } = useToast();
+
+  // Handle like with optional custom onUpvote handler
+  const handleLike = async () => {
+    if (onUpvote) {
+      await onUpvote();
+    } else {
+      await toggleLike();
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -67,7 +81,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({ post, isAuthenticated = 
           variant="ghost"
           size="sm"
           className={`flex items-center gap-2 ${isLiked ? 'text-primary' : ''}`}
-          onClick={toggleLike}
+          onClick={handleLike}
           disabled={isSubmitting || !isAuthenticated}
           aria-label={isLiked ? "Unlike" : "Like"}
         >
