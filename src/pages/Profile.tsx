@@ -124,11 +124,11 @@ const Profile = () => {
       }
       
       // Call the updateUserProfile function from the auth context
-      // and handle the returned result correctly
-      const result = await updateUserProfile(updates);
+      // and properly handle the result
+      const updateResult = await updateUserProfile(updates);
       
-      if (result && result.error) {
-        throw result.error;
+      if (updateResult.error) {
+        throw updateResult.error;
       }
       
       // Update local state
