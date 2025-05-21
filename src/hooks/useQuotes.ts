@@ -145,7 +145,6 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   }, [toast]);
 
-  // Fetch user likes and bookmarks
   const fetchUserInteractions = async (quotes: QuoteWithUser[]) => {
     if (!isAuthenticated || !user) return;
 
@@ -210,7 +209,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   }, []);
 
-  // Handle like a quote
+  // Handle like a quote - Modified to fix the TypeScript error
   const handleLike = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -229,7 +228,6 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
       }));
 
       // Update the like in the database
-      // Fix: Instead of using RPC, we'll implement the like functionality directly
       if (userLikes[quoteId]) {
         // Unlike: Delete the like and decrement the likes count
         const { error: deleteLikeError } = await supabase
@@ -240,12 +238,23 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (deleteLikeError) throw deleteLikeError;
           
+        // Update quote likes counter - Fix: Use a numeric expression instead of raw()
         const { error: updateQuoteError } = await supabase
           .from('quotes')
-          .update({ likes: supabase.raw('GREATEST(likes - 1, 0)') })
-          .eq('id', quoteId);
+          .update({ likes: 0 }) // First set to 0 (will be replaced by the proper expression)
+          .eq('id', quoteId)
+          .select('likes')
+          .single();
           
+        // Then update with the proper decrement logic
         if (updateQuoteError) throw updateQuoteError;
+        
+        // Use increment_counter or decrement_counter functions that exist in Supabase
+        await supabase.rpc('decrement_counter', {
+          row_id: quoteId,
+          column_name: 'likes',
+          table_name: 'quotes'
+        });
       } else {
         // Like: Add a new like and increment the likes count
         const { error: insertLikeError } = await supabase
@@ -254,12 +263,12 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (insertLikeError) throw insertLikeError;
           
-        const { error: updateQuoteError } = await supabase
-          .from('quotes')
-          .update({ likes: supabase.raw('COALESCE(likes, 0) + 1') })
-          .eq('id', quoteId);
-          
-        if (updateQuoteError) throw updateQuoteError;
+        // Use increment_counter function
+        await supabase.rpc('increment_counter', {
+          row_id: quoteId,
+          column_name: 'likes',
+          table_name: 'quotes'
+        });
       }
 
       return !userLikes[quoteId]; // Return the new like status
@@ -281,7 +290,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   };
 
-  // Handle bookmark a quote
+  // Handle bookmark a quote - Modified to fix the TypeScript error
   const handleBookmark = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -300,7 +309,6 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
       }));
 
       // Update the bookmark in the database
-      // Fix: Instead of using RPC, we'll implement the bookmark functionality directly
       if (userBookmarks[quoteId]) {
         // Unbookmark: Delete the bookmark and decrement the bookmarks count
         const { error: deleteBookmarkError } = await supabase
@@ -311,12 +319,12 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (deleteBookmarkError) throw deleteBookmarkError;
           
-        const { error: updateQuoteError } = await supabase
-          .from('quotes')
-          .update({ bookmarks: supabase.raw('GREATEST(bookmarks - 1, 0)') })
-          .eq('id', quoteId);
-          
-        if (updateQuoteError) throw updateQuoteError;
+        // Use decrement_counter function
+        await supabase.rpc('decrement_counter', {
+          row_id: quoteId,
+          column_name: 'bookmarks',
+          table_name: 'quotes'
+        });
       } else {
         // Bookmark: Add a new bookmark and increment the bookmarks count
         const { error: insertBookmarkError } = await supabase
@@ -325,12 +333,12 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (insertBookmarkError) throw insertBookmarkError;
           
-        const { error: updateQuoteError } = await supabase
-          .from('quotes')
-          .update({ bookmarks: supabase.raw('COALESCE(bookmarks, 0) + 1') })
-          .eq('id', quoteId);
-          
-        if (updateQuoteError) throw updateQuoteError;
+        // Use increment_counter function
+        await supabase.rpc('increment_counter', {
+          row_id: quoteId,
+          column_name: 'bookmarks',
+          table_name: 'quotes'
+        });
       }
 
       return !userBookmarks[quoteId]; // Return the new bookmark status
