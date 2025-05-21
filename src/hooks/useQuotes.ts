@@ -209,7 +209,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   }, []);
 
-  // Handle like a quote - Modified to fix the TypeScript error
+  // Handle like a quote - Fixed to use the RPC functions correctly
   const handleLike = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -237,19 +237,8 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           .eq('user_id', user.id);
           
         if (deleteLikeError) throw deleteLikeError;
-          
-        // Update quote likes counter - Fix: Use a numeric expression instead of raw()
-        const { error: updateQuoteError } = await supabase
-          .from('quotes')
-          .update({ likes: 0 }) // First set to 0 (will be replaced by the proper expression)
-          .eq('id', quoteId)
-          .select('likes')
-          .single();
-          
-        // Then update with the proper decrement logic
-        if (updateQuoteError) throw updateQuoteError;
         
-        // Use increment_counter or decrement_counter functions that exist in Supabase
+        // Use decrement_counter function
         await supabase.rpc('decrement_counter', {
           row_id: quoteId,
           column_name: 'likes',
@@ -262,7 +251,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           .insert({ quote_id: quoteId, user_id: user.id });
           
         if (insertLikeError) throw insertLikeError;
-          
+        
         // Use increment_counter function
         await supabase.rpc('increment_counter', {
           row_id: quoteId,
@@ -290,7 +279,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   };
 
-  // Handle bookmark a quote - Modified to fix the TypeScript error
+  // Handle bookmark a quote - Fixed to use the RPC functions correctly
   const handleBookmark = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -318,7 +307,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           .eq('user_id', user.id);
           
         if (deleteBookmarkError) throw deleteBookmarkError;
-          
+        
         // Use decrement_counter function
         await supabase.rpc('decrement_counter', {
           row_id: quoteId,
@@ -332,7 +321,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           .insert({ quote_id: quoteId, user_id: user.id });
           
         if (insertBookmarkError) throw insertBookmarkError;
-          
+        
         // Use increment_counter function
         await supabase.rpc('increment_counter', {
           row_id: quoteId,
@@ -392,9 +381,9 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
         .insert({
           text: quoteData.text,
           author: quoteData.author,
-          source: quoteData.source,
+          source: quoteData.source || null,
           category: quoteData.category,
-          tags: quoteData.tags,
+          tags: quoteData.tags || [],
           user_id: user.id
         })
         .select()
