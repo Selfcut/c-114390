@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +8,7 @@ export const useForumActions = (postId?: string) => {
   const { toast } = useToast();
 
   const handleUpvote = async (user: any, discussion: any) => {
-    if (!user || !postId) return;
+    if (!user || !postId) return undefined;
 
     setIsSubmitting(true);
     try {
@@ -22,7 +23,7 @@ export const useForumActions = (postId?: string) => {
 
       if (checkError) {
         console.error('Error checking like:', checkError);
-        return;
+        return undefined;
       }
 
       if (existingLike) {
@@ -74,8 +75,8 @@ export const useForumActions = (postId?: string) => {
         variant: 'destructive'
       });
       
-      // Return failed operation
-      return false;
+      // Return undefined for failed operation
+      return undefined;
     } finally {
       setIsSubmitting(false);
     }

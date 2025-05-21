@@ -1,3 +1,4 @@
+
 import { MessageSquare, ThumbsUp, Tag, Clock, Eye } from "lucide-react";
 import { formatTimeAgo, DiscussionTopic } from "../lib/discussions-utils";
 import { Badge } from "@/components/ui/badge";
@@ -90,10 +91,12 @@ export const DiscussionTopicCard = ({ discussion, onClick }: DiscussionTopicCard
     setIsUpvoting(true);
 
     try {
-      const success = await handleUpvote(user, { id, upvotes: upvoteCount, user_id: authorId });
+      // Call handleUpvote and get the result
+      const result = await handleUpvote(user, { id, upvotes: upvoteCount, user_id: authorId });
       
-      // Toggle upvote state and count if operation was successful
-      if (success !== false) {
+      // Only toggle the upvote state if the operation was successful
+      // The useForumActions hook returns true for success, undefined for failure
+      if (result !== undefined) {
         // Toggle upvote state and count
         if (hasUpvoted) {
           setUpvoteCount(prev => Math.max(prev - 1, 0));
