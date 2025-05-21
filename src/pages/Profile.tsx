@@ -92,7 +92,7 @@ const Profile = () => {
   }, [username, currentUser, navigate]);
 
   // Handle profile update
-  const handleUpdateProfile = async (updates: Partial<UserProfileType>) => {
+  const handleUpdateProfile = async (updates: Partial<UserProfileType>): Promise<void> => {
     try {
       if (!currentUser?.id) {
         toast({
@@ -127,8 +127,8 @@ const Profile = () => {
       // and properly handle the result
       const result = await updateUserProfile(updates);
       
-      // Check if there's an error using the correct type
-      if (result && result.error) {
+      // Type-safe error checking
+      if (result && typeof result === 'object' && 'error' in result && result.error) {
         throw result.error;
       }
       
