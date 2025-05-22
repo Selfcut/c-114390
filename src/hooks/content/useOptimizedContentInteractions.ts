@@ -5,6 +5,7 @@ import { checkUserContentInteractions, incrementCounter, decrementCounter } from
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Define key types clearly to avoid deep type instantiations
 interface UseOptimizedContentInteractionsProps {
   userId: string | null;
   contentType: string;
@@ -17,12 +18,12 @@ interface ContentInteractionState {
   isBookmarkLoading: boolean;
 }
 
-// Define mutation variables type explicitly to avoid deep instantiation
+// Simple mutation variable type
 interface MutationVariables {
   contentId: string;
 }
 
-// Define mutation return type explicitly
+// Simple mutation return type
 interface MutationReturn {
   contentId: string;
   isLiked?: boolean;
@@ -58,7 +59,7 @@ export const useOptimizedContentInteractions = ({
     }
   }, [userId, contentType]);
 
-  // Handle like interaction with optimistic updates
+  // Use a simpler approach to handle like mutations
   const likeMutation = useMutation<MutationReturn, Error, MutationVariables>({
     mutationFn: async (variables) => {
       const { contentId } = variables;
@@ -179,7 +180,7 @@ export const useOptimizedContentInteractions = ({
     }
   });
 
-  // Handle bookmark interaction with optimistic updates
+  // Similarly simplified approach for bookmark mutations
   const bookmarkMutation = useMutation<MutationReturn, Error, MutationVariables>({
     mutationFn: async (variables) => {
       const { contentId } = variables;
