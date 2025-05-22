@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PageLayout } from '@/components/layouts/PageLayout';
-import { LoadingScreen } from '@/components/routing/LoadingScreen';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { AuthCallback } from './AuthCallback';
 
 // Import pages directly for better code clarity
