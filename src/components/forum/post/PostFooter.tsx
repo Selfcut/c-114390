@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { useUserContentInteractions } from '@/hooks/useUserContentInteractions';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useContentInteraction } from '@/contexts/UserInteractionContext';
+import { useEffect } from 'react';
 
 interface PostFooterProps {
   post: {
@@ -13,7 +14,7 @@ interface PostFooterProps {
     comments: number;
   };
   isAuthenticated?: boolean;
-  onUpvote?: () => Promise<void>; // Added onUpvote prop
+  onUpvote?: () => Promise<void>;
 }
 
 export const PostFooter: React.FC<PostFooterProps> = ({ 
@@ -21,20 +22,23 @@ export const PostFooter: React.FC<PostFooterProps> = ({
   isAuthenticated = false,
   onUpvote 
 }) => {
-  const { 
-    isLiked, 
-    isBookmarked, 
-    likeCount, 
-    isSubmitting, 
-    toggleLike, 
-    toggleBookmark 
-  } = useUserContentInteractions({
-    contentId: post.id,
-    contentType: 'forum',
-    initialLikeCount: post.upvotes
-  });
-  
   const { toast } = useToast();
+  const {
+    isLiked,
+    isBookmarked,
+    isLikeLoading,
+    isBookmarkLoading,
+    toggleLike,
+    toggleBookmark,
+    checkInteraction
+  } = useContentInteraction(post.id, 'forum');
+
+  // Check interaction status on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      checkInteraction();
+    }
+  }, [isAuthenticated, checkInteraction]);
 
   // Handle like with optional custom onUpvote handler
   const handleLike = async () => {
@@ -91,11 +95,11 @@ export const PostFooter: React.FC<PostFooterProps> = ({
           size="sm"
           className={`flex items-center gap-2 ${isLiked ? 'text-primary' : ''}`}
           onClick={handleLike}
-          disabled={isSubmitting || !isAuthenticated}
+          disabled={isLikeLoading || !isAuthenticated}
           aria-label={isLiked ? "Unlike" : "Like"}
         >
           <ThumbsUp size={16} className={isLiked ? 'fill-primary' : ''} />
-          <span>{likeCount}</span>
+          <span>{post.upvotes}</span>
         </Button>
         
         <Button
@@ -103,7 +107,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
           size="sm"
           className={`flex items-center gap-2 ${isBookmarked ? 'text-primary' : ''}`}
           onClick={toggleBookmark}
-          disabled={isSubmitting || !isAuthenticated}
+          disabled={isBookmarkLoading || !isAuthenticated}
           aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
         >
           <Bookmark size={16} className={isBookmarked ? 'fill-primary' : ''} />

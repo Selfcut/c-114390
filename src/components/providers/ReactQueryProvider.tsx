@@ -1,40 +1,33 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ReactNode } from 'react';
-
-// Create a client with optimized settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60, // 1 minute
-      gcTime: 1000 * 60 * 10, // 10 minutes (replacing cacheTime)
-      refetchOnWindowFocus: process.env.NODE_ENV === 'production',
-      retry: (failureCount, error) => {
-        // Only retry network errors, not 400/500 errors
-        if ((error as any)?.status >= 400) return false;
-        return failureCount < 2;
-      },
-      refetchOnMount: 'always',
-    },
-    mutations: {
-      retry: 1,
-      onError: (err) => {
-        console.error('Mutation error:', err);
-      },
-    },
-  },
-});
+import { useState, ReactNode } from 'react';
 
 interface ReactQueryProviderProps {
   children: ReactNode;
 }
 
 export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 10, // 10 minutes
+        retry: 1,
+        refetchOnWindowFocus: import.meta.env.PROD,
+        refetchOnReconnect: true,
+      },
+      mutations: {
+        retry: 1,
+        networkMode: 'always',
+      },
+    },
+  }));
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }

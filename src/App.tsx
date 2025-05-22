@@ -8,6 +8,7 @@ import { ReactQueryProvider } from './components/providers/ReactQueryProvider';
 import { AppRoutes } from "./components/routing/AppRoutes";
 import { HelmetProvider } from 'react-helmet-async';
 import { ScrollToTop } from "./components/ui/ScrollToTop";
+import { UserInteractionProvider } from "./contexts/UserInteractionContext";
 import { useEffect } from "react";
 import "./styles/dark-mode.css";
 import "./styles/light-mode.css";
@@ -25,11 +26,13 @@ function App() {
         <ErrorBoundary>
           <ReactQueryProvider>
             <AuthProvider>
-              <Router>
-                <ScrollToTop />
-                <AppRoutes />
-                <Toaster />
-              </Router>
+              <UserInteractionProvider>
+                <Router>
+                  <ScrollToTop />
+                  <AppRoutes />
+                  <Toaster />
+                </Router>
+              </UserInteractionProvider>
             </AuthProvider>
           </ReactQueryProvider>
         </ErrorBoundary>
