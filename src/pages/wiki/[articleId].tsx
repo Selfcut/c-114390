@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -15,6 +14,7 @@ import { useAuth } from "@/lib/auth";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EditWikiArticleDialog } from "@/components/wiki/EditWikiArticleDialog";
+import { useWikiContentInteractions } from "@/hooks/use-wiki-content-interactions";
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
@@ -25,6 +25,16 @@ const WikiArticlePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // Use the new wiki interactions hook
+  const { 
+    likedItems, 
+    bookmarkedItems, 
+    handleLike, 
+    handleBookmark,
+    checkInteractions,
+    getLoadingState
+  } = useWikiContentInteractions(user?.id || null);
 
   // Fetch article data
   useEffect(() => {
@@ -40,6 +50,9 @@ const WikiArticlePage = () => {
         
         if (article) {
           setArticle(article);
+          if (user?.id) {
+            checkInteractions(article.id);
+          }
         } else {
           setError("Article not found");
         }
@@ -57,7 +70,7 @@ const WikiArticlePage = () => {
     };
     
     fetchArticle();
-  }, [articleId, toast]);
+  }, [articleId, toast, user?.id, checkInteractions]);
 
   const handleBack = () => {
     navigate(-1);
@@ -70,6 +83,20 @@ const WikiArticlePage = () => {
       title: "Article Updated",
       description: "The article has been updated successfully",
     });
+  };
+  
+  // Helper to handle like button click
+  const onLikeClick = () => {
+    if (article) {
+      handleLike(article.id);
+    }
+  };
+  
+  // Helper to handle bookmark button click
+  const onBookmarkClick = () => {
+    if (article) {
+      handleBookmark(article.id);
+    }
   };
 
   // Loading state
@@ -142,12 +169,12 @@ const WikiArticlePage = () => {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    {getCategoryIcon(article.category)}
+                    {getCategoryIcon(article?.category || '')}
                   </div>
-                  <span className="text-sm text-muted-foreground capitalize">{article.category}</span>
+                  <span className="text-sm text-muted-foreground capitalize">{article?.category}</span>
                 </div>
-                <CardTitle className="text-3xl mb-2">{article.title}</CardTitle>
-                <p className="text-muted-foreground">{article.description}</p>
+                <CardTitle className="text-3xl mb-2">{article?.title}</CardTitle>
+                <p className="text-muted-foreground">{article?.description}</p>
               </div>
               
               {user && (
@@ -168,44 +195,66 @@ const WikiArticlePage = () => {
             <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <UserCircle size={16} />
-                <span>Author: {article.author_name || 'Unknown'}</span>
+                <span>Author: {article?.author_name || 'Unknown'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
-                <span>Last updated: {formatDate(article.last_updated)}</span>
+                <span>Last updated: {formatDate(article?.last_updated || '')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Eye size={16} />
-                <span>{article.views} views</span>
+                <span>{article?.views} views</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <UserCircle size={16} />
-                <span>{article.contributors} contributors</span>
+                <span>{article?.contributors} contributors</span>
               </div>
             </div>
             
             <div className="prose prose-stone dark:prose-invert max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {article.content || ''}
+                {article?.content || ''}
               </ReactMarkdown>
             </div>
             
             <div className="mt-12 pt-6 border-t flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarFallback>{article.author_name?.[0] || 'U'}</AvatarFallback>
+                  <AvatarFallback>{article?.author_name?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{article.author_name || 'Unknown'}</p>
+                  <p className="font-medium">{article?.author_name || 'Unknown'}</p>
                   <p className="text-xs text-muted-foreground">Contributor</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-                  <Heart size={14} />
-                  <span>Like</span>
-                </Button>
+                {article && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onLikeClick} 
+                      disabled={!user || getLoadingState(article.id).isLikeLoading}
+                      className={`flex items-center gap-1.5 ${likedItems[article.id] ? 'text-primary' : ''}`}
+                    >
+                      <Heart size={14} className={likedItems[article.id] ? 'fill-primary' : ''} />
+                      <span>Like</span>
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onBookmarkClick}
+                      disabled={!user || getLoadingState(article.id).isBookmarkLoading}
+                      className={`flex items-center gap-1.5 ${bookmarkedItems[article.id] ? 'text-primary' : ''}`}
+                    >
+                      <Bookmark size={14} className={bookmarkedItems[article.id] ? 'fill-primary' : ''} />
+                      <span>Bookmark</span>
+                    </Button>
+                  </>
+                )}
+                
                 <Button variant="outline" size="sm" className="flex items-center gap-1.5">
                   <MessagesSquare size={14} />
                   <span>Discuss</span>
