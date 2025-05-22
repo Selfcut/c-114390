@@ -1,5 +1,13 @@
+
 // Import supabase client
 import { supabase } from '@/integrations/supabase/client';
+
+// Initialize necessary Supabase utilities
+export const initializeSupabaseUtils = async () => {
+  // This function can be expanded in the future
+  console.log('Supabase utilities initialized');
+  return true;
+};
 
 // Batch operations for optimized data fetching
 export const batchOperations = async (operations: Array<() => Promise<any>>) => {

@@ -1,6 +1,5 @@
 
 import { supabase } from "./client";
-import { initializeSupabaseUtils } from "@/lib/utils/supabase-utils";
 
 export const initializeSupabase = async () => {
   try {
@@ -26,9 +25,7 @@ export const initializeSupabase = async () => {
       })
       .subscribe();
     
-    // Initialize any required RPC functions or utilities
-    await initializeSupabaseUtils();
-    
+    // Initialize complete
     console.log("Supabase initialization complete");
   } catch (error) {
     console.error("Error initializing Supabase:", error);

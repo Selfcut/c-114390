@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,8 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
   const [commentCount, setCommentCount] = useState(comments);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: authUser } = useAuth();
+  const userId = authUser?.id;
   
   // Check if user has liked or bookmarked this quote
   useEffect(() => {
@@ -71,20 +71,20 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
     
     const checkInteractions = async () => {
       if (!isLikeChecked) {
-        const liked = await checkUserLikedQuote(id);
+        const liked = await checkUserLikedQuote(id, userId);
         setIsLiked(liked);
         setIsLikeChecked(true);
       }
       
       if (!isBookmarkChecked) {
-        const bookmarked = await checkUserBookmarkedQuote(id);
+        const bookmarked = await checkUserBookmarkedQuote(id, userId);
         setIsBookmarked(bookmarked);
         setIsBookmarkChecked(true);
       }
     };
     
     checkInteractions();
-  }, [id, isAuthenticated, isLikeChecked, isBookmarkChecked]);
+  }, [id, isAuthenticated, isLikeChecked, isBookmarkChecked, userId]);
 
   // Format time ago
   const formatTimeAgo = (date: Date) => {
@@ -146,9 +146,6 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       return;
     }
     
-    const { data } = await supabase.auth.getSession();
-    const userId = data?.session?.user?.id;
-    
     if (!userId) {
       toast({
         title: "Authentication error",
@@ -184,9 +181,6 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       });
       return;
     }
-    
-    const { data } = await supabase.auth.getSession();
-    const userId = data?.session?.user?.id;
     
     if (!userId) {
       toast({

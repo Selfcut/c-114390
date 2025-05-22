@@ -9,17 +9,14 @@ import { AppRoutes } from "./components/routing/AppRoutes";
 import { HelmetProvider } from 'react-helmet-async';
 import { ScrollToTop } from "./components/ui/ScrollToTop";
 import { useEffect } from "react";
-import { initializeSupabaseUtils } from "./lib/utils/supabase-utils";
 import "./styles/dark-mode.css";
 import "./styles/light-mode.css";
 import "./styles/global.css";
 
 function App() {
   useEffect(() => {
-    // Initialize Supabase utilities
-    initializeSupabaseUtils().then(() => {
-      console.info("Application fully loaded: Styles and animations initialized");
-    });
+    // Log initialization
+    console.info("Application fully loaded: Styles and animations initialized");
   }, []);
 
   return (

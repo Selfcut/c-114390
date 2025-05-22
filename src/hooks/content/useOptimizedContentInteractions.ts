@@ -77,13 +77,21 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isLiked: false };
       } else {
         // Like - Insert new like
+        const insertData: Record<string, any> = {
+          user_id: userId
+        };
+        
+        // Set the correct content id field based on content type
+        insertData[contentIdField] = contentId;
+        
+        // Add content_type field if not a quote
+        if (contentType !== 'quote') {
+          insertData['content_type'] = contentType;
+        }
+        
         const { data, error } = await supabase
           .from(tableName)
-          .insert({
-            [contentIdField]: contentId,
-            user_id: userId,
-            ...(contentType !== 'quote' && { content_type: contentType })
-          });
+          .insert(insertData);
           
         if (error) throw error;
         
@@ -180,13 +188,21 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isBookmarked: false };
       } else {
         // Bookmark - Insert new bookmark
+        const insertData: Record<string, any> = {
+          user_id: userId
+        };
+        
+        // Set the correct content id field based on content type
+        insertData[contentIdField] = contentId;
+        
+        // Add content_type field if not a quote
+        if (contentType !== 'quote') {
+          insertData['content_type'] = contentType;
+        }
+        
         const { data, error } = await supabase
           .from(tableName)
-          .insert({
-            [contentIdField]: contentId,
-            user_id: userId,
-            ...(contentType !== 'quote' && { content_type: contentType })
-          });
+          .insert(insertData);
           
         if (error) throw error;
         
