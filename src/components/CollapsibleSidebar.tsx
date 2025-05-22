@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Home, Library, MessageSquare, User, Settings, 
   Youtube, Book, FileText, Shield, Menu, X, AlertTriangle,
-  Quote, Calendar
+  Quote, Calendar, PenLine, StickyNote
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,8 @@ export const CollapsibleSidebar = () => {
     { path: "/wiki", icon: Book, label: "Wiki" },
     { path: "/media", icon: Youtube, label: "Media" },
     { path: "/quotes", icon: Quote, label: "Quotes" },
+    { path: "/words", icon: PenLine, label: "Words" },
+    { path: "/notes", icon: StickyNote, label: "Notes" },
     { path: "/events", icon: Calendar, label: "Events" },
     { path: "/problems", icon: AlertTriangle, label: "Problems" },
   ];

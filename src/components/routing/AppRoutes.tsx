@@ -32,6 +32,12 @@ import Auth from '@/pages/Auth';
 import Profile from '@/pages/Profile';
 import AdminPanel from '@/pages/AdminPanel';
 
+// Import our new pages
+import Words from '@/pages/Words';
+import WordDetail from '@/pages/WordDetail';
+import WordEditor from '@/pages/WordEditor';
+import Notes from '@/pages/Notes';
+
 export function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -99,6 +105,31 @@ export function AppRoutes() {
         
         {/* Saved Quotes route */}
         <Route path="/saved-quotes" element={<SavedQuotes />} />
+        
+        {/* Words routes */}
+        <Route path="/words" element={
+          <ProtectedRoute>
+            <Words />
+          </ProtectedRoute>
+        } />
+        <Route path="/words/:id" element={<WordDetail />} />
+        <Route path="/words/new" element={
+          <ProtectedRoute>
+            <WordEditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/words/:id/edit" element={
+          <ProtectedRoute>
+            <WordEditor />
+          </ProtectedRoute>
+        } />
+        
+        {/* Notes route */}
+        <Route path="/notes" element={
+          <ProtectedRoute>
+            <Notes />
+          </ProtectedRoute>
+        } />
         
         {/* Wiki routes */}
         <Route path="/wiki" element={<Wiki />} />
