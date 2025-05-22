@@ -16,7 +16,7 @@ export interface ContentInteractions {
   hasBookmarked: boolean;
 }
 
-// Use a simple type definition without generics to avoid excessive type instantiation
+// Simplify return type to avoid excessive type instantiation
 export type BatchOperation = () => Promise<unknown>;
 
 /**
@@ -60,6 +60,10 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
+    // Define specific result types to avoid type recursion
+    type LikeResult = { data: { id: string } | null };
+    type BookmarkResult = { data: { id: string } | null };
+    
     // Execute queries in parallel for better performance
     const [likesResult, bookmarksResult] = await Promise.all([
       // Check if user has liked the content
@@ -68,14 +72,14 @@ export const checkUserContentInteractions = async (
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle(),
+        .maybeSingle() as Promise<LikeResult>,
       // Check if user has bookmarked the content
       supabase
         .from(bookmarksTable)
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle()
+        .maybeSingle() as Promise<BookmarkResult>
     ]);
     
     return {
@@ -174,6 +178,10 @@ interface ContentBookmarkInsert {
   content_type: string;
 }
 
+// Define result types for database operations
+type SupabaseDeleteResult = { error: Error | null };
+type SupabaseInsertResult = { error: Error | null };
+
 /**
  * Toggle a user interaction (like or bookmark) on content
  * @param type The interaction type ('like' or 'bookmark')
@@ -199,13 +207,19 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
+    // Define specific type for checking results
+    type ExistingCheckResult = {
+      data: { id: string } | null;
+      error: Error | null;
+    };
+
     // Check if interaction exists
     const { data: existingData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
-      .maybeSingle();
+      .maybeSingle() as ExistingCheckResult;
       
     if (checkError) throw checkError;
 
@@ -214,7 +228,7 @@ export const toggleUserInteraction = async (
       const { error: deleteError } = await supabase
         .from(tableName)
         .delete()
-        .eq('id', existingData.id);
+        .eq('id', existingData.id) as SupabaseDeleteResult;
         
       if (deleteError) throw deleteError;
       
@@ -237,7 +251,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(quoteData);
+            .insert(quoteData) as SupabaseInsertResult;
             
           if (error) throw error;
         } else {
@@ -249,7 +263,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(quoteData);
+            .insert(quoteData) as SupabaseInsertResult;
             
           if (error) throw error;
         }
@@ -264,7 +278,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(contentData);
+            .insert(contentData) as SupabaseInsertResult;
             
           if (error) throw error;
         } else {
@@ -277,7 +291,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(contentData);
+            .insert(contentData) as SupabaseInsertResult;
             
           if (error) throw error;
         }
