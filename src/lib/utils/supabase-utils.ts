@@ -43,12 +43,6 @@ export const batchOperations = async (operations: BatchOperation[]): Promise<unk
   return Promise.all(operations.map(operation => operation()));
 };
 
-// Define simplified response types to avoid recursion issues
-interface SimplifiedResponse<T> {
-  data: T | null;
-  error: Error | null;
-}
-
 /**
  * Check if a user has liked or bookmarked a piece of content
  * @param userId The user ID
@@ -67,24 +61,22 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute queries in parallel for better performance
-    const [likesResponse, bookmarksResponse] = await Promise.all([
-      // Check if user has liked the content
-      supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle(),
-        
-      // Check if user has bookmarked the content
-      supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle()
-    ]);
+    // Execute queries in parallel for better performance - avoid type complexity with await
+    const likesPromise = supabase
+      .from(likesTable)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    const bookmarksPromise = supabase
+      .from(bookmarksTable)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    const [likesResponse, bookmarksResponse] = await Promise.all([likesPromise, bookmarksPromise]);
     
     return {
       hasLiked: !!likesResponse.data,
@@ -114,12 +106,13 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    await supabase.rpc('increment_counter_fn', {
+    const { error } = await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
     });
     
+    if (error) throw error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -144,12 +137,13 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    await supabase.rpc('decrement_counter_fn', {
+    const { error } = await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
     });
     
+    if (error) throw error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -207,24 +201,24 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists - using explicit await to avoid type instantiation issues
-    const checkResponse = await supabase
+    // Check if interaction exists - use direct destructuring of query result to avoid typing issues
+    const { data: existingData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
       
-    if (checkResponse.error) throw checkResponse.error;
+    if (checkError) throw checkError;
 
-    if (checkResponse.data) {
-      // Remove interaction
-      const deleteResponse = await supabase
+    if (existingData) {
+      // Remove interaction - use direct destructuring of delete result
+      const { error: deleteError } = await supabase
         .from(tableName)
         .delete()
-        .eq('id', checkResponse.data.id);
+        .eq('id', existingData.id);
         
-      if (deleteResponse.error) throw deleteResponse.error;
+      if (deleteError) throw deleteError;
       
       // Only decrement count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
@@ -234,57 +228,66 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction - avoid excessive type instantiation by using explicit await
-      let insertResponse;
+      // Add interaction - avoid typing issues by handling each case separately
+      let error = null;
+      
       if (contentType === 'quote') {
         if (isLike) {
-          // Use specific interface for quote likes
-          const quoteData: QuoteLikeInsert = {
+          // Quote like
+          const insertData: QuoteLikeInsert = {
             quote_id: contentId,
             user_id: userId
           };
-          // Create separate insert call
-          insertResponse = await supabase
+          
+          const result = await supabase
             .from(tableName)
-            .insert(quoteData);
+            .insert(insertData);
+            
+          error = result.error;
         } else {
-          // Use specific interface for quote bookmarks
-          const quoteData: QuoteBookmarkInsert = {
+          // Quote bookmark
+          const insertData: QuoteBookmarkInsert = {
             quote_id: contentId,
             user_id: userId
           };
-          // Create separate insert call
-          insertResponse = await supabase
+          
+          const result = await supabase
             .from(tableName)
-            .insert(quoteData);
+            .insert(insertData);
+            
+          error = result.error;
         }
       } else {
         if (isLike) {
-          // Use specific interface for content likes
-          const contentData: ContentLikeInsert = {
+          // Content like
+          const insertData: ContentLikeInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
-          // Create separate insert call
-          insertResponse = await supabase
+          
+          const result = await supabase
             .from(tableName)
-            .insert(contentData);
+            .insert(insertData);
+            
+          error = result.error;
         } else {
-          // Use specific interface for content bookmarks
-          const contentData: ContentBookmarkInsert = {
+          // Content bookmark
+          const insertData: ContentBookmarkInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
-          // Create separate insert call
-          insertResponse = await supabase
+          
+          const result = await supabase
             .from(tableName)
-            .insert(contentData);
+            .insert(insertData);
+            
+          error = result.error;
         }
       }
-            
-      if (insertResponse && insertResponse.error) throw insertResponse.error;
+      
+      if (error) throw error;
       
       // Only increment count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
