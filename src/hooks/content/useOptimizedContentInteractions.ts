@@ -5,12 +5,7 @@ import { checkUserContentInteractions, incrementCounter, decrementCounter } from
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Define key types clearly to avoid deep type instantiations
-interface UseOptimizedContentInteractionsProps {
-  userId: string | null;
-  contentType: string;
-}
-
+// Define simple concrete types
 interface ContentInteractionState {
   isLiked: boolean;
   isBookmarked: boolean;
@@ -18,12 +13,26 @@ interface ContentInteractionState {
   isBookmarkLoading: boolean;
 }
 
-// Simple mutation variable type
+// Creates a default state object to avoid null checks
+const createDefaultState = (): ContentInteractionState => ({
+  isLiked: false,
+  isBookmarked: false,
+  isLikeLoading: false,
+  isBookmarkLoading: false
+});
+
+// Define props type
+interface UseOptimizedContentInteractionsProps {
+  userId: string | null;
+  contentType: string;
+}
+
+// Define mutation variables type
 interface MutationVariables {
   contentId: string;
 }
 
-// Simple mutation return type
+// Define mutation return type
 interface MutationReturn {
   contentId: string;
   isLiked?: boolean;
@@ -34,9 +43,27 @@ export const useOptimizedContentInteractions = ({
   userId, 
   contentType 
 }: UseOptimizedContentInteractionsProps) => {
+  // Use a simpler state structure
   const [interactionState, setInteractionState] = useState<Record<string, ContentInteractionState>>({});
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Helper function to update state safely
+  const updateContentState = useCallback((
+    contentId: string, 
+    updates: Partial<ContentInteractionState>
+  ) => {
+    setInteractionState(prevState => {
+      const currentState = prevState[contentId] || createDefaultState();
+      return {
+        ...prevState,
+        [contentId]: {
+          ...currentState,
+          ...updates
+        }
+      };
+    });
+  }, []);
 
   // Check interactions for a specific content item
   const checkInteractions = useCallback(async (contentId: string) => {
@@ -45,38 +72,34 @@ export const useOptimizedContentInteractions = ({
     try {
       const result = await checkUserContentInteractions(userId, contentId, contentType);
       
-      setInteractionState(prev => ({
-        ...prev,
-        [contentId]: {
-          isLiked: result.hasLiked,
-          isBookmarked: result.hasBookmarked,
-          isLikeLoading: false,
-          isBookmarkLoading: false
-        }
-      }));
+      updateContentState(contentId, {
+        isLiked: result.hasLiked,
+        isBookmarked: result.hasBookmarked,
+        isLikeLoading: false,
+        isBookmarkLoading: false
+      });
     } catch (error) {
       console.error('Error checking content interactions:', error);
     }
-  }, [userId, contentType]);
+  }, [userId, contentType, updateContentState]);
 
-  // Use a simpler approach to handle like mutations
+  // Like mutation with simplified state management
   const likeMutation = useMutation<MutationReturn, Error, MutationVariables>({
-    mutationFn: async (variables) => {
-      const { contentId } = variables;
-      
+    mutationFn: async ({ contentId }) => {
       if (!userId || !contentId) {
         throw new Error('User ID or Content ID missing');
       }
 
-      // Get the current like state (to toggle)
-      const currentState = interactionState[contentId]?.isLiked || false;
+      // Get the current state using a local variable
+      const state = interactionState[contentId] || createDefaultState();
+      const currentlyLiked = state.isLiked;
       
       // Table name based on content type
       const tableName = contentType === 'quote' ? 'quote_likes' : 'content_likes';
       const contentIdField = contentType === 'quote' ? 'quote_id' : 'content_id';
       const counterTableName = contentType === 'quote' ? 'quotes' : contentType;
       
-      if (currentState) {
+      if (currentlyLiked) {
         // Unlike - Delete existing like
         const { error } = await supabase
           .from(tableName)
@@ -121,33 +144,41 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isLiked: true };
       }
     },
-    onMutate: (variables) => {
-      const { contentId } = variables;
-      // Use type assertion to avoid deep type instantiation
-      const updatedState = {
-        ...interactionState,
-        [contentId]: {
-          ...(interactionState[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
-          isLiked: !(interactionState[contentId]?.isLiked || false),
-          isLikeLoading: true
-        }
+    onMutate: ({ contentId }) => {
+      // Get current state
+      const state = interactionState[contentId] || createDefaultState();
+      
+      // Create a new state object with fixed types
+      const newState: ContentInteractionState = {
+        isLiked: !state.isLiked,
+        isBookmarked: state.isBookmarked,
+        isLikeLoading: true,
+        isBookmarkLoading: state.isBookmarkLoading
       };
       
-      // Directly set state with the prepared object
-      setInteractionState(updatedState);
+      // Update the state with the new object directly
+      setInteractionState({
+        ...interactionState,
+        [contentId]: newState
+      });
     },
     onSuccess: (data) => {
       // Update with server result
       const { contentId, isLiked } = data;
       
-      setInteractionState(prev => ({
-        ...prev,
-        [contentId]: {
-          ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
-          isLiked: isLiked || false,
-          isLikeLoading: false
-        }
-      }));
+      // Create an explicit state object
+      const successState: ContentInteractionState = {
+        isLiked: isLiked ?? false,
+        isBookmarked: interactionState[contentId]?.isBookmarked || false,
+        isLikeLoading: false,
+        isBookmarkLoading: interactionState[contentId]?.isBookmarkLoading || false
+      };
+      
+      // Update state directly with the fixed type
+      setInteractionState({
+        ...interactionState,
+        [contentId]: successState
+      });
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ 
@@ -167,38 +198,40 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
       
-      // Revert to previous state
-      const prevState = !interactionState[contentId]?.isLiked;
+      // Get current state and create a fixed revert state
+      const state = interactionState[contentId] || createDefaultState();
+      const revertState: ContentInteractionState = {
+        isLiked: !state.isLiked,
+        isBookmarked: state.isBookmarked,
+        isLikeLoading: false,
+        isBookmarkLoading: state.isBookmarkLoading
+      };
       
-      setInteractionState(prev => ({
-        ...prev,
-        [contentId]: {
-          ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
-          isLiked: prevState,
-          isLikeLoading: false
-        }
-      }));
+      // Update state directly with the fixed type
+      setInteractionState({
+        ...interactionState,
+        [contentId]: revertState
+      });
     }
   });
 
-  // Similarly simplified approach for bookmark mutations
+  // Bookmark mutation with similarly simplified state management
   const bookmarkMutation = useMutation<MutationReturn, Error, MutationVariables>({
-    mutationFn: async (variables) => {
-      const { contentId } = variables;
-      
+    mutationFn: async ({ contentId }) => {
       if (!userId || !contentId) {
         throw new Error('User ID or Content ID missing');
       }
 
-      // Get the current bookmark state (to toggle)
-      const currentState = interactionState[contentId]?.isBookmarked || false;
+      // Get the current state using a local variable
+      const state = interactionState[contentId] || createDefaultState();
+      const currentlyBookmarked = state.isBookmarked;
       
       // Table name based on content type
       const tableName = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
       const contentIdField = contentType === 'quote' ? 'quote_id' : 'content_id';
       const counterTableName = contentType === 'quote' ? 'quotes' : contentType;
       
-      if (currentState) {
+      if (currentlyBookmarked) {
         // Unbookmark - Delete existing bookmark
         const { error } = await supabase
           .from(tableName)
@@ -247,33 +280,41 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isBookmarked: true };
       }
     },
-    onMutate: (variables) => {
-      const { contentId } = variables;
-      // Use type assertion to avoid deep type instantiation
-      const updatedState = {
-        ...interactionState,
-        [contentId]: {
-          ...(interactionState[contentId] || { isLiked: false, isLikeLoading: false }),
-          isBookmarked: !(interactionState[contentId]?.isBookmarked || false),
-          isBookmarkLoading: true
-        }
+    onMutate: ({ contentId }) => {
+      // Get current state
+      const state = interactionState[contentId] || createDefaultState();
+      
+      // Create a new state object with fixed types
+      const newState: ContentInteractionState = {
+        isLiked: state.isLiked,
+        isBookmarked: !state.isBookmarked,
+        isLikeLoading: state.isLikeLoading,
+        isBookmarkLoading: true
       };
       
-      // Directly set state with the prepared object
-      setInteractionState(updatedState);
+      // Update the state with the new object directly
+      setInteractionState({
+        ...interactionState,
+        [contentId]: newState
+      });
     },
     onSuccess: (data) => {
       // Update with server result
       const { contentId, isBookmarked } = data;
       
-      setInteractionState(prev => ({
-        ...prev,
-        [contentId]: {
-          ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
-          isBookmarked: isBookmarked || false,
-          isBookmarkLoading: false
-        }
-      }));
+      // Create an explicit state object
+      const successState: ContentInteractionState = {
+        isLiked: interactionState[contentId]?.isLiked || false,
+        isBookmarked: isBookmarked ?? false,
+        isLikeLoading: interactionState[contentId]?.isLikeLoading || false,
+        isBookmarkLoading: false
+      };
+      
+      // Update state directly with the fixed type
+      setInteractionState({
+        ...interactionState,
+        [contentId]: successState
+      });
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ 
@@ -290,17 +331,20 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
       
-      // Revert to previous state
-      const prevState = !interactionState[contentId]?.isBookmarked;
+      // Get current state and create a fixed revert state
+      const state = interactionState[contentId] || createDefaultState();
+      const revertState: ContentInteractionState = {
+        isLiked: state.isLiked,
+        isBookmarked: !state.isBookmarked,
+        isLikeLoading: state.isLikeLoading,
+        isBookmarkLoading: false
+      };
       
-      setInteractionState(prev => ({
-        ...prev,
-        [contentId]: {
-          ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
-          isBookmarked: prevState,
-          isBookmarkLoading: false
-        }
-      }));
+      // Update state directly with the fixed type
+      setInteractionState({
+        ...interactionState,
+        [contentId]: revertState
+      });
     }
   });
 
