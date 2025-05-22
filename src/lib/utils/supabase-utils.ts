@@ -16,8 +16,8 @@ export interface ContentInteractions {
   hasBookmarked: boolean;
 }
 
-// Define a simpler batch operation type without complex generic parameters
-export type BatchOperation<T = any> = () => Promise<T>;
+// Use a simple type definition to avoid excessive type instantiation
+export type BatchOperation = () => Promise<any>;
 
 /**
  * Initialize necessary Supabase utilities
@@ -38,7 +38,7 @@ export const initializeSupabaseUtils = async (): Promise<boolean> => {
  * @param operations Array of functions that return promises
  * @returns Promise with array of results
  */
-export const batchOperations = async <T>(operations: BatchOperation<T>[]): Promise<T[]> => {
+export const batchOperations = async (operations: BatchOperation[]): Promise<any[]> => {
   return Promise.all(operations.map(operation => operation()));
 };
 
@@ -151,13 +151,24 @@ export const decrementCounter = async (
   }
 };
 
-// Define specific insert types to avoid deep type instantiation
-interface QuoteInteractionInsert {
+// Use explicit interfaces for insert operations to avoid type recursion
+interface QuoteLikeInsert {
   quote_id: string;
   user_id: string;
 }
 
-interface ContentInteractionInsert {
+interface QuoteBookmarkInsert {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentLikeInsert {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
+interface ContentBookmarkInsert {
   content_id: string;
   user_id: string;
   content_type: string;
@@ -215,32 +226,57 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction
+      // Add interaction - use properly typed insert data
       if (contentType === 'quote') {
-        // Quote-specific insert with correct typing
-        const quoteData: QuoteInteractionInsert = {
-          quote_id: contentId,
-          user_id: userId
-        };
-        
-        const { error } = await supabase
-          .from(tableName)
-          .insert(quoteData);
-          
-        if (error) throw error;
+        if (isLike) {
+          // Quote like
+          const quoteData: QuoteLikeInsert = {
+            quote_id: contentId,
+            user_id: userId
+          };
+          const { error } = await supabase
+            .from(tableName)
+            .insert(quoteData);
+            
+          if (error) throw error;
+        } else {
+          // Quote bookmark
+          const quoteData: QuoteBookmarkInsert = {
+            quote_id: contentId,
+            user_id: userId
+          };
+          const { error } = await supabase
+            .from(tableName)
+            .insert(quoteData);
+            
+          if (error) throw error;
+        }
       } else {
-        // Content-specific insert with correct typing
-        const contentData: ContentInteractionInsert = {
-          content_id: contentId,
-          user_id: userId,
-          content_type: contentType
-        };
-        
-        const { error } = await supabase
-          .from(tableName)
-          .insert(contentData);
-          
-        if (error) throw error;
+        if (isLike) {
+          // Content like
+          const contentData: ContentLikeInsert = {
+            content_id: contentId,
+            user_id: userId,
+            content_type: contentType
+          };
+          const { error } = await supabase
+            .from(tableName)
+            .insert(contentData);
+            
+          if (error) throw error;
+        } else {
+          // Content bookmark
+          const contentData: ContentBookmarkInsert = {
+            content_id: contentId,
+            user_id: userId,
+            content_type: contentType
+          };
+          const { error } = await supabase
+            .from(tableName)
+            .insert(contentData);
+            
+          if (error) throw error;
+        }
       }
       
       // Only increment count for supported counters
