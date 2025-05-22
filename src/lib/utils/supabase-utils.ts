@@ -66,7 +66,7 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute the likes query
+    // Execute likes query - avoid type inference issues by using as QueryResult
     const likesQuery = supabase
       .from(likesTable)
       .select('id')
@@ -75,9 +75,9 @@ export const checkUserContentInteractions = async (
       .maybeSingle();
     
     // Execute the query directly without type inference
-    const likesResult = await likesQuery as QueryResult;
+    const likesResult = await likesQuery as unknown as QueryResult;
     
-    // Execute the bookmarks query
+    // Execute the bookmarks query - avoid type inference issues
     const bookmarksQuery = supabase
       .from(bookmarksTable)
       .select('id')
@@ -86,7 +86,7 @@ export const checkUserContentInteractions = async (
       .maybeSingle();
     
     // Execute the query directly without type inference
-    const bookmarksResult = await bookmarksQuery as QueryResult;
+    const bookmarksResult = await bookmarksQuery as unknown as QueryResult;
     
     // Check for errors
     if (likesResult.error) {
@@ -220,7 +220,7 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists
+    // Check if interaction exists - avoiding type inference issues
     const checkQuery = supabase
       .from(tableName)
       .select('id')
@@ -229,7 +229,7 @@ export const toggleUserInteraction = async (
       .maybeSingle();
     
     // Execute the query without destructuring to avoid complex typing
-    const checkResult = await checkQuery as QueryResult;
+    const checkResult = await checkQuery as unknown as QueryResult;
     
     if (checkResult.error) throw checkResult.error;
 
@@ -240,7 +240,7 @@ export const toggleUserInteraction = async (
         .delete()
         .eq('id', checkResult.data.id);
         
-      const deleteResult = await deleteQuery as QueryResult;
+      const deleteResult = await deleteQuery as unknown as QueryResult;
       if (deleteResult.error) throw deleteResult.error;
       
       // Only decrement count for supported counters
@@ -255,57 +255,61 @@ export const toggleUserInteraction = async (
       
       if (contentType === 'quote') {
         if (isLike) {
-          // Quote like
+          // Quote like - use explicit interface to avoid deep typing
           const insertData: QuoteLikeInsert = {
             quote_id: contentId,
             user_id: userId
           };
           
+          // Separate query creation and execution to simplify types
           const query = supabase
             .from(tableName)
             .insert(insertData);
             
-          insertResult = await query as QueryResult;
+          insertResult = await query as unknown as QueryResult;
         } else {
-          // Quote bookmark
+          // Quote bookmark - use explicit interface
           const insertData: QuoteBookmarkInsert = {
             quote_id: contentId,
             user_id: userId
           };
           
+          // Separate query creation and execution
           const query = supabase
             .from(tableName)
             .insert(insertData);
             
-          insertResult = await query as QueryResult;
+          insertResult = await query as unknown as QueryResult;
         }
       } else {
         if (isLike) {
-          // Content like
+          // Content like - use explicit interface
           const insertData: ContentLikeInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
           
+          // Separate query creation and execution
           const query = supabase
             .from(tableName)
             .insert(insertData);
             
-          insertResult = await query as QueryResult;
+          insertResult = await query as unknown as QueryResult;
         } else {
-          // Content bookmark
+          // Content bookmark - use explicit interface
           const insertData: ContentBookmarkInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
           
+          // Separate query creation and execution
           const query = supabase
             .from(tableName)
             .insert(insertData);
             
-          insertResult = await query as QueryResult;
+          insertResult = await query as unknown as QueryResult;
         }
       }
       
@@ -325,4 +329,3 @@ export const toggleUserInteraction = async (
     return false;
   }
 };
-
