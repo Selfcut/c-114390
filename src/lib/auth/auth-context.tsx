@@ -13,44 +13,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authInitialized, setAuthInitialized] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Dedicated function to load user profile with improved error handling
+  // Dedicated function to load user profile with robust error handling
   const loadUserProfile = useCallback(async (userId: string, currentSession: Session | null) => {
     if (!userId) return null;
     
     try {
-      console.log(`Loading profile for user: ${userId}`);
-      let profile = await fetchUserProfile(userId, currentSession);
+      console.log(`[Auth] Loading profile for user: ${userId}`);
+      const MAX_RETRIES = 2;
+      let retryCount = 0;
+      let profile = null;
       
-      // If no profile was found, try to create one
-      if (!profile) {
-        console.log('Profile not found, attempting to create one');
-        profile = await ensureUserProfile(userId, {
-          email: currentSession?.user?.email,
-          name: currentSession?.user?.user_metadata?.name,
-          username: currentSession?.user?.user_metadata?.username
-        });
+      while (retryCount <= MAX_RETRIES && !profile) {
+        profile = await fetchUserProfile(userId, currentSession);
         
+        // If no profile was found, try to create one
         if (!profile) {
-          console.error('Failed to create profile for user:', userId);
-          return null;
+          console.log('[Auth] Profile not found, attempting to create one');
+          profile = await ensureUserProfile(userId, {
+            email: currentSession?.user?.email,
+            name: currentSession?.user?.user_metadata?.name,
+            username: currentSession?.user?.user_metadata?.username
+          });
+          
+          if (!profile) {
+            console.error(`[Auth] Failed to create profile for user: ${userId}, attempt ${retryCount + 1}`);
+            
+            retryCount++;
+            if (retryCount <= MAX_RETRIES) {
+              console.log(`[Auth] Retrying profile loading, attempt ${retryCount + 1}...`);
+              // Wait briefly before retrying
+              await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+            }
+          }
         }
       }
       
-      return profile;
+      if (profile) {
+        console.log(`[Auth] Successfully loaded profile for user: ${userId}`);
+        return profile;
+      } else {
+        console.error(`[Auth] Failed to load profile after ${MAX_RETRIES + 1} attempts`);
+        return null;
+      }
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('[Auth] Error loading user profile:', error);
       return null;
     }
   }, []);
 
-  // Handle auth state changes with improved flow
+  // Handle auth state changes with improved flow and error recovery
   const handleAuthStateChange = useCallback((session: Session | null) => {
     setSession(session);
     
     if (!session) {
       // No active session, reset user state
+      console.log('[Auth] No active session, resetting user state');
       setUser(null);
       setIsAuthenticated(false);
       return;
@@ -60,14 +80,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // to avoid auth state deadlocks
     if (session?.user) {
       const userId = session.user.id;
+      console.log(`[Auth] Session exists, loading profile for: ${userId}`);
+      
       loadUserProfile(userId, session).then(profile => {
         if (profile) {
+          console.log(`[Auth] Profile loaded: ${profile.username}`);
           setUser(profile);
           setIsAuthenticated(true);
         } else {
-          console.error(`Failed to load profile for authenticated user: ${userId}`);
-          setUser(null);
-          setIsAuthenticated(false);
+          console.error(`[Auth] Failed to load profile for authenticated user: ${userId}`);
+          
+          // Recovery attempt: create a minimal profile from session data
+          const minimalProfile: UserProfile = {
+            id: userId,
+            username: session.user.user_metadata?.username || `user_${userId.substring(0, 8)}`,
+            name: session.user.user_metadata?.name || `User ${userId.substring(0, 4)}`,
+            email: session.user.email || '',
+            avatar: null,
+            avatar_url: null,
+            bio: '',
+            website: '',
+            status: 'online',
+            isGhostMode: false,
+            role: 'user',
+            isAdmin: false,
+            notificationSettings: {
+              desktopNotifications: true,
+              soundNotifications: true,
+              emailNotifications: true
+            }
+          };
+          
+          console.log('[Auth] Using recovery minimal profile');
+          setUser(minimalProfile);
+          setIsAuthenticated(true);
         }
       });
     }
@@ -75,11 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     setIsLoading(true);
-    console.log("Setting up auth state listener");
+    console.log("[Auth] Setting up auth state listener");
     
     // Set up auth state listener FIRST (correct initialization order)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      console.log('Auth state changed:', event, currentSession?.user?.id);
+      console.log('[Auth] Auth state changed:', event, currentSession?.user?.id);
       
       // Update session state
       handleAuthStateChange(currentSession);
@@ -88,28 +134,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
-        console.log("Checking for existing session");
+        console.log("[Auth] Checking for existing session");
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         
         if (existingSession) {
-          console.log("Found existing session:", existingSession.user.id);
+          console.log("[Auth] Found existing session:", existingSession.user.id);
           handleAuthStateChange(existingSession);
         } else {
-          console.log("No existing session found");
+          console.log("[Auth] No existing session found");
           handleAuthStateChange(null);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('[Auth] Error initializing auth:', error);
+        // In case of error, assume no active session
         handleAuthStateChange(null);
       } finally {
         setIsLoading(false);
+        setAuthInitialized(true);
       }
     };
 
     initializeAuth();
 
     return () => {
-      console.log("Cleaning up auth state listener");
+      console.log("[Auth] Cleaning up auth state listener");
       subscription.unsubscribe();
     };
   }, [handleAuthStateChange]);
@@ -246,15 +294,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Update user status
+  // Update user status with improved error handling
   const updateUserStatus = async (status: UserStatus): Promise<void> => {
     if (!user) {
+      console.error('[Auth] Cannot update status: User not authenticated');
       throw new Error('User not authenticated');
     }
     
-    const result = await handleUpdateProfile({ status });
-    if (result.error) {
-      throw result.error;
+    try {
+      const result = await handleUpdateProfile({ status });
+      if (result.error) {
+        console.error('[Auth] Error updating status:', result.error);
+        throw result.error;
+      }
+      console.log(`[Auth] Status updated to: ${status}`);
+    } catch (error) {
+      console.error('[Auth] Failed to update user status:', error);
+      toast({
+        title: "Status Update Failed",
+        description: error instanceof Error ? error.message : "Could not update status",
+        variant: "destructive"
+      });
+      throw error;
     }
   };
   

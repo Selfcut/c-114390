@@ -16,14 +16,25 @@ import {
   User,
   Settings,
   LogOut,
-  Crown
+  Crown,
+  Loader2
 } from "lucide-react";
 import { useAuth } from '@/lib/auth';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const UserMenu = () => {
-  const { user, signOut, isAuthenticated } = useAuth();
+  const { user, signOut, isAuthenticated, isLoading } = useAuth();
   
-  console.log("UserMenu render - isAuthenticated:", isAuthenticated, "user:", user?.name);
+  console.log("[UserMenu] render - isAuthenticated:", isAuthenticated, "isLoading:", isLoading, "user:", user?.name);
+  
+  // Show loading skeleton during authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-8 w-8">
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </div>
+    );
+  }
   
   if (!isAuthenticated || !user) {
     return (
@@ -36,7 +47,15 @@ export const UserMenu = () => {
   }
   
   // Use avatar_url or avatar, ensuring we have an image source
-  const avatarSrc = user.avatar_url || user.avatar || "";
+  const avatarSrc = user.avatar_url || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.username || user.email || 'user')}`;
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("[UserMenu] Error signing out:", error);
+    }
+  };
   
   return (
     <DropdownMenu>
@@ -85,7 +104,7 @@ export const UserMenu = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={signOut}
+          onClick={handleSignOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>

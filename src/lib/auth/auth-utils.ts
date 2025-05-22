@@ -12,7 +12,7 @@ const DEFAULT_USER: Partial<UserProfile> = {
   isGhostMode: false,
 };
 
-// Fetch a user's profile from the database
+// Fetch a user's profile from the database with enhanced logging
 export async function fetchUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
   try {
     if (!userId) {
@@ -20,7 +20,7 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
       return null;
     }
     
-    console.log(`Fetching profile for user: ${userId}`);
+    console.log(`[Auth] Fetching profile for user: ${userId}`);
     
     const { data: profile, error } = await supabase
       .from('profiles')
@@ -29,18 +29,20 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
       .maybeSingle();
       
     if (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('[Auth] Error fetching user profile:', error);
       return null;
     }
     
     if (!profile) {
-      console.warn('No profile found for user ID:', userId);
+      console.warn('[Auth] No profile found for user ID:', userId);
       // Attempt to create a profile automatically
       return await createUserProfile(userId, session);
     }
     
     // Get email from session if available
     const email = session?.user?.email || '';
+    
+    console.log(`[Auth] Profile found for user: ${userId}, username: ${profile.username}`);
     
     // Map database profile to UserProfile type
     return {
@@ -63,81 +65,110 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
       }
     };
   } catch (err) {
-    console.error('Exception in fetchUserProfile:', err);
+    console.error('[Auth] Exception in fetchUserProfile:', err);
     return null;
   }
 }
 
-// Create a user profile if missing
+// Create a user profile if missing, with retry mechanism
 export async function createUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
-  try {
-    if (!userId) {
-      console.error('Invalid user ID provided to createUserProfile');
-      return null;
-    }
-    
-    console.log(`Creating profile for user: ${userId}`);
-    
-    const email = session?.user?.email || '';
-    const name = session?.user?.user_metadata?.name || `User ${userId.substring(0, 4)}`;
-    const username = session?.user?.user_metadata?.username || `user_${userId.substring(0, 8)}`;
-    
-    // Check if profile already exists (just to be safe)
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-      
-    if (existingProfile) {
-      console.log('Profile already exists, returning existing profile');
-      return await fetchUserProfile(userId, session);
-    }
-    
-    const newProfile = {
-      id: userId,
-      username,
-      name,
-      avatar_url: `https://api.dicebear.com/6.x/initials/svg?seed=${username}`,
-      status: 'online' as UserStatus,
-      role: 'user' as UserRole,
-      is_ghost_mode: false,
-      bio: '',
-      website: ''
-    };
-    
-    const { error } = await supabase
-      .from('profiles')
-      .insert(newProfile);
-      
-    if (error) {
-      console.error('Error creating user profile:', error);
-      return null;
-    }
-    
-    return {
-      id: userId,
-      username,
-      name,
-      email,
-      avatar: newProfile.avatar_url,
-      avatar_url: newProfile.avatar_url,
-      bio: '',
-      website: '',
-      status: 'online',
-      isGhostMode: false,
-      role: 'user',
-      isAdmin: false,
-      notificationSettings: {
-        desktopNotifications: true,
-        soundNotifications: true,
-        emailNotifications: true
+  const MAX_RETRIES = 2;
+  let retryCount = 0;
+  
+  while (retryCount <= MAX_RETRIES) {
+    try {
+      if (!userId) {
+        console.error('[Auth] Invalid user ID provided to createUserProfile');
+        return null;
       }
-    };
-  } catch (err) {
-    console.error('Error creating profile:', err);
-    return null;
+      
+      console.log(`[Auth] Creating profile for user: ${userId}, attempt: ${retryCount + 1}`);
+      
+      const email = session?.user?.email || '';
+      const name = session?.user?.user_metadata?.name || `User ${userId.substring(0, 4)}`;
+      const username = session?.user?.user_metadata?.username || `user_${userId.substring(0, 8)}`;
+      
+      // Check if profile already exists (just to be safe)
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      if (existingProfile) {
+        console.log('[Auth] Profile already exists, returning existing profile');
+        return await fetchUserProfile(userId, session);
+      }
+      
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(username)}`;
+      console.log(`[Auth] Generated avatar URL: ${avatarUrl}`);
+      
+      const newProfile = {
+        id: userId,
+        username,
+        name,
+        avatar_url: avatarUrl,
+        status: 'online' as UserStatus,
+        role: 'user' as UserRole,
+        is_ghost_mode: false,
+        bio: '',
+        website: ''
+      };
+      
+      const { error } = await supabase
+        .from('profiles')
+        .insert(newProfile);
+        
+      if (error) {
+        console.error('[Auth] Error creating user profile:', error);
+        retryCount++;
+        
+        if (retryCount <= MAX_RETRIES) {
+          console.log(`[Auth] Retrying profile creation, attempt ${retryCount + 1}...`);
+          // Wait briefly before retrying
+          await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+          continue;
+        }
+        
+        return null;
+      }
+      
+      console.log(`[Auth] Profile created successfully for user: ${userId}`);
+      
+      return {
+        id: userId,
+        username,
+        name,
+        email,
+        avatar: newProfile.avatar_url,
+        avatar_url: newProfile.avatar_url,
+        bio: '',
+        website: '',
+        status: 'online',
+        isGhostMode: false,
+        role: 'user',
+        isAdmin: false,
+        notificationSettings: {
+          desktopNotifications: true,
+          soundNotifications: true,
+          emailNotifications: true
+        }
+      };
+    } catch (err) {
+      console.error(`[Auth] Error creating profile (attempt ${retryCount + 1}):`, err);
+      retryCount++;
+      
+      if (retryCount <= MAX_RETRIES) {
+        // Wait briefly before retrying
+        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+        continue;
+      }
+      
+      return null;
+    }
   }
+  
+  return null;
 }
 
 // Update a user's profile
@@ -191,7 +222,7 @@ export async function ensureUserProfile(userId: string, userData?: {
 }): Promise<UserProfile | null> {
   try {
     if (!userId) {
-      console.error('Invalid user ID provided to ensureUserProfile');
+      console.error('[Auth] Invalid user ID provided to ensureUserProfile');
       return null;
     }
     
@@ -203,16 +234,18 @@ export async function ensureUserProfile(userId: string, userData?: {
       .maybeSingle();
     
     if (error) {
-      console.error('Error checking for user profile:', error);
+      console.error('[Auth] Error checking for user profile:', error);
       return null;
     }
     
     if (existingProfile) {
       // Profile exists, return it
+      console.log('[Auth] Profile exists, returning it');
       return await fetchUserProfile(userId);
     }
     
     // No profile exists, create one
+    console.log('[Auth] No profile exists, creating one');
     const dummySession = userData ? {
       user: {
         id: userId,
@@ -226,7 +259,7 @@ export async function ensureUserProfile(userId: string, userData?: {
     
     return await createUserProfile(userId, dummySession as any);
   } catch (err) {
-    console.error('Error ensuring user profile exists:', err);
+    console.error('[Auth] Error ensuring user profile exists:', err);
     return null;
   }
 }
