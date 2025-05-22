@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { executeQuery, QueryResult } from './supabase-helpers';
 import { incrementCounter, decrementCounter } from './counter-operations';
 
 // Content interaction interfaces for better type safety
@@ -51,38 +50,34 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute likes query using our helper function without complex typing
-    const likesResult = await executeQuery(() => 
-      supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle()
-    );
+    // Execute likes query directly without the wrapper function
+    const { data: likesData, error: likesError } = await supabase
+      .from(likesTable)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
     
-    // Execute the bookmarks query using our helper function without complex typing
-    const bookmarksResult = await executeQuery(() => 
-      supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle()
-    );
+    // Execute the bookmarks query directly without the wrapper function
+    const { data: bookmarksData, error: bookmarksError } = await supabase
+      .from(bookmarksTable)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
     
     // Check for errors
-    if (likesResult.error) {
-      console.warn('[Supabase Utils] Error checking likes:', likesResult.error);
+    if (likesError) {
+      console.warn('[Supabase Utils] Error checking likes:', likesError);
     }
     
-    if (bookmarksResult.error) {
-      console.warn('[Supabase Utils] Error checking bookmarks:', bookmarksResult.error);
+    if (bookmarksError) {
+      console.warn('[Supabase Utils] Error checking bookmarks:', bookmarksError);
     }
     
     return {
-      hasLiked: !!likesResult.data,
-      hasBookmarked: !!bookmarksResult.data
+      hasLiked: !!likesData,
+      hasBookmarked: !!bookmarksData
     };
   } catch (error) {
     console.error('[Supabase Utils] Error checking user content interactions:', error);
@@ -118,31 +113,27 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists using our helper function
-    const checkResult = await executeQuery(() =>
-      supabase
-        .from(tableName)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle()
-    );
+    // Check if interaction exists using direct Supabase client
+    const { data: checkData, error: checkError } = await supabase
+      .from(tableName)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
     
-    if (checkResult.error) throw checkResult.error;
+    if (checkError) throw checkError;
 
-    if (checkResult.data) {
-      // Remove interaction - use the data.id safely with type checking
-      const recordId = checkResult.data.id;
+    if (checkData) {
+      // Remove interaction - use the data.id directly
+      const recordId = checkData.id;
       if (!recordId) throw new Error('Could not find record ID');
       
-      const deleteResult = await executeQuery(() =>
-        supabase
-          .from(tableName)
-          .delete()
-          .eq('id', recordId)
-      );
+      const { error: deleteError } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('id', recordId);
         
-      if (deleteResult.error) throw deleteResult.error;
+      if (deleteError) throw deleteError;
       
       // Only decrement count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
@@ -152,7 +143,7 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      let insertResult;
+      let insertError;
       
       if (contentType === 'quote') {
         if (isLike) {
@@ -162,12 +153,12 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           
-          // Use helper function for insertion
-          insertResult = await executeQuery(() =>
-            supabase
-              .from(tableName)
-              .insert(insertData)
-          );
+          // Use direct supabase client for insertion
+          const { error } = await supabase
+            .from(tableName)
+            .insert(insertData);
+            
+          insertError = error;
         } else {
           // Quote bookmark - use explicit interface
           const insertData: QuoteBookmarkInsert = {
@@ -175,12 +166,12 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           
-          // Use helper function for insertion
-          insertResult = await executeQuery(() =>
-            supabase
-              .from(tableName)
-              .insert(insertData)
-          );
+          // Use direct supabase client for insertion
+          const { error } = await supabase
+            .from(tableName)
+            .insert(insertData);
+            
+          insertError = error;
         }
       } else {
         if (isLike) {
@@ -191,12 +182,12 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           
-          // Use helper function for insertion
-          insertResult = await executeQuery(() =>
-            supabase
-              .from(tableName)
-              .insert(insertData)
-          );
+          // Use direct supabase client for insertion
+          const { error } = await supabase
+            .from(tableName)
+            .insert(insertData);
+            
+          insertError = error;
         } else {
           // Content bookmark - use explicit interface
           const insertData: ContentBookmarkInsert = {
@@ -205,16 +196,16 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           
-          // Use helper function for insertion
-          insertResult = await executeQuery(() =>
-            supabase
-              .from(tableName)
-              .insert(insertData)
-          );
+          // Use direct supabase client for insertion
+          const { error } = await supabase
+            .from(tableName)
+            .insert(insertData);
+            
+          insertError = error;
         }
       }
       
-      if (insertResult.error) throw insertResult.error;
+      if (insertError) throw insertError;
       
       // Only increment count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
