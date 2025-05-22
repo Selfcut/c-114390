@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -156,7 +156,7 @@ export const useNotes = () => {
     }, [id, debouncedContent]);
 
     // Effect to trigger auto-save when debounced content changes
-    React.useEffect(() => {
+    useEffect(() => {
       if (debouncedContent && id) {
         autoSave();
       }

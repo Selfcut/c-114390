@@ -10,7 +10,7 @@ interface WordsGridProps {
 }
 
 export const WordsGrid: React.FC<WordsGridProps> = ({ words, onDelete, onToggleVisibility }) => {
-  if (words.length === 0) {
+  if (!words || words.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <h3 className="text-xl font-semibold mb-2">No writings found</h3>

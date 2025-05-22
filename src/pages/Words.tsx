@@ -27,7 +27,7 @@ const WordsPage = () => {
 
   // Get unique categories from all words
   const categories = useMemo(() => {
-    const allWords = [...words, ...publicWords];
+    const allWords = [...(Array.isArray(words) ? words : []), ...publicWords];
     const uniqueCategories = Array.from(
       new Set(allWords.map(word => word.category))
     ).filter(Boolean);
@@ -36,6 +36,10 @@ const WordsPage = () => {
 
   // Filter words based on search query and category
   const filteredWords = useMemo(() => {
+    if (!Array.isArray(words)) {
+      return [];
+    }
+    
     let result = [...words];
     
     if (searchQuery) {

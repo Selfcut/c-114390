@@ -63,7 +63,7 @@ export const useOptimizedContentInteractions = ({
       
       if (currentState) {
         // Unlike - Delete existing like
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from(tableName)
           .delete()
           .eq(contentIdField, contentId)
@@ -79,7 +79,7 @@ export const useOptimizedContentInteractions = ({
         // Like - Insert new like
         if (contentType === 'quote') {
           // For quote likes
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('quote_likes')
             .insert({
               quote_id: contentId,
@@ -89,7 +89,7 @@ export const useOptimizedContentInteractions = ({
           if (error) throw error;
         } else {
           // For other content types
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('content_likes')
             .insert({
               content_id: contentId,
@@ -113,7 +113,7 @@ export const useOptimizedContentInteractions = ({
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
-          ...prev[contentId] || { isBookmarked: false, isBookmarkLoading: false },
+          ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
           isLiked: !currentState,
           isLikeLoading: true
         }
@@ -124,7 +124,7 @@ export const useOptimizedContentInteractions = ({
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
-          ...prev[contentId] || { isBookmarked: false, isBookmarkLoading: false },
+          ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
           isLiked,
           isLikeLoading: false
         }
@@ -152,7 +152,7 @@ export const useOptimizedContentInteractions = ({
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
-          ...prev[contentId] || { isBookmarked: false, isBookmarkLoading: false },
+          ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
           isLiked: prevState,
           isLikeLoading: false
         }
@@ -177,7 +177,7 @@ export const useOptimizedContentInteractions = ({
       
       if (currentState) {
         // Unbookmark - Delete existing bookmark
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from(tableName)
           .delete()
           .eq(contentIdField, contentId)
@@ -195,7 +195,7 @@ export const useOptimizedContentInteractions = ({
         // Bookmark - Insert new bookmark
         if (contentType === 'quote') {
           // For quote bookmarks
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('quote_bookmarks')
             .insert({
               quote_id: contentId,
@@ -205,7 +205,7 @@ export const useOptimizedContentInteractions = ({
           if (error) throw error;
         } else {
           // For other content types
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('content_bookmarks')
             .insert({
               content_id: contentId,
@@ -231,7 +231,7 @@ export const useOptimizedContentInteractions = ({
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
-          ...prev[contentId] || { isLiked: false, isLikeLoading: false },
+          ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
           isBookmarked: !currentState,
           isBookmarkLoading: true
         }
@@ -242,13 +242,13 @@ export const useOptimizedContentInteractions = ({
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
-          ...prev[contentId] || { isLiked: false, isLikeLoading: false },
+          ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
           isBookmarked,
           isBookmarkLoading: false
         }
       }));
       
-      // Invalidate relevant queries - use objects instead of arrays
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ 
         queryKey: [`${contentType}s`, 'bookmarked']
       });
@@ -267,7 +267,7 @@ export const useOptimizedContentInteractions = ({
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
-          ...prev[contentId] || { isLiked: false, isLikeLoading: false },
+          ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
           isBookmarked: prevState,
           isBookmarkLoading: false
         }
