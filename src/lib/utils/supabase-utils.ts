@@ -159,7 +159,7 @@ export const decrementCounter = async (
   }
 };
 
-// Define explicit separate interfaces for different insert operations
+// Define explicit separate interfaces for insert operations to avoid deep type instantiation
 interface QuoteLikeInsert {
   quote_id: string;
   user_id: string;
@@ -207,7 +207,7 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists - simpler approach without complex typing
+    // Check if interaction exists - using explicit await to avoid type instantiation issues
     const checkResponse = await supabase
       .from(tableName)
       .select('id')
@@ -234,7 +234,8 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction - use specialized types for each combination
+      // Add interaction - avoid excessive type instantiation by using explicit await
+      let insertResponse;
       if (contentType === 'quote') {
         if (isLike) {
           // Use specific interface for quote likes
@@ -243,11 +244,9 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           // Create separate insert call
-          const insertResponse = await supabase
+          insertResponse = await supabase
             .from(tableName)
             .insert(quoteData);
-            
-          if (insertResponse.error) throw insertResponse.error;
         } else {
           // Use specific interface for quote bookmarks
           const quoteData: QuoteBookmarkInsert = {
@@ -255,11 +254,9 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           // Create separate insert call
-          const insertResponse = await supabase
+          insertResponse = await supabase
             .from(tableName)
             .insert(quoteData);
-            
-          if (insertResponse.error) throw insertResponse.error;
         }
       } else {
         if (isLike) {
@@ -270,11 +267,9 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           // Create separate insert call
-          const insertResponse = await supabase
+          insertResponse = await supabase
             .from(tableName)
             .insert(contentData);
-            
-          if (insertResponse.error) throw insertResponse.error;
         } else {
           // Use specific interface for content bookmarks
           const contentData: ContentBookmarkInsert = {
@@ -283,13 +278,13 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           // Create separate insert call
-          const insertResponse = await supabase
+          insertResponse = await supabase
             .from(tableName)
             .insert(contentData);
-            
-          if (insertResponse.error) throw insertResponse.error;
         }
       }
+            
+      if (insertResponse && insertResponse.error) throw insertResponse.error;
       
       // Only increment count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
