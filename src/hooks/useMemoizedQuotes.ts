@@ -76,13 +76,10 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   }, [options, currentPage]);
   
   // Use the custom hook to fetch quotes
-  const { data: quotesData, isLoading, error, refetch } = useSupabaseQuery<{
-    data: QuoteWithUser[];
-    count: number | null;
-  }>(queryKey, async () => {
+  const { data: quotesData, isLoading, error, refetch } = useSupabaseQuery<QuoteWithUser[]>(queryKey, async () => {
     const result = await queryFn();
     return {
-      data: result.data || [],
+      data: result.data as QuoteWithUser[],
       error: result.error,
       count: result.count
     };
@@ -92,9 +89,9 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   
   // Format quotes and handle user relationships
   const quotes = useMemo(() => {
-    if (!quotesData?.data) return [];
+    if (!quotesData) return [];
     
-    return quotesData.data.map(quote => ({
+    return quotesData.map(quote => ({
       ...quote,
       user: quote.user || {
         id: null,
@@ -108,7 +105,7 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   
   // Calculate total pages
   const totalPages = useMemo(() => {
-    const count = quotesData?.count || 0;
+    const count = quotesData?.length || 0; // Fallback to length if count isn't available
     const pageSize = options.limit || 12;
     return Math.ceil(count / pageSize);
   }, [quotesData, options.limit]);
@@ -117,12 +114,12 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   const { data: allTags = [] } = useSupabaseQuery<string[]>(
     ['quoteTags'],
     async () => {
-      const result = await supabase
+      const { data, error } = await supabase
         .from('quotes')
         .select('tags');
       
       // Extract and flatten tags
-      const tags = (result.data || [])
+      const tags = (data || [])
         .map(item => item.tags)
         .filter(tags => Array.isArray(tags))
         .reduce((acc: string[], tags: string[]) => acc.concat(tags), []);
@@ -130,7 +127,7 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
       // Get distinct tags
       return {
         data: [...new Set(tags)],
-        error: result.error
+        error
       };
     }
   );
