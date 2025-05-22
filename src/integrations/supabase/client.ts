@@ -13,6 +13,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     storage: localStorage,
+    detectSessionInUrl: true,  // Explicitly enable detecting auth sessions in URL
+    flowType: 'implicit'        // Use implicit flow for simpler auth handling
   }
 });
 

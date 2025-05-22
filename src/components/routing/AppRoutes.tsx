@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PageLayout } from '@/components/layouts/PageLayout';
-import { Loader2 } from 'lucide-react';
+import { LoadingScreen } from '@/components/routing/LoadingScreen';
 import { AuthCallback } from './AuthCallback';
 
 // Import pages directly for better code clarity
@@ -31,7 +31,6 @@ import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
 import Profile from '@/pages/Profile';
 import AdminPanel from '@/pages/AdminPanel';
-import { LoadingScreen } from './LoadingScreen';
 
 export function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth();

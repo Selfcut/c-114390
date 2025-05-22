@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUserProfile, updateUserProfile, signIn, signOut, signUp } from './auth-utils';
+import { fetchUserProfile, updateUserProfile, signIn, signOut, signUp, ensureUserProfile } from './auth-utils';
 import { UserProfile, UserStatus, UserRole, AuthContextType } from '@/types/user';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,7 +21,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       console.log(`Loading profile for user: ${userId}`);
-      const profile = await fetchUserProfile(userId, currentSession);
+      let profile = await fetchUserProfile(userId, currentSession);
+      
+      // If no profile was found, try to create one
+      if (!profile) {
+        console.log('Profile not found, attempting to create one');
+        profile = await ensureUserProfile(userId, {
+          email: currentSession?.user?.email,
+          name: currentSession?.user?.user_metadata?.name,
+          username: currentSession?.user?.user_metadata?.username
+        });
+      }
+      
       return profile;
     } catch (error) {
       console.error('Error loading user profile:', error);
