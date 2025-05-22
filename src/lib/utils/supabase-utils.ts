@@ -2,6 +2,15 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
+ * Initialize any required Supabase utilities
+ */
+export const initializeSupabaseUtils = async (): Promise<void> => {
+  console.log('Initializing Supabase utilities...');
+  // This function is called during app initialization
+  // You can add any setup code here if needed in the future
+};
+
+/**
  * Optimized function to increment a counter in a Supabase table
  * 
  * @param rowId - The ID of the row to update
@@ -86,8 +95,10 @@ export const checkUserInteraction = async (
   if (!userId) return false;
   
   try {
+    // Fix for TypeScript strict type checking - use type assertion for the table name
+    // This tells TypeScript we know what we're doing with the dynamic table name
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .eq(contentColumn, contentId)
       .eq('user_id', userId)

@@ -27,7 +27,7 @@ export const initializeSupabase = async () => {
       .subscribe();
     
     // Initialize any required RPC functions or utilities
-    initializeSupabaseUtils();
+    await initializeSupabaseUtils();
     
     console.log("Supabase initialization complete");
   } catch (error) {
