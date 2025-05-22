@@ -1,177 +1,150 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 /**
- * Initialize any required Supabase utilities
+ * Initialize any necessary Supabase-related utilities
  */
-export const initializeSupabaseUtils = async (): Promise<void> => {
-  console.log('Initializing Supabase utilities...');
-  // This function is called during app initialization
-  // You can add any setup code here if needed in the future
-};
-
-/**
- * Type-safe counter operation function to modify a counter in a Supabase table
- * 
- * @param operation - The operation to perform (increment or decrement)
- * @param rowId - The ID of the row to update
- * @param columnName - The name of the counter column
- * @param tableName - The name of the table
- * @returns A promise that resolves when the counter is updated
- */
-const performCounterOperation = async (
-  operation: 'increment' | 'decrement',
-  rowId: string,
-  columnName: string,
-  tableName: string
-): Promise<void> => {
-  try {
-    await supabase.rpc(
-      `${operation}_counter`,
-      {
-        row_id: rowId,
-        column_name: columnName,
-        table_name: tableName
-      }
-    );
-  } catch (error) {
-    console.error(`Error ${operation}ing ${columnName} for ${tableName}:${rowId}`, error);
-    throw error;
+export async function initializeSupabaseUtils(): Promise<void> {
+  console.info('Initializing Supabase utilities...');
+  // Check current authentication status
+  const { data } = await supabase.auth.getSession();
+  if (data.session) {
+    console.info('User session exists, user ID:', data.session.user.id);
+  } else {
+    console.info('No active user session');
   }
-};
+  
+  // Any other initialization can go here
+  
+  return Promise.resolve();
+}
 
 /**
- * Optimized function to increment a counter in a Supabase table
+ * Executes a Supabase query and handles errors
  * 
- * @param rowId - The ID of the row to update
- * @param columnName - The name of the counter column
- * @param tableName - The name of the table
- * @returns A promise that resolves when the counter is incremented
+ * @param queryFn - Function that performs the Supabase query
+ * @returns The query result or null if there was an error
  */
-export const incrementCounter = async (
-  rowId: string, 
-  columnName: string, 
-  tableName: string
-): Promise<void> => {
-  return performCounterOperation('increment', rowId, columnName, tableName);
-};
-
-/**
- * Optimized function to decrement a counter in a Supabase table
- * 
- * @param rowId - The ID of the row to update
- * @param columnName - The name of the counter column
- * @param tableName - The name of the table
- * @returns A promise that resolves when the counter is decremented
- */
-export const decrementCounter = async (
-  rowId: string, 
-  columnName: string, 
-  tableName: string
-): Promise<void> => {
-  return performCounterOperation('decrement', rowId, columnName, tableName);
-};
-
-/**
- * Execute multiple Supabase operations in parallel with optimized error handling
- * 
- * @param operations - Array of operation functions to batch
- * @returns A promise that resolves when all operations are completed
- */
-export const batchOperations = async <T>(
-  operations: (() => Promise<T>)[]
-): Promise<T[]> => {
-  try {
-    return await Promise.all(operations.map(op => op()));
-  } catch (error) {
-    console.error('Error in batch operations:', error);
-    throw error;
-  }
-};
-
-/**
- * Type-safe wrapper for Supabase query execution with error handling
- * 
- * @param queryFn - Function that returns a Supabase query
- * @returns The query result or null if an error occurred
- */
-export const executeQuery = async <T>(
-  queryFn: () => Promise<PostgrestSingleResponse<T>>
-): Promise<T | null> => {
+export async function executeQuery<T>(queryFn: () => Promise<{ data: T | null; error: any }>): Promise<T | null> {
   try {
     const { data, error } = await queryFn();
-    if (error) throw error;
+    if (error) {
+      console.error('Database query error:', error);
+      return null;
+    }
     return data;
-  } catch (error) {
-    console.error('Error executing query:', error);
+  } catch (err) {
+    console.error('Unexpected error during query execution:', err);
     return null;
   }
-};
+}
 
 /**
- * Optimized function to check if a user has interacted with content
+ * Run multiple Supabase operations in parallel
  * 
- * @param tableName - The name of the interaction table (e.g. quote_likes)
- * @param contentColumn - The name of the content ID column (e.g. quote_id)
- * @param contentId - The ID of the content to check
- * @param userId - The ID of the user
- * @returns A promise that resolves to a boolean indicating if the user has interacted with the content
+ * @param operations - Array of functions that return promises
+ * @returns Results of all operations
  */
-export const checkUserInteraction = async (
-  tableName: string,
-  contentColumn: string,
-  contentId: string,
-  userId?: string | null
-): Promise<boolean> => {
-  if (!userId) return false;
+export async function batchOperations<T extends any[]>(operations: Array<() => Promise<T[number]>>): Promise<T> {
+  try {
+    return await Promise.all(operations.map(op => op().catch(err => {
+      console.error('Operation error:', err);
+      return null as any;
+    }))) as T;
+  } catch (err) {
+    console.error('Batch operations error:', err);
+    return Array(operations.length).fill(null) as unknown as T;
+  }
+}
+
+/**
+ * Increment a counter in a specified table
+ * 
+ * @param rowId - ID of the row to update 
+ * @param columnName - Name of the column to increment
+ * @param tableName - Name of the table
+ */
+export async function incrementCounter(
+  rowId: string, 
+  columnName: string, 
+  tableName: string
+): Promise<void> {
+  try {
+    // Use the RPC function rather than direct update for better performance
+    await supabase.rpc('increment_counter', { 
+      row_id: rowId, 
+      column_name: columnName, 
+      table_name: tableName 
+    });
+  } catch (err) {
+    console.error(`Failed to increment ${columnName} in ${tableName}:`, err);
+  }
+}
+
+/**
+ * Decrement a counter in a specified table
+ * 
+ * @param rowId - ID of the row to update
+ * @param columnName - Name of the column to decrement
+ * @param tableName - Name of the table
+ */
+export async function decrementCounter(
+  rowId: string, 
+  columnName: string, 
+  tableName: string
+): Promise<void> {
+  try {
+    // Use the RPC function rather than direct update for better performance
+    await supabase.rpc('decrement_counter', { 
+      row_id: rowId, 
+      column_name: columnName, 
+      table_name: tableName 
+    });
+  } catch (err) {
+    console.error(`Failed to decrement ${columnName} in ${tableName}:`, err);
+  }
+}
+
+/**
+ * Type-safe function to query a table by ID
+ * 
+ * @param tableName - Name of the table to query
+ * @param id - ID to search for
+ * @returns The found row or null
+ */
+export async function getRecordById<T>(tableName: string, id: string): Promise<T | null> {
+  const { data, error } = await supabase
+    .from(tableName as any)
+    .select('*')
+    .eq('id', id)
+    .single();
+    
+  if (error) {
+    console.error(`Error fetching ${tableName} with ID ${id}:`, error);
+    return null;
+  }
+    
+  return data as T;
+}
+
+/**
+ * Helper to safely insert a record with error handling
+ * 
+ * @param tableName - Name of the table
+ * @param data - Data to insert
+ * @returns The inserted record or null
+ */
+export async function insertRecord<T, U>(tableName: string, data: U): Promise<T | null> {
+  const { data: inserted, error } = await supabase
+    .from(tableName as any)
+    .insert(data)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error(`Error inserting into ${tableName}:`, error);
+    return null;
+  }
   
-  try {
-    // Use type assertion for the dynamic table name
-    const { data, error } = await supabase
-      .from(tableName as any)
-      .select('*')
-      .eq(contentColumn, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (error) throw error;
-    return !!data;
-  } catch (error) {
-    console.error(`Error checking ${tableName} interaction:`, error);
-    return false;
-  }
-};
-
-/**
- * Gets the count of items in a table with optional filtering
- * 
- * @param tableName - The name of the table
- * @param filters - Optional filters in the format { column: value }
- * @returns A promise that resolves to the count
- */
-export const getCount = async (
-  tableName: string,
-  filters?: Record<string, any>
-): Promise<number> => {
-  try {
-    let query = supabase
-      .from(tableName as any)
-      .select('*', { count: 'exact', head: true });
-    
-    // Apply filters if provided
-    if (filters) {
-      Object.entries(filters).forEach(([column, value]) => {
-        query = query.eq(column, value);
-      });
-    }
-    
-    const { count, error } = await query;
-    
-    if (error) throw error;
-    return count || 0;
-  } catch (error) {
-    console.error(`Error counting ${tableName}:`, error);
-    return 0;
-  }
-};
+  return inserted as T;
+}

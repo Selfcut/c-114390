@@ -12,7 +12,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 
 // This component is now optimized to use memoization and prevent unnecessary rerenders
-const DayContent = React.memo(({ date }: DayContentProps) => {
+const DayContent = ({ date }: DayContentProps) => {
   const { events } = useEvents();
   const navigate = useNavigate();
 
@@ -56,9 +56,7 @@ const DayContent = React.memo(({ date }: DayContentProps) => {
       )}
     </div>
   );
-});
-
-DayContent.displayName = 'DayContent';
+};
 
 export const EventCalendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());

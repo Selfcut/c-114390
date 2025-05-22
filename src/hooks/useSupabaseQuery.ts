@@ -2,6 +2,8 @@
 import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import { PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { ReactNode } from 'react';
+import { useState } from 'react';
 
 // Type for Supabase query function
 type SupabaseQueryFn<T> = () => Promise<PostgrestSingleResponse<T>>;
@@ -47,8 +49,8 @@ export function useSupabaseMutation<TData = unknown, TVariables = unknown, TErro
       // Show success toast if not suppressed
       if (!options?.meta?.suppressSuccessToast) {
         toast({
-          title: options?.meta?.successTitle || 'Success',
-          description: options?.meta?.successMessage || 'Operation completed successfully',
+          title: options?.meta?.successTitle as string || 'Success',
+          description: options?.meta?.successMessage as ReactNode || 'Operation completed successfully',
         });
       }
       

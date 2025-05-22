@@ -190,7 +190,7 @@ export const createQuoteOptimized = async (
     // Return the quote with user data
     return {
       ...newQuote,
-      user: profileError ? {
+      user: profileError || !profile ? {
         id: userData.user.id,
         username: 'unknown',
         name: 'Unknown User',

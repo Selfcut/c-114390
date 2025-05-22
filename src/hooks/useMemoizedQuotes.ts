@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { QuoteWithUser, QuoteFilterOptions, QuoteSortOption } from '@/lib/quotes/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseQuery } from './useSupabaseQuery';
@@ -74,7 +74,13 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   const { data: quotesData, isLoading, error, refetch } = useSupabaseQuery<{
     data: QuoteWithUser[];
     count: number | null;
-  }>(queryKey, queryFn, {
+  }>(queryKey, async () => {
+    const result = await queryFn();
+    return {
+      data: result.data || [],
+      count: result.count
+    };
+  }, {
     keepPreviousData: true,
   });
   
@@ -105,17 +111,17 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   const { data: allTags = [] } = useSupabaseQuery<string[]>(
     ['quoteTags'],
     async () => {
-      const { data, error } = await supabase
+      const result = await supabase
         .from('quotes')
         .select('tags');
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       // Extract and flatten tags
-      const tags = data
+      const tags = result.data
         .map(item => item.tags)
         .filter(tags => Array.isArray(tags))
-        .reduce((acc, tags) => acc.concat(tags), []);
+        .reduce((acc: string[], tags: string[]) => acc.concat(tags), []);
       
       // Get distinct tags
       return [...new Set(tags)];
