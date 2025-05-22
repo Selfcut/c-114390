@@ -16,7 +16,7 @@ export interface ContentInteractions {
   hasBookmarked: boolean;
 }
 
-// Define a more concrete batch operation type
+// Define a more concrete batch operation type without excessive generic parameters
 export interface BatchOperation<T> {
   (): Promise<T>;
 }
@@ -108,7 +108,7 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    // Use the rpc function directly without type instantiation issues
+    // Use the rpc function directly
     const { error } = await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
@@ -140,7 +140,7 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    // Use the rpc function directly without type instantiation issues
+    // Use the rpc function directly
     const { error } = await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
@@ -210,22 +210,19 @@ export const toggleUserInteraction = async (
       return false;
     } else {
       // Add interaction
-      let insertData: { [key: string]: string };
+      // Fix: Define explicit fields for insert
+      const insertData: Record<string, string> = {};
       
       if (contentType === 'quote') {
-        insertData = {
-          quote_id: contentId, 
-          user_id: userId
-        };
+        insertData.quote_id = contentId;
+        insertData.user_id = userId;
       } else {
-        insertData = {
-          content_id: contentId,
-          user_id: userId,
-          content_type: contentType
-        };
+        insertData.content_id = contentId;
+        insertData.user_id = userId;
+        insertData.content_type = contentType;
       }
       
-      // Perform insert
+      // Perform insert with typed data
       const { error: insertError } = await supabase
         .from(tableName)
         .insert(insertData);

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserInteraction } from '@/contexts/UserInteractionContext';
-import { useEffect } from 'react';
 
 interface PostFooterProps {
   post: {
@@ -52,7 +51,8 @@ export const PostFooter: React.FC<PostFooterProps> = ({
       await onUpvote();
     } else if (isAuthenticated) {
       // Use the context function if no custom handler is provided
-      await toggleLike(post.id, 'forum', isAuthenticated);
+      // Fix: Pass post.id as string instead of isAuthenticated boolean
+      await toggleLike(post.id, 'forum', isAuthenticated ? 'authenticated' : '');
     }
   };
 
@@ -67,7 +67,8 @@ export const PostFooter: React.FC<PostFooterProps> = ({
       return;
     }
 
-    await toggleBookmark(post.id, 'forum', isAuthenticated);
+    // Fix: Pass post.id as string instead of isAuthenticated boolean
+    await toggleBookmark(post.id, 'forum', isAuthenticated ? 'authenticated' : '');
   };
 
   const handleShare = async () => {
