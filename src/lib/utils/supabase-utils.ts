@@ -16,10 +16,8 @@ export interface ContentInteractions {
   hasBookmarked: boolean;
 }
 
-// Define a more concrete batch operation type without excessive generic parameters
-export interface BatchOperation<T> {
-  (): Promise<T>;
-}
+// Define a simpler batch operation type without complex generic parameters
+export type BatchOperation<T = any> = () => Promise<T>;
 
 /**
  * Initialize necessary Supabase utilities
@@ -155,6 +153,18 @@ export const decrementCounter = async (
   }
 };
 
+// Define specific insert types to avoid deep type instantiation
+interface QuoteInteractionInsert {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentInteractionInsert {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
 /**
  * Toggle a user interaction (like or bookmark) on content
  * @param type The interaction type ('like' or 'bookmark')
@@ -208,24 +218,31 @@ export const toggleUserInteraction = async (
       return false;
     } else {
       // Add interaction
-      // Fix: Use specific object literal with required fields instead of Record<string, string>
       if (contentType === 'quote') {
         // Quote-specific insert with correct typing
-        await supabase
+        const quoteData: QuoteInteractionInsert = {
+          quote_id: contentId,
+          user_id: userId
+        };
+        
+        const { error } = await supabase
           .from(tableName)
-          .insert({
-            quote_id: contentId,
-            user_id: userId
-          });
+          .insert(quoteData);
+          
+        if (error) throw error;
       } else {
         // Content-specific insert with correct typing
-        await supabase
+        const contentData: ContentInteractionInsert = {
+          content_id: contentId,
+          user_id: userId,
+          content_type: contentType
+        };
+        
+        const { error } = await supabase
           .from(tableName)
-          .insert({
-            content_id: contentId,
-            user_id: userId,
-            content_type: contentType
-          });
+          .insert(contentData);
+          
+        if (error) throw error;
       }
       
       // Only increment count for supported counters
