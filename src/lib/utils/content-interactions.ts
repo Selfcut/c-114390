@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { executeQuery } from './supabase-helpers';
+import { executeQuery, QueryResult } from './supabase-helpers';
 import { incrementCounter, decrementCounter } from './counter-operations';
 
 // Content interaction interfaces for better type safety
@@ -51,8 +51,8 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute likes query using our helper function
-    const likesResult = await executeQuery(() => 
+    // Execute likes query using our helper function without complex typing
+    const likesResult: QueryResult = await executeQuery(() => 
       supabase
         .from(likesTable)
         .select('id')
@@ -61,8 +61,8 @@ export const checkUserContentInteractions = async (
         .maybeSingle()
     );
     
-    // Execute the bookmarks query using our helper function
-    const bookmarksResult = await executeQuery(() => 
+    // Execute the bookmarks query using our helper function without complex typing
+    const bookmarksResult: QueryResult = await executeQuery(() => 
       supabase
         .from(bookmarksTable)
         .select('id')
@@ -119,7 +119,7 @@ export const toggleUserInteraction = async (
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
     // Check if interaction exists using our helper function
-    const checkResult = await executeQuery(() =>
+    const checkResult: QueryResult = await executeQuery(() =>
       supabase
         .from(tableName)
         .select('id')
@@ -131,12 +131,15 @@ export const toggleUserInteraction = async (
     if (checkResult.error) throw checkResult.error;
 
     if (checkResult.data) {
-      // Remove interaction
-      const deleteResult = await executeQuery(() =>
+      // Remove interaction - use the data.id safely with type checking
+      const recordId = checkResult.data?.id;
+      if (!recordId) throw new Error('Could not find record ID');
+      
+      const deleteResult: QueryResult = await executeQuery(() =>
         supabase
           .from(tableName)
           .delete()
-          .eq('id', checkResult.data.id)
+          .eq('id', recordId)
       );
         
       if (deleteResult.error) throw deleteResult.error;
@@ -149,7 +152,7 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      let insertResult: { data: any, error: any };
+      let insertResult: QueryResult;
       
       if (contentType === 'quote') {
         if (isLike) {
