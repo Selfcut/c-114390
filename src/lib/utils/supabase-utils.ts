@@ -2,6 +2,7 @@
 // Import supabase client
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 // Type definitions for better type safety
 export interface CounterOptions {
@@ -42,6 +43,12 @@ export const batchOperations = async (operations: BatchOperation[]): Promise<unk
   return Promise.all(operations.map(operation => operation()));
 };
 
+// Define response types to avoid type recursion issues
+interface SupabaseSingleResult {
+  data: { id: string } | null;
+  error: Error | null;
+}
+
 /**
  * Check if a user has liked or bookmarked a piece of content
  * @param userId The user ID
@@ -60,10 +67,6 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Define specific result types to avoid type recursion
-    type LikeResult = { data: { id: string } | null };
-    type BookmarkResult = { data: { id: string } | null };
-    
     // Execute queries in parallel for better performance
     const [likesResult, bookmarksResult] = await Promise.all([
       // Check if user has liked the content
@@ -72,14 +75,14 @@ export const checkUserContentInteractions = async (
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle() as Promise<LikeResult>,
+        .maybeSingle() as unknown as Promise<SupabaseSingleResult>,
       // Check if user has bookmarked the content
       supabase
         .from(bookmarksTable)
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle() as Promise<BookmarkResult>
+        .maybeSingle() as unknown as Promise<SupabaseSingleResult>
     ]);
     
     return {
@@ -179,8 +182,9 @@ interface ContentBookmarkInsert {
 }
 
 // Define result types for database operations
-type SupabaseDeleteResult = { error: Error | null };
-type SupabaseInsertResult = { error: Error | null };
+interface SupabaseResult {
+  error: Error | null;
+}
 
 /**
  * Toggle a user interaction (like or bookmark) on content
@@ -207,19 +211,13 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Define specific type for checking results
-    type ExistingCheckResult = {
-      data: { id: string } | null;
-      error: Error | null;
-    };
-
     // Check if interaction exists
     const { data: existingData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
-      .maybeSingle() as ExistingCheckResult;
+      .maybeSingle() as unknown as SupabaseSingleResult;
       
     if (checkError) throw checkError;
 
@@ -228,7 +226,7 @@ export const toggleUserInteraction = async (
       const { error: deleteError } = await supabase
         .from(tableName)
         .delete()
-        .eq('id', existingData.id) as SupabaseDeleteResult;
+        .eq('id', existingData.id) as unknown as SupabaseResult;
         
       if (deleteError) throw deleteError;
       
@@ -251,7 +249,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(quoteData) as SupabaseInsertResult;
+            .insert(quoteData) as unknown as SupabaseResult;
             
           if (error) throw error;
         } else {
@@ -263,7 +261,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(quoteData) as SupabaseInsertResult;
+            .insert(quoteData) as unknown as SupabaseResult;
             
           if (error) throw error;
         }
@@ -278,7 +276,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(contentData) as SupabaseInsertResult;
+            .insert(contentData) as unknown as SupabaseResult;
             
           if (error) throw error;
         } else {
@@ -291,7 +289,7 @@ export const toggleUserInteraction = async (
           // Create separate insert call
           const { error } = await supabase
             .from(tableName)
-            .insert(contentData) as SupabaseInsertResult;
+            .insert(contentData) as unknown as SupabaseResult;
             
           if (error) throw error;
         }
