@@ -60,15 +60,24 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute queries in parallel for better performance - avoid complex typing with destructuring
-    const [likesResponse, bookmarksResponse] = await Promise.all([
-      supabase.from(likesTable).select('id').eq(idField, contentId).eq('user_id', userId).maybeSingle(),
-      supabase.from(bookmarksTable).select('id').eq(idField, contentId).eq('user_id', userId).maybeSingle()
-    ]);
+    // Explicitly type and handle Supabase queries separately to avoid deep type instantiation
+    const likesQuery = await supabase
+      .from(likesTable)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    const bookmarksQuery = await supabase
+      .from(bookmarksTable)
+      .select('id')
+      .eq(idField, contentId)
+      .eq('user_id', userId)
+      .maybeSingle();
     
     return {
-      hasLiked: !!likesResponse.data,
-      hasBookmarked: !!bookmarksResponse.data
+      hasLiked: !!likesQuery.data,
+      hasBookmarked: !!bookmarksQuery.data
     };
   } catch (error) {
     console.error('[Supabase Utils] Error checking user content interactions:', error);
@@ -189,27 +198,27 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists
-    const checkResponse = await supabase
+    // Check if interaction exists - handle response directly without destructuring
+    const checkQuery = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
-    const existingData = checkResponse.data;
-    const checkError = checkResponse.error;
+    const existingData = checkQuery.data;
+    const checkError = checkQuery.error;
       
     if (checkError) throw checkError;
 
     if (existingData) {
       // Remove interaction
-      const deleteResponse = await supabase
+      const deleteQuery = await supabase
         .from(tableName)
         .delete()
         .eq('id', existingData.id);
         
-      if (deleteResponse.error) throw deleteResponse.error;
+      if (deleteQuery.error) throw deleteQuery.error;
       
       // Only decrement count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
