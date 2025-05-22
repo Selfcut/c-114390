@@ -49,8 +49,8 @@ export function useSupabaseMutation<TData = unknown, TVariables = unknown, TErro
       // Show success toast if not suppressed
       if (!options?.meta?.suppressSuccessToast) {
         toast({
-          title: options?.meta?.successTitle as string || 'Success',
-          description: options?.meta?.successMessage as ReactNode || 'Operation completed successfully',
+          title: (options?.meta?.successTitle as string) || 'Success',
+          description: (options?.meta?.successMessage as ReactNode) || 'Operation completed successfully',
         });
       }
       

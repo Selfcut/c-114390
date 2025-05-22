@@ -88,7 +88,7 @@ export const fetchQuotesOptimized = async (
     });
     
     return {
-      quotes: formattedQuotes,
+      quotes: formattedQuotes as QuoteWithUser[],
       count: count || 0
     };
   } catch (error) {
@@ -134,7 +134,7 @@ export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser
         avatar_url: null,
         status: 'offline'
       }
-    };
+    } as QuoteWithUser;
   } catch (error) {
     console.error('Error in fetchQuoteByIdOptimized:', error);
     return null;
@@ -197,7 +197,7 @@ export const createQuoteOptimized = async (
         avatar_url: null,
         status: 'offline'
       } : profile
-    };
+    } as QuoteWithUser;
   } catch (error) {
     console.error('Error in createQuoteOptimized:', error);
     return null;

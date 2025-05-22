@@ -76,10 +76,10 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   }, [options, currentPage]);
   
   // Use the custom hook to fetch quotes
-  const { data: quotesData, isLoading, error, refetch } = useSupabaseQuery<QuoteWithUser[]>(queryKey, async () => {
+  const { data: quotesData, isLoading, error, refetch } = useSupabaseQuery<any[]>(queryKey, async () => {
     const result = await queryFn();
     return {
-      data: result.data as QuoteWithUser[],
+      data: result.data,
       error: result.error,
       count: result.count
     };
@@ -100,7 +100,7 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
         avatar_url: null,
         status: 'offline'
       }
-    }));
+    })) as QuoteWithUser[];
   }, [quotesData]);
   
   // Calculate total pages
