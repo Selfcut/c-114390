@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -201,10 +202,10 @@ export const ForumPostDetail = () => {
               // Adapt the comment data for CommentItem, ensuring all required properties are present
               const adaptedComment = {
                 id: comment.id,
-                content: comment.content || comment.comment || '',
-                comment: comment.comment || comment.content || '',
+                content: comment.content || '',
+                comment: comment.content || '', // Using content as comment
                 author: comment.author || 'Anonymous',
-                authorName: comment.author || comment.authorName || 'Anonymous',
+                authorName: comment.author || 'Anonymous', // Using author as authorName
                 authorAvatar: comment.authorAvatar || '',
                 created_at: comment.createdAt instanceof Date 
                   ? comment.createdAt.toISOString() 
@@ -212,7 +213,7 @@ export const ForumPostDetail = () => {
                     ? comment.createdAt
                     : new Date().toISOString(),
                 isAuthor: !!comment.isAuthor,
-                upvotes: comment.upvotes || 0
+                upvotes: 0 // Default upvotes value since it's missing
               };
               
               return <CommentItem key={comment.id} comment={adaptedComment} />;

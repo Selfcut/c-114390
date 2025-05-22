@@ -63,7 +63,8 @@ export const checkUserContentInteractions = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
     // Execute queries in parallel for better performance
-    const [likesResult, bookmarksResult] = await Promise.all([
+    // Use explicit Promise.all instead of destructuring to avoid deep type instantiation
+    const results = await Promise.all([
       // Check if user has liked the content
       supabase
         .from(likesTable)
@@ -89,8 +90,8 @@ export const checkUserContentInteractions = async (
     ]);
     
     return {
-      hasLiked: likesResult,
-      hasBookmarked: bookmarksResult
+      hasLiked: results[0],
+      hasBookmarked: results[1]
     };
   } catch (error) {
     console.error('[Supabase Utils] Error checking user content interactions:', error);
@@ -116,6 +117,7 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
+    // Use the rpc function directly without type instantiation issues
     const { error } = await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
@@ -147,6 +149,7 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
+    // Use the rpc function directly without type instantiation issues
     const { error } = await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
@@ -188,8 +191,8 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : contentType;
 
-    // Check if interaction exists
-    const { data: existingInteraction, error: checkError } = await supabase
+    // Check if interaction exists - use simpler approach to avoid type issues
+    const { data: existingData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
@@ -197,6 +200,7 @@ export const toggleUserInteraction = async (
       .maybeSingle();
       
     if (checkError) throw checkError;
+    const existingInteraction = existingData;
 
     if (existingInteraction) {
       // Remove interaction
@@ -215,31 +219,28 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction - use explicit object with required fields
+      // Add interaction - prepare insert data with explicit typing
+      let insertData: Record<string, string>;
+      
       if (contentType === 'quote') {
-        const insertData: { quote_id: string; user_id: string } = {
+        insertData = {
           quote_id: contentId, 
           user_id: userId
         };
-        
-        const { error: insertError } = await supabase
-          .from(tableName)
-          .insert(insertData);
-          
-        if (insertError) throw insertError;
       } else {
-        const insertData: { content_id: string; user_id: string; content_type: string } = {
+        insertData = {
           content_id: contentId,
           user_id: userId,
           content_type: contentType
         };
-        
-        const { error: insertError } = await supabase
-          .from(tableName)
-          .insert(insertData);
-          
-        if (insertError) throw insertError;
       }
+      
+      // Perform insert
+      const { error: insertError } = await supabase
+        .from(tableName)
+        .insert(insertData);
+          
+      if (insertError) throw insertError;
       
       // Only increment count for supported counters
       const counterSupported = isLike || (contentType === 'quote');

@@ -51,23 +51,17 @@ export const fetchQuotesOptimized = async (
     // Get unique user IDs
     const userIds = [...new Set(quotesData.map(quote => quote.user_id).filter(Boolean))];
     
-    // Batch fetch user profiles
-    const [profilesResult] = await batchOperations<any[]>([
-      async () => {
-        if (userIds.length === 0) return [];
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, username, name, avatar_url, status')
-          .in('id', userIds);
-        
-        if (error) throw error;
-        return data || [];
-      }
-    ]);
+    // Batch fetch user profiles - fixed by using a properly typed operation
+    const profilesResult = await supabase
+      .from('profiles')
+      .select('id, username, name, avatar_url, status')
+      .in('id', userIds.length > 0 ? userIds : ['no-user-ids']);  // Avoid empty IN clause
+    
+    const profiles = profilesResult.data || [];
     
     // Create a map of profiles by user ID
     const profilesMap: Record<string, any> = {};
-    profilesResult.forEach(profile => {
+    profiles.forEach(profile => {
       profilesMap[profile.id] = profile;
     });
     
@@ -105,68 +99,33 @@ export const fetchQuotesOptimized = async (
  */
 export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser | null> => {
   try {
-    // Execute both queries in parallel using batch operations
-    type QuoteType = {
-      author: string;
-      bookmarks: number;
-      category: string;
-      comments: number;
-      created_at: string;
-      featured_date: string;
-      id: string;
-      likes: number;
-      source: string;
-      tags: string[];
-      text: string;
-      updated_at: string;
-      user_id: string;
-    };
+    // Execute quote and profile queries separately to avoid type issues
+    const { data: quoteData, error: quoteError } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', id)
+      .single();
     
-    type ProfileType = {
-      id: string;
-      username: string;
-      name: string;
-      avatar_url: string;
-      status: string;
-    } | null;
+    if (quoteError || !quoteData) return null;
     
-    const [quoteResult, profileResult] = await batchOperations<QuoteType | ProfileType>([
-      async () => {
-        // Properly await the query to get the data and error properties
-        const { data, error } = await supabase
-          .from('quotes')
-          .select('*')
-          .eq('id', id)
-          .single();
-          
-        return error ? null : data as QuoteType;
-      },
-      async () => {
-        // Fetch user profile associated with the quote
-        const { data: quoteData, error: quoteError } = await supabase
-          .from('quotes')
-          .select('user_id')
-          .eq('id', id)
-          .single();
+    // Fetch user profile if quote has a user_id
+    let profileData = null;
+    if (quoteData.user_id) {
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, name, avatar_url, status')
+        .eq('id', quoteData.user_id)
+        .single();
         
-        if (quoteError || !quoteData?.user_id) return null;
-        
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, name, avatar_url, status')
-          .eq('id', quoteData.user_id)
-          .single();
-          
-        return profileError ? null : profileData as ProfileType;
+      if (!profileError) {
+        profileData = data;
       }
-    ]);
-    
-    if (!quoteResult) return null;
+    }
     
     // Combine quote with user data
     return {
-      ...quoteResult,
-      user: profileResult || {
+      ...quoteData,
+      user: profileData || {
         id: null,
         username: 'unknown',
         name: 'Unknown User',
