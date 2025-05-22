@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useContentInteraction } from '@/contexts/UserInteractionContext';
+import { useUserInteraction } from '@/contexts/UserInteractionContext';
 import { useEffect } from 'react';
 
 interface PostFooterProps {
@@ -24,21 +24,18 @@ export const PostFooter: React.FC<PostFooterProps> = ({
 }) => {
   const { toast } = useToast();
   const {
-    isLiked,
-    isBookmarked,
-    isLikeLoading,
-    isBookmarkLoading,
+    likedItems,
+    bookmarkedItems,
+    isLoading,
     toggleLike,
-    toggleBookmark,
-    checkInteraction
-  } = useContentInteraction(post.id, 'forum');
+    toggleBookmark
+  } = useUserInteraction();
 
-  // Check interaction status on mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      checkInteraction();
-    }
-  }, [isAuthenticated, checkInteraction]);
+  // Check if this post is liked or bookmarked
+  const isLiked = likedItems[`forum:${post.id}`] || false;
+  const isBookmarked = bookmarkedItems[`forum:${post.id}`] || false;
+  const isLikeLoading = isLoading;
+  const isBookmarkLoading = isLoading;
 
   // Handle like with optional custom onUpvote handler
   const handleLike = async () => {
@@ -53,9 +50,24 @@ export const PostFooter: React.FC<PostFooterProps> = ({
 
     if (onUpvote) {
       await onUpvote();
-    } else {
-      await toggleLike();
+    } else if (isAuthenticated) {
+      // Use the context function if no custom handler is provided
+      await toggleLike(post.id, 'forum', isAuthenticated);
     }
+  };
+
+  // Handle bookmark
+  const handleBookmark = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to bookmark",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await toggleBookmark(post.id, 'forum', isAuthenticated);
   };
 
   const handleShare = async () => {
@@ -106,7 +118,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
           variant="ghost"
           size="sm"
           className={`flex items-center gap-2 ${isBookmarked ? 'text-primary' : ''}`}
-          onClick={toggleBookmark}
+          onClick={handleBookmark}
           disabled={isBookmarkLoading || !isAuthenticated}
           aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
         >

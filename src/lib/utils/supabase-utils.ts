@@ -40,7 +40,7 @@ export const initializeSupabaseUtils = async (): Promise<boolean> => {
  * @param operations Array of functions that return promises
  * @returns Promise with array of results
  */
-export const batchOperations = async <T>(operations: Array<BatchOperation<T>>): Promise<T[]> => {
+export const batchOperations = async <T>(operations: BatchOperation<T>[]): Promise<T[]> => {
   return Promise.all(operations.map(operation => operation()));
 };
 
@@ -63,19 +63,14 @@ export const checkUserContentInteractions = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
     // Execute queries in parallel for better performance
-    // Use explicit Promise.all instead of destructuring to avoid deep type instantiation
-    const results = await Promise.all([
+    const [likesResult, bookmarksResult] = await Promise.all([
       // Check if user has liked the content
       supabase
         .from(likesTable)
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle()
-        .then(({ data, error }) => {
-          if (error) throw error;
-          return !!data;
-        }),
+        .maybeSingle(),
       // Check if user has bookmarked the content
       supabase
         .from(bookmarksTable)
@@ -83,15 +78,11 @@ export const checkUserContentInteractions = async (
         .eq(idField, contentId)
         .eq('user_id', userId)
         .maybeSingle()
-        .then(({ data, error }) => {
-          if (error) throw error;
-          return !!data;
-        })
     ]);
     
     return {
-      hasLiked: results[0],
-      hasBookmarked: results[1]
+      hasLiked: !!likesResult.data,
+      hasBookmarked: !!bookmarksResult.data
     };
   } catch (error) {
     console.error('[Supabase Utils] Error checking user content interactions:', error);
@@ -189,9 +180,9 @@ export const toggleUserInteraction = async (
     
     const counterName = isLike ? 'likes' : 'bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
-    const contentTableName = contentType === 'quote' ? 'quotes' : contentType;
+    const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists - use simpler approach to avoid type issues
+    // Check if interaction exists
     const { data: existingData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
@@ -200,14 +191,13 @@ export const toggleUserInteraction = async (
       .maybeSingle();
       
     if (checkError) throw checkError;
-    const existingInteraction = existingData;
 
-    if (existingInteraction) {
+    if (existingData) {
       // Remove interaction
       const { error: deleteError } = await supabase
         .from(tableName)
         .delete()
-        .eq('id', existingInteraction.id);
+        .eq('id', existingData.id);
         
       if (deleteError) throw deleteError;
       
@@ -219,8 +209,8 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction - prepare insert data with explicit typing
-      let insertData: Record<string, string>;
+      // Add interaction
+      let insertData: { [key: string]: string };
       
       if (contentType === 'quote') {
         insertData = {
