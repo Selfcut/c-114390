@@ -75,14 +75,16 @@ export const checkUserContentInteractions = async (
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle() as unknown as Promise<SupabaseSingleResult>,
+        .maybeSingle()
+        .then(result => result as unknown as SupabaseSingleResult),
       // Check if user has bookmarked the content
       supabase
         .from(bookmarksTable)
         .select('id')
         .eq(idField, contentId)
         .eq('user_id', userId)
-        .maybeSingle() as unknown as Promise<SupabaseSingleResult>
+        .maybeSingle()
+        .then(result => result as unknown as SupabaseSingleResult)
     ]);
     
     return {
@@ -211,24 +213,29 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists
-    const { data: existingData, error: checkError } = await supabase
+    // Check if interaction exists - use .then() to avoid type issues
+    const result = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
-      .maybeSingle() as unknown as SupabaseSingleResult;
+      .maybeSingle()
+      .then(res => ({
+        data: res.data as { id: string } | null,
+        error: res.error
+      }));
       
-    if (checkError) throw checkError;
+    if (result.error) throw result.error;
 
-    if (existingData) {
+    if (result.data) {
       // Remove interaction
-      const { error: deleteError } = await supabase
+      const deleteResult = await supabase
         .from(tableName)
         .delete()
-        .eq('id', existingData.id) as unknown as SupabaseResult;
+        .eq('id', result.data.id)
+        .then(res => ({ error: res.error }));
         
-      if (deleteError) throw deleteError;
+      if (deleteResult.error) throw deleteResult.error;
       
       // Only decrement count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
@@ -247,11 +254,12 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           // Create separate insert call
-          const { error } = await supabase
+          const insertResult = await supabase
             .from(tableName)
-            .insert(quoteData) as unknown as SupabaseResult;
+            .insert(quoteData)
+            .then(res => ({ error: res.error }));
             
-          if (error) throw error;
+          if (insertResult.error) throw insertResult.error;
         } else {
           // Use specific interface for quote bookmarks
           const quoteData: QuoteBookmarkInsert = {
@@ -259,11 +267,12 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           // Create separate insert call
-          const { error } = await supabase
+          const insertResult = await supabase
             .from(tableName)
-            .insert(quoteData) as unknown as SupabaseResult;
+            .insert(quoteData)
+            .then(res => ({ error: res.error }));
             
-          if (error) throw error;
+          if (insertResult.error) throw insertResult.error;
         }
       } else {
         if (isLike) {
@@ -274,11 +283,12 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           // Create separate insert call
-          const { error } = await supabase
+          const insertResult = await supabase
             .from(tableName)
-            .insert(contentData) as unknown as SupabaseResult;
+            .insert(contentData)
+            .then(res => ({ error: res.error }));
             
-          if (error) throw error;
+          if (insertResult.error) throw insertResult.error;
         } else {
           // Use specific interface for content bookmarks
           const contentData: ContentBookmarkInsert = {
@@ -287,11 +297,12 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           // Create separate insert call
-          const { error } = await supabase
+          const insertResult = await supabase
             .from(tableName)
-            .insert(contentData) as unknown as SupabaseResult;
+            .insert(contentData)
+            .then(res => ({ error: res.error }));
             
-          if (error) throw error;
+          if (insertResult.error) throw insertResult.error;
         }
       }
       
