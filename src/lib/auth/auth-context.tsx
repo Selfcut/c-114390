@@ -15,7 +15,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Dedicated function to load user profile
+  // Dedicated function to load user profile with improved error handling
   const loadUserProfile = useCallback(async (userId: string, currentSession: Session | null) => {
     if (!userId) return null;
     
@@ -31,6 +31,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: currentSession?.user?.user_metadata?.name,
           username: currentSession?.user?.user_metadata?.username
         });
+        
+        if (!profile) {
+          console.error('Failed to create profile for user:', userId);
+          return null;
+        }
       }
       
       return profile;
@@ -40,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Handle auth state changes independently
+  // Handle auth state changes with improved flow
   const handleAuthStateChange = useCallback((session: Session | null) => {
     setSession(session);
     
@@ -72,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     console.log("Setting up auth state listener");
     
-    // Set up auth state listener
+    // Set up auth state listener FIRST (correct initialization order)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       console.log('Auth state changed:', event, currentSession?.user?.id);
       
@@ -80,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       handleAuthStateChange(currentSession);
     });
     
-    // Check for existing session
+    // THEN check for existing session
     const initializeAuth = async () => {
       try {
         console.log("Checking for existing session");

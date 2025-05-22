@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserStatus, UserRole } from "@/types/user";
 import { Session } from "@supabase/supabase-js";
@@ -184,13 +183,18 @@ export async function updateUserProfile(
   }
 }
 
-// Add the missing ensureUserProfile function
+// Improved ensureUserProfile function with better error handling
 export async function ensureUserProfile(userId: string, userData?: { 
   email?: string; 
   name?: string; 
   username?: string; 
 }): Promise<UserProfile | null> {
   try {
+    if (!userId) {
+      console.error('Invalid user ID provided to ensureUserProfile');
+      return null;
+    }
+    
     // First check if profile exists
     const { data: existingProfile, error } = await supabase
       .from('profiles')
