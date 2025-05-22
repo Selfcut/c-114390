@@ -163,7 +163,7 @@ export const createQuoteOptimized = async (
       throw new Error('Missing required fields: text, author, and category are required');
     }
     
-    // Insert the quote
+    // Insert the quote - Fix issue with awaiting the Promise
     const { data: newQuote, error: insertError } = await supabase
       .from('quotes')
       .insert({
