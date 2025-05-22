@@ -1,4 +1,3 @@
-
 import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
 // Use 'export type' to properly re-export types when isolatedModules is enabled
@@ -17,7 +16,7 @@ export interface AuthContextValue extends AuthState {
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;
   session?: any;
-  updateUserProfile?: (updates: Partial<UserProfile>) => Promise<{ error: any } | null>;
+  updateUserProfile?: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   updateUserStatus?: (status: UserStatus) => Promise<void>;
   toggleGhostMode?: () => Promise<void>;
   toggleDoNotDisturb?: () => Promise<void>;
