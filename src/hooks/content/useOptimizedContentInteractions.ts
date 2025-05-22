@@ -60,7 +60,9 @@ export const useOptimizedContentInteractions = ({
 
   // Handle like interaction with optimistic updates
   const likeMutation = useMutation<MutationReturn, Error, MutationVariables>({
-    mutationFn: async ({ contentId }) => {
+    mutationFn: async (variables: MutationVariables) => {
+      const { contentId } = variables;
+      
       if (!userId || !contentId) {
         throw new Error('User ID or Content ID missing');
       }
@@ -174,7 +176,9 @@ export const useOptimizedContentInteractions = ({
 
   // Handle bookmark interaction with optimistic updates
   const bookmarkMutation = useMutation<MutationReturn, Error, MutationVariables>({
-    mutationFn: async ({ contentId }) => {
+    mutationFn: async (variables: MutationVariables) => {
+      const { contentId } = variables;
+      
       if (!userId || !contentId) {
         throw new Error('User ID or Content ID missing');
       }
