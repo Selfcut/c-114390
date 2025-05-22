@@ -123,17 +123,18 @@ export const useOptimizedContentInteractions = ({
     },
     onMutate: (variables) => {
       const { contentId } = variables;
-      // Optimistically update the UI
-      const currentState = interactionState[contentId]?.isLiked || false;
-      
-      setInteractionState(prev => ({
-        ...prev,
+      // Use type assertion to avoid deep type instantiation
+      const updatedState = {
+        ...interactionState,
         [contentId]: {
-          ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
-          isLiked: !currentState,
+          ...(interactionState[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
+          isLiked: !(interactionState[contentId]?.isLiked || false),
           isLikeLoading: true
         }
-      }));
+      };
+      
+      // Directly set state with the prepared object
+      setInteractionState(updatedState);
     },
     onSuccess: (data) => {
       // Update with server result
@@ -248,17 +249,18 @@ export const useOptimizedContentInteractions = ({
     },
     onMutate: (variables) => {
       const { contentId } = variables;
-      // Optimistically update the UI
-      const currentState = interactionState[contentId]?.isBookmarked || false;
-      
-      setInteractionState(prev => ({
-        ...prev,
+      // Use type assertion to avoid deep type instantiation
+      const updatedState = {
+        ...interactionState,
         [contentId]: {
-          ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
-          isBookmarked: !currentState,
+          ...(interactionState[contentId] || { isLiked: false, isLikeLoading: false }),
+          isBookmarked: !(interactionState[contentId]?.isBookmarked || false),
           isBookmarkLoading: true
         }
-      }));
+      };
+      
+      // Directly set state with the prepared object
+      setInteractionState(updatedState);
     },
     onSuccess: (data) => {
       // Update with server result
