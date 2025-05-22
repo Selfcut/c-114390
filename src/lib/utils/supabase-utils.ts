@@ -16,8 +16,8 @@ export interface ContentInteractions {
   hasBookmarked: boolean;
 }
 
-// Use a simple type definition to avoid excessive type instantiation
-export type BatchOperation = () => Promise<any>;
+// Use a simple type definition without generics to avoid excessive type instantiation
+export type BatchOperation = () => Promise<unknown>;
 
 /**
  * Initialize necessary Supabase utilities
@@ -38,7 +38,7 @@ export const initializeSupabaseUtils = async (): Promise<boolean> => {
  * @param operations Array of functions that return promises
  * @returns Promise with array of results
  */
-export const batchOperations = async (operations: BatchOperation[]): Promise<any[]> => {
+export const batchOperations = async (operations: BatchOperation[]): Promise<unknown[]> => {
   return Promise.all(operations.map(operation => operation()));
 };
 
@@ -151,7 +151,7 @@ export const decrementCounter = async (
   }
 };
 
-// Use explicit interfaces for insert operations to avoid type recursion
+// Define explicit separate interfaces for different insert operations
 interface QuoteLikeInsert {
   quote_id: string;
   user_id: string;
@@ -226,25 +226,27 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction - use properly typed insert data
+      // Add interaction - use specialized types for each combination
       if (contentType === 'quote') {
         if (isLike) {
-          // Quote like
+          // Use specific interface for quote likes
           const quoteData: QuoteLikeInsert = {
             quote_id: contentId,
             user_id: userId
           };
+          // Create separate insert call
           const { error } = await supabase
             .from(tableName)
             .insert(quoteData);
             
           if (error) throw error;
         } else {
-          // Quote bookmark
+          // Use specific interface for quote bookmarks
           const quoteData: QuoteBookmarkInsert = {
             quote_id: contentId,
             user_id: userId
           };
+          // Create separate insert call
           const { error } = await supabase
             .from(tableName)
             .insert(quoteData);
@@ -253,24 +255,26 @@ export const toggleUserInteraction = async (
         }
       } else {
         if (isLike) {
-          // Content like
+          // Use specific interface for content likes
           const contentData: ContentLikeInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
+          // Create separate insert call
           const { error } = await supabase
             .from(tableName)
             .insert(contentData);
             
           if (error) throw error;
         } else {
-          // Content bookmark
+          // Use specific interface for content bookmarks
           const contentData: ContentBookmarkInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
+          // Create separate insert call
           const { error } = await supabase
             .from(tableName)
             .insert(contentData);
