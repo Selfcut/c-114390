@@ -2,7 +2,7 @@
 // Export auth context and provider
 export { AuthProvider, useAuth } from './auth-context';
 
-// Export types carefully to avoid ambiguity
+// Export types from the single source of truth
 export type { UserProfile, UserStatus, UserRole } from './types';
 export type { AuthContextType, AuthState } from './types';
 

@@ -7,6 +7,7 @@ export interface AuthState {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  session: any | null;
 }
 
 export interface AuthContextValue extends AuthState {
@@ -15,11 +16,10 @@ export interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;
-  session?: any;
-  updateUserProfile?: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
-  updateUserStatus?: (status: UserStatus) => Promise<void>;
-  toggleGhostMode?: () => Promise<void>;
-  toggleDoNotDisturb?: () => Promise<void>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  updateUserStatus: (status: UserStatus) => Promise<void>;
+  toggleGhostMode: () => Promise<void>;
+  toggleDoNotDisturb: () => Promise<void>;
 }
 
 // This keeps compatibility with the auth-context.tsx file
