@@ -1,8 +1,11 @@
 
-// Export auth context and types
-export * from './auth-context';
-export * from './auth-types';
-export * from './types';
+// Export auth context and provider
+export { AuthProvider, useAuth } from './auth-context';
+
+// Export types carefully to avoid ambiguity
+export type { UserProfile, UserStatus, UserRole } from './auth-types';
+export type { AuthContextType } from './auth-types';
+export type { AuthState } from './auth-types';
 
 // Export utility functions
 export { signIn, signOut, signUp, fetchUserProfile, updateUserProfile, createUserProfile } from './auth-utils';

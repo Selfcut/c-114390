@@ -1,7 +1,8 @@
 
 import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
-export { UserProfile, UserStatus, UserRole };
+// Use 'export type' to properly re-export types when isolatedModules is enabled
+export type { UserProfile, UserStatus, UserRole };
 
 export interface AuthState {
   user: UserProfile | null;

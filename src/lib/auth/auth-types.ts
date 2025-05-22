@@ -2,6 +2,7 @@
 import { User, Session } from '@supabase/supabase-js';
 import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
+// Use proper type exports
 export type { UserProfile, UserStatus, UserRole };
 
 export interface AuthState {
