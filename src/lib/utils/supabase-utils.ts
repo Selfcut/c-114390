@@ -60,27 +60,47 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Use type assertion to simplify types and avoid excessive type instantiation
-    type SimpleResponse = { data: any; error: any };
+    // Avoid type inference completely by using any for intermediate results
+    let likesData: any = null;
+    let likesError: any = null;
     
-    // Execute separate queries to avoid deep type instantiation
-    const likesQuery: SimpleResponse = await supabase
+    // Execute the likes query directly
+    const likesResult = await supabase
       .from(likesTable)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
-      
-    const bookmarksQuery: SimpleResponse = await supabase
+    
+    likesData = likesResult.data;
+    likesError = likesResult.error;
+    
+    // Execute the bookmarks query directly
+    let bookmarksData: any = null;
+    let bookmarksError: any = null;
+    
+    const bookmarksResult = await supabase
       .from(bookmarksTable)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
+    bookmarksData = bookmarksResult.data;
+    bookmarksError = bookmarksResult.error;
+    
+    // Check for errors
+    if (likesError) {
+      console.warn('[Supabase Utils] Error checking likes:', likesError);
+    }
+    
+    if (bookmarksError) {
+      console.warn('[Supabase Utils] Error checking bookmarks:', bookmarksError);
+    }
+    
     return {
-      hasLiked: !!likesQuery.data,
-      hasBookmarked: !!bookmarksQuery.data
+      hasLiked: !!likesData,
+      hasBookmarked: !!bookmarksData
     };
   } catch (error) {
     console.error('[Supabase Utils] Error checking user content interactions:', error);
@@ -201,30 +221,31 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Use type assertion to simplify types
-    type SimpleDbResponse = { data: any; error: any };
-
+    // Avoid typed response completely by working with raw response objects
+    let checkData: any = null;
+    let checkError: any = null;
+    
     // Check if interaction exists
-    const checkQuery: SimpleDbResponse = await supabase
+    const checkResult = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
-    const existingData = checkQuery.data;
-    const checkError = checkQuery.error;
+    checkData = checkResult.data;
+    checkError = checkResult.error;
       
     if (checkError) throw checkError;
 
-    if (existingData) {
+    if (checkData) {
       // Remove interaction
-      const deleteQuery: SimpleDbResponse = await supabase
+      const deleteResult = await supabase
         .from(tableName)
         .delete()
-        .eq('id', existingData.id);
+        .eq('id', checkData.id);
         
-      if (deleteQuery.error) throw deleteQuery.error;
+      if (deleteResult.error) throw deleteResult.error;
       
       // Only decrement count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
@@ -239,25 +260,25 @@ export const toggleUserInteraction = async (
       
       if (contentType === 'quote') {
         if (isLike) {
-          // Quote like
+          // Quote like - use simple object for insert data
           const insertData: QuoteLikeInsert = {
             quote_id: contentId,
             user_id: userId
           };
           
-          const result: SimpleDbResponse = await supabase
+          const result = await supabase
             .from(tableName)
             .insert(insertData);
             
           error = result.error;
         } else {
-          // Quote bookmark
+          // Quote bookmark - use simple object for insert data
           const insertData: QuoteBookmarkInsert = {
             quote_id: contentId,
             user_id: userId
           };
           
-          const result: SimpleDbResponse = await supabase
+          const result = await supabase
             .from(tableName)
             .insert(insertData);
             
@@ -265,27 +286,27 @@ export const toggleUserInteraction = async (
         }
       } else {
         if (isLike) {
-          // Content like
+          // Content like - use simple object for insert data
           const insertData: ContentLikeInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
           
-          const result: SimpleDbResponse = await supabase
+          const result = await supabase
             .from(tableName)
             .insert(insertData);
             
           error = result.error;
         } else {
-          // Content bookmark
+          // Content bookmark - use simple object for insert data
           const insertData: ContentBookmarkInsert = {
             content_id: contentId,
             user_id: userId,
             content_type: contentType
           };
           
-          const result: SimpleDbResponse = await supabase
+          const result = await supabase
             .from(tableName)
             .insert(insertData);
             
