@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,9 +25,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const UserMenu = () => {
   const { user, signOut, isAuthenticated, isLoading } = useAuth();
   
-  console.log("[UserMenu] render - isAuthenticated:", isAuthenticated, "isLoading:", isLoading, "user:", user?.name);
+  // Memoized avatar generation for better performance
+  const getAvatarFallback = useCallback(() => {
+    if (!user) return 'U';
+    return user.name?.charAt(0) || user.email?.charAt(0) || 'U';
+  }, [user]);
   
-  // Show loading skeleton during authentication
+  // Memoized avatar URL generation
+  const getAvatarUrl = useCallback(() => {
+    if (!user) return '';
+    return user.avatar_url || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.username || user.email || 'user')}`;
+  }, [user]);
+  
+  // Show optimized loading skeleton during authentication
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-8 w-8">
@@ -46,9 +56,6 @@ export const UserMenu = () => {
     );
   }
   
-  // Use avatar_url or avatar, ensuring we have an image source
-  const avatarSrc = user.avatar_url || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.username || user.email || 'user')}`;
-  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -62,8 +69,8 @@ export const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarSrc} alt={user.name || 'User'} />
-            <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
+            <AvatarImage src={getAvatarUrl()} alt={user.name || 'User'} />
+            <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
