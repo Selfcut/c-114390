@@ -16,8 +16,6 @@ const DEFAULT_USER: Partial<UserProfile> = {
 // Fetch a user's profile from the database
 export async function fetchUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
   try {
-    console.log('Fetching profile for user ID:', userId);
-    
     if (!userId) {
       console.error('Invalid user ID provided to fetchUserProfile');
       return null;
@@ -72,8 +70,6 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
 // Create a user profile if missing
 export async function createUserProfile(userId: string, session?: Session | null): Promise<UserProfile | null> {
   try {
-    console.log('Creating missing profile for user ID:', userId);
-    
     if (!userId) {
       console.error('Invalid user ID provided to createUserProfile');
       return null;
@@ -88,7 +84,7 @@ export async function createUserProfile(userId: string, session?: Session | null
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     if (existingProfile) {
       console.log('Profile already exists, returning existing profile');
@@ -106,8 +102,6 @@ export async function createUserProfile(userId: string, session?: Session | null
       bio: '',
       website: ''
     };
-    
-    console.log('Inserting new profile:', newProfile);
     
     const { error } = await supabase
       .from('profiles')
@@ -143,7 +137,7 @@ export async function createUserProfile(userId: string, session?: Session | null
   }
 }
 
-// Ensure a user profile exists, creating it if necessary (alias for consistency)
+// Ensure a user profile exists, creating it if necessary
 export async function ensureUserProfile(
   userId: string, 
   defaultProfile: Partial<UserProfile> = {},
@@ -176,8 +170,6 @@ export async function ensureUserProfile(
       bio: defaultProfile.bio || '',
       website: defaultProfile.website || '',
     };
-    
-    console.log('Creating new profile with merged data:', newProfileData);
     
     const { data: profile, error } = await supabase
       .from('profiles')

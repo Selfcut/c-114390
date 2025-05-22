@@ -25,13 +25,3 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     }
   }
 });
-
-// Initialize Supabase utilities
-import { initializeSupabaseUtils } from '@/lib/utils/supabase-utils';
-
-// Initialize utilities on client load
-try {
-  initializeSupabaseUtils();
-} catch (error) {
-  console.error('Failed to initialize Supabase utilities:', error);
-}

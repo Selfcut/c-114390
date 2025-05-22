@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUserProfile, updateUserProfile, signIn, signOut, signUp, ensureUserProfile } from './auth-utils';
+import { fetchUserProfile, updateUserProfile, signIn, signOut, signUp } from './auth-utils';
 import { UserProfile, UserStatus, UserRole, AuthContextType } from '@/types/user';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,61 +17,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log("Setting up auth state listener");
-    let isFirstLoad = true;
     
     // Set up auth state listener FIRST before checking for existing session
     // This prevents race conditions between the two operations
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log('Auth state changed:', event, currentSession?.user?.id);
         
         // Update the session state synchronously to prevent rerendering issues
         setSession(currentSession);
         
-        if (currentSession?.user) {
-          // Don't fetch profile directly in the callback to avoid Supabase deadlocks
-          // Instead use setTimeout to run it on the next event loop tick
-          setTimeout(async () => {
-            try {
-              console.log("Fetching profile after auth state change");
-              // Force ensureUserProfile to create if missing
-              const profile = await ensureUserProfile(
-                currentSession.user.id, 
-                {}, // Default profile values
-                currentSession
-              );
-              
-              if (profile) {
-                console.log("User profile resolved:", profile.username);
-                setUser(profile);
-                setIsAuthenticated(true);
-              }
-              else {
-                console.error("No profile found for user after auth state change");
-                setUser(null);
-                setIsAuthenticated(false);
-              }
-              
-              // Only update loading state after first load is complete
-              if (isFirstLoad) {
-                setIsLoading(false);
-                isFirstLoad = false;
-              }
-            } catch (error) {
-              console.error('Error fetching user profile after auth change:', error);
-              setIsLoading(false);
-            }
-          }, 0);
-        } else {
+        if (!currentSession) {
           console.log("No user in session, setting user to null");
           setUser(null);
           setIsAuthenticated(false);
-          
-          // Only update loading state after first load is complete
-          if (isFirstLoad) {
-            setIsLoading(false);
-            isFirstLoad = false;
-          }
+          setIsLoading(false);
+          return;
+        }
+        
+        if (currentSession.user) {
+          // Use a safer approach to fetch the profile
+          // Run outside the auth state change callback execution path
+          const userId = currentSession.user.id;
+          setTimeout(async () => {
+            try {
+              // Fetch the profile
+              const profile = await fetchUserProfile(userId, currentSession);
+              
+              if (profile) {
+                console.log("User profile loaded:", profile.username);
+                setUser(profile);
+                setIsAuthenticated(true);
+              } else {
+                console.error("Failed to load profile for user:", userId);
+                setUser(null);
+                setIsAuthenticated(false);
+              }
+            } catch (error) {
+              console.error('Error in profile fetch:', error);
+              setUser(null);
+              setIsAuthenticated(false);
+            } finally {
+              setIsLoading(false);
+            }
+          }, 0);
         }
       }
     );
@@ -83,21 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data } = await supabase.auth.getSession();
         
         // Only update session if we don't already have one from the auth state change
-        if (!session) {
-          console.log("Initial session check:", data.session?.user?.id);
-          setSession(data.session);
-        }
-
         if (data.session?.user) {
-          // Fetch the user profile (this is not in the auth state change callback)
-          const profile = await ensureUserProfile(
-            data.session.user.id,
-            {},
-            data.session
-          );
+          // Fetch the user profile
+          const profile = await fetchUserProfile(data.session.user.id, data.session);
           
           if (profile) {
             console.log("Initial profile fetch:", profile.username);
+            setSession(data.session);
             setUser(profile);
             setIsAuthenticated(true);
           } else {
@@ -110,7 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error initializing auth:', error);
       } finally {
         setIsLoading(false);
-        isFirstLoad = false;
       }
     };
 
@@ -138,11 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
       
-      toast({
-        title: "Signed in successfully",
-        description: "Welcome back!"
-      });
-      
+      // Success toast will be handled after profile load
       return { data, error: null };
     } catch (error) {
       console.error("Error signing in:", error);
