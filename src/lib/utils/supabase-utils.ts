@@ -60,15 +60,18 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Explicitly type and handle Supabase queries separately to avoid deep type instantiation
-    const likesQuery = await supabase
+    // Use type assertion to simplify types and avoid excessive type instantiation
+    type SimpleResponse = { data: any; error: any };
+    
+    // Execute separate queries to avoid deep type instantiation
+    const likesQuery: SimpleResponse = await supabase
       .from(likesTable)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
       
-    const bookmarksQuery = await supabase
+    const bookmarksQuery: SimpleResponse = await supabase
       .from(bookmarksTable)
       .select('id')
       .eq(idField, contentId)
@@ -198,8 +201,11 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists - handle response directly without destructuring
-    const checkQuery = await supabase
+    // Use type assertion to simplify types
+    type SimpleDbResponse = { data: any; error: any };
+
+    // Check if interaction exists
+    const checkQuery: SimpleDbResponse = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
@@ -213,7 +219,7 @@ export const toggleUserInteraction = async (
 
     if (existingData) {
       // Remove interaction
-      const deleteQuery = await supabase
+      const deleteQuery: SimpleDbResponse = await supabase
         .from(tableName)
         .delete()
         .eq('id', existingData.id);
@@ -239,7 +245,7 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           
-          const result = await supabase
+          const result: SimpleDbResponse = await supabase
             .from(tableName)
             .insert(insertData);
             
@@ -251,7 +257,7 @@ export const toggleUserInteraction = async (
             user_id: userId
           };
           
-          const result = await supabase
+          const result: SimpleDbResponse = await supabase
             .from(tableName)
             .insert(insertData);
             
@@ -266,7 +272,7 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           
-          const result = await supabase
+          const result: SimpleDbResponse = await supabase
             .from(tableName)
             .insert(insertData);
             
@@ -279,7 +285,7 @@ export const toggleUserInteraction = async (
             content_type: contentType
           };
           
-          const result = await supabase
+          const result: SimpleDbResponse = await supabase
             .from(tableName)
             .insert(insertData);
             
