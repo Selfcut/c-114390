@@ -23,21 +23,62 @@ export const toggleUserInteraction = async (
     // Determine which table to use
     const isLike = type === 'like';
     
-    // Use explicit literal string types to avoid deep type instantiation
+    // Use string literals directly without complex type assertions
     const tableName = contentType === 'quote' 
-      ? (isLike ? 'quote_likes' : 'quote_bookmarks') as const
-      : (isLike ? 'content_likes' : 'content_bookmarks') as const;
+      ? (isLike ? 'quote_likes' : 'quote_bookmarks')
+      : (isLike ? 'content_likes' : 'content_bookmarks');
     
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
 
-    // Check if interaction exists with explicit table name
-    // Use type assertion to prevent deep type instantiation
-    const { data: checkData, error: checkError } = await supabase
-      .from(tableName)
-      .select('id')
-      .eq(idField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Use explicit table name in query to prevent type inference issues
+    let checkData;
+    let checkError;
+    
+    if (contentType === 'quote') {
+      if (isLike) {
+        // Quote likes
+        const result = await supabase
+          .from('quote_likes')
+          .select('id')
+          .eq('quote_id', contentId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        checkData = result.data;
+        checkError = result.error;
+      } else {
+        // Quote bookmarks
+        const result = await supabase
+          .from('quote_bookmarks')
+          .select('id')
+          .eq('quote_id', contentId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        checkData = result.data;
+        checkError = result.error;
+      }
+    } else {
+      if (isLike) {
+        // Content likes
+        const result = await supabase
+          .from('content_likes')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        checkData = result.data;
+        checkError = result.error;
+      } else {
+        // Content bookmarks
+        const result = await supabase
+          .from('content_bookmarks')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        checkData = result.data;
+        checkError = result.error;
+      }
+    }
     
     if (checkError) throw checkError;
 
@@ -62,14 +103,14 @@ export const toggleUserInteraction = async (
           userId, 
           contentId, 
           contentType, 
-          contentType === 'quote' ? 'quote_likes' as const : 'content_likes' as const
+          contentType === 'quote' ? 'quote_likes' : 'content_likes'
         );
       } else {
         await addBookmark(
           userId, 
           contentId, 
           contentType, 
-          contentType === 'quote' ? 'quote_bookmarks' as const : 'content_bookmarks' as const
+          contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks'
         );
       }
       
