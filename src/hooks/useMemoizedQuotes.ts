@@ -67,7 +67,12 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
       }
     }
     
-    return await query;
+    const result = await query;
+    return {
+      data: result.data || [],
+      error: result.error,
+      count: result.count
+    };
   }, [options, currentPage]);
   
   // Use the custom hook to fetch quotes
@@ -78,6 +83,7 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
     const result = await queryFn();
     return {
       data: result.data || [],
+      error: result.error,
       count: result.count
     };
   }, {
@@ -115,16 +121,17 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
         .from('quotes')
         .select('tags');
       
-      if (result.error) throw result.error;
-      
       // Extract and flatten tags
-      const tags = result.data
+      const tags = (result.data || [])
         .map(item => item.tags)
         .filter(tags => Array.isArray(tags))
         .reduce((acc: string[], tags: string[]) => acc.concat(tags), []);
       
       // Get distinct tags
-      return [...new Set(tags)];
+      return {
+        data: [...new Set(tags)],
+        error: result.error
+      };
     }
   );
   

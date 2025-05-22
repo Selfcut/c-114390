@@ -11,7 +11,7 @@ import { EventList } from './EventList';
 import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 
-// This component is now optimized to use memoization and prevent unnecessary rerenders
+// This is a regular function component, not using React.memo
 const DayContent = ({ date }: DayContentProps) => {
   const { events } = useEvents();
   const navigate = useNavigate();

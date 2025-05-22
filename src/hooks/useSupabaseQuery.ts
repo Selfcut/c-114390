@@ -5,8 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ReactNode } from 'react';
 import { useState } from 'react';
 
-// Type for Supabase query function
-type SupabaseQueryFn<T> = () => Promise<PostgrestSingleResponse<T>>;
+// Type for Supabase query function - modified to be more flexible
+type SupabaseQueryFn<T> = () => Promise<{ data: T | null; error: any; count?: number | null }>;
 
 // Type for Supabase mutation function
 type SupabaseMutationFn<TData, TVariables> = (variables: TVariables) => Promise<PostgrestSingleResponse<TData>>;
@@ -22,9 +22,9 @@ export function useSupabaseQuery<TData = unknown, TError = Error>(
   return useQuery<TData, TError>({
     queryKey,
     queryFn: async () => {
-      const { data, error } = await queryFn();
-      if (error) throw error;
-      return data as TData;
+      const result = await queryFn();
+      if (result.error) throw result.error;
+      return result.data as TData;
     },
     ...options,
   });
