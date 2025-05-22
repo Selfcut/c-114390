@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { incrementCounter, decrementCounter } from '../counter-operations';
@@ -16,29 +15,33 @@ export const checkContentInteractions = async (
     // Use separate queries for clarity
     const isQuote = contentType === 'quote';
     
-    // Check likes - Direct query without executeQuery wrapper
+    // Check likes - Being explicit with types and return handling
     const likesTable = isQuote ? 'quote_likes' : 'content_likes';
     const likeIdColumn = isQuote ? 'quote_id' : 'content_id';
-    const likeResult = await supabase
+    const { data: likeData, error: likeError } = await supabase
       .from(likesTable)
       .select('id')
       .eq(likeIdColumn, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
-    // Check bookmarks - Direct query without executeQuery wrapper
+    if (likeError) throw likeError;
+    
+    // Check bookmarks - Being explicit with types and return handling
     const bookmarksTable = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
     const bookmarkIdColumn = isQuote ? 'quote_id' : 'content_id';
-    const bookmarkResult = await supabase
+    const { data: bookmarkData, error: bookmarkError } = await supabase
       .from(bookmarksTable)
       .select('id')
       .eq(bookmarkIdColumn, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
+    if (bookmarkError) throw bookmarkError;
+    
     return {
-      isLiked: !!likeResult.data,
-      isBookmarked: !!bookmarkResult.data
+      isLiked: !!likeData,
+      isBookmarked: !!bookmarkData
     };
   } catch (error) {
     console.error('Error checking content interactions:', error);
@@ -59,17 +62,17 @@ export const addContentLike = async (
     
     if (isQuote) {
       // For quotes
-      const result = await supabase
+      const { error } = await supabase
         .from('quote_likes')
         .insert({
           quote_id: contentId,
           user_id: userId
         });
         
-      if (result.error) throw result.error;
+      if (error) throw error;
     } else {
       // For other content
-      const result = await supabase
+      const { error } = await supabase
         .from('content_likes')
         .insert({
           content_id: contentId,
@@ -77,7 +80,7 @@ export const addContentLike = async (
           user_id: userId
         });
         
-      if (result.error) throw result.error;
+      if (error) throw error;
     }
     
     // Update content counter
@@ -140,20 +143,20 @@ export const addContentBookmark = async (
     
     if (isQuote) {
       // For quotes
-      const result = await supabase
+      const { error } = await supabase
         .from('quote_bookmarks')
         .insert({
           quote_id: contentId,
           user_id: userId
         });
         
-      if (result.error) throw result.error;
+      if (error) throw error;
       
       // Update bookmark counter for quotes
       await incrementCounter(contentId, 'bookmarks', 'quotes');
     } else {
       // For other content
-      const result = await supabase
+      const { error } = await supabase
         .from('content_bookmarks')
         .insert({
           content_id: contentId,
@@ -161,7 +164,7 @@ export const addContentBookmark = async (
           user_id: userId
         });
         
-      if (result.error) throw result.error;
+      if (error) throw error;
       
       // Note: Other content types might not track bookmark counts
     }
