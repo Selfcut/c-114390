@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { incrementCounter, decrementCounter } from '../counter-operations';
@@ -15,33 +16,35 @@ export const checkContentInteractions = async (
     // Use separate queries for clarity
     const isQuote = contentType === 'quote';
     
-    // Check likes - Being explicit with types and return handling
+    // Check likes - Using explicit type annotations to avoid deep type instantiation
     const likesTable = isQuote ? 'quote_likes' : 'content_likes';
     const likeIdColumn = isQuote ? 'quote_id' : 'content_id';
-    const { data: likeData, error: likeError } = await supabase
+    
+    // Use explicit type annotation for query result
+    const likesQuery = await supabase
       .from(likesTable)
       .select('id')
       .eq(likeIdColumn, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', userId);
+      
+    if (likesQuery.error) throw likesQuery.error;
     
-    if (likeError) throw likeError;
-    
-    // Check bookmarks - Being explicit with types and return handling
+    // Check bookmarks - Using explicit type annotations to avoid deep type instantiation
     const bookmarksTable = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
     const bookmarkIdColumn = isQuote ? 'quote_id' : 'content_id';
-    const { data: bookmarkData, error: bookmarkError } = await supabase
+    
+    // Use explicit type annotation for query result
+    const bookmarksQuery = await supabase
       .from(bookmarksTable)
       .select('id')
       .eq(bookmarkIdColumn, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', userId);
     
-    if (bookmarkError) throw bookmarkError;
+    if (bookmarksQuery.error) throw bookmarksQuery.error;
     
     return {
-      isLiked: !!likeData,
-      isBookmarked: !!bookmarkData
+      isLiked: likesQuery.data !== null && likesQuery.data.length > 0,
+      isBookmarked: bookmarksQuery.data !== null && bookmarksQuery.data.length > 0
     };
   } catch (error) {
     console.error('Error checking content interactions:', error);
