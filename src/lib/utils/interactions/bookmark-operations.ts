@@ -16,7 +16,7 @@ export const addBookmark = async (
   userId: string,
   contentId: string,
   contentType: string,
-  tableName: string
+  tableName: 'quote_bookmarks' | 'content_bookmarks'
 ): Promise<boolean> => {
   try {
     if (contentType === 'quote') {
@@ -27,7 +27,7 @@ export const addBookmark = async (
       };
       
       const { error } = await supabase
-        .from(tableName)
+        .from('quote_bookmarks')
         .insert(insertData);
         
       if (error) throw error;
@@ -40,7 +40,7 @@ export const addBookmark = async (
       };
       
       const { error } = await supabase
-        .from(tableName)
+        .from('content_bookmarks')
         .insert(insertData);
         
       if (error) throw error;
@@ -74,7 +74,7 @@ export const removeBookmark = async (
     const tableName = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     
     const { error } = await supabase
-      .from(tableName)
+      .from(tableName as 'quote_bookmarks' | 'content_bookmarks')
       .delete()
       .eq('id', bookmarkId);
       

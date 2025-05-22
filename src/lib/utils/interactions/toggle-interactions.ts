@@ -23,12 +23,12 @@ export const toggleUserInteraction = async (
     // Determine table and field names
     const isLike = type === 'like';
     const tableName = contentType === 'quote' 
-      ? (isLike ? 'quote_likes' : 'quote_bookmarks')
-      : (isLike ? 'content_likes' : 'content_bookmarks');
+      ? (isLike ? 'quote_likes' as const : 'quote_bookmarks' as const)
+      : (isLike ? 'content_likes' as const : 'content_bookmarks' as const);
     
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
 
-    // Check if interaction exists
+    // Check if interaction exists - use explicit typing to avoid deep instantiation
     const { data: checkData, error: checkError } = await supabase
       .from(tableName)
       .select('id')

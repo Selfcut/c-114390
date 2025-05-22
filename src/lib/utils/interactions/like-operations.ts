@@ -16,7 +16,7 @@ export const addLike = async (
   userId: string,
   contentId: string,
   contentType: string,
-  tableName: string
+  tableName: 'quote_likes' | 'content_likes'
 ): Promise<boolean> => {
   try {
     if (contentType === 'quote') {
@@ -27,7 +27,7 @@ export const addLike = async (
       };
       
       const { error } = await supabase
-        .from(tableName)
+        .from('quote_likes')
         .insert(insertData);
         
       if (error) throw error;
@@ -40,7 +40,7 @@ export const addLike = async (
       };
       
       const { error } = await supabase
-        .from(tableName)
+        .from('content_likes')
         .insert(insertData);
         
       if (error) throw error;
@@ -73,7 +73,7 @@ export const removeLike = async (
     const tableName = contentType === 'quote' ? 'quote_likes' : 'content_likes';
     
     const { error } = await supabase
-      .from(tableName)
+      .from(tableName as 'quote_likes' | 'content_likes')
       .delete()
       .eq('id', likeId);
       

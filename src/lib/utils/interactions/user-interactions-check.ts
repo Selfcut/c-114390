@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContentInteractions } from './types';
+import type { ContentInteractions } from './types';
 
 /**
  * Check if a user has liked or bookmarked a piece of content
@@ -20,17 +20,17 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute likes query
+    // Execute likes query with explicit type casting
     const { data: likesData, error: likesError } = await supabase
-      .from(likesTable)
+      .from(likesTable as 'quote_likes' | 'content_likes')
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
-    // Execute the bookmarks query
+    // Execute the bookmarks query with explicit type casting
     const { data: bookmarksData, error: bookmarksError } = await supabase
-      .from(bookmarksTable)
+      .from(bookmarksTable as 'quote_bookmarks' | 'content_bookmarks')
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
