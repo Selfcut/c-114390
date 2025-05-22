@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Loader2 } from 'lucide-react';
+import { AuthCallback } from './AuthCallback';
 
 // Import pages directly for better code clarity
 import Welcome from '@/pages/Welcome';
@@ -48,6 +49,7 @@ export function AppRoutes() {
         
         {/* Authentication */}
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         
         {/* Main application routes */}
         <Route path="/dashboard" element={

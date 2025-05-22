@@ -21,6 +21,8 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
       return null;
     }
     
+    console.log(`Fetching profile for user: ${userId}`);
+    
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
@@ -74,6 +76,8 @@ export async function createUserProfile(userId: string, session?: Session | null
       console.error('Invalid user ID provided to createUserProfile');
       return null;
     }
+    
+    console.log(`Creating profile for user: ${userId}`);
     
     const email = session?.user?.email || '';
     const name = session?.user?.user_metadata?.name || `User ${userId.substring(0, 4)}`;
@@ -133,78 +137,6 @@ export async function createUserProfile(userId: string, session?: Session | null
     };
   } catch (err) {
     console.error('Error creating profile:', err);
-    return null;
-  }
-}
-
-// Ensure a user profile exists, creating it if necessary
-export async function ensureUserProfile(
-  userId: string, 
-  defaultProfile: Partial<UserProfile> = {},
-  session?: Session | null
-): Promise<UserProfile | null> {
-  try {
-    // First check if profile exists
-    const existingProfile = await fetchUserProfile(userId, session);
-    
-    // If profile exists, return it
-    if (existingProfile) {
-      return existingProfile;
-    }
-    
-    // If no profile, create one with default values merged
-    const email = session?.user?.email || '';
-    const sessionName = session?.user?.user_metadata?.name;
-    const sessionUsername = session?.user?.user_metadata?.username;
-    
-    // Priority order: defaultProfile > session > generated defaults
-    const newProfileData = {
-      id: userId,
-      username: defaultProfile.username || sessionUsername || `user_${userId.substring(0, 8)}`,
-      name: defaultProfile.name || sessionName || `User ${userId.substring(0, 4)}`,
-      avatar_url: defaultProfile.avatar_url || 
-        `https://api.dicebear.com/6.x/initials/svg?seed=${defaultProfile.username || sessionUsername || userId.substring(0, 8)}`,
-      status: 'online' as UserStatus,
-      role: 'user' as UserRole,
-      is_ghost_mode: false,
-      bio: defaultProfile.bio || '',
-      website: defaultProfile.website || '',
-    };
-    
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .insert(newProfileData)
-      .select()
-      .single();
-      
-    if (error) {
-      console.error('Error creating user profile in ensureUserProfile:', error);
-      return null;
-    }
-    
-    // Return the newly created profile
-    return {
-      id: profile.id,
-      username: profile.username,
-      name: profile.name,
-      email,
-      avatar: profile.avatar_url,
-      avatar_url: profile.avatar_url,
-      bio: profile.bio || '',
-      website: profile.website || '',
-      status: profile.status as UserStatus,
-      isGhostMode: profile.is_ghost_mode || false,
-      role: profile.role as UserRole,
-      isAdmin: profile.role === 'admin',
-      notificationSettings: {
-        desktopNotifications: true,
-        soundNotifications: true,
-        emailNotifications: true
-      }
-    };
-    
-  } catch (err) {
-    console.error('Exception in ensureUserProfile:', err);
     return null;
   }
 }

@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { LoadingScreen } from '@/components/LoadingScreen';
+import { LoadingScreen } from '@/components/routing/LoadingScreen';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -22,9 +23,13 @@ const Auth = () => {
   const { signIn, signUp, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { toast } = useToast();
   
-  console.log("Auth page - isAuthenticated:", isAuthenticated);
+  // Get the redirect path from location state or use default
+  const from = (location.state as { from?: string })?.from || '/dashboard';
+  
+  console.log("Auth page - isAuthenticated:", isAuthenticated, "redirecting to:", from);
   
   // Check for error param in URL
   useEffect(() => {
@@ -37,10 +42,10 @@ const Auth = () => {
   // Redirect authenticated users
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("User is authenticated, redirecting to dashboard");
-      navigate('/dashboard', { replace: true });
+      console.log("User is authenticated, redirecting to:", from);
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, from]);
 
   const validateForm = () => {
     if (!email) {
@@ -105,7 +110,7 @@ const Auth = () => {
           description: "Welcome back!"
         });
         
-        navigate('/dashboard');
+        // Will be redirected by the useEffect hook
       } else {
         console.log("Signing up with email:", email);
         const result = await signUp(email, password, username, name);
@@ -145,7 +150,7 @@ const Auth = () => {
 
   // Redirect immediately if authenticated
   if (isAuthenticated) {
-    return <LoadingScreen message="Redirecting to dashboard..." />;
+    return <LoadingScreen message={`Redirecting to ${from}...`} />;
   }
 
   return (

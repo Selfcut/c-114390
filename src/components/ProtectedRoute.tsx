@@ -22,6 +22,7 @@ export const ProtectedRoute = ({
   const location = useLocation();
   const isAdmin = user?.isAdmin || user?.role === "admin";
 
+  // Show loading state while authentication is being determined
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -40,7 +41,8 @@ export const ProtectedRoute = ({
 
   // If authentication is required but user is not authenticated
   if (!isAuthenticated && !allowGuests) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Save the current location so we can redirect back after login
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
   }
 
   // If admin access is required but user is not an admin

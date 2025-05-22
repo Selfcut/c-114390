@@ -1,11 +1,12 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchUserProfile, updateUserProfile, signIn, signOut, signUp } from './auth-utils';
 import { UserProfile, UserStatus, UserRole, AuthContextType } from '@/types/user';
 import { useToast } from '@/hooks/use-toast';
 
+// Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -15,80 +16,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    console.log("Setting up auth state listener");
+  // Dedicated function to load user profile
+  const loadUserProfile = useCallback(async (userId: string, currentSession: Session | null) => {
+    if (!userId) return null;
     
-    // Set up auth state listener FIRST before checking for existing session
-    // This prevents race conditions between the two operations
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log('Auth state changed:', event, currentSession?.user?.id);
-        
-        // Update the session state synchronously to prevent rerendering issues
-        setSession(currentSession);
-        
-        if (!currentSession) {
-          console.log("No user in session, setting user to null");
+    try {
+      console.log(`Loading profile for user: ${userId}`);
+      const profile = await fetchUserProfile(userId, currentSession);
+      return profile;
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      return null;
+    }
+  }, []);
+
+  // Handle auth state changes independently
+  const handleAuthStateChange = useCallback((session: Session | null) => {
+    setSession(session);
+    
+    if (!session) {
+      // No active session, reset user state
+      setUser(null);
+      setIsAuthenticated(false);
+      return;
+    }
+    
+    // Session exists, load the profile outside of the auth state change callback
+    // to avoid auth state deadlocks
+    if (session?.user) {
+      const userId = session.user.id;
+      loadUserProfile(userId, session).then(profile => {
+        if (profile) {
+          setUser(profile);
+          setIsAuthenticated(true);
+        } else {
+          console.error(`Failed to load profile for authenticated user: ${userId}`);
           setUser(null);
           setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
         }
-        
-        if (currentSession.user) {
-          // Use a safer approach to fetch the profile
-          // Run outside the auth state change callback execution path
-          const userId = currentSession.user.id;
-          setTimeout(async () => {
-            try {
-              // Fetch the profile
-              const profile = await fetchUserProfile(userId, currentSession);
-              
-              if (profile) {
-                console.log("User profile loaded:", profile.username);
-                setUser(profile);
-                setIsAuthenticated(true);
-              } else {
-                console.error("Failed to load profile for user:", userId);
-                setUser(null);
-                setIsAuthenticated(false);
-              }
-            } catch (error) {
-              console.error('Error in profile fetch:', error);
-              setUser(null);
-              setIsAuthenticated(false);
-            } finally {
-              setIsLoading(false);
-            }
-          }, 0);
-        }
-      }
-    );
+      });
+    }
+  }, [loadUserProfile]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    console.log("Setting up auth state listener");
     
-    // THEN check for existing session
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log('Auth state changed:', event, currentSession?.user?.id);
+      
+      // Update session state
+      handleAuthStateChange(currentSession);
+    });
+    
+    // Check for existing session
     const initializeAuth = async () => {
       try {
         console.log("Checking for existing session");
-        const { data } = await supabase.auth.getSession();
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
         
-        // Only update session if we don't already have one from the auth state change
-        if (data.session?.user) {
-          // Fetch the user profile
-          const profile = await fetchUserProfile(data.session.user.id, data.session);
-          
-          if (profile) {
-            console.log("Initial profile fetch:", profile.username);
-            setSession(data.session);
-            setUser(profile);
-            setIsAuthenticated(true);
-          } else {
-            console.warn('No profile found during initialization');
-            setUser(null);
-            setIsAuthenticated(false);
-          }
+        if (existingSession) {
+          console.log("Found existing session:", existingSession.user.id);
+          handleAuthStateChange(existingSession);
+        } else {
+          console.log("No existing session found");
+          handleAuthStateChange(null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        handleAuthStateChange(null);
       } finally {
         setIsLoading(false);
       }
@@ -97,9 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     return () => {
+      console.log("Cleaning up auth state listener");
       subscription.unsubscribe();
     };
-  }, []);
+  }, [handleAuthStateChange]);
 
   // Sign in with email and password
   const handleSignIn = async (email: string, password: string) => {
@@ -118,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
       
-      // Success toast will be handled after profile load
       return { data, error: null };
     } catch (error) {
       console.error("Error signing in:", error);
