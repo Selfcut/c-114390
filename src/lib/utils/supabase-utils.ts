@@ -108,14 +108,13 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    // Use the rpc function directly
-    const { error } = await supabase.rpc('increment_counter_fn', {
+    // Use the rpc function directly - avoid generic parameters
+    await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
     });
     
-    if (error) throw error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -140,14 +139,13 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    // Use the rpc function directly
-    const { error } = await supabase.rpc('decrement_counter_fn', {
+    // Use the rpc function directly - avoid generic parameters
+    await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
     });
     
-    if (error) throw error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -210,24 +208,25 @@ export const toggleUserInteraction = async (
       return false;
     } else {
       // Add interaction
-      // Fix: Define explicit fields for insert
-      const insertData: Record<string, string> = {};
-      
+      // Fix: Use specific object literal with required fields instead of Record<string, string>
       if (contentType === 'quote') {
-        insertData.quote_id = contentId;
-        insertData.user_id = userId;
+        // Quote-specific insert with correct typing
+        await supabase
+          .from(tableName)
+          .insert({
+            quote_id: contentId,
+            user_id: userId
+          });
       } else {
-        insertData.content_id = contentId;
-        insertData.user_id = userId;
-        insertData.content_type = contentType;
+        // Content-specific insert with correct typing
+        await supabase
+          .from(tableName)
+          .insert({
+            content_id: contentId,
+            user_id: userId,
+            content_type: contentType
+          });
       }
-      
-      // Perform insert with typed data
-      const { error: insertError } = await supabase
-        .from(tableName)
-        .insert(insertData);
-          
-      if (insertError) throw insertError;
       
       // Only increment count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
