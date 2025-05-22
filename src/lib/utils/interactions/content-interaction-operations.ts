@@ -16,25 +16,29 @@ export const checkContentInteractions = async (
     // Use separate queries for clarity
     const isQuote = contentType === 'quote';
     
-    // Check likes
-    const { data: likeData } = await supabase
-      .from(isQuote ? 'quote_likes' : 'content_likes')
+    // Check likes - Direct query without executeQuery wrapper
+    const likesTable = isQuote ? 'quote_likes' : 'content_likes';
+    const likeIdColumn = isQuote ? 'quote_id' : 'content_id';
+    const likeResult = await supabase
+      .from(likesTable)
       .select('id')
-      .eq(isQuote ? 'quote_id' : 'content_id', contentId)
+      .eq(likeIdColumn, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
-    // Check bookmarks
-    const { data: bookmarkData } = await supabase
-      .from(isQuote ? 'quote_bookmarks' : 'content_bookmarks')
+    // Check bookmarks - Direct query without executeQuery wrapper
+    const bookmarksTable = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
+    const bookmarkIdColumn = isQuote ? 'quote_id' : 'content_id';
+    const bookmarkResult = await supabase
+      .from(bookmarksTable)
       .select('id')
-      .eq(isQuote ? 'quote_id' : 'content_id', contentId)
+      .eq(bookmarkIdColumn, contentId)
       .eq('user_id', userId)
       .maybeSingle();
     
     return {
-      isLiked: !!likeData,
-      isBookmarked: !!bookmarkData
+      isLiked: !!likeResult.data,
+      isBookmarked: !!bookmarkResult.data
     };
   } catch (error) {
     console.error('Error checking content interactions:', error);
@@ -55,17 +59,17 @@ export const addContentLike = async (
     
     if (isQuote) {
       // For quotes
-      const { error } = await supabase
+      const result = await supabase
         .from('quote_likes')
         .insert({
           quote_id: contentId,
           user_id: userId
         });
         
-      if (error) throw error;
+      if (result.error) throw result.error;
     } else {
       // For other content
-      const { error } = await supabase
+      const result = await supabase
         .from('content_likes')
         .insert({
           content_id: contentId,
@@ -73,7 +77,7 @@ export const addContentLike = async (
           user_id: userId
         });
         
-      if (error) throw error;
+      if (result.error) throw result.error;
     }
     
     // Update content counter
@@ -100,13 +104,16 @@ export const removeContentLike = async (
     const isQuote = contentType === 'quote';
     
     // Remove like record
-    const { error } = await supabase
-      .from(isQuote ? 'quote_likes' : 'content_likes')
+    const likesTable = isQuote ? 'quote_likes' : 'content_likes';
+    const likeIdColumn = isQuote ? 'quote_id' : 'content_id';
+    
+    const result = await supabase
+      .from(likesTable)
       .delete()
-      .eq(isQuote ? 'quote_id' : 'content_id', contentId)
+      .eq(likeIdColumn, contentId)
       .eq('user_id', userId);
       
-    if (error) throw error;
+    if (result.error) throw result.error;
     
     // Update content counter
     const tableName = getContentTable(contentType);
@@ -133,20 +140,20 @@ export const addContentBookmark = async (
     
     if (isQuote) {
       // For quotes
-      const { error } = await supabase
+      const result = await supabase
         .from('quote_bookmarks')
         .insert({
           quote_id: contentId,
           user_id: userId
         });
         
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       // Update bookmark counter for quotes
       await incrementCounter(contentId, 'bookmarks', 'quotes');
     } else {
       // For other content
-      const { error } = await supabase
+      const result = await supabase
         .from('content_bookmarks')
         .insert({
           content_id: contentId,
@@ -154,7 +161,7 @@ export const addContentBookmark = async (
           user_id: userId
         });
         
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       // Note: Other content types might not track bookmark counts
     }
@@ -178,13 +185,16 @@ export const removeContentBookmark = async (
     const isQuote = contentType === 'quote';
     
     // Remove bookmark record
-    const { error } = await supabase
-      .from(isQuote ? 'quote_bookmarks' : 'content_bookmarks')
+    const bookmarksTable = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
+    const bookmarkIdColumn = isQuote ? 'quote_id' : 'content_id';
+    
+    const result = await supabase
+      .from(bookmarksTable)
       .delete()
-      .eq(isQuote ? 'quote_id' : 'content_id', contentId)
+      .eq(bookmarkIdColumn, contentId)
       .eq('user_id', userId);
       
-    if (error) throw error;
+    if (result.error) throw result.error;
     
     // Update bookmark counter for quotes
     if (isQuote) {

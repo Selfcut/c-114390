@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -9,6 +9,7 @@ import {
   addContentBookmark,
   removeContentBookmark
 } from '@/lib/utils/interactions/content-interaction-operations';
+import { useContentStates } from './interactions/use-content-states';
 
 /**
  * Input props type for the hook
@@ -26,11 +27,15 @@ export const useOptimizedContentInteractions = ({
   userId, 
   contentType 
 }: UseOptimizedContentInteractionsProps) => {
-  // Simple state objects with clear types
-  const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
-  const [bookmarkedItems, setBookmarkedItems] = useState<Record<string, boolean>>({});
-  const [likeLoadingStates, setLikeLoadingStates] = useState<Record<string, boolean>>({});
-  const [bookmarkLoadingStates, setBookmarkLoadingStates] = useState<Record<string, boolean>>({});
+  const {
+    likedItems,
+    bookmarkedItems,
+    setLikeState,
+    setBookmarkState,
+    setLikeLoadingState,
+    setBookmarkLoadingState,
+    getStateForContent
+  } = useContentStates();
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -42,13 +47,13 @@ export const useOptimizedContentInteractions = ({
     try {
       const { isLiked, isBookmarked } = await checkContentInteractions(userId, contentId, contentType);
       
-      // Update states independently - no nesting
-      setLikedItems(prev => ({...prev, [contentId]: isLiked}));
-      setBookmarkedItems(prev => ({...prev, [contentId]: isBookmarked}));
+      // Update states separately with our helper functions
+      setLikeState(contentId, isLiked);
+      setBookmarkState(contentId, isBookmarked);
     } catch (error) {
       console.error('Error checking content interactions:', error);
     }
-  }, [userId, contentType]);
+  }, [userId, contentType, setLikeState, setBookmarkState]);
 
   // Handle like/unlike with separate state updates
   const handleLike = useCallback(async (contentId: string) => {
@@ -64,12 +69,12 @@ export const useOptimizedContentInteractions = ({
     // Get current state
     const isCurrentlyLiked = likedItems[contentId] || false;
     
-    // Set loading state - no nesting 
-    setLikeLoadingStates(prev => ({...prev, [contentId]: true}));
+    // Set loading state with helper function
+    setLikeLoadingState(contentId, true);
     
     try {
-      // Optimistic update - no nesting
-      setLikedItems(prev => ({...prev, [contentId]: !isCurrentlyLiked}));
+      // Optimistic update with helper function
+      setLikeState(contentId, !isCurrentlyLiked);
       
       // Perform API operation
       let success;
@@ -79,9 +84,9 @@ export const useOptimizedContentInteractions = ({
         success = await addContentLike(userId, contentId, contentType);
       }
       
-      // Revert on failure - no nesting
+      // Revert on failure with helper function
       if (!success) {
-        setLikedItems(prev => ({...prev, [contentId]: isCurrentlyLiked}));
+        setLikeState(contentId, isCurrentlyLiked);
         
         toast({
           title: "Error",
@@ -102,8 +107,8 @@ export const useOptimizedContentInteractions = ({
     } catch (error) {
       console.error('Error toggling like:', error);
       
-      // Revert on error - no nesting
-      setLikedItems(prev => ({...prev, [contentId]: isCurrentlyLiked}));
+      // Revert on error with helper function
+      setLikeState(contentId, isCurrentlyLiked);
       
       toast({
         title: "Error",
@@ -111,12 +116,12 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
     } finally {
-      // Clear loading state - no nesting
-      setLikeLoadingStates(prev => ({...prev, [contentId]: false}));
+      // Clear loading state with helper function
+      setLikeLoadingState(contentId, false);
     }
     
     return null;
-  }, [userId, likedItems, contentType, toast, queryClient]);
+  }, [userId, likedItems, contentType, toast, queryClient, setLikeState, setLikeLoadingState]);
 
   // Handle bookmark/unbookmark with separate state updates
   const handleBookmark = useCallback(async (contentId: string) => {
@@ -132,12 +137,12 @@ export const useOptimizedContentInteractions = ({
     // Get current state
     const isCurrentlyBookmarked = bookmarkedItems[contentId] || false;
     
-    // Set loading state - no nesting
-    setBookmarkLoadingStates(prev => ({...prev, [contentId]: true}));
+    // Set loading state with helper function
+    setBookmarkLoadingState(contentId, true);
     
     try {
-      // Optimistic update - no nesting
-      setBookmarkedItems(prev => ({...prev, [contentId]: !isCurrentlyBookmarked}));
+      // Optimistic update with helper function
+      setBookmarkState(contentId, !isCurrentlyBookmarked);
       
       // Perform API operation
       let success;
@@ -147,9 +152,9 @@ export const useOptimizedContentInteractions = ({
         success = await addContentBookmark(userId, contentId, contentType);
       }
       
-      // Revert on failure - no nesting
+      // Revert on failure with helper function
       if (!success) {
-        setBookmarkedItems(prev => ({...prev, [contentId]: isCurrentlyBookmarked}));
+        setBookmarkState(contentId, isCurrentlyBookmarked);
         
         toast({
           title: "Error",
@@ -167,8 +172,8 @@ export const useOptimizedContentInteractions = ({
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       
-      // Revert on error - no nesting
-      setBookmarkedItems(prev => ({...prev, [contentId]: isCurrentlyBookmarked}));
+      // Revert on error with helper function
+      setBookmarkState(contentId, isCurrentlyBookmarked);
       
       toast({
         title: "Error",
@@ -176,22 +181,12 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
     } finally {
-      // Clear loading state - no nesting
-      setBookmarkLoadingStates(prev => ({...prev, [contentId]: false}));
+      // Clear loading state with helper function
+      setBookmarkLoadingState(contentId, false);
     }
     
     return null;
-  }, [userId, bookmarkedItems, contentType, toast, queryClient]);
-
-  // Get state helper with minimal processing
-  const getStateForContent = useCallback((contentId: string) => {
-    return {
-      isLiked: likedItems[contentId] || false,
-      isBookmarked: bookmarkedItems[contentId] || false,
-      isLikeLoading: likeLoadingStates[contentId] || false,
-      isBookmarkLoading: bookmarkLoadingStates[contentId] || false
-    };
-  }, [likedItems, bookmarkedItems, likeLoadingStates, bookmarkLoadingStates]);
+  }, [userId, bookmarkedItems, contentType, toast, queryClient, setBookmarkState, setBookmarkLoadingState]);
 
   return {
     likedItems,
