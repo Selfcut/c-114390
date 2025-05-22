@@ -1,48 +1,7 @@
 
-import { supabase } from "@/integrations/supabase/client";
+// This file is now deprecated.
+// All authentication methods are now centralized in auth-utils.ts
+// Importing from here will redirect to the proper implementation
+import { signIn, signOut, signUp } from './auth-utils';
 
-// Authentication methods
-export const signIn = async (email: string, password: string) => {
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-      return { error };
-    }
-    
-    return { error: null };
-  } catch (error) {
-    console.error("Sign in error:", error);
-    return { error };
-  }
-};
-
-export const signUp = async (email: string, password: string, metadata = {}) => {
-  try {
-    const { data, error } = await supabase.auth.signUp({ 
-      email, 
-      password, 
-      options: { 
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      } 
-    });
-    
-    if (error) {
-      return { error };
-    }
-    
-    return { error: null };
-  } catch (error) {
-    console.error("Sign up error:", error);
-    return { error };
-  }
-};
-
-export const signOut = async () => {
-  try {
-    await supabase.auth.signOut();
-  } catch (error) {
-    console.error("Sign out error:", error);
-  }
-};
+export { signIn, signOut, signUp };
