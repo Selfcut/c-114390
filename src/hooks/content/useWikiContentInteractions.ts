@@ -175,7 +175,7 @@ export const useWikiContentInteractions = (userId: string | null) => {
         title: "Error",
         description: "Failed to update bookmark status",
         variant: "destructive"
-      });
+        });
     } finally {
       setLoading(contentId, 'bookmark', false);
     }

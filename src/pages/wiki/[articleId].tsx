@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AlertTriangle, ArrowLeft, Calendar, Heart, MessagesSquare, Pencil, UserCircle, Eye } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, Heart, MessagesSquare, Pencil, UserCircle, Eye, Bookmark } from "lucide-react";
 import { getCategoryIcon, formatDate } from "@/components/wiki/WikiUtils";
 import { WikiArticle } from "@/components/wiki/types";
 import { fetchWikiArticleById } from "@/utils/wikiUtils";
@@ -14,7 +15,7 @@ import { useAuth } from "@/lib/auth";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EditWikiArticleDialog } from "@/components/wiki/EditWikiArticleDialog";
-import { useWikiContentInteractions } from "@/hooks/use-wiki-content-interactions";
+import { useWikiContentInteractions } from "@/hooks/content/useWikiContentInteractions";
 
 const WikiArticlePage = () => {
   const { articleId } = useParams();
@@ -156,6 +157,11 @@ const WikiArticlePage = () => {
     );
   }
 
+  // Format the date safely
+  const formattedDate = article.last_updated instanceof Date 
+    ? formatDate(article.last_updated) 
+    : formatDate(new Date(article.last_updated));
+
   return (
     <PageLayout>
       <div className="container mx-auto py-8 px-4">
@@ -199,7 +205,7 @@ const WikiArticlePage = () => {
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
-                <span>Last updated: {formatDate(article?.last_updated || '')}</span>
+                <span>Last updated: {formattedDate}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Eye size={16} />
