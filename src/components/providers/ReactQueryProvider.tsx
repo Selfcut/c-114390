@@ -8,7 +8,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60, // 1 minute
-      cacheTime: 1000 * 60 * 10, // 10 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (replacing cacheTime)
       refetchOnWindowFocus: process.env.NODE_ENV === 'production',
       retry: (failureCount, error) => {
         // Only retry network errors, not 400/500 errors

@@ -1,174 +1,100 @@
+// Import supabase client
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Executes a Supabase query and handles potential errors with improved type safety
- * 
- * @param queryFn - Function that returns a Supabase query
- * @returns A promise that resolves to the result of the query or null on error
- */
-export async function executeQuery<T>(queryFn: () => Promise<{ data: T | null; error: any }>): Promise<T | null> {
-  try {
-    const { data, error } = await queryFn();
-    if (error) {
-      console.error('Supabase query error:', error);
-      return null;
-    }
-    return data;
-  } catch (err) {
-    console.error('Error executing query:', err);
-    return null;
-  }
-}
+// Batch operations for optimized data fetching
+export const batchOperations = async (operations: Array<() => Promise<any>>) => {
+  return Promise.all(operations.map(operation => operation()));
+};
 
-/**
- * Executes multiple operations in parallel and returns their results
- * With improved typing and error handling
- * 
- * @param operations - Array of functions that return promises
- * @returns A promise that resolves to an array of results
- */
-export async function batchOperations<T extends any[]>(
-  operations: Array<() => Promise<any>>
-): Promise<T> {
-  try {
-    return await Promise.all(operations.map(op => op().catch(err => {
-      console.error('Batch operation error:', err);
-      return null;
-    }))) as T;
-  } catch (err) {
-    console.error('Error in batch operations:', err);
-    return [] as unknown as T;
-  }
-}
-
-/**
- * Increment a counter for a specific record in a table
- * 
- * @param rowId - The ID of the record to update
- * @param columnName - The column to increment
- * @param tableName - The table containing the record
- * @returns A promise that resolves when the operation is complete
- */
-export async function incrementCounter(
-  rowId: string,
-  columnName: string,
-  tableName: string
-): Promise<void> {
-  try {
-    await supabase.rpc('increment_counter_fn', {
-      row_id: rowId,
-      column_name: columnName,
-      table_name: tableName
-    });
-  } catch (err) {
-    console.error(`Error incrementing ${columnName} for ${tableName}:`, err);
-  }
-}
-
-/**
- * Decrement a counter for a specific record in a table
- * 
- * @param rowId - The ID of the record to update
- * @param columnName - The column to decrement
- * @param tableName - The table containing the record
- * @returns A promise that resolves when the operation is complete
- */
-export async function decrementCounter(
-  rowId: string,
-  columnName: string,
-  tableName: string
-): Promise<void> {
-  try {
-    await supabase.rpc('decrement_counter_fn', {
-      row_id: rowId,
-      column_name: columnName,
-      table_name: tableName
-    });
-  } catch (err) {
-    console.error(`Error decrementing ${columnName} for ${tableName}:`, err);
-  }
-}
-
-/**
- * Initialize Supabase utilities and functions
- * Used when the application starts up
- */
-export async function initializeSupabaseUtils(): Promise<void> {
-  try {
-    console.info("Initializing Supabase utilities...");
-    // Check if required RPC functions are available
-    const { error } = await supabase.rpc('increment_counter_fn', {
-      row_id: '00000000-0000-0000-0000-000000000000',
-      column_name: 'test',
-      table_name: 'test'
-    });
-    
-    // This is expected to fail with a specific error for a table that doesn't exist
-    // But it should not fail with "function doesn't exist"
-    if (error && error.message.includes('function') && error.message.includes('does not exist')) {
-      console.warn('Required Supabase functions are not available. Some features may not work properly.');
-    } else {
-      console.info('Supabase utilities initialized successfully');
-    }
-  } catch (err) {
-    console.error('Failed to initialize Supabase utilities:', err);
-  }
-}
-
-/**
- * Optimized check for user interaction with content
- * Combines multiple checks into a single batch operation
- * 
- * @param userId - The user ID to check
- * @param contentId - The content ID to check
- * @param contentType - The type of content
- * @returns A promise that resolves to an object with interaction states
- */
-export async function checkUserContentInteractions(
+// Check if a user has liked or bookmarked a piece of content
+export const checkUserContentInteractions = async (
   userId: string,
   contentId: string,
   contentType: string
-): Promise<{ hasLiked: boolean; hasBookmarked: boolean }> {
-  if (!userId || !contentId) {
-    return { hasLiked: false, hasBookmarked: false };
-  }
-  
+) => {
   try {
-    const [likeResult, bookmarkResult] = await batchOperations([
+    // Determine table names based on content type
+    const likesTable = contentType === 'quote' ? 'quote_likes' : 'content_likes';
+    const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
+    const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
+    
+    // Execute batch operations to check likes and bookmarks
+    const [likesResult, bookmarksResult] = await batchOperations([
       async () => {
         const { data, error } = await supabase
-          .from('content_likes')
+          .from(likesTable)
           .select('id')
-          .eq('content_id', contentId)
+          .eq(idField, contentId)
           .eq('user_id', userId)
-          .eq('content_type', contentType)
           .maybeSingle();
-        
+          
         if (error) throw error;
         return !!data;
       },
       async () => {
         const { data, error } = await supabase
-          .from('content_bookmarks')
+          .from(bookmarksTable)
           .select('id')
-          .eq('content_id', contentId)
+          .eq(idField, contentId)
           .eq('user_id', userId)
-          .eq('content_type', contentType)
           .maybeSingle();
-        
+          
         if (error) throw error;
         return !!data;
       }
     ]);
     
     return {
-      hasLiked: likeResult === true,
-      hasBookmarked: bookmarkResult === true
+      hasLiked: likesResult,
+      hasBookmarked: bookmarksResult
     };
-  } catch (err) {
-    console.error('Error checking user content interactions:', err);
-    return { hasLiked: false, hasBookmarked: false };
+  } catch (error) {
+    console.error('Error checking user content interactions:', error);
+    return {
+      hasLiked: false,
+      hasBookmarked: false
+    };
   }
-}
+};
 
-// Import statement - moved to the top
-import { supabase } from '@/integrations/supabase/client';
+// Increment a counter on a content item
+export const incrementCounter = async (
+  contentId: string,
+  counterName: string,
+  tableName: string
+) => {
+  try {
+    const { error } = await supabase.rpc('increment_counter_fn', {
+      row_id: contentId,
+      column_name: counterName,
+      table_name: tableName
+    });
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error(`Error incrementing ${counterName} counter:`, error);
+    return false;
+  }
+};
+
+// Decrement a counter on a content item
+export const decrementCounter = async (
+  contentId: string,
+  counterName: string,
+  tableName: string
+) => {
+  try {
+    const { error } = await supabase.rpc('decrement_counter_fn', {
+      row_id: contentId,
+      column_name: counterName,
+      table_name: tableName
+    });
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error(`Error decrementing ${counterName} counter:`, error);
+    return false;
+  }
+};

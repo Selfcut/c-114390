@@ -1,6 +1,116 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// Export missing functions for backward compatibility
+export const checkUserLikedQuote = async (quoteId: string, userId: string) => checkQuoteLike(quoteId, userId);
+export const checkUserBookmarkedQuote = async (quoteId: string, userId: string) => checkQuoteBookmark(quoteId, userId);
+export const likeQuote = async (quoteId: string, userId: string) => toggleQuoteLike(quoteId, userId);
+export const bookmarkQuote = async (quoteId: string, userId: string) => toggleQuoteBookmark(quoteId, userId);
+
+export const fetchComments = async (quoteId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('quote_comments')
+      .select(`
+        id,
+        content,
+        user_id,
+        created_at,
+        updated_at,
+        profiles:user_id (id, username, name, avatar_url)
+      `)
+      .eq('quote_id', quoteId)
+      .order('created_at', { ascending: true });
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching quote comments:', error);
+    return [];
+  }
+};
+
+export const createComment = async (quoteId: string, userId: string, content: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('quote_comments')
+      .insert({
+        quote_id: quoteId,
+        user_id: userId,
+        content
+      })
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    // Increment comment count
+    await supabase.rpc('increment_counter_fn', {
+      row_id: quoteId,
+      column_name: 'comments',
+      table_name: 'quotes'
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating comment:', error);
+    return null;
+  }
+};
+
+export const deleteComment = async (commentId: string, quoteId: string) => {
+  try {
+    const { error } = await supabase
+      .from('quote_comments')
+      .delete()
+      .eq('id', commentId);
+      
+    if (error) throw error;
+    
+    // Decrement comment count
+    await supabase.rpc('decrement_counter_fn', {
+      row_id: quoteId,
+      column_name: 'comments',
+      table_name: 'quotes'
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return false;
+  }
+};
+
+export const subscribeToQuoteUpdates = (quoteId: string, callback: (payload: any) => void) => {
+  const channel = supabase
+    .channel(`quote-updates-${quoteId}`)
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'quotes', filter: `id=eq.${quoteId}` },
+      payload => callback(payload)
+    )
+    .subscribe();
+    
+  // Return unsubscribe function
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+export const subscribeToQuoteInteractions = (quoteId: string, callback: (payload: any) => void) => {
+  const channel = supabase
+    .channel(`quote-interactions-${quoteId}`)
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'quote_comments', filter: `quote_id=eq.${quoteId}` },
+      payload => callback(payload)
+    )
+    .subscribe();
+    
+  // Return unsubscribe function
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
 /**
  * Toggle a like on a quote
  * 
