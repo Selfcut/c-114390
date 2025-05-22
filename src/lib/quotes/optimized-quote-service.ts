@@ -174,11 +174,10 @@ export const createQuoteOptimized = async (
         tags: quoteData.tags || [],
         user_id: userData.user.id
       })
-      .select()
-      .single();
+      .select();
       
     if (insertError) throw insertError;
-    if (!newQuote) throw new Error('Failed to create quote');
+    if (!newQuote || newQuote.length === 0) throw new Error('Failed to create quote');
     
     // Get user profile
     const { data: profile, error: profileError } = await supabase
@@ -189,7 +188,7 @@ export const createQuoteOptimized = async (
     
     // Return the quote with user data
     return {
-      ...newQuote,
+      ...newQuote[0],
       user: profileError || !profile ? {
         id: userData.user.id,
         username: 'unknown',

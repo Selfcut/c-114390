@@ -87,5 +87,31 @@ export async function decrementCounter(
   }
 }
 
+/**
+ * Initialize Supabase utilities and functions
+ * Used when the application starts up
+ */
+export async function initializeSupabaseUtils(): Promise<void> {
+  try {
+    console.info("Initializing Supabase utilities...");
+    // Check if required RPC functions are available
+    const { error } = await supabase.rpc('increment_counter_fn', {
+      row_id: '00000000-0000-0000-0000-000000000000',
+      column_name: 'test',
+      table_name: 'test'
+    });
+    
+    // This is expected to fail with a specific error for a table that doesn't exist
+    // But it should not fail with "function doesn't exist"
+    if (error && error.message.includes('function') && error.message.includes('does not exist')) {
+      console.warn('Required Supabase functions are not available. Some features may not work properly.');
+    } else {
+      console.info('Supabase utilities initialized successfully');
+    }
+  } catch (err) {
+    console.error('Failed to initialize Supabase utilities:', err);
+  }
+}
+
 // Import statement was missing in the original code snippet
 import { supabase } from '@/integrations/supabase/client';
