@@ -13,6 +13,12 @@ interface ContentInteractionState {
   isBookmarkLoading: boolean;
 }
 
+// Type for mutation context to avoid deep nesting
+interface MutationContext {
+  contentId: string;
+  previousValue: boolean;
+}
+
 // Props type
 interface UseOptimizedContentInteractionsProps {
   userId: string | null;
@@ -59,10 +65,10 @@ export const useOptimizedContentInteractions = ({
       };
       
       // Create a new record instead of spreading
-      const newRecord = { ...prevState };
-      newRecord[contentId] = newState;
-      
-      return newRecord;
+      return { 
+        ...prevState,
+        [contentId]: newState 
+      };
     });
   }, []);
 
@@ -151,6 +157,7 @@ export const useOptimizedContentInteractions = ({
       
       // Get current state safely
       const currentState = getStateForContent(contentId);
+      const previousValue = currentState.isLiked;
       
       // Update state with direct assignment for type safety
       updateContentState(contentId, {
@@ -158,18 +165,18 @@ export const useOptimizedContentInteractions = ({
         isLikeLoading: true
       });
       
-      // Return context
-      return { previousState: { ...interactionState } };
+      // Return simplified context (avoids deep nesting)
+      return {
+        contentId,
+        previousValue
+      } as MutationContext;
     },
     onSuccess: (data) => {
       const { contentId, isLiked } = data;
       
-      // Get current state safely
-      const currentState = getStateForContent(contentId);
-      
       // Update state with direct assignment
       updateContentState(contentId, {
-        isLiked: isLiked,
+        isLiked,
         isLikeLoading: false
       });
       
@@ -181,8 +188,10 @@ export const useOptimizedContentInteractions = ({
         queryKey: [`${contentType}`, contentId]
       });
     },
-    onError: (error, variables) => {
-      const { contentId } = variables;
+    onError: (error, variables, context) => {
+      if (!context) return;
+      
+      const { contentId, previousValue } = context;
       
       console.error('Error toggling like:', error);
       toast({
@@ -191,12 +200,9 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
       
-      // Get current state safely
-      const currentState = getStateForContent(contentId);
-      
       // Revert state with direct assignment
       updateContentState(contentId, {
-        isLiked: !currentState.isLiked,  
+        isLiked: previousValue,
         isLikeLoading: false
       });
     }
@@ -272,6 +278,7 @@ export const useOptimizedContentInteractions = ({
       
       // Get current state safely
       const currentState = getStateForContent(contentId);
+      const previousValue = currentState.isBookmarked;
       
       // Update state with direct assignment
       updateContentState(contentId, {
@@ -279,18 +286,18 @@ export const useOptimizedContentInteractions = ({
         isBookmarkLoading: true
       });
       
-      // Return context
-      return { previousState: { ...interactionState } };
+      // Return simplified context (avoids deep nesting)
+      return {
+        contentId,
+        previousValue
+      } as MutationContext;
     },
     onSuccess: (data) => {
       const { contentId, isBookmarked } = data;
       
-      // Get current state safely
-      const currentState = getStateForContent(contentId);
-      
       // Update state with direct assignment
       updateContentState(contentId, {
-        isBookmarked: isBookmarked,
+        isBookmarked,
         isBookmarkLoading: false
       });
       
@@ -299,8 +306,10 @@ export const useOptimizedContentInteractions = ({
         queryKey: [`${contentType}s`, 'bookmarked']
       });
     },
-    onError: (error, variables) => {
-      const { contentId } = variables;
+    onError: (error, variables, context) => {
+      if (!context) return;
+      
+      const { contentId, previousValue } = context;
       
       console.error('Error toggling bookmark:', error);
       toast({
@@ -309,12 +318,9 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
       
-      // Get current state safely
-      const currentState = getStateForContent(contentId);
-      
       // Revert state with direct assignment
       updateContentState(contentId, {
-        isBookmarked: !currentState.isBookmarked,
+        isBookmarked: previousValue,
         isBookmarkLoading: false
       });
     }
