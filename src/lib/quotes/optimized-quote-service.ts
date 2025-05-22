@@ -107,7 +107,16 @@ export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser
   try {
     // Execute both queries in parallel using batch operations
     const [quoteResult, profileResult] = await batchOperations([
-      () => executeQuery(() => supabase.from('quotes').select('*').eq('id', id).single()),
+      async () => {
+        // Properly await the query to get the data and error properties
+        const { data, error } = await supabase
+          .from('quotes')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        return error ? null : data;
+      },
       async () => {
         // Fix the issue here - properly await the query
         const { data: quoteData, error: quoteError } = await supabase
