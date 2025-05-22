@@ -42,9 +42,9 @@ export const batchOperations = async (operations: BatchOperation[]): Promise<unk
   return Promise.all(operations.map(operation => operation()));
 };
 
-// Simple interface for query results to avoid deep type instantiation
-interface QueryResult<T> {
-  data: T | null;
+// Explicitly define simple query result type
+interface QueryResult {
+  data: any | null;
   error: any | null;
 }
 
@@ -66,12 +66,12 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Use any for intermediate results to avoid deep typing
-    let likesResult: any = null;
+    // Use explicit typing for query results to avoid deep typing
+    let likesResult: QueryResult;
     let likesData: any = null;
     let likesError: any = null;
     
-    // Execute likes query and manually process result
+    // Execute likes query directly without destructuring
     likesResult = await supabase
       .from(likesTable)
       .select('id')
@@ -79,11 +79,12 @@ export const checkUserContentInteractions = async (
       .eq('user_id', userId)
       .maybeSingle();
     
+    // Manually extract data and error
     likesData = likesResult.data;
     likesError = likesResult.error;
     
-    // Handle bookmarks query similarly
-    let bookmarksResult: any = null;
+    // Handle bookmarks query similarly with explicit typing
+    let bookmarksResult: QueryResult;
     let bookmarksData: any = null;
     let bookmarksError: any = null;
     
@@ -95,6 +96,7 @@ export const checkUserContentInteractions = async (
       .eq('user_id', userId)
       .maybeSingle();
     
+    // Manually extract data and error
     bookmarksData = bookmarksResult.data;
     bookmarksError = bookmarksResult.error;
     
@@ -205,12 +207,6 @@ interface ContentBookmarkInsert {
   content_type: string;
 }
 
-// Interface for Supabase responses to avoid deep type inference
-interface SupabaseResponse {
-  data: any | null;
-  error: any | null;
-}
-
 /**
  * Toggle a user interaction (like or bookmark) on content
  * @param type The interaction type ('like' or 'bookmark')
@@ -237,10 +233,7 @@ export const toggleUserInteraction = async (
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
     // Check if interaction exists - use explicit typing to avoid deep inference
-    let checkResult: SupabaseResponse;
-    
-    // Run the query
-    checkResult = await supabase
+    const checkResult: QueryResult = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
@@ -254,8 +247,8 @@ export const toggleUserInteraction = async (
     if (checkError) throw checkError;
 
     if (checkData) {
-      // Remove interaction - treat as simple operation
-      const deleteResult: SupabaseResponse = await supabase
+      // Remove interaction
+      const deleteResult: QueryResult = await supabase
         .from(tableName)
         .delete()
         .eq('id', checkData.id);
@@ -271,7 +264,7 @@ export const toggleUserInteraction = async (
       return false;
     } else {
       // Add interaction - handle each case separately with explicit typing
-      let insertResult: SupabaseResponse;
+      let insertResult: QueryResult;
       
       if (contentType === 'quote') {
         if (isLike) {
