@@ -22,17 +22,16 @@ export const toggleUserInteraction = async (
   try {
     // Determine which table to use
     const isLike = type === 'like';
-    let tableName: 'quote_likes' | 'content_likes' | 'quote_bookmarks' | 'content_bookmarks';
     
-    if (contentType === 'quote') {
-      tableName = isLike ? 'quote_likes' : 'quote_bookmarks';
-    } else {
-      tableName = isLike ? 'content_likes' : 'content_bookmarks';
-    }
+    // Use explicit literal string types to avoid deep type instantiation
+    const tableName = contentType === 'quote' 
+      ? (isLike ? 'quote_likes' : 'quote_bookmarks') as const
+      : (isLike ? 'content_likes' : 'content_bookmarks') as const;
     
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
 
     // Check if interaction exists with explicit table name
+    // Use type assertion to prevent deep type instantiation
     const { data: checkData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
@@ -63,14 +62,14 @@ export const toggleUserInteraction = async (
           userId, 
           contentId, 
           contentType, 
-          contentType === 'quote' ? 'quote_likes' : 'content_likes'
+          contentType === 'quote' ? 'quote_likes' as const : 'content_likes' as const
         );
       } else {
         await addBookmark(
           userId, 
           contentId, 
           contentType, 
-          contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks'
+          contentType === 'quote' ? 'quote_bookmarks' as const : 'content_bookmarks' as const
         );
       }
       
