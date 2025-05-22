@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { incrementCounter, decrementCounter } from "@/lib/utils/supabase-utils";
+import { incrementCounter, decrementCounter } from "@/lib/utils/counter-operations";
 
 export const useCounterOperations = () => {
   /**

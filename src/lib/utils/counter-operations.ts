@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { executeQuery } from './supabase-helpers';
 
 /**
  * Increment a counter on a content item
@@ -17,13 +16,13 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    const result = await executeQuery(() => supabase.rpc('increment_counter_fn', {
+    const { error } = await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
-    }));
+    });
     
-    if (result.error) throw result.error;
+    if (error) throw error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -48,13 +47,13 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    const result = await executeQuery(() => supabase.rpc('decrement_counter_fn', {
+    const { error } = await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
-    }));
+    });
     
-    if (result.error) throw result.error;
+    if (error) throw error;
     return true;
   } catch (error) {
     if (!silent) {
