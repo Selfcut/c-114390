@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { PageLayout } from "./layouts/PageLayout";
 import { Skeleton } from "./ui/skeleton";
+import { LoadingScreen } from "./LoadingScreen";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -24,14 +24,7 @@ export const ProtectedRoute = ({
 
   // Show loading state while authentication is being determined
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-primary/20 rounded-full mb-4"></div>
-          <Skeleton className="h-4 w-24 bg-primary/20 rounded" />
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Verifying authentication..." />;
   }
 
   // If guest access is allowed, render the content directly

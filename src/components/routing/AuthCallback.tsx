@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export const AuthCallback = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();

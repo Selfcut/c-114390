@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { LoadingScreen } from '@/components/routing/LoadingScreen';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
