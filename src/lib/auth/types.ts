@@ -1,4 +1,5 @@
 
+// Import types from the single source of truth
 import { UserProfile, UserStatus, UserRole } from '@/types/user';
 
 // Use 'export type' to properly re-export types when isolatedModules is enabled
