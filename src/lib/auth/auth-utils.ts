@@ -184,6 +184,49 @@ export async function updateUserProfile(
   }
 }
 
+// Add the missing ensureUserProfile function
+export async function ensureUserProfile(userId: string, userData?: { 
+  email?: string; 
+  name?: string; 
+  username?: string; 
+}): Promise<UserProfile | null> {
+  try {
+    // First check if profile exists
+    const { data: existingProfile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error checking for user profile:', error);
+      return null;
+    }
+    
+    if (existingProfile) {
+      // Profile exists, return it
+      return await fetchUserProfile(userId);
+    }
+    
+    // No profile exists, create one
+    const dummySession = userData ? {
+      user: {
+        id: userId,
+        email: userData.email || '',
+        user_metadata: {
+          name: userData.name || '',
+          username: userData.username || ''
+        }
+      }
+    } : null;
+    
+    return await createUserProfile(userId, dummySession as any);
+  } catch (err) {
+    console.error('Error ensuring user profile exists:', err);
+    return null;
+  }
+}
+
 // Authentication methods
 export const signIn = async (email: string, password: string) => {
   try {
