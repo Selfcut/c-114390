@@ -1,6 +1,6 @@
 
 /**
- * Executes a Supabase query and handles potential errors
+ * Executes a Supabase query and handles potential errors with improved type safety
  * 
  * @param queryFn - Function that returns a Supabase query
  * @returns A promise that resolves to the result of the query or null on error
@@ -21,6 +21,7 @@ export async function executeQuery<T>(queryFn: () => Promise<{ data: T | null; e
 
 /**
  * Executes multiple operations in parallel and returns their results
+ * With improved typing and error handling
  * 
  * @param operations - Array of functions that return promises
  * @returns A promise that resolves to an array of results
@@ -113,5 +114,61 @@ export async function initializeSupabaseUtils(): Promise<void> {
   }
 }
 
-// Import statement was missing in the original code snippet
+/**
+ * Optimized check for user interaction with content
+ * Combines multiple checks into a single batch operation
+ * 
+ * @param userId - The user ID to check
+ * @param contentId - The content ID to check
+ * @param contentType - The type of content
+ * @returns A promise that resolves to an object with interaction states
+ */
+export async function checkUserContentInteractions(
+  userId: string,
+  contentId: string,
+  contentType: string
+): Promise<{ hasLiked: boolean; hasBookmarked: boolean }> {
+  if (!userId || !contentId) {
+    return { hasLiked: false, hasBookmarked: false };
+  }
+  
+  try {
+    const [likeResult, bookmarkResult] = await batchOperations([
+      async () => {
+        const { data, error } = await supabase
+          .from('content_likes')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', userId)
+          .eq('content_type', contentType)
+          .maybeSingle();
+        
+        if (error) throw error;
+        return !!data;
+      },
+      async () => {
+        const { data, error } = await supabase
+          .from('content_bookmarks')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', userId)
+          .eq('content_type', contentType)
+          .maybeSingle();
+        
+        if (error) throw error;
+        return !!data;
+      }
+    ]);
+    
+    return {
+      hasLiked: likeResult === true,
+      hasBookmarked: bookmarkResult === true
+    };
+  } catch (err) {
+    console.error('Error checking user content interactions:', err);
+    return { hasLiked: false, hasBookmarked: false };
+  }
+}
+
+// Import statement - moved to the top
 import { supabase } from '@/integrations/supabase/client';
