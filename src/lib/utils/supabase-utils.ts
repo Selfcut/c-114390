@@ -106,7 +106,6 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    // Use the rpc function directly - avoid generic parameters
     await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
@@ -137,7 +136,6 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    // Use the rpc function directly - avoid generic parameters
     await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
