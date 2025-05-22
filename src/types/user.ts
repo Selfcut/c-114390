@@ -44,3 +44,25 @@ export interface UserActivity {
   metadata?: Record<string, any>;
   user_id: string;
 }
+
+export interface AuthState {
+  user: UserProfile | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  session: any | null;
+}
+
+export interface AuthContextType extends AuthState {
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; data?: any }>;
+  signUp: (email: string, password: string, username: string, name?: string) => Promise<{ error: Error | null; data?: any }>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
+  updateUserStatus: (status: UserStatus) => Promise<void>;
+  toggleGhostMode: () => Promise<void>;
+  toggleDoNotDisturb: () => Promise<void>;
+}
+
+// For backward compatibility
+export type AuthContextValue = AuthContextType;

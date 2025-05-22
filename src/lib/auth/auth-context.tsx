@@ -2,9 +2,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUserProfile, updateUserProfile as updateProfile, signIn, signOut, signUp } from './auth-utils';
-import { UserProfile, UserStatus, UserRole } from '@/types/user';
-import { AuthContextType } from './types';
+import { fetchUserProfile, updateUserProfile, signIn, signOut, signUp, ensureUserProfile } from './auth-utils';
+import { UserProfile, UserStatus, UserRole, AuthContextType } from '@/types/user';
 import { useToast } from '@/hooks/use-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,11 +17,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log("Setting up auth state listener");
+    let isFirstLoad = true;
     
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST before checking for existing session
+    // This prevents race conditions between the two operations
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log('Auth state changed:', event, currentSession?.user?.id);
+        
+        // Update the session state synchronously to prevent rerendering issues
         setSession(currentSession);
         
         if (currentSession?.user) {
@@ -30,11 +33,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Instead use setTimeout to run it on the next event loop tick
           setTimeout(async () => {
             try {
-              // Fetch the user profile
-              const profile = await fetchUserProfile(currentSession.user.id, currentSession);
+              console.log("Fetching profile after auth state change");
+              // Force ensureUserProfile to create if missing
+              const profile = await ensureUserProfile(
+                currentSession.user.id, 
+                {}, // Default profile values
+                currentSession
+              );
               
               if (profile) {
-                console.log("User profile fetched:", profile.username);
+                console.log("User profile resolved:", profile.username);
                 setUser(profile);
                 setIsAuthenticated(true);
               }
@@ -43,9 +51,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(null);
                 setIsAuthenticated(false);
               }
+              
+              // Only update loading state after first load is complete
+              if (isFirstLoad) {
+                setIsLoading(false);
+                isFirstLoad = false;
+              }
             } catch (error) {
-              console.error('Error fetching user profile:', error);
-            } finally {
+              console.error('Error fetching user profile after auth change:', error);
               setIsLoading(false);
             }
           }, 0);
@@ -53,7 +66,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log("No user in session, setting user to null");
           setUser(null);
           setIsAuthenticated(false);
-          setIsLoading(false);
+          
+          // Only update loading state after first load is complete
+          if (isFirstLoad) {
+            setIsLoading(false);
+            isFirstLoad = false;
+          }
         }
       }
     );
@@ -61,13 +79,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
+        console.log("Checking for existing session");
         const { data } = await supabase.auth.getSession();
-        console.log("Initial session check:", data.session?.user?.id);
-        setSession(data.session);
+        
+        // Only update session if we don't already have one from the auth state change
+        if (!session) {
+          console.log("Initial session check:", data.session?.user?.id);
+          setSession(data.session);
+        }
 
         if (data.session?.user) {
-          // Fetch the user profile
-          const profile = await fetchUserProfile(data.session.user.id, data.session);
+          // Fetch the user profile (this is not in the auth state change callback)
+          const profile = await ensureUserProfile(
+            data.session.user.id,
+            {},
+            data.session
+          );
           
           if (profile) {
             console.log("Initial profile fetch:", profile.username);
@@ -83,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error initializing auth:', error);
       } finally {
         setIsLoading(false);
+        isFirstLoad = false;
       }
     };
 
@@ -199,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setIsLoading(true);
     try {
-      const result = await updateProfile(user.id, updates);
+      const result = await updateUserProfile(user.id, updates);
       
       if (!result.error) {
         setUser(prev => prev ? { ...prev, ...updates } : null);

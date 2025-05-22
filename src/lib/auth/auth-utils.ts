@@ -18,6 +18,11 @@ export async function fetchUserProfile(userId: string, session?: Session | null)
   try {
     console.log('Fetching profile for user ID:', userId);
     
+    if (!userId) {
+      console.error('Invalid user ID provided to fetchUserProfile');
+      return null;
+    }
+    
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
@@ -69,9 +74,26 @@ export async function createUserProfile(userId: string, session?: Session | null
   try {
     console.log('Creating missing profile for user ID:', userId);
     
+    if (!userId) {
+      console.error('Invalid user ID provided to createUserProfile');
+      return null;
+    }
+    
     const email = session?.user?.email || '';
     const name = session?.user?.user_metadata?.name || `User ${userId.substring(0, 4)}`;
     const username = session?.user?.user_metadata?.username || `user_${userId.substring(0, 8)}`;
+    
+    // Check if profile already exists (just to be safe)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (existingProfile) {
+      console.log('Profile already exists, returning existing profile');
+      return await fetchUserProfile(userId, session);
+    }
     
     const newProfile = {
       id: userId,
@@ -84,6 +106,8 @@ export async function createUserProfile(userId: string, session?: Session | null
       bio: '',
       website: ''
     };
+    
+    console.log('Inserting new profile:', newProfile);
     
     const { error } = await supabase
       .from('profiles')
@@ -119,12 +143,90 @@ export async function createUserProfile(userId: string, session?: Session | null
   }
 }
 
+// Ensure a user profile exists, creating it if necessary (alias for consistency)
+export async function ensureUserProfile(
+  userId: string, 
+  defaultProfile: Partial<UserProfile> = {},
+  session?: Session | null
+): Promise<UserProfile | null> {
+  try {
+    // First check if profile exists
+    const existingProfile = await fetchUserProfile(userId, session);
+    
+    // If profile exists, return it
+    if (existingProfile) {
+      return existingProfile;
+    }
+    
+    // If no profile, create one with default values merged
+    const email = session?.user?.email || '';
+    const sessionName = session?.user?.user_metadata?.name;
+    const sessionUsername = session?.user?.user_metadata?.username;
+    
+    // Priority order: defaultProfile > session > generated defaults
+    const newProfileData = {
+      id: userId,
+      username: defaultProfile.username || sessionUsername || `user_${userId.substring(0, 8)}`,
+      name: defaultProfile.name || sessionName || `User ${userId.substring(0, 4)}`,
+      avatar_url: defaultProfile.avatar_url || 
+        `https://api.dicebear.com/6.x/initials/svg?seed=${defaultProfile.username || sessionUsername || userId.substring(0, 8)}`,
+      status: 'online' as UserStatus,
+      role: 'user' as UserRole,
+      is_ghost_mode: false,
+      bio: defaultProfile.bio || '',
+      website: defaultProfile.website || '',
+    };
+    
+    console.log('Creating new profile with merged data:', newProfileData);
+    
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .insert(newProfileData)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('Error creating user profile in ensureUserProfile:', error);
+      return null;
+    }
+    
+    // Return the newly created profile
+    return {
+      id: profile.id,
+      username: profile.username,
+      name: profile.name,
+      email,
+      avatar: profile.avatar_url,
+      avatar_url: profile.avatar_url,
+      bio: profile.bio || '',
+      website: profile.website || '',
+      status: profile.status as UserStatus,
+      isGhostMode: profile.is_ghost_mode || false,
+      role: profile.role as UserRole,
+      isAdmin: profile.role === 'admin',
+      notificationSettings: {
+        desktopNotifications: true,
+        soundNotifications: true,
+        emailNotifications: true
+      }
+    };
+    
+  } catch (err) {
+    console.error('Exception in ensureUserProfile:', err);
+    return null;
+  }
+}
+
 // Update a user's profile
 export async function updateUserProfile(
   userId: string,
   updates: Partial<UserProfile>
 ): Promise<{ error: Error | null }> {
   try {
+    if (!userId) {
+      return { error: new Error('Invalid user ID provided to updateUserProfile') };
+    }
+    
     // Convert from our app UserProfile type to database fields
     const dbUpdates: any = {};
     
