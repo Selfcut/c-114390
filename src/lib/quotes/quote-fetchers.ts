@@ -52,7 +52,7 @@ export const fetchQuotesOptimized = async (
     const userIds = [...new Set(quotesData.map(quote => quote.user_id).filter(Boolean))];
     
     // Batch fetch user profiles
-    const [profilesResult] = await batchOperations([
+    const [profilesResult] = await batchOperations<any[]>([
       async () => {
         if (userIds.length === 0) return [];
         const { data, error } = await supabase
@@ -106,7 +106,31 @@ export const fetchQuotesOptimized = async (
 export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser | null> => {
   try {
     // Execute both queries in parallel using batch operations
-    const [quoteResult, profileResult] = await batchOperations([
+    type QuoteType = {
+      author: string;
+      bookmarks: number;
+      category: string;
+      comments: number;
+      created_at: string;
+      featured_date: string;
+      id: string;
+      likes: number;
+      source: string;
+      tags: string[];
+      text: string;
+      updated_at: string;
+      user_id: string;
+    };
+    
+    type ProfileType = {
+      id: string;
+      username: string;
+      name: string;
+      avatar_url: string;
+      status: string;
+    } | null;
+    
+    const [quoteResult, profileResult] = await batchOperations<QuoteType | ProfileType>([
       async () => {
         // Properly await the query to get the data and error properties
         const { data, error } = await supabase
@@ -115,7 +139,7 @@ export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser
           .eq('id', id)
           .single();
           
-        return error ? null : data;
+        return error ? null : data as QuoteType;
       },
       async () => {
         // Fetch user profile associated with the quote
@@ -133,7 +157,7 @@ export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser
           .eq('id', quoteData.user_id)
           .single();
           
-        return profileError ? null : profileData;
+        return profileError ? null : profileData as ProfileType;
       }
     ]);
     

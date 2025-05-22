@@ -217,7 +217,7 @@ export const toggleUserInteraction = async (
     } else {
       // Add interaction - use explicit object with required fields
       if (contentType === 'quote') {
-        const insertData = {
+        const insertData: { quote_id: string; user_id: string } = {
           quote_id: contentId, 
           user_id: userId
         };
@@ -228,7 +228,7 @@ export const toggleUserInteraction = async (
           
         if (insertError) throw insertError;
       } else {
-        const insertData = {
+        const insertData: { content_id: string; user_id: string; content_type: string } = {
           content_id: contentId,
           user_id: userId,
           content_type: contentType

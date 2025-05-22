@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -151,15 +150,17 @@ export const ForumPostDetail = () => {
   }
   
   // Adapt the post data for PostHeader component
-  const adaptedPost = {
+  const adaptedPost = post ? {
     ...post,
-    authorName: post.author,
+    title: post.title || '',
+    authorName: post.author || 'Anonymous',
+    author: post.author || 'Anonymous', // Ensure both fields are set
     created_at: post.createdAt instanceof Date 
       ? post.createdAt.toISOString() 
       : typeof post.createdAt === 'string' 
         ? post.createdAt 
         : new Date().toISOString()
-  };
+  } : { title: '', authorName: 'Anonymous', created_at: new Date().toISOString() };
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -170,12 +171,14 @@ export const ForumPostDetail = () => {
       
       <Card className="mb-8">
         <PostHeader post={adaptedPost} />
-        <PostContent content={post.content} tags={post.tags} />
-        <PostFooter 
-          post={post} 
-          isAuthenticated={isAuthenticated}
-          onUpvote={handleUpvote}
-        />
+        {post && <PostContent content={post.content} tags={post.tags} />}
+        {post && (
+          <PostFooter 
+            post={post} 
+            isAuthenticated={isAuthenticated}
+            onUpvote={handleUpvote}
+          />
+        )}
       </Card>
       
       {/* Comments Section */}
@@ -195,11 +198,21 @@ export const ForumPostDetail = () => {
         {comments.length > 0 ? (
           <div className="space-y-4">
             {comments.map((comment) => {
-              // Adapt the comment data for CommentItem
+              // Adapt the comment data for CommentItem, ensuring all required properties are present
               const adaptedComment = {
-                ...comment,
-                authorName: comment.author,
-                upvotes: 0 // Default value if not available
+                id: comment.id,
+                content: comment.content || comment.comment || '',
+                comment: comment.comment || comment.content || '',
+                author: comment.author || 'Anonymous',
+                authorName: comment.author || comment.authorName || 'Anonymous',
+                authorAvatar: comment.authorAvatar || '',
+                created_at: comment.createdAt instanceof Date 
+                  ? comment.createdAt.toISOString() 
+                  : typeof comment.createdAt === 'string'
+                    ? comment.createdAt
+                    : new Date().toISOString(),
+                isAuthor: !!comment.isAuthor,
+                upvotes: comment.upvotes || 0
               };
               
               return <CommentItem key={comment.id} comment={adaptedComment} />;

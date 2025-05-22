@@ -97,9 +97,13 @@ export const UserInteractionProvider: React.FC<{
           }
         }));
         
-        // Invalidate relevant queries
-        queryClient.invalidateQueries([contentType]);
-        queryClient.invalidateQueries([contentType, contentId]);
+        // Invalidate relevant queries - Fix for React Query v5
+        queryClient.invalidateQueries({
+          queryKey: [contentType]
+        });
+        queryClient.invalidateQueries({
+          queryKey: [contentType, contentId]
+        });
         
         return newState;
       } catch (error) {
@@ -160,8 +164,10 @@ export const UserInteractionProvider: React.FC<{
           }
         }));
         
-        // Invalidate relevant queries
-        queryClient.invalidateQueries([contentType, 'bookmarked']);
+        // Invalidate relevant queries - Fix for React Query v5
+        queryClient.invalidateQueries({
+          queryKey: [contentType, 'bookmarked']
+        });
         
         return newState;
       } catch (error) {
