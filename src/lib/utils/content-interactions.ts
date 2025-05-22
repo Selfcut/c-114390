@@ -52,7 +52,7 @@ export const checkUserContentInteractions = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
     // Execute likes query using our helper function without complex typing
-    const likesResult: QueryResult = await executeQuery(() => 
+    const likesResult = await executeQuery(() => 
       supabase
         .from(likesTable)
         .select('id')
@@ -62,7 +62,7 @@ export const checkUserContentInteractions = async (
     );
     
     // Execute the bookmarks query using our helper function without complex typing
-    const bookmarksResult: QueryResult = await executeQuery(() => 
+    const bookmarksResult = await executeQuery(() => 
       supabase
         .from(bookmarksTable)
         .select('id')
@@ -119,7 +119,7 @@ export const toggleUserInteraction = async (
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
     // Check if interaction exists using our helper function
-    const checkResult: QueryResult = await executeQuery(() =>
+    const checkResult = await executeQuery(() =>
       supabase
         .from(tableName)
         .select('id')
@@ -132,10 +132,10 @@ export const toggleUserInteraction = async (
 
     if (checkResult.data) {
       // Remove interaction - use the data.id safely with type checking
-      const recordId = checkResult.data?.id;
+      const recordId = checkResult.data.id;
       if (!recordId) throw new Error('Could not find record ID');
       
-      const deleteResult: QueryResult = await executeQuery(() =>
+      const deleteResult = await executeQuery(() =>
         supabase
           .from(tableName)
           .delete()
@@ -152,7 +152,7 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      let insertResult: QueryResult;
+      let insertResult;
       
       if (contentType === 'quote') {
         if (isLike) {

@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 export * from './batch-operations';
 export * from './counter-operations';
 export * from './content-interactions';
+export * from './supabase-helpers';
 
 // Type definitions as common foundation
 export interface CounterOptions {
@@ -13,10 +14,4 @@ export interface CounterOptions {
   counterName: string;
   tableName: string;
   silent?: boolean;
-}
-
-// Simple interface for Supabase query results to avoid deep type inference
-export interface QueryResult {
-  data: any;
-  error: any;
 }

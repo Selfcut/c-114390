@@ -12,7 +12,7 @@ export interface QueryResult {
  * @param queryFn Function that returns a Supabase query
  * @returns Promise with query result
  */
-export async function executeQuery<T>(queryFn: () => any): Promise<QueryResult> {
+export async function executeQuery(queryFn: () => any): Promise<QueryResult> {
   try {
     // Execute the query function
     const result = await queryFn();
