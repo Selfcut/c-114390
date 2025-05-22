@@ -2,7 +2,6 @@
 // Import supabase client
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 // Type definitions for better type safety
 export interface CounterOptions {
@@ -61,22 +60,11 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute queries in parallel for better performance - avoid type complexity with await
-    const likesPromise = supabase
-      .from(likesTable)
-      .select('id')
-      .eq(idField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    const bookmarksPromise = supabase
-      .from(bookmarksTable)
-      .select('id')
-      .eq(idField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    const [likesResponse, bookmarksResponse] = await Promise.all([likesPromise, bookmarksPromise]);
+    // Execute queries in parallel for better performance - avoid complex typing with destructuring
+    const [likesResponse, bookmarksResponse] = await Promise.all([
+      supabase.from(likesTable).select('id').eq(idField, contentId).eq('user_id', userId).maybeSingle(),
+      supabase.from(bookmarksTable).select('id').eq(idField, contentId).eq('user_id', userId).maybeSingle()
+    ]);
     
     return {
       hasLiked: !!likesResponse.data,
@@ -106,13 +94,13 @@ export const incrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc('increment_counter_fn', {
+    const result = await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
     });
     
-    if (error) throw error;
+    if (result.error) throw result.error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -137,13 +125,13 @@ export const decrementCounter = async (
   silent = false
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc('decrement_counter_fn', {
+    const result = await supabase.rpc('decrement_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
     });
     
-    if (error) throw error;
+    if (result.error) throw result.error;
     return true;
   } catch (error) {
     if (!silent) {
@@ -201,24 +189,27 @@ export const toggleUserInteraction = async (
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
 
-    // Check if interaction exists - use direct destructuring of query result to avoid typing issues
-    const { data: existingData, error: checkError } = await supabase
+    // Check if interaction exists
+    const checkResponse = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
       .eq('user_id', userId)
       .maybeSingle();
+    
+    const existingData = checkResponse.data;
+    const checkError = checkResponse.error;
       
     if (checkError) throw checkError;
 
     if (existingData) {
-      // Remove interaction - use direct destructuring of delete result
-      const { error: deleteError } = await supabase
+      // Remove interaction
+      const deleteResponse = await supabase
         .from(tableName)
         .delete()
         .eq('id', existingData.id);
         
-      if (deleteError) throw deleteError;
+      if (deleteResponse.error) throw deleteResponse.error;
       
       // Only decrement count for supported counters
       const counterSupported = isLike || (contentType === 'quote');
@@ -228,7 +219,7 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction - avoid typing issues by handling each case separately
+      // Add interaction - handle each case separately to avoid complex typing
       let error = null;
       
       if (contentType === 'quote') {
