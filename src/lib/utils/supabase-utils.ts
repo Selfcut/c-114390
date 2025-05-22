@@ -16,6 +16,7 @@ export interface ContentInteractions {
   hasBookmarked: boolean;
 }
 
+// Define a more concrete batch operation type
 export interface BatchOperation<T> {
   (): Promise<T>;
 }
@@ -61,32 +62,30 @@ export const checkUserContentInteractions = async (
     const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
     
-    // Execute batch operations to check likes and bookmarks
+    // Execute queries in parallel for better performance
     const [likesResult, bookmarksResult] = await Promise.all([
       // Check if user has liked the content
-      (async () => {
-        const { data, error } = await supabase
-          .from(likesTable)
-          .select('id')
-          .eq(idField, contentId)
-          .eq('user_id', userId)
-          .maybeSingle();
-          
-        if (error) throw error;
-        return !!data;
-      })(),
+      supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return !!data;
+        }),
       // Check if user has bookmarked the content
-      (async () => {
-        const { data, error } = await supabase
-          .from(bookmarksTable)
-          .select('id')
-          .eq(idField, contentId)
-          .eq('user_id', userId)
-          .maybeSingle();
-          
-        if (error) throw error;
-        return !!data;
-      })()
+      supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return !!data;
+        })
     ]);
     
     return {
@@ -103,18 +102,21 @@ export const checkUserContentInteractions = async (
 };
 
 /**
- * Unified counter operation function (increment or decrement)
- * @param operation 'increment' or 'decrement' 
- * @param options The counter options
+ * Increment a counter on a content item
+ * @param contentId The content ID
+ * @param counterName The counter column name
+ * @param tableName The table name
+ * @param silent Optional flag to suppress error logging
  * @returns Promise<boolean> indicating success
  */
-const counterOperation = async (
-  operation: 'increment' | 'decrement',
-  { contentId, counterName, tableName, silent = false }: CounterOptions
+export const incrementCounter = async (
+  contentId: string,
+  counterName: string,
+  tableName: string,
+  silent = false
 ): Promise<boolean> => {
   try {
-    const functionName = `${operation}_counter_fn`;
-    const { error } = await supabase.rpc(functionName, {
+    const { error } = await supabase.rpc('increment_counter_fn', {
       row_id: contentId,
       column_name: counterName,
       table_name: tableName
@@ -124,29 +126,18 @@ const counterOperation = async (
     return true;
   } catch (error) {
     if (!silent) {
-      console.error(`[Supabase Utils] Error ${operation}ing ${counterName} counter:`, error);
+      console.error(`[Supabase Utils] Error incrementing ${counterName} counter:`, error);
     }
     return false;
   }
 };
 
 /**
- * Increment a counter on a content item
- * @param options The counter options
- * @returns Promise<boolean> indicating success
- */
-export const incrementCounter = async (
-  contentId: string,
-  counterName: string,
-  tableName: string,
-  silent = false
-): Promise<boolean> => {
-  return counterOperation('increment', { contentId, counterName, tableName, silent });
-};
-
-/**
  * Decrement a counter on a content item
- * @param options The counter options
+ * @param contentId The content ID
+ * @param counterName The counter column name
+ * @param tableName The table name
+ * @param silent Optional flag to suppress error logging
  * @returns Promise<boolean> indicating success
  */
 export const decrementCounter = async (
@@ -155,7 +146,21 @@ export const decrementCounter = async (
   tableName: string,
   silent = false
 ): Promise<boolean> => {
-  return counterOperation('decrement', { contentId, counterName, tableName, silent });
+  try {
+    const { error } = await supabase.rpc('decrement_counter_fn', {
+      row_id: contentId,
+      column_name: counterName,
+      table_name: tableName
+    });
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    if (!silent) {
+      console.error(`[Supabase Utils] Error decrementing ${counterName} counter:`, error);
+    }
+    return false;
+  }
 };
 
 /**
@@ -184,7 +189,7 @@ export const toggleUserInteraction = async (
     const contentTableName = contentType === 'quote' ? 'quotes' : contentType;
 
     // Check if interaction exists
-    const { data, error: checkError } = await supabase
+    const { data: existingInteraction, error: checkError } = await supabase
       .from(tableName)
       .select('id')
       .eq(idField, contentId)
@@ -193,12 +198,12 @@ export const toggleUserInteraction = async (
       
     if (checkError) throw checkError;
 
-    if (data) {
+    if (existingInteraction) {
       // Remove interaction
       const { error: deleteError } = await supabase
         .from(tableName)
         .delete()
-        .eq('id', data.id);
+        .eq('id', existingInteraction.id);
         
       if (deleteError) throw deleteError;
       
@@ -210,22 +215,31 @@ export const toggleUserInteraction = async (
       
       return false;
     } else {
-      // Add interaction
-      const insertData: Record<string, any> = { user_id: userId };
-      
-      // Set the correct content id field
-      insertData[idField] = contentId;
-      
-      // Add content_type field for non-quote tables
-      if (contentType !== 'quote' && tableName.startsWith('content_')) {
-        insertData.content_type = contentType;
-      }
-      
-      const { error: insertError } = await supabase
-        .from(tableName)
-        .insert(insertData);
+      // Add interaction - use explicit object with required fields
+      if (contentType === 'quote') {
+        const insertData = {
+          quote_id: contentId, 
+          user_id: userId
+        };
         
-      if (insertError) throw insertError;
+        const { error: insertError } = await supabase
+          .from(tableName)
+          .insert(insertData);
+          
+        if (insertError) throw insertError;
+      } else {
+        const insertData = {
+          content_id: contentId,
+          user_id: userId,
+          content_type: contentType
+        };
+        
+        const { error: insertError } = await supabase
+          .from(tableName)
+          .insert(insertData);
+          
+        if (insertError) throw insertError;
+      }
       
       // Only increment count for supported counters
       const counterSupported = isLike || (contentType === 'quote');

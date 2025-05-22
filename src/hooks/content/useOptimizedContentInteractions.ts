@@ -77,23 +77,28 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isLiked: false };
       } else {
         // Like - Insert new like
-        const insertData: Record<string, any> = {
-          user_id: userId
-        };
-        
-        // Set the correct content id field based on content type
-        insertData[contentIdField] = contentId;
-        
-        // Add content_type field if not a quote
-        if (contentType !== 'quote') {
-          insertData['content_type'] = contentType;
+        if (contentType === 'quote') {
+          // For quote likes
+          const { data, error } = await supabase
+            .from('quote_likes')
+            .insert({
+              quote_id: contentId,
+              user_id: userId
+            });
+            
+          if (error) throw error;
+        } else {
+          // For other content types
+          const { data, error } = await supabase
+            .from('content_likes')
+            .insert({
+              content_id: contentId,
+              content_type: contentType,
+              user_id: userId
+            });
+            
+          if (error) throw error;
         }
-        
-        const { data, error } = await supabase
-          .from(tableName)
-          .insert(insertData);
-          
-        if (error) throw error;
         
         // Increment likes counter
         await incrementCounter(contentId, 'likes', counterTableName);
@@ -188,23 +193,28 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isBookmarked: false };
       } else {
         // Bookmark - Insert new bookmark
-        const insertData: Record<string, any> = {
-          user_id: userId
-        };
-        
-        // Set the correct content id field based on content type
-        insertData[contentIdField] = contentId;
-        
-        // Add content_type field if not a quote
-        if (contentType !== 'quote') {
-          insertData['content_type'] = contentType;
+        if (contentType === 'quote') {
+          // For quote bookmarks
+          const { data, error } = await supabase
+            .from('quote_bookmarks')
+            .insert({
+              quote_id: contentId,
+              user_id: userId
+            });
+            
+          if (error) throw error;
+        } else {
+          // For other content types
+          const { data, error } = await supabase
+            .from('content_bookmarks')
+            .insert({
+              content_id: contentId,
+              content_type: contentType,
+              user_id: userId
+            });
+            
+          if (error) throw error;
         }
-        
-        const { data, error } = await supabase
-          .from(tableName)
-          .insert(insertData);
-          
-        if (error) throw error;
         
         // Increment bookmarks counter if available
         if (contentType === 'quote') {
@@ -238,9 +248,9 @@ export const useOptimizedContentInteractions = ({
         }
       }));
       
-      // Invalidate relevant queries
+      // Invalidate relevant queries - use objects instead of arrays
       queryClient.invalidateQueries({ 
-        queryKey: [`${contentType}s`, 'bookmarked'] 
+        queryKey: [`${contentType}s`, 'bookmarked']
       });
     },
     onError: (error, { contentId }) => {

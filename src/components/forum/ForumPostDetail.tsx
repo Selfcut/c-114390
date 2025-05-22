@@ -150,6 +150,17 @@ export const ForumPostDetail = () => {
     );
   }
   
+  // Adapt the post data for PostHeader component
+  const adaptedPost = {
+    ...post,
+    authorName: post.author,
+    created_at: post.createdAt instanceof Date 
+      ? post.createdAt.toISOString() 
+      : typeof post.createdAt === 'string' 
+        ? post.createdAt 
+        : new Date().toISOString()
+  };
+  
   return (
     <div className="container mx-auto py-8 px-4">
       <Button variant="ghost" className="mb-6" onClick={handleBack}>
@@ -158,7 +169,7 @@ export const ForumPostDetail = () => {
       </Button>
       
       <Card className="mb-8">
-        <PostHeader post={post} />
+        <PostHeader post={adaptedPost} />
         <PostContent content={post.content} tags={post.tags} />
         <PostFooter 
           post={post} 
@@ -183,9 +194,16 @@ export const ForumPostDetail = () => {
         
         {comments.length > 0 ? (
           <div className="space-y-4">
-            {comments.map((comment) => (
-              <CommentItem key={comment.id} comment={comment} />
-            ))}
+            {comments.map((comment) => {
+              // Adapt the comment data for CommentItem
+              const adaptedComment = {
+                ...comment,
+                authorName: comment.author,
+                upvotes: 0 // Default value if not available
+              };
+              
+              return <CommentItem key={comment.id} comment={adaptedComment} />;
+            })}
           </div>
         ) : (
           <EmptyComments isAuthenticated={isAuthenticated} />

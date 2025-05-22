@@ -64,7 +64,7 @@ export const EnhancedQuotesCarousel = ({
   const carouselRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const autoRotateTimeoutRef = useRef<number | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   // Memoized fetch quotes function to prevent unnecessary re-renders
   const loadQuotes = useCallback(async () => {
@@ -75,10 +75,10 @@ export const EnhancedQuotesCarousel = ({
         setQuotes(fetchedQuotes);
         
         // Check which quotes the user has liked
-        if (isAuthenticated) {
+        if (isAuthenticated && user?.id) {
           const likedIds = await Promise.all(
             fetchedQuotes.map(async (quote) => {
-              const isLiked = await checkUserLikedQuote(quote.id);
+              const isLiked = await checkUserLikedQuote(quote.id, user.id);
               return isLiked ? quote.id : null;
             })
           );
@@ -154,7 +154,7 @@ export const EnhancedQuotesCarousel = ({
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
   
   useEffect(() => {
     loadQuotes();

@@ -9,13 +9,25 @@ import { formatDistanceToNow } from 'date-fns';
 interface PostHeaderProps {
   post: {
     title: string;
-    authorName: string;
+    authorName?: string;
+    author?: string; // Alternative field name
     authorAvatar?: string;
-    created_at: string;
+    created_at?: string;
+    createdAt?: Date | string; // Alternative field name
   };
 }
 
 export const PostHeader = ({ post }: PostHeaderProps) => {
+  // Handle different field names that might come from different sources
+  const authorName = post.authorName || post.author || 'Anonymous';
+  const createdAt = post.createdAt 
+    ? typeof post.createdAt === 'string' 
+      ? new Date(post.createdAt) 
+      : post.createdAt
+    : post.created_at 
+      ? new Date(post.created_at) 
+      : new Date();
+
   return (
     <CardHeader>
       <div className="flex justify-between items-start">
@@ -33,14 +45,14 @@ export const PostHeader = ({ post }: PostHeaderProps) => {
       </div>
       <div className="flex items-center space-x-2 mt-2">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={post.authorAvatar} alt={post.authorName} />
-          <AvatarFallback>{post.authorName?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
+          <AvatarImage src={post.authorAvatar} alt={authorName} />
+          <AvatarFallback>{authorName?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
         </Avatar>
         <div>
-          <span className="text-sm font-medium">{post.authorName}</span>
+          <span className="text-sm font-medium">{authorName}</span>
           <div className="flex items-center text-xs text-muted-foreground">
             <Calendar size={12} className="mr-1" />
-            <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+            <span>{formatDistanceToNow(createdAt, { addSuffix: true })}</span>
           </div>
         </div>
       </div>
