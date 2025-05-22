@@ -17,6 +17,18 @@ interface ContentInteractionState {
   isBookmarkLoading: boolean;
 }
 
+// Define mutation variables type explicitly to avoid deep instantiation
+interface MutationVariables {
+  contentId: string;
+}
+
+// Define mutation return type explicitly
+interface MutationReturn {
+  contentId: string;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+}
+
 export const useOptimizedContentInteractions = ({ 
   userId, 
   contentType 
@@ -47,8 +59,8 @@ export const useOptimizedContentInteractions = ({
   }, [userId, contentType]);
 
   // Handle like interaction with optimistic updates
-  const likeMutation = useMutation({
-    mutationFn: async ({ contentId }: { contentId: string }) => {
+  const likeMutation = useMutation<MutationReturn, Error, MutationVariables>({
+    mutationFn: async ({ contentId }) => {
       if (!userId || !contentId) {
         throw new Error('User ID or Content ID missing');
       }
@@ -161,8 +173,8 @@ export const useOptimizedContentInteractions = ({
   });
 
   // Handle bookmark interaction with optimistic updates
-  const bookmarkMutation = useMutation({
-    mutationFn: async ({ contentId }: { contentId: string }) => {
+  const bookmarkMutation = useMutation<MutationReturn, Error, MutationVariables>({
+    mutationFn: async ({ contentId }) => {
       if (!userId || !contentId) {
         throw new Error('User ID or Content ID missing');
       }
