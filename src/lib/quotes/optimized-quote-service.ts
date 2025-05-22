@@ -42,7 +42,7 @@ export const fetchQuotesOptimized = async (
       }
     }
     
-    // Execute query - properly await the Promise
+    // Execute query - properly await the PostgrestBuilder to get the Promise result
     const { data: quotesData, error: quotesError, count } = await query;
     
     if (quotesError) throw quotesError;
