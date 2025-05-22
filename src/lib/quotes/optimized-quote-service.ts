@@ -42,7 +42,7 @@ export const fetchQuotesOptimized = async (
       }
     }
     
-    // Execute query
+    // Execute query - properly await the Promise
     const { data: quotesData, error: quotesError, count } = await query;
     
     if (quotesError) throw quotesError;

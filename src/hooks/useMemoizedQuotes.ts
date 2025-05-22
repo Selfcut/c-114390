@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { QuoteWithUser, QuoteFilterOptions, QuoteSortOption } from '@/lib/quotes/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,8 +82,6 @@ export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
       error: result.error,
       count: result.count
     };
-  }, {
-    keepPreviousData: true,
   });
   
   // Format quotes and handle user relationships
