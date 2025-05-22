@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -27,7 +26,7 @@ const WikiArticlePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Use the new wiki interactions hook
+  // Use the wiki interactions hook
   const { 
     likedItems, 
     bookmarkedItems, 
