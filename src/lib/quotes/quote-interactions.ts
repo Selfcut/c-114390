@@ -44,7 +44,7 @@ export const createComment = async (quoteId: string, userId: string, content: st
       
     if (error) throw error;
     
-    // Increment comment count
+    // Increment comment count with consistent function name
     await supabase.rpc('increment_counter_fn', {
       row_id: quoteId,
       column_name: 'comments',
@@ -67,7 +67,7 @@ export const deleteComment = async (commentId: string, quoteId: string) => {
       
     if (error) throw error;
     
-    // Decrement comment count
+    // Decrement comment count with consistent function name
     await supabase.rpc('decrement_counter_fn', {
       row_id: quoteId,
       column_name: 'comments',
@@ -144,7 +144,7 @@ export const toggleQuoteLike = async (
         
       if (unlikeError) throw unlikeError;
       
-      // Decrement likes count on quotes table
+      // Decrement likes count on quotes table with consistent function name
       await supabase.rpc('decrement_counter_fn', {
         row_id: quoteId,
         column_name: 'likes',
@@ -163,7 +163,7 @@ export const toggleQuoteLike = async (
         
       if (likeError) throw likeError;
       
-      // Increment likes count on quotes table
+      // Increment likes count on quotes table with consistent function name
       await supabase.rpc('increment_counter_fn', {
         row_id: quoteId,
         column_name: 'likes',
@@ -211,7 +211,7 @@ export const toggleQuoteBookmark = async (
         
       if (unbookmarkError) throw unbookmarkError;
       
-      // Decrement bookmarks count on quotes table
+      // Decrement bookmarks count on quotes table with consistent function name
       await supabase.rpc('decrement_counter_fn', {
         row_id: quoteId,
         column_name: 'bookmarks',
@@ -230,7 +230,7 @@ export const toggleQuoteBookmark = async (
         
       if (bookmarkError) throw bookmarkError;
       
-      // Increment bookmarks count on quotes table
+      // Increment bookmarks count on quotes table with consistent function name
       await supabase.rpc('increment_counter_fn', {
         row_id: quoteId,
         column_name: 'bookmarks',

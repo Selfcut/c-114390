@@ -13,7 +13,7 @@ export const useLikeInteractions = (
 ) => {
   const { toast } = useToast();
   
-  // Handle like interaction
+  // Handle like interaction with consistent RPC function name
   const handleLike = async (id: string, itemType: ContentItemType): Promise<ContentInteractionResult | null> => {
     if (!userId) {
       toast({
@@ -38,10 +38,10 @@ export const useLikeInteractions = (
           
         setUserLikes(prev => ({...prev, [id]: false}));
         
-        // Update counter in the appropriate table
+        // Update counter in the appropriate table with consistent function name
         const tableName = getContentTable(contentTypeStr);
             
-        // Update the likes count using RPC function
+        // Update the likes count using consistent RPC function name
         await supabase.rpc('decrement_counter_fn', {
           row_id: id,
           column_name: 'likes',
@@ -59,10 +59,10 @@ export const useLikeInteractions = (
           
         setUserLikes(prev => ({...prev, [id]: true}));
         
-        // Update counter in the appropriate table
+        // Update counter in the appropriate table with consistent function name
         const tableName = getContentTable(contentTypeStr);
             
-        // Update the likes count using RPC function
+        // Update the likes count using consistent RPC function name
         await supabase.rpc('increment_counter_fn', {
           row_id: id,
           column_name: 'likes',

@@ -78,7 +78,7 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
     }
   };
 
-  // Fix the addComment function
+  // Fix the addComment function with consistent RPC call
   const addComment = async (content: string) => {
     if (!user || !content.trim()) return;
 
@@ -120,8 +120,8 @@ export const QuoteComments: React.FC<QuoteCommentsProps> = ({ quoteId, updateQuo
         // Add to comment list
         setComments(prevComments => [...prevComments, newComment]);
         
-        // Update quote comment count
-        await supabase.rpc('increment_counter', {
+        // Update quote comment count with consistent function name
+        await supabase.rpc('increment_counter_fn', {
           row_id: quoteId,
           column_name: 'comments',
           table_name: 'quotes'

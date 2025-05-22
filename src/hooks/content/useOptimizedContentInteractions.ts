@@ -55,7 +55,7 @@ export const useOptimizedContentInteractions = ({
     }
   }, [userId, contentType, setLikeState, setBookmarkState]);
 
-  // Handle like/unlike with separate state updates
+  // Handle like/unlike with separate state updates and consistent function names
   const handleLike = useCallback(async (contentId: string) => {
     if (!userId) {
       toast({
@@ -76,7 +76,7 @@ export const useOptimizedContentInteractions = ({
       // Optimistic update with helper function
       setLikeState(contentId, !isCurrentlyLiked);
       
-      // Perform API operation
+      // Perform API operation with consistent function names
       let success;
       if (isCurrentlyLiked) {
         success = await removeContentLike(userId, contentId, contentType);
@@ -123,7 +123,7 @@ export const useOptimizedContentInteractions = ({
     return null;
   }, [userId, likedItems, contentType, toast, queryClient, setLikeState, setLikeLoadingState]);
 
-  // Handle bookmark/unbookmark with separate state updates
+  // Handle bookmark/unbookmark with separate state updates and consistent function names
   const handleBookmark = useCallback(async (contentId: string) => {
     if (!userId) {
       toast({
@@ -144,7 +144,7 @@ export const useOptimizedContentInteractions = ({
       // Optimistic update with helper function
       setBookmarkState(contentId, !isCurrentlyBookmarked);
       
-      // Perform API operation
+      // Perform API operation with consistent function names
       let success;
       if (isCurrentlyBookmarked) {
         success = await removeContentBookmark(userId, contentId, contentType);

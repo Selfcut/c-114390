@@ -98,7 +98,7 @@ export const useUserContentInteractions = ({
     checkUserInteractions();
   }, [contentId, contentType, user]);
 
-  // Handle like/unlike
+  // Handle like/unlike with consistent RPC function names
   const toggleLike = async (): Promise<boolean> => {
     if (!user) {
       toast({
@@ -125,7 +125,7 @@ export const useUserContentInteractions = ({
           
         if (error) throw error;
         
-        // Decrement like count
+        // Decrement like count with consistent function name
         await supabase.rpc('decrement_counter_fn', {
           row_id: contentId,
           column_name: likeColumnName,
@@ -147,7 +147,7 @@ export const useUserContentInteractions = ({
           
         if (error) throw error;
         
-        // Increment like count
+        // Increment like count with consistent function name
         await supabase.rpc('increment_counter_fn', {
           row_id: contentId,
           column_name: likeColumnName,
@@ -173,7 +173,7 @@ export const useUserContentInteractions = ({
     }
   };
 
-  // Handle bookmark/unbookmark
+  // Handle bookmark/unbookmark with consistent RPC function names
   const toggleBookmark = async (): Promise<boolean> => {
     if (!user) {
       toast({
@@ -199,7 +199,7 @@ export const useUserContentInteractions = ({
           
         if (error) throw error;
         
-        // Decrement bookmark count if applicable
+        // Decrement bookmark count if applicable with consistent function name
         if (contentType === 'quote') {
           await supabase.rpc('decrement_counter_fn', {
             row_id: contentId,
@@ -223,7 +223,7 @@ export const useUserContentInteractions = ({
           
         if (error) throw error;
         
-        // Increment bookmark count if applicable
+        // Increment bookmark count if applicable with consistent function name
         if (contentType === 'quote') {
           await supabase.rpc('increment_counter_fn', {
             row_id: contentId,

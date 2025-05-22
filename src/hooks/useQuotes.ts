@@ -224,7 +224,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   }, []);
 
-  // Handle like a quote
+  // Handle like a quote - Fixed to use consistent RPC function name
   const handleLike = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -253,8 +253,8 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (deleteLikeError) throw deleteLikeError;
         
-        // Use decrement_counter function
-        await supabase.rpc('decrement_counter', {
+        // Use consistent RPC function name
+        await supabase.rpc('decrement_counter_fn', {
           row_id: quoteId,
           column_name: 'likes',
           table_name: 'quotes'
@@ -267,8 +267,8 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (insertLikeError) throw insertLikeError;
         
-        // Use increment_counter function
-        await supabase.rpc('increment_counter', {
+        // Use consistent RPC function name
+        await supabase.rpc('increment_counter_fn', {
           row_id: quoteId,
           column_name: 'likes',
           table_name: 'quotes'
@@ -294,7 +294,7 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
     }
   };
 
-  // Handle bookmark a quote
+  // Handle bookmark a quote - Fixed to use consistent RPC function name
   const handleBookmark = async (quoteId: string): Promise<boolean | null> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -323,8 +323,8 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (deleteBookmarkError) throw deleteBookmarkError;
         
-        // Use decrement_counter function
-        await supabase.rpc('decrement_counter', {
+        // Use consistent RPC function name
+        await supabase.rpc('decrement_counter_fn', {
           row_id: quoteId,
           column_name: 'bookmarks',
           table_name: 'quotes'
@@ -337,8 +337,8 @@ export function useQuotes(initialOptions?: QuoteFilterOptions): UseQuotesResult 
           
         if (insertBookmarkError) throw insertBookmarkError;
         
-        // Use increment_counter function
-        await supabase.rpc('increment_counter', {
+        // Use consistent RPC function name
+        await supabase.rpc('increment_counter_fn', {
           row_id: quoteId,
           column_name: 'bookmarks',
           table_name: 'quotes'

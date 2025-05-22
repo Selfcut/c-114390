@@ -1,22 +1,24 @@
 
-export interface UseContentInteractionsProps {
-  userId?: string | null;
-}
-
+/**
+ * Result of a content interaction (like, bookmark)
+ */
 export interface ContentInteractionResult {
   isLiked: boolean;
   id: string;
 }
 
+/**
+ * Result of a bookmark interaction
+ */
 export interface ContentBookmarkResult {
   isBookmarked: boolean;
   id: string;
 }
 
-export interface UserInteractions {
-  userLikes: Record<string, boolean>;
-  userBookmarks: Record<string, boolean>;
-  handleLike: (id: string, itemType: string) => Promise<ContentInteractionResult | null>;
-  handleBookmark: (id: string, itemType: string) => Promise<ContentBookmarkResult | null>;
-  checkUserInteractions: (itemIds: string[]) => Promise<void>;
+/**
+ * Interactions data for content
+ */
+export interface ContentInteractions {
+  isLiked: boolean;
+  isBookmarked: boolean;
 }

@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { incrementCounter, decrementCounter } from '../counter-operations';
 
 /**
  * Check if a user has liked or bookmarked a quote
@@ -39,7 +38,7 @@ export const checkQuoteInteractions = async (
 };
 
 /**
- * Add a like to a quote
+ * Add a like to a quote with consistent function name
  */
 export const addQuoteLike = async (
   userId: string,
@@ -55,8 +54,12 @@ export const addQuoteLike = async (
       
     if (error) throw error;
     
-    // Update like counter
-    await incrementCounter(quoteId, 'likes', 'quotes');
+    // Update like counter with consistent function name
+    await supabase.rpc('increment_counter_fn', {
+      row_id: quoteId,
+      column_name: 'likes',
+      table_name: 'quotes'
+    });
     return true;
   } catch (error) {
     console.error('Error adding quote like:', error);
@@ -65,7 +68,7 @@ export const addQuoteLike = async (
 };
 
 /**
- * Remove a like from a quote
+ * Remove a like from a quote with consistent function name
  */
 export const removeQuoteLike = async (
   userId: string,
@@ -80,8 +83,12 @@ export const removeQuoteLike = async (
       
     if (error) throw error;
     
-    // Update like counter
-    await decrementCounter(quoteId, 'likes', 'quotes');
+    // Update like counter with consistent function name
+    await supabase.rpc('decrement_counter_fn', {
+      row_id: quoteId,
+      column_name: 'likes',
+      table_name: 'quotes'
+    });
     return true;
   } catch (error) {
     console.error('Error removing quote like:', error);
@@ -90,7 +97,7 @@ export const removeQuoteLike = async (
 };
 
 /**
- * Add a bookmark to a quote
+ * Add a bookmark to a quote with consistent function name
  */
 export const addQuoteBookmark = async (
   userId: string,
@@ -106,8 +113,12 @@ export const addQuoteBookmark = async (
       
     if (error) throw error;
     
-    // Update bookmark counter for quotes
-    await incrementCounter(quoteId, 'bookmarks', 'quotes');
+    // Update bookmark counter for quotes with consistent function name
+    await supabase.rpc('increment_counter_fn', {
+      row_id: quoteId,
+      column_name: 'bookmarks',
+      table_name: 'quotes'
+    });
     return true;
   } catch (error) {
     console.error('Error adding quote bookmark:', error);
@@ -116,7 +127,7 @@ export const addQuoteBookmark = async (
 };
 
 /**
- * Remove a bookmark from a quote
+ * Remove a bookmark from a quote with consistent function name
  */
 export const removeQuoteBookmark = async (
   userId: string,
@@ -131,8 +142,12 @@ export const removeQuoteBookmark = async (
       
     if (error) throw error;
     
-    // Update bookmark counter
-    await decrementCounter(quoteId, 'bookmarks', 'quotes');
+    // Update bookmark counter with consistent function name
+    await supabase.rpc('decrement_counter_fn', {
+      row_id: quoteId,
+      column_name: 'bookmarks',
+      table_name: 'quotes'
+    });
     return true;
   } catch (error) {
     console.error('Error removing quote bookmark:', error);

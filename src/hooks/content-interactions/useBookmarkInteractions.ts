@@ -12,7 +12,7 @@ export const useBookmarkInteractions = (
 ) => {
   const { toast } = useToast();
   
-  // Handle bookmark interaction
+  // Handle bookmark interaction with consistent RPC function name
   const handleBookmark = async (id: string, itemType: ContentItemType): Promise<ContentBookmarkResult | null> => {
     if (!userId) {
       toast({
@@ -37,7 +37,7 @@ export const useBookmarkInteractions = (
           
         setUserBookmarks(prev => ({...prev, [id]: false}));
         
-        // Update counter if it's a quote
+        // Update counter if it's a quote with consistent function name
         if (contentTypeStr === 'quote') {
           await supabase.rpc('decrement_counter_fn', {
             row_id: id,
@@ -57,7 +57,7 @@ export const useBookmarkInteractions = (
           
         setUserBookmarks(prev => ({...prev, [id]: true}));
         
-        // Update counter if it's a quote
+        // Update counter if it's a quote with consistent function name
         if (contentTypeStr === 'quote') {
           await supabase.rpc('increment_counter_fn', {
             row_id: id,

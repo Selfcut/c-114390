@@ -145,9 +145,9 @@ export function QuoteDetail() {
   const handleLike = async () => {
     if (!user) {
       toast({
-        title: 'Authentication Required',
-        description: 'Please log in to like quotes',
-        variant: 'destructive',
+        title: "Authentication Required",
+        description: "Please log in to like quotes",
+        variant: "destructive",
       });
       return;
     }
@@ -163,8 +163,8 @@ export function QuoteDetail() {
           .eq('quote_id', quote.id)
           .eq('user_id', user.id);
         
-        // Update quote counter
-        await supabase.rpc('decrement_counter', {
+        // Update quote counter with consistent function name
+        await supabase.rpc('decrement_counter_fn', {
           row_id: quote.id,
           column_name: 'likes',
           table_name: 'quotes'
@@ -185,8 +185,8 @@ export function QuoteDetail() {
             user_id: user.id
           });
         
-        // Update quote counter
-        await supabase.rpc('increment_counter', {
+        // Update quote counter with consistent function name
+        await supabase.rpc('increment_counter_fn', {
           row_id: quote.id,
           column_name: 'likes',
           table_name: 'quotes'
@@ -212,9 +212,9 @@ export function QuoteDetail() {
   const handleBookmark = async () => {
     if (!user) {
       toast({
-        title: 'Authentication Required',
-        description: 'Please log in to bookmark quotes',
-        variant: 'destructive',
+        title: "Authentication Required",
+        description: "Please log in to bookmark quotes",
+        variant: "destructive",
       });
       return;
     }
@@ -230,8 +230,8 @@ export function QuoteDetail() {
           .eq('quote_id', quote.id)
           .eq('user_id', user.id);
         
-        // Update quote counter
-        await supabase.rpc('decrement_counter', {
+        // Update quote counter with consistent function name
+        await supabase.rpc('decrement_counter_fn', {
           row_id: quote.id,
           column_name: 'bookmarks',
           table_name: 'quotes'
@@ -252,8 +252,8 @@ export function QuoteDetail() {
             user_id: user.id
           });
         
-        // Update quote counter
-        await supabase.rpc('increment_counter', {
+        // Update quote counter with consistent function name
+        await supabase.rpc('increment_counter_fn', {
           row_id: quote.id,
           column_name: 'bookmarks',
           table_name: 'quotes'
