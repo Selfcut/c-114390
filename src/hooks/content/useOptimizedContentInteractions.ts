@@ -60,7 +60,7 @@ export const useOptimizedContentInteractions = ({
 
   // Handle like interaction with optimistic updates
   const likeMutation = useMutation<MutationReturn, Error, MutationVariables>({
-    mutationFn: async (variables: MutationVariables) => {
+    mutationFn: async (variables) => {
       const { contentId } = variables;
       
       if (!userId || !contentId) {
@@ -120,7 +120,8 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isLiked: true };
       }
     },
-    onMutate: ({ contentId }) => {
+    onMutate: (variables) => {
+      const { contentId } = variables;
       // Optimistically update the UI
       const currentState = interactionState[contentId]?.isLiked || false;
       
@@ -133,13 +134,15 @@ export const useOptimizedContentInteractions = ({
         }
       }));
     },
-    onSuccess: ({ contentId, isLiked }) => {
+    onSuccess: (data) => {
       // Update with server result
+      const { contentId, isLiked } = data;
+      
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
           ...(prev[contentId] || { isBookmarked: false, isBookmarkLoading: false }),
-          isLiked,
+          isLiked: isLiked || false,
           isLikeLoading: false
         }
       }));
@@ -152,7 +155,9 @@ export const useOptimizedContentInteractions = ({
         queryKey: [`${contentType}`, contentId]
       });
     },
-    onError: (error, { contentId }) => {
+    onError: (error, variables) => {
+      const { contentId } = variables;
+      
       console.error('Error toggling like:', error);
       toast({
         title: "Error",
@@ -176,7 +181,7 @@ export const useOptimizedContentInteractions = ({
 
   // Handle bookmark interaction with optimistic updates
   const bookmarkMutation = useMutation<MutationReturn, Error, MutationVariables>({
-    mutationFn: async (variables: MutationVariables) => {
+    mutationFn: async (variables) => {
       const { contentId } = variables;
       
       if (!userId || !contentId) {
@@ -240,7 +245,8 @@ export const useOptimizedContentInteractions = ({
         return { contentId, isBookmarked: true };
       }
     },
-    onMutate: ({ contentId }) => {
+    onMutate: (variables) => {
+      const { contentId } = variables;
       // Optimistically update the UI
       const currentState = interactionState[contentId]?.isBookmarked || false;
       
@@ -253,13 +259,15 @@ export const useOptimizedContentInteractions = ({
         }
       }));
     },
-    onSuccess: ({ contentId, isBookmarked }) => {
+    onSuccess: (data) => {
       // Update with server result
+      const { contentId, isBookmarked } = data;
+      
       setInteractionState(prev => ({
         ...prev,
         [contentId]: {
           ...(prev[contentId] || { isLiked: false, isLikeLoading: false }),
-          isBookmarked,
+          isBookmarked: isBookmarked || false,
           isBookmarkLoading: false
         }
       }));
@@ -269,7 +277,9 @@ export const useOptimizedContentInteractions = ({
         queryKey: [`${contentType}s`, 'bookmarked']
       });
     },
-    onError: (error, { contentId }) => {
+    onError: (error, variables) => {
+      const { contentId } = variables;
+      
       console.error('Error toggling bookmark:', error);
       toast({
         title: "Error",
