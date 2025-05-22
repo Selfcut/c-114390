@@ -1,87 +1,113 @@
 
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { checkUserContentInteractions } from '@/lib/utils/supabase-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getContentTable, getContentColumnName } from '@/lib/utils/interactions/content-type-utils';
 
-// Simplified types
-interface ContentState {
+// Simple interface for content items' interaction state
+interface ContentInteractionState {
   likes: Record<string, boolean>;
   bookmarks: Record<string, boolean>;
-  loading: Record<string, {
-    like: boolean;
-    bookmark: boolean;
-  }>;
+  loadingLikes: Record<string, boolean>;
+  loadingBookmarks: Record<string, boolean>;
 }
 
-// Props type with explicit types
+// Input props type
 interface UseOptimizedContentInteractionsProps {
   userId: string | null;
   contentType: string;
 }
 
-// Main hook implementation with simplified state management
+/**
+ * A simplified hook for handling optimized content interactions (likes and bookmarks)
+ * with improved type safety to prevent deep type instantiation issues
+ */
 export const useOptimizedContentInteractions = ({ 
   userId, 
   contentType 
 }: UseOptimizedContentInteractionsProps) => {
-  // Unified state object to simplify management
-  const [state, setState] = useState<ContentState>({
+  // Simplified state structure to avoid deep nesting
+  const [state, setState] = useState<ContentInteractionState>({
     likes: {},
     bookmarks: {},
-    loading: {}
+    loadingLikes: {},
+    loadingBookmarks: {}
   });
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Get state for a specific content item
+  // Get content interaction state (simplified)
   const getStateForContent = useCallback((contentId: string) => {
     return {
       isLiked: !!state.likes[contentId],
       isBookmarked: !!state.bookmarks[contentId],
-      isLikeLoading: !!state.loading[contentId]?.like,
-      isBookmarkLoading: !!state.loading[contentId]?.bookmark
+      isLikeLoading: !!state.loadingLikes[contentId],
+      isBookmarkLoading: !!state.loadingBookmarks[contentId]
     };
   }, [state]);
 
-  // Set loading state
-  const setLoadingState = useCallback((contentId: string, type: 'like' | 'bookmark', isLoading: boolean) => {
-    setState(prev => {
-      const currentLoadingState = prev.loading[contentId] || { like: false, bookmark: false };
-      return {
-        ...prev,
-        loading: {
-          ...prev.loading,
-          [contentId]: {
-            ...currentLoadingState,
-            [type]: isLoading
-          }
-        }
-      };
-    });
-  }, []);
-
-  // Check interactions
+  // Check user's interactions with content
   const checkInteractions = useCallback(async (contentId: string) => {
     if (!userId || !contentId) return;
-
+    
     try {
-      const result = await checkUserContentInteractions(userId, contentId, contentType);
+      // Check likes
+      const { data: likeData } = await supabase
+        .from(contentType === 'quote' ? 'quote_likes' : 'content_likes')
+        .select('id')
+        .eq(contentType === 'quote' ? 'quote_id' : 'content_id', contentId)
+        .eq('user_id', userId);
+        
+      // Check bookmarks
+      const { data: bookmarkData } = await supabase
+        .from(contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks')
+        .select('id')
+        .eq(contentType === 'quote' ? 'quote_id' : 'content_id', contentId)
+        .eq('user_id', userId);
       
-      // Update state directly
-      setState(prev => ({
-        ...prev,
-        likes: { ...prev.likes, [contentId]: result.hasLiked },
-        bookmarks: { ...prev.bookmarks, [contentId]: result.hasBookmarked }
+      // Update state directly with explicit spread syntax
+      setState(currentState => ({
+        ...currentState,
+        likes: { 
+          ...currentState.likes, 
+          [contentId]: likeData && likeData.length > 0 
+        },
+        bookmarks: { 
+          ...currentState.bookmarks, 
+          [contentId]: bookmarkData && bookmarkData.length > 0 
+        }
       }));
     } catch (error) {
       console.error('Error checking content interactions:', error);
     }
   }, [userId, contentType]);
 
-  // Handle like action with simplified state updates
+  // Function to safely update counter
+  const updateCounter = useCallback(async (
+    contentId: string, 
+    columnName: string, 
+    tableName: string, 
+    increment: boolean
+  ): Promise<boolean> => {
+    try {
+      const funcName = increment ? 'increment_counter_fn' : 'decrement_counter_fn';
+      const { error } = await supabase.rpc(funcName, {
+        row_id: contentId,
+        column_name: columnName,
+        table_name: tableName
+      });
+      
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error(`Error ${increment ? 'incrementing' : 'decrementing'} counter:`, err);
+      return false;
+    }
+  }, []);
+
+  // Handle like/unlike
   const handleLike = useCallback(async (contentId: string) => {
     if (!userId) {
       toast({
@@ -92,24 +118,32 @@ export const useOptimizedContentInteractions = ({
       return;
     }
 
-    const isCurrentlyLiked = state.likes[contentId] || false;
-    setLoadingState(contentId, 'like', true);
+    // Get current state
+    const isLiked = !!state.likes[contentId];
+    
+    // Set loading state
+    setState(curr => ({
+      ...curr,
+      loadingLikes: { ...curr.loadingLikes, [contentId]: true }
+    }));
     
     try {
       // Optimistic update
-      setState(prev => ({
-        ...prev,
-        likes: { ...prev.likes, [contentId]: !isCurrentlyLiked }
+      setState(curr => ({
+        ...curr,
+        likes: { ...curr.likes, [contentId]: !isLiked }
       }));
       
-      // Determine table names
-      const tableName = contentType === 'quote' ? 'quote_likes' : 'content_likes';
-      const contentIdField = contentType === 'quote' ? 'quote_id' : 'content_id';
-      const counterTableName = contentType === 'quote' ? 'quotes' : contentType;
+      // Get table and column names
+      const isQuote = contentType === 'quote';
+      const tableName = isQuote ? 'quote_likes' : 'content_likes';
+      const contentIdField = isQuote ? 'quote_id' : 'content_id';
+      const counterTableName = isQuote ? 'quotes' : contentType;
+      const likeColumnName = isQuote || contentType === 'wiki' ? 'likes' : 'upvotes';
       
       let success = false;
       
-      if (isCurrentlyLiked) {
+      if (isLiked) {
         // Remove like
         const { error } = await supabase
           .from(tableName)
@@ -120,11 +154,11 @@ export const useOptimizedContentInteractions = ({
         if (error) throw error;
         
         // Decrement counter
-        await decrementCounter(contentId, 'likes', counterTableName);
+        await updateCounter(contentId, likeColumnName, counterTableName, false);
         success = true;
       } else {
         // Add like
-        if (contentType === 'quote') {
+        if (isQuote) {
           const { error } = await supabase
             .from('quote_likes')
             .insert({
@@ -146,7 +180,7 @@ export const useOptimizedContentInteractions = ({
         }
         
         // Increment counter
-        await incrementCounter(contentId, 'likes', counterTableName);
+        await updateCounter(contentId, likeColumnName, counterTableName, true);
         success = true;
       }
       
@@ -163,10 +197,10 @@ export const useOptimizedContentInteractions = ({
     } catch (error) {
       console.error('Error toggling like:', error);
       
-      // Revert on error
-      setState(prev => ({
-        ...prev,
-        likes: { ...prev.likes, [contentId]: isCurrentlyLiked }
+      // Revert on error - use direct state update to avoid nesting
+      setState(curr => ({
+        ...curr,
+        likes: { ...curr.likes, [contentId]: isLiked }
       }));
       
       toast({
@@ -175,11 +209,15 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
     } finally {
-      setLoadingState(contentId, 'like', false);
+      // Clear loading state - use direct state update to avoid nesting
+      setState(curr => ({
+        ...curr,
+        loadingLikes: { ...curr.loadingLikes, [contentId]: false }
+      }));
     }
-  }, [userId, state.likes, contentType, queryClient, toast, setLoadingState]);
+  }, [userId, state.likes, contentType, queryClient, toast, updateCounter]);
 
-  // Handle bookmark action with simplified state updates
+  // Handle bookmark/unbookmark
   const handleBookmark = useCallback(async (contentId: string) => {
     if (!userId) {
       toast({
@@ -190,23 +228,31 @@ export const useOptimizedContentInteractions = ({
       return;
     }
 
-    const isCurrentlyBookmarked = state.bookmarks[contentId] || false;
-    setLoadingState(contentId, 'bookmark', true);
+    // Get current state
+    const isBookmarked = !!state.bookmarks[contentId];
+    
+    // Set loading state
+    setState(curr => ({
+      ...curr,
+      loadingBookmarks: { ...curr.loadingBookmarks, [contentId]: true }
+    }));
     
     try {
       // Optimistic update
-      setState(prev => ({
-        ...prev,
-        bookmarks: { ...prev.bookmarks, [contentId]: !isCurrentlyBookmarked }
+      setState(curr => ({
+        ...curr,
+        bookmarks: { ...curr.bookmarks, [contentId]: !isBookmarked }
       }));
       
       // Determine table names
-      const tableName = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
-      const contentIdField = contentType === 'quote' ? 'quote_id' : 'content_id';
+      const isQuote = contentType === 'quote';
+      const tableName = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
+      const contentIdField = isQuote ? 'quote_id' : 'content_id';
+      const counterTableName = isQuote ? 'quotes' : contentType;
       
       let success = false;
       
-      if (isCurrentlyBookmarked) {
+      if (isBookmarked) {
         // Remove bookmark
         const { error } = await supabase
           .from(tableName)
@@ -217,14 +263,14 @@ export const useOptimizedContentInteractions = ({
         if (error) throw error;
         
         // Decrement bookmarks counter if it's a quote
-        if (contentType === 'quote') {
-          await decrementCounter(contentId, 'bookmarks', 'quotes');
+        if (isQuote) {
+          await updateCounter(contentId, 'bookmarks', counterTableName, false);
         }
         
         success = true;
       } else {
         // Add bookmark
-        if (contentType === 'quote') {
+        if (isQuote) {
           const { error } = await supabase
             .from('quote_bookmarks')
             .insert({
@@ -246,8 +292,8 @@ export const useOptimizedContentInteractions = ({
         }
         
         // Increment bookmarks counter if it's a quote
-        if (contentType === 'quote') {
-          await incrementCounter(contentId, 'bookmarks', 'quotes');
+        if (isQuote) {
+          await updateCounter(contentId, 'bookmarks', counterTableName, true);
         }
         
         success = true;
@@ -263,10 +309,10 @@ export const useOptimizedContentInteractions = ({
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       
-      // Revert on error
-      setState(prev => ({
-        ...prev,
-        bookmarks: { ...prev.bookmarks, [contentId]: isCurrentlyBookmarked }
+      // Revert on error - use direct state update
+      setState(curr => ({
+        ...curr,
+        bookmarks: { ...curr.bookmarks, [contentId]: isBookmarked }
       }));
       
       toast({
@@ -275,34 +321,13 @@ export const useOptimizedContentInteractions = ({
         variant: "destructive"
       });
     } finally {
-      setLoadingState(contentId, 'bookmark', false);
+      // Clear loading state - use direct state update
+      setState(curr => ({
+        ...curr,
+        loadingBookmarks: { ...curr.loadingBookmarks, [contentId]: false }
+      }));
     }
-  }, [userId, state.bookmarks, contentType, queryClient, toast, setLoadingState]);
-
-  // Helper functions for counter operations
-  async function incrementCounter(contentId: string, columnName: string, tableName: string): Promise<void> {
-    try {
-      await supabase.rpc('increment_counter_fn', {
-        row_id: contentId,
-        column_name: columnName,
-        table_name: tableName
-      });
-    } catch (error) {
-      console.error(`Error incrementing ${columnName} counter:`, error);
-    }
-  }
-
-  async function decrementCounter(contentId: string, columnName: string, tableName: string): Promise<void> {
-    try {
-      await supabase.rpc('decrement_counter_fn', {
-        row_id: contentId,
-        column_name: columnName,
-        table_name: tableName
-      });
-    } catch (error) {
-      console.error(`Error decrementing ${columnName} counter:`, error);
-    }
-  }
+  }, [userId, state.bookmarks, contentType, queryClient, toast, updateCounter]);
 
   return {
     interactionState: state,
