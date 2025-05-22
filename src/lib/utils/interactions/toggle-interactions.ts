@@ -20,15 +20,19 @@ export const toggleUserInteraction = async (
   contentType: string
 ): Promise<boolean> => {
   try {
-    // Determine table and field names
+    // Determine which table to use
     const isLike = type === 'like';
-    const tableName = contentType === 'quote' 
-      ? (isLike ? 'quote_likes' as const : 'quote_bookmarks' as const)
-      : (isLike ? 'content_likes' as const : 'content_bookmarks' as const);
+    let tableName: 'quote_likes' | 'content_likes' | 'quote_bookmarks' | 'content_bookmarks';
+    
+    if (contentType === 'quote') {
+      tableName = isLike ? 'quote_likes' : 'quote_bookmarks';
+    } else {
+      tableName = isLike ? 'content_likes' : 'content_bookmarks';
+    }
     
     const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
 
-    // Check if interaction exists - use explicit typing to avoid deep instantiation
+    // Check if interaction exists with explicit table name
     const { data: checkData, error: checkError } = await supabase
       .from(tableName)
       .select('id')
@@ -44,8 +48,10 @@ export const toggleUserInteraction = async (
       if (!recordId) throw new Error('Could not find record ID');
       
       if (isLike) {
+        // Pass the appropriate table name for likes
         await removeLike(recordId, contentId, contentType);
       } else {
+        // Pass the appropriate table name for bookmarks
         await removeBookmark(recordId, contentId, contentType);
       }
       
@@ -53,9 +59,19 @@ export const toggleUserInteraction = async (
     } else {
       // Add interaction
       if (isLike) {
-        await addLike(userId, contentId, contentType, tableName);
+        await addLike(
+          userId, 
+          contentId, 
+          contentType, 
+          contentType === 'quote' ? 'quote_likes' : 'content_likes'
+        );
       } else {
-        await addBookmark(userId, contentId, contentType, tableName);
+        await addBookmark(
+          userId, 
+          contentId, 
+          contentType, 
+          contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks'
+        );
       }
       
       return true;

@@ -70,10 +70,11 @@ export const removeLike = async (
   contentType: string
 ): Promise<boolean> => {
   try {
+    // Use concrete table name
     const tableName = contentType === 'quote' ? 'quote_likes' : 'content_likes';
     
     const { error } = await supabase
-      .from(tableName as 'quote_likes' | 'content_likes')
+      .from(tableName)
       .delete()
       .eq('id', likeId);
       

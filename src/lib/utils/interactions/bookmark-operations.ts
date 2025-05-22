@@ -71,10 +71,11 @@ export const removeBookmark = async (
   contentType: string
 ): Promise<boolean> => {
   try {
+    // Use concrete table name
     const tableName = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
     
     const { error } = await supabase
-      .from(tableName as 'quote_bookmarks' | 'content_bookmarks')
+      .from(tableName)
       .delete()
       .eq('id', bookmarkId);
       
