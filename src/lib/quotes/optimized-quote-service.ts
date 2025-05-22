@@ -109,16 +109,22 @@ export const fetchQuoteByIdOptimized = async (id: string): Promise<QuoteWithUser
     const [quoteResult, profileResult] = await batchOperations([
       () => executeQuery(() => supabase.from('quotes').select('*').eq('id', id).single()),
       async () => {
-        const quoteData = await supabase.from('quotes').select('user_id').eq('id', id).single();
-        if (quoteData.error || !quoteData.data?.user_id) return null;
+        // Fix the issue here - properly await the query
+        const { data: quoteData, error: quoteError } = await supabase
+          .from('quotes')
+          .select('user_id')
+          .eq('id', id)
+          .single();
         
-        const profileData = await supabase
+        if (quoteError || !quoteData?.user_id) return null;
+        
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, username, name, avatar_url, status')
-          .eq('id', quoteData.data.user_id)
+          .eq('id', quoteData.user_id)
           .single();
           
-        return profileData.error ? null : profileData.data;
+        return profileError ? null : profileData;
       }
     ]);
     
