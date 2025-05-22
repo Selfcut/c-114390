@@ -1,0 +1,229 @@
+
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { executeQuery } from './supabase-helpers';
+import { incrementCounter, decrementCounter } from './counter-operations';
+
+// Content interaction interfaces for better type safety
+export interface ContentInteractions {
+  hasLiked: boolean;
+  hasBookmarked: boolean;
+}
+
+// Define explicit interfaces for insert operations to avoid deep type instantiation
+interface QuoteLikeInsert {
+  quote_id: string;
+  user_id: string;
+}
+
+interface QuoteBookmarkInsert {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentLikeInsert {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
+interface ContentBookmarkInsert {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
+/**
+ * Check if a user has liked or bookmarked a piece of content
+ * @param userId The user ID
+ * @param contentId The content ID
+ * @param contentType The content type (quote, forum, etc.)
+ * @returns Object with hasLiked and hasBookmarked booleans
+ */
+export const checkUserContentInteractions = async (
+  userId: string,
+  contentId: string,
+  contentType: string
+): Promise<ContentInteractions> => {
+  try {
+    // Determine table names based on content type
+    const likesTable = contentType === 'quote' ? 'quote_likes' : 'content_likes';
+    const bookmarksTable = contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
+    const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
+    
+    // Execute likes query using our helper function
+    const likesResult = await executeQuery(() => 
+      supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle()
+    );
+    
+    // Execute the bookmarks query using our helper function
+    const bookmarksResult = await executeQuery(() => 
+      supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle()
+    );
+    
+    // Check for errors
+    if (likesResult.error) {
+      console.warn('[Supabase Utils] Error checking likes:', likesResult.error);
+    }
+    
+    if (bookmarksResult.error) {
+      console.warn('[Supabase Utils] Error checking bookmarks:', bookmarksResult.error);
+    }
+    
+    return {
+      hasLiked: !!likesResult.data,
+      hasBookmarked: !!bookmarksResult.data
+    };
+  } catch (error) {
+    console.error('[Supabase Utils] Error checking user content interactions:', error);
+    return {
+      hasLiked: false,
+      hasBookmarked: false
+    };
+  }
+};
+
+/**
+ * Toggle a user interaction (like or bookmark) on content
+ * @param type The interaction type ('like' or 'bookmark')
+ * @param userId The user ID
+ * @param contentId The content ID
+ * @param contentType The content type (quote, forum, etc.)
+ * @returns Promise<boolean> indicating new state
+ */
+export const toggleUserInteraction = async (
+  type: 'like' | 'bookmark',
+  userId: string,
+  contentId: string,
+  contentType: string
+): Promise<boolean> => {
+  try {
+    // Determine table and field names
+    const isLike = type === 'like';
+    const tableName = contentType === 'quote' 
+      ? (isLike ? 'quote_likes' : 'quote_bookmarks')
+      : (isLike ? 'content_likes' : 'content_bookmarks');
+    
+    const counterName = isLike ? 'likes' : 'bookmarks';
+    const idField = contentType === 'quote' ? 'quote_id' : 'content_id';
+    const contentTableName = contentType === 'quote' ? 'quotes' : `${contentType}_posts`;
+
+    // Check if interaction exists using our helper function
+    const checkResult = await executeQuery(() =>
+      supabase
+        .from(tableName)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle()
+    );
+    
+    if (checkResult.error) throw checkResult.error;
+
+    if (checkResult.data) {
+      // Remove interaction
+      const deleteResult = await executeQuery(() =>
+        supabase
+          .from(tableName)
+          .delete()
+          .eq('id', checkResult.data.id)
+      );
+        
+      if (deleteResult.error) throw deleteResult.error;
+      
+      // Only decrement count for supported counters
+      const counterSupported = isLike || (contentType === 'quote');
+      if (counterSupported) {
+        await decrementCounter(contentId, counterName, contentTableName);
+      }
+      
+      return false;
+    } else {
+      let insertResult: { data: any, error: any };
+      
+      if (contentType === 'quote') {
+        if (isLike) {
+          // Quote like - use explicit interface
+          const insertData: QuoteLikeInsert = {
+            quote_id: contentId,
+            user_id: userId
+          };
+          
+          // Use helper function for insertion
+          insertResult = await executeQuery(() =>
+            supabase
+              .from(tableName)
+              .insert(insertData)
+          );
+        } else {
+          // Quote bookmark - use explicit interface
+          const insertData: QuoteBookmarkInsert = {
+            quote_id: contentId,
+            user_id: userId
+          };
+          
+          // Use helper function for insertion
+          insertResult = await executeQuery(() =>
+            supabase
+              .from(tableName)
+              .insert(insertData)
+          );
+        }
+      } else {
+        if (isLike) {
+          // Content like - use explicit interface
+          const insertData: ContentLikeInsert = {
+            content_id: contentId,
+            user_id: userId,
+            content_type: contentType
+          };
+          
+          // Use helper function for insertion
+          insertResult = await executeQuery(() =>
+            supabase
+              .from(tableName)
+              .insert(insertData)
+          );
+        } else {
+          // Content bookmark - use explicit interface
+          const insertData: ContentBookmarkInsert = {
+            content_id: contentId,
+            user_id: userId,
+            content_type: contentType
+          };
+          
+          // Use helper function for insertion
+          insertResult = await executeQuery(() =>
+            supabase
+              .from(tableName)
+              .insert(insertData)
+          );
+        }
+      }
+      
+      if (insertResult.error) throw insertResult.error;
+      
+      // Only increment count for supported counters
+      const counterSupported = isLike || (contentType === 'quote');
+      if (counterSupported) {
+        await incrementCounter(contentId, counterName, contentTableName);
+      }
+      
+      return true;
+    }
+  } catch (error) {
+    console.error(`[Supabase Utils] Error toggling ${type}:`, error);
+    toast.error(`Could not ${type} the content. Please try again.`);
+    return false;
+  }
+};
