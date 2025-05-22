@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { DayContentProps } from 'react-day-picker';
 import { Badge } from '@/components/ui/badge';
@@ -10,37 +10,35 @@ import { format } from 'date-fns';
 import { EventList } from './EventList';
 import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
+import { Event } from '@/types/events';
 
-// This component is now optimized to use memoization and prevent unnecessary rerenders
-const DayContent = React.memo(({ date }: DayContentProps) => {
-  const { events } = useEvents();
+interface EventDateMap {
+  [dateKey: string]: number;
+}
+
+// Custom Day Content component that uses memoization
+const MemoizedDayContent = React.memo(({ date, events }: { date: Date; events: Event[] }) => {
   const navigate = useNavigate();
-
-  // Calculate event count only when needed
-  const eventCount = useMemo(() => {
-    if (!date) return 0;
-    
-    return events.filter(event => {
+  
+  // Count events for this specific date
+  const eventCount = useMemo(() => 
+    events.filter(event => {
       const eventDate = new Date(event.date);
       return (
         eventDate.getDate() === date.getDate() &&
         eventDate.getMonth() === date.getMonth() &&
         eventDate.getFullYear() === date.getFullYear()
       );
-    }).length;
-  }, [date, events]);
+    }).length,
+  [events, date]);
   
-  // Handle navigation on badge click
-  const handleBadgeClick = (e: React.MouseEvent) => {
-    if (!date) return;
-    
+  // Navigate to filtered events when badge is clicked
+  const handleBadgeClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const formattedDate = format(date, 'yyyy-MM-dd');
     navigate(`/events?date=${formattedDate}`);
-  };
-  
-  if (!date) return null;
+  }, [date, navigate]);
   
   return (
     <div className="relative">
@@ -48,7 +46,7 @@ const DayContent = React.memo(({ date }: DayContentProps) => {
       {eventCount > 0 && (
         <Badge 
           variant="secondary" 
-          className="absolute top-1 right-1 text-[10px] px-1 py-0.5 rounded-md"
+          className="absolute top-1 right-1 text-[10px] px-1 py-0.5 rounded-md cursor-pointer"
           onClick={handleBadgeClick}
         >
           {eventCount}
@@ -58,24 +56,36 @@ const DayContent = React.memo(({ date }: DayContentProps) => {
   );
 });
 
-DayContent.displayName = 'DayContent';
+MemoizedDayContent.displayName = 'MemoizedDayContent';
 
-export const EventCalendar = () => {
+// Wrapper component to make it compatible with react-day-picker
+function DayContentWrapper(props: DayContentProps) {
+  const { events } = useEvents();
+  if (!props.date) return null;
+  return <MemoizedDayContent date={props.date} events={events} />;
+}
+
+export const OptimizedEventCalendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { events, isLoading } = useEvents();
   const navigate = useNavigate();
 
-  // Update URL when date changes
-  useEffect(() => {
-    if (date) {
-      const formattedDate = format(date, 'yyyy-MM-dd');
+  // Memoized navigation to avoid recreating on every render
+  const handleDateChange = useCallback((newDate: Date | undefined) => {
+    setDate(newDate);
+    if (newDate) {
+      const formattedDate = format(newDate, 'yyyy-MM-dd');
       navigate(`/events?date=${formattedDate}`);
     }
-  }, [date, navigate]);
-  
-  // Memoize filtered events to prevent recalculation
+  }, [navigate]);
+
+  // Memoized icons to avoid recreation
+  const IconLeft = useMemo(() => (props: any) => <ChevronLeft className="h-4 w-4" {...props} />, []);
+  const IconRight = useMemo(() => (props: any) => <ChevronRight className="h-4 w-4" {...props} />, []);
+
+  // Filter events for the selected date
   const filteredEvents = useMemo(() => {
-    if (!date) return [];
+    if (!date || !events) return [];
     
     return events.filter(event => {
       const eventDate = new Date(event.date);
@@ -85,13 +95,13 @@ export const EventCalendar = () => {
         eventDate.getFullYear() === date.getFullYear()
       );
     });
-  }, [events, date]);
+  }, [date, events]);
 
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-semibold">
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="mr-2 h-4 w-4 inline" />
           Events Calendar
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
@@ -102,12 +112,12 @@ export const EventCalendar = () => {
         <CalendarComponent
           mode="single"
           selected={date}
-          onSelect={setDate}
+          onSelect={handleDateChange}
           className="border-none shadow-none"
           components={{
-            DayContent,
-            IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-            IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+            DayContent: DayContentWrapper,
+            IconLeft,
+            IconRight,
           }}
         />
         <div className="mb-4">

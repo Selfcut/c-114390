@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 /**
  * Initialize any required Supabase utilities
@@ -8,6 +9,36 @@ export const initializeSupabaseUtils = async (): Promise<void> => {
   console.log('Initializing Supabase utilities...');
   // This function is called during app initialization
   // You can add any setup code here if needed in the future
+};
+
+/**
+ * Type-safe counter operation function to modify a counter in a Supabase table
+ * 
+ * @param operation - The operation to perform (increment or decrement)
+ * @param rowId - The ID of the row to update
+ * @param columnName - The name of the counter column
+ * @param tableName - The name of the table
+ * @returns A promise that resolves when the counter is updated
+ */
+const performCounterOperation = async (
+  operation: 'increment' | 'decrement',
+  rowId: string,
+  columnName: string,
+  tableName: string
+): Promise<void> => {
+  try {
+    await supabase.rpc(
+      `${operation}_counter`,
+      {
+        row_id: rowId,
+        column_name: columnName,
+        table_name: tableName
+      }
+    );
+  } catch (error) {
+    console.error(`Error ${operation}ing ${columnName} for ${tableName}:${rowId}`, error);
+    throw error;
+  }
 };
 
 /**
@@ -23,16 +54,7 @@ export const incrementCounter = async (
   columnName: string, 
   tableName: string
 ): Promise<void> => {
-  try {
-    await supabase.rpc('increment_counter', {
-      row_id: rowId,
-      column_name: columnName,
-      table_name: tableName
-    });
-  } catch (error) {
-    console.error(`Error incrementing ${columnName} for ${tableName}:${rowId}`, error);
-    throw error;
-  }
+  return performCounterOperation('increment', rowId, columnName, tableName);
 };
 
 /**
@@ -48,32 +70,42 @@ export const decrementCounter = async (
   columnName: string, 
   tableName: string
 ): Promise<void> => {
-  try {
-    await supabase.rpc('decrement_counter', {
-      row_id: rowId,
-      column_name: columnName,
-      table_name: tableName
-    });
-  } catch (error) {
-    console.error(`Error decrementing ${columnName} for ${tableName}:${rowId}`, error);
-    throw error;
-  }
+  return performCounterOperation('decrement', rowId, columnName, tableName);
 };
 
 /**
- * Optimized batch operations for Supabase
+ * Execute multiple Supabase operations in parallel with optimized error handling
  * 
  * @param operations - Array of operation functions to batch
  * @returns A promise that resolves when all operations are completed
  */
-export const batchOperations = async (
-  operations: (() => Promise<any>)[]
-): Promise<any[]> => {
+export const batchOperations = async <T>(
+  operations: (() => Promise<T>)[]
+): Promise<T[]> => {
   try {
     return await Promise.all(operations.map(op => op()));
   } catch (error) {
     console.error('Error in batch operations:', error);
     throw error;
+  }
+};
+
+/**
+ * Type-safe wrapper for Supabase query execution with error handling
+ * 
+ * @param queryFn - Function that returns a Supabase query
+ * @returns The query result or null if an error occurred
+ */
+export const executeQuery = async <T>(
+  queryFn: () => Promise<PostgrestSingleResponse<T>>
+): Promise<T | null> => {
+  try {
+    const { data, error } = await queryFn();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error executing query:', error);
+    return null;
   }
 };
 
@@ -90,13 +122,12 @@ export const checkUserInteraction = async (
   tableName: string,
   contentColumn: string,
   contentId: string,
-  userId?: string
+  userId?: string | null
 ): Promise<boolean> => {
   if (!userId) return false;
   
   try {
-    // Fix for TypeScript strict type checking - use type assertion for the table name
-    // This tells TypeScript we know what we're doing with the dynamic table name
+    // Use type assertion for the dynamic table name
     const { data, error } = await supabase
       .from(tableName as any)
       .select('*')
@@ -109,5 +140,38 @@ export const checkUserInteraction = async (
   } catch (error) {
     console.error(`Error checking ${tableName} interaction:`, error);
     return false;
+  }
+};
+
+/**
+ * Gets the count of items in a table with optional filtering
+ * 
+ * @param tableName - The name of the table
+ * @param filters - Optional filters in the format { column: value }
+ * @returns A promise that resolves to the count
+ */
+export const getCount = async (
+  tableName: string,
+  filters?: Record<string, any>
+): Promise<number> => {
+  try {
+    let query = supabase
+      .from(tableName as any)
+      .select('*', { count: 'exact', head: true });
+    
+    // Apply filters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([column, value]) => {
+        query = query.eq(column, value);
+      });
+    }
+    
+    const { count, error } = await query;
+    
+    if (error) throw error;
+    return count || 0;
+  } catch (error) {
+    console.error(`Error counting ${tableName}:`, error);
+    return 0;
   }
 };

@@ -4,7 +4,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { AuthProvider } from "./lib/auth";
-import { QueryProvider } from './components/providers/QueryProvider';
+import { ReactQueryProvider } from './components/providers/ReactQueryProvider';
 import { AppRoutes } from "./components/routing/AppRoutes";
 import { HelmetProvider } from 'react-helmet-async';
 import { ScrollToTop } from "./components/ui/ScrollToTop";
@@ -26,7 +26,7 @@ function App() {
     <HelmetProvider>
       <ThemeProvider>
         <ErrorBoundary>
-          <QueryProvider>
+          <ReactQueryProvider>
             <AuthProvider>
               <Router>
                 <ScrollToTop />
@@ -34,7 +34,7 @@ function App() {
                 <Toaster />
               </Router>
             </AuthProvider>
-          </QueryProvider>
+          </ReactQueryProvider>
         </ErrorBoundary>
       </ThemeProvider>
     </HelmetProvider>
