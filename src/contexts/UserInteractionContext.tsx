@@ -5,6 +5,7 @@ import { toggleUserInteraction } from '@/lib/utils/supabase-utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentType } from '@/types/contentTypes';
 import { getContentKey } from '@/hooks/content-interactions/contentTypeUtils';
 
 interface UserInteractionContextType {
@@ -13,8 +14,8 @@ interface UserInteractionContextType {
   toggleBookmark: (contentId: string, contentType: string, userId: string) => Promise<boolean>;
   
   // Simplified API that uses the current user's ID automatically
-  likeContent: (contentId: string, contentType: string | ContentItemType) => Promise<boolean>;
-  bookmarkContent: (contentId: string, contentType: string | ContentItemType) => Promise<boolean>;
+  likeContent: (contentId: string, contentType: string | ContentItemType | ContentType) => Promise<boolean>;
+  bookmarkContent: (contentId: string, contentType: string | ContentItemType | ContentType) => Promise<boolean>;
   
   likedItems: Record<string, boolean>;
   bookmarkedItems: Record<string, boolean>;
@@ -98,7 +99,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
   // Simplified like function that uses current user
   const likeContent = useCallback(async (
     contentId: string,
-    contentType: string | ContentItemType
+    contentType: string | ContentItemType | ContentType
   ): Promise<boolean> => {
     if (!user?.id) {
       toast.error('You must be logged in to like content');
@@ -175,7 +176,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
   // Simplified bookmark function that uses current user
   const bookmarkContent = useCallback(async (
     contentId: string,
-    contentType: string | ContentItemType
+    contentType: string | ContentItemType | ContentType
   ): Promise<boolean> => {
     if (!user?.id) {
       toast.error('You must be logged in to bookmark content');
