@@ -3,64 +3,59 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PenSquare, BookOpen } from "lucide-react";
+import { PenSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { ContentTypeFilter, ContentType } from "@/components/library/ContentTypeFilter";
-import { ViewSwitcher, ViewMode } from "@/components/library/ViewSwitcher";
 import { UnifiedContentFeed } from "@/components/library/UnifiedContentFeed";
 import { ContentSubmissionModal } from "@/components/library/ContentSubmissionModal";
 import { PageLayout } from "@/components/layouts/PageLayout";
-import { useContentNavigation } from "@/hooks/useContentNavigation";
 import { LibrarySearchBar } from "@/components/library/LibrarySearchBar";
 import { LibraryHeader } from "@/components/library/LibraryHeader";
+import { ContentType, ContentViewMode } from "@/types/unified-content-types";
 
 const Library = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const { handleContentClick } = useContentNavigation();
   
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [activeContentType, setActiveContentType] = useState<ContentType>('all');
-  const [activeViewMode, setActiveViewMode] = useState<ViewMode>('list');
-  const [activeTab, setActiveTab] = useState<'knowledge' | 'media' | 'quote' | 'ai'>('knowledge');
+  const [activeContentType, setActiveContentType] = useState<ContentType>(ContentType.All);
+  const [activeViewMode, setActiveViewMode] = useState<ContentViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Parse URL parameters to set initial state
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const viewParam = params.get('view');
-    const modeParam = params.get('mode') as ViewMode | null;
+    const modeParam = params.get('mode') as ContentViewMode | null;
     const searchParam = params.get('search');
     
     // Set content type based on URL parameter
     if (viewParam) {
       switch (viewParam) {
         case 'media':
-          setActiveContentType('media');
-          setActiveTab('media');
+          setActiveContentType(ContentType.Media);
           break;
         case 'quotes':
-          setActiveContentType('quotes');
-          setActiveTab('quote');
+          setActiveContentType(ContentType.Quote);
           break;
         case 'ai':
-          setActiveContentType('ai');
-          setActiveTab('ai');
+          setActiveContentType(ContentType.AI);
           break;
         case 'knowledge':
-          setActiveContentType('knowledge');
-          setActiveTab('knowledge');
+          setActiveContentType(ContentType.Knowledge);
+          break;
+        case 'forum':
+          setActiveContentType(ContentType.Forum);
           break;
         default:
-          setActiveContentType('all');
+          setActiveContentType(ContentType.All);
       }
     }
     
     // Set view mode based on URL parameter
     if (modeParam && ['grid', 'list', 'feed'].includes(modeParam)) {
-      setActiveViewMode(modeParam as ViewMode);
+      setActiveViewMode(modeParam);
     }
     
     // Set search term based on URL parameter
@@ -73,7 +68,7 @@ const Library = () => {
   useEffect(() => {
     const params = new URLSearchParams();
     
-    if (activeContentType !== 'all') {
+    if (activeContentType !== ContentType.All) {
       params.set('view', activeContentType);
     }
     
@@ -90,34 +85,6 @@ const Library = () => {
     
     navigate(newUrl, { replace: true });
   }, [activeContentType, activeViewMode, searchTerm, location.pathname, navigate]);
-  
-  // Handle content type change
-  const handleContentTypeChange = (type: ContentType) => {
-    setActiveContentType(type);
-    
-    // Set appropriate tab for content submission
-    switch (type) {
-      case 'media':
-        setActiveTab('media');
-        break;
-      case 'quotes':
-        setActiveTab('quote');
-        break;
-      case 'ai':
-        setActiveTab('ai');
-        break;
-      case 'knowledge':
-        setActiveTab('knowledge');
-        break;
-      default:
-        setActiveTab('knowledge');
-    }
-  };
-  
-  // Handle view mode change
-  const handleViewModeChange = (mode: ViewMode) => {
-    setActiveViewMode(mode);
-  };
   
   // Handle search term change
   const handleSearchChange = (term: string) => {
@@ -172,7 +139,7 @@ const Library = () => {
         <ContentSubmissionModal
           isOpen={isSubmitModalOpen}
           onOpenChange={setIsSubmitModalOpen}
-          defaultTab={activeTab}
+          defaultTab="knowledge"
           onSubmitSuccess={handleSubmitSuccess}
         />
       </div>
