@@ -22,3 +22,21 @@ export interface ContentInteractions {
   isLiked: boolean;
   isBookmarked: boolean;
 }
+
+/**
+ * Props for useContentInteractions hook
+ */
+export interface UseContentInteractionsProps {
+  userId?: string | null;
+}
+
+/**
+ * Return value from useContentInteractions hook
+ */
+export interface UserInteractions {
+  userLikes: Record<string, boolean>;
+  userBookmarks: Record<string, boolean>;
+  handleLike: (contentId: string, contentType: import('@/components/library/content-items/ContentItemTypes').ContentItemType) => Promise<ContentInteractionResult | null>;
+  handleBookmark: (contentId: string, contentType: import('@/components/library/content-items/ContentItemTypes').ContentItemType) => Promise<ContentBookmarkResult | null>;
+  checkUserInteractions: (contentIds: string[]) => Promise<void>;
+}

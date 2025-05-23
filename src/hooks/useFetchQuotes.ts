@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContentItemProps } from '@/components/library/content-items/ContentItemTypes';
+import { ContentItemProps, ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ViewMode } from '@/components/library/ViewSwitcher';
 
 export const useFetchQuotes = () => {
@@ -27,7 +27,7 @@ export const useFetchQuotes = () => {
       if (quotesData) {
         const quoteItems: ContentItemProps[] = quotesData.map((item: any) => ({
           id: item.id,
-          type: 'quote',
+          type: ContentItemType.Quote,
           title: item.author,
           content: item.text,
           summary: item.source,

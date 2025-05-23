@@ -11,7 +11,7 @@ const generateMockFeedItems = (): ContentFeedItem[] => {
   return [
     {
       id: '1',
-      type: 'knowledge',
+      type: ContentItemType.Knowledge,
       title: 'Understanding Quantum Mechanics',
       summary: 'An introduction to quantum mechanics concepts for beginners',
       author: {
@@ -28,7 +28,7 @@ const generateMockFeedItems = (): ContentFeedItem[] => {
     },
     {
       id: '2',
-      type: 'media',
+      type: ContentItemType.Media,
       title: 'Mathematical Beauty in Nature',
       summary: 'Exploring the Fibonacci sequence and golden ratio in natural patterns',
       author: {
@@ -47,7 +47,7 @@ const generateMockFeedItems = (): ContentFeedItem[] => {
     },
     {
       id: '3',
-      type: 'quote',
+      type: ContentItemType.Quote,
       title: 'On the Nature of Knowledge',
       content: "The true sign of intelligence is not knowledge but imagination.",
       author: {
@@ -64,7 +64,7 @@ const generateMockFeedItems = (): ContentFeedItem[] => {
     },
     {
       id: '4',
-      type: 'ai',
+      type: ContentItemType.AI,
       title: 'Future of Machine Learning',
       summary: 'AI-generated exploration of the next decade in machine learning advancements',
       author: {

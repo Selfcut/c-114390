@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContentItemProps } from '@/components/library/content-items/ContentItemTypes';
+import { ContentItemProps, ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ViewMode } from '@/components/library/ViewSwitcher';
 
 export const useFetchKnowledgeEntries = () => {
@@ -27,7 +27,7 @@ export const useFetchKnowledgeEntries = () => {
       if (knowledgeData) {
         const knowledgeItems: ContentItemProps[] = knowledgeData.map((item: any) => ({
           id: item.id,
-          type: 'knowledge',
+          type: ContentItemType.Knowledge,
           title: item.title,
           summary: item.summary,
           author: {

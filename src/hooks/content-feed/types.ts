@@ -1,5 +1,6 @@
 
-import { ContentItemType, MediaType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { MediaType } from '@/components/library/content-items/ContentItemTypes';
 
 export interface ContentFeedItem {
   id: string;

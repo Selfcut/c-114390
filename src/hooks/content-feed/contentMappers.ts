@@ -4,7 +4,7 @@ import { ContentItemType, MediaType } from '@/components/library/content-items/C
 
 export const mapKnowledgeToFeedItem = (item: any): ContentFeedItem => ({
   id: item.id,
-  type: 'knowledge' as ContentItemType,
+  type: ContentItemType.Knowledge,
   title: item.title,
   summary: item.summary,
   content: item.content,
@@ -25,7 +25,7 @@ export const mapKnowledgeToFeedItem = (item: any): ContentFeedItem => ({
 
 export const mapQuoteToFeedItem = (item: any): ContentFeedItem => ({
   id: item.id,
-  type: 'quote' as ContentItemType,
+  type: ContentItemType.Quote,
   title: item.author, // For quotes, we use the quote author as the title
   summary: item.text,
   author: {
@@ -45,7 +45,7 @@ export const mapQuoteToFeedItem = (item: any): ContentFeedItem => ({
 
 export const mapMediaToFeedItem = (item: any): ContentFeedItem => ({
   id: item.id,
-  type: 'media' as ContentItemType,
+  type: ContentItemType.Media,
   title: item.title,
   summary: item.content,
   author: {

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ContentItemProps } from "@/components/library/content-items/ContentItemTypes";
+import { ContentItemProps, ContentItemType } from "@/components/library/content-items/ContentItemTypes";
 import { ViewMode } from "@/components/library/ViewSwitcher";
 
 interface FetchMediaResult {
@@ -26,7 +26,7 @@ export const fetchMediaPosts = async (page: number, viewMode: ViewMode): Promise
     // Map data to ContentItemProps format
     const mappedData: ContentItemProps[] = data.map((item: any) => ({
       id: item.id,
-      type: 'media',
+      type: ContentItemType.Media,
       title: item.title,
       content: item.content,
       mediaUrl: item.url,
