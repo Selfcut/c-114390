@@ -22,6 +22,7 @@ export function isValidContentType(type: string): type is ContentType {
 
 /**
  * Convert a ContentType enum to string
+ * No toString() call needed since enum values are already strings
  */
 export function contentTypeToString(type: ContentType | string): string {
   return typeof type === 'string' ? type : type;

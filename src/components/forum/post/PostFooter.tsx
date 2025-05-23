@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserInteraction } from '@/contexts/UserInteractionContext';
 import { useAuth } from '@/lib/auth';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 interface PostFooterProps {
   post: {
@@ -33,9 +35,10 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     bookmarkContent
   } = useUserInteraction();
 
-  // Check if this post is liked or bookmarked
-  const isLiked = likedItems[`forum:${post.id}`] || false;
-  const isBookmarked = bookmarkedItems[`forum:${post.id}`] || false;
+  // Check if this post is liked or bookmarked using forum content type
+  const contentKey = `forum:${post.id}`;
+  const isLiked = likedItems[contentKey] || false;
+  const isBookmarked = bookmarkedItems[contentKey] || false;
   const isLikeLoading = isLoading;
   const isBookmarkLoading = isLoading;
 
@@ -55,7 +58,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     } else if (isAuthenticated && user?.id) {
       // Use the simplified API if available, otherwise use explicit userId
       if (likeContent) {
-        await likeContent(post.id, 'forum');
+        await likeContent(post.id, ContentItemType.Forum);
       } else {
         await toggleLike(post.id, 'forum', user.id);
       }
@@ -76,7 +79,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     if (user?.id) {
       // Use the simplified API if available, otherwise use explicit userId
       if (bookmarkContent) {
-        await bookmarkContent(post.id, 'forum');
+        await bookmarkContent(post.id, ContentItemType.Forum);
       } else {
         await toggleBookmark(post.id, 'forum', user.id);
       }
