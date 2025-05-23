@@ -38,7 +38,7 @@ export async function checkUserInteractions(
   userId: string, 
   contentId: string, 
   contentType: string
-): Promise<{ isLiked: boolean, isBookmarked: boolean }> {
+) {
   const normalizedType = normalizeContentType(contentType);
   
   try {
@@ -50,48 +50,22 @@ export async function checkUserInteractions(
     const bookmarksTable = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = isQuote ? 'quote_id' : 'content_id';
     
-    // Check if user has liked this content
-    let likesQuery;
+    // Build queries manually to avoid type recursion
+    let likesQuery = supabase.from(likesTable).select('id');
+    let bookmarksQuery = supabase.from(bookmarksTable).select('id');
+    
     if (isQuote) {
-      likesQuery = supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
+      likesQuery = likesQuery.eq(idField, contentId).eq('user_id', userId);
+      bookmarksQuery = bookmarksQuery.eq(idField, contentId).eq('user_id', userId);
     } else {
-      likesQuery = supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .eq('content_type', normalizedType)
-        .maybeSingle();
+      likesQuery = likesQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
+      bookmarksQuery = bookmarksQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
     }
     
-    // Check if user has bookmarked this content
-    let bookmarksQuery;
-    if (isQuote) {
-      bookmarksQuery = supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
-    } else {
-      bookmarksQuery = supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .eq('content_type', normalizedType)
-        .maybeSingle();
-    }
-    
-    // Execute both queries in parallel
+    // Execute both queries
     const [likesResult, bookmarksResult] = await Promise.all([
-      likesQuery, 
-      bookmarksQuery
+      likesQuery.maybeSingle(), 
+      bookmarksQuery.maybeSingle()
     ]);
     
     // Return interaction status
@@ -112,7 +86,7 @@ export async function toggleLike(
   userId: string,
   contentId: string,
   contentType: string
-): Promise<boolean> {
+) {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
   
@@ -124,44 +98,26 @@ export async function toggleLike(
     const likesColumn = normalizedType === 'forum' ? 'upvotes' : 'likes';
     
     // Check if like already exists
-    let likeQuery;
+    let likeQuery = supabase.from(likesTable).select('id');
+    
     if (isQuote) {
-      likeQuery = supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
+      likeQuery = likeQuery.eq(idField, contentId).eq('user_id', userId);
     } else {
-      likeQuery = supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .eq('content_type', normalizedType)
-        .maybeSingle();
+      likeQuery = likeQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
     }
     
-    const { data: existingLike, error: checkError } = await likeQuery;
+    const { data: existingLike, error: checkError } = await likeQuery.maybeSingle();
     
     if (checkError) throw checkError;
     
     if (existingLike) {
       // Remove like if it exists
-      let deleteQuery;
+      let deleteQuery = supabase.from(likesTable).delete();
+      
       if (isQuote) {
-        deleteQuery = supabase
-          .from(likesTable)
-          .delete()
-          .eq(idField, contentId)
-          .eq('user_id', userId);
+        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId);
       } else {
-        deleteQuery = supabase
-          .from(likesTable)
-          .delete()
-          .eq(idField, contentId)
-          .eq('user_id', userId)
-          .eq('content_type', normalizedType);
+        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
       }
       
       const { error: deleteError } = await deleteQuery;
@@ -177,7 +133,7 @@ export async function toggleLike(
       return false;
     } else {
       // Add like if it doesn't exist
-      const insertData: any = {
+      const insertData: Record<string, any> = {
         user_id: userId,
         [idField]: contentId
       };
@@ -215,7 +171,7 @@ export async function toggleBookmark(
   userId: string,
   contentId: string,
   contentType: string
-): Promise<boolean> {
+) {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
   
@@ -227,44 +183,26 @@ export async function toggleBookmark(
     const bookmarksColumn = isQuote ? 'bookmarks' : undefined;
     
     // Check if bookmark already exists
-    let bookmarkQuery;
+    let bookmarkQuery = supabase.from(bookmarksTable).select('id');
+    
     if (isQuote) {
-      bookmarkQuery = supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
+      bookmarkQuery = bookmarkQuery.eq(idField, contentId).eq('user_id', userId);
     } else {
-      bookmarkQuery = supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, contentId)
-        .eq('user_id', userId)
-        .eq('content_type', normalizedType)
-        .maybeSingle();
+      bookmarkQuery = bookmarkQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
     }
     
-    const { data: existingBookmark, error: checkError } = await bookmarkQuery;
+    const { data: existingBookmark, error: checkError } = await bookmarkQuery.maybeSingle();
     
     if (checkError) throw checkError;
     
     if (existingBookmark) {
       // Remove bookmark if it exists
-      let deleteQuery;
+      let deleteQuery = supabase.from(bookmarksTable).delete();
+      
       if (isQuote) {
-        deleteQuery = supabase
-          .from(bookmarksTable)
-          .delete()
-          .eq(idField, contentId)
-          .eq('user_id', userId);
+        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId);
       } else {
-        deleteQuery = supabase
-          .from(bookmarksTable)
-          .delete()
-          .eq(idField, contentId)
-          .eq('user_id', userId)
-          .eq('content_type', normalizedType);
+        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
       }
       
       const { error: deleteError } = await deleteQuery;
@@ -282,7 +220,7 @@ export async function toggleBookmark(
       return false;
     } else {
       // Add bookmark if it doesn't exist
-      const insertData: any = {
+      const insertData: Record<string, any> = {
         user_id: userId,
         [idField]: contentId
       };

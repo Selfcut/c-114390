@@ -6,7 +6,7 @@ import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
 import { ContentFeedItemComponent } from './ContentFeedItem';
-import { ContentType } from '@/types/contentTypes';
+import { ContentType as UIContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ContentItemType } from './content-items/ContentItemTypes';
 
 interface ContentFeedProps {
-  contentType: ContentType | 'all' | 'quotes';
+  contentType: UIContentType;
   viewMode: ViewMode;
   lastRefresh?: Date;
 }
