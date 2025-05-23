@@ -1,7 +1,7 @@
 
-import { ContentType, ContentItemType } from '@/types/contentTypes';
+import { ContentType } from '@/types/unified-content-types';
 
-export const normalizeContentType = (contentType: string | ContentType | ContentItemType): string => {
+export const normalizeContentType = (contentType: string | ContentType): string => {
   if (!contentType) return 'default';
   return String(contentType).toLowerCase();
 };
@@ -15,7 +15,7 @@ export interface ContentTableInfo {
   bookmarksColumnName?: string;
 }
 
-export const getContentTableInfo = (contentType: string | ContentType | ContentItemType): ContentTableInfo => {
+export const getContentTableInfo = (contentType: string | ContentType): ContentTableInfo => {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
   
@@ -29,7 +29,7 @@ export const getContentTableInfo = (contentType: string | ContentType | ContentI
   };
 };
 
-export const getContentTableName = (contentType: string | ContentType | ContentItemType): string => {
+export const getContentTableName = (contentType: string | ContentType): string => {
   const normalizedType = normalizeContentType(contentType);
   
   switch (normalizedType) {
@@ -53,7 +53,7 @@ export const getContentTableName = (contentType: string | ContentType | ContentI
   }
 };
 
-export const getContentStateKey = (id: string, type: string | ContentType | ContentItemType): string => {
+export const getContentStateKey = (id: string, type: string | ContentType): string => {
   return `${normalizeContentType(type)}:${id}`;
 };
 

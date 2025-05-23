@@ -9,7 +9,6 @@ import { ContentViewMode, ContentType } from '@/types/unified-content-types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { ContentItemType } from './content-items/ContentItemTypes';
 import { useUnifiedContentFeed } from '@/hooks/useUnifiedContentFeed';
 
 interface ContentFeedProps {
@@ -61,26 +60,26 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     action();
   }, [user, toast]);
   
-  const handleLikeWithAuth = useCallback((contentId: string, contentType: ContentItemType) => {
+  const handleLikeWithAuth = useCallback((contentId: string, contentType: ContentType) => {
     handleAuthAction(() => handleLike(contentId, contentType));
   }, [handleAuthAction, handleLike]);
   
-  const handleBookmarkWithAuth = useCallback((contentId: string, contentType: ContentItemType) => {
+  const handleBookmarkWithAuth = useCallback((contentId: string, contentType: ContentType) => {
     handleAuthAction(() => handleBookmark(contentId, contentType));
   }, [handleAuthAction, handleBookmark]);
   
   // Custom content click handler that can include analytics
-  const handleItemClick = useCallback((contentId: string, contentType: ContentItemType) => {
+  const handleItemClick = useCallback((contentId: string, contentType: ContentType) => {
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);
       handleContentClick(contentId, contentType);
     } catch (err) {
       console.error("Error handling content click:", err);
       // Fallback navigation
-      const path = contentType === ContentItemType.Knowledge ? `/knowledge/${contentId}` :
-                   contentType === ContentItemType.Media ? `/media/${contentId}` :
-                   contentType === ContentItemType.Quote ? `/quotes/${contentId}` :
-                   contentType === ContentItemType.Forum ? `/forum/${contentId}` : '/';
+      const path = contentType === ContentType.Knowledge ? `/knowledge/${contentId}` :
+                   contentType === ContentType.Media ? `/media/${contentId}` :
+                   contentType === ContentType.Quote ? `/quotes/${contentId}` :
+                   contentType === ContentType.Forum ? `/forum/${contentId}` : '/';
       navigate(path);
     }
   }, [handleContentClick, navigate]);

@@ -9,7 +9,7 @@ import { ContentViewMode, ContentType } from '@/types/unified-content-types';
 import { QuoteSubmissionModal } from '@/components/QuoteSubmissionModal';
 
 const Library = () => {
-  const [contentType, setContentType] = useState<ContentType>('all');
+  const [contentType, setContentType] = useState<ContentType>(ContentType.All);
   const [viewMode, setViewMode] = useState<ContentViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date>();
