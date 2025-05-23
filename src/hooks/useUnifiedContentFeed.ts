@@ -8,6 +8,9 @@ import { ContentItemType } from '@/components/library/content-items/ContentItemT
 
 const ITEMS_PER_PAGE = 10;
 
+// Define valid table names to ensure type safety
+type ValidTableName = 'quotes' | 'knowledge_entries' | 'media_posts' | 'forum_posts' | 'wiki_articles' | 'research_papers';
+
 export const useUnifiedContentFeed = (
   contentType: ContentType = 'all',
   viewMode: ContentViewMode = 'list'
@@ -39,7 +42,7 @@ export const useUnifiedContentFeed = (
   });
 
   // Helper function to normalize content type for database queries
-  const getTableName = useCallback((type: ContentType): string => {
+  const getTableName = useCallback((type: ContentType): ValidTableName => {
     switch (type) {
       case 'quote': return 'quotes';
       case 'knowledge': return 'knowledge_entries';

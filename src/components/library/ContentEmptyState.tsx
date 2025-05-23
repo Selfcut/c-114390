@@ -18,35 +18,35 @@ export const ContentEmptyState: React.FC<ContentEmptyStateProps> = ({
 }) => {
   const getEmptyStateConfig = () => {
     switch (contentType) {
-      case ContentType.Quote:
+      case 'quote':
         return {
           icon: <FileText className="h-16 w-16 text-gray-300" />,
           title: "No quotes found",
           description: "Be the first to share an inspiring quote with the community.",
           actionText: "Share a Quote"
         };
-      case ContentType.Media:
+      case 'media':
         return {
           icon: <Image className="h-16 w-16 text-gray-300" />,
           title: "No media found",
           description: "Upload images, videos, or documents to share with others.",
           actionText: "Upload Media"
         };
-      case ContentType.Forum:
+      case 'forum':
         return {
           icon: <MessageSquare className="h-16 w-16 text-gray-300" />,
           title: "No forum posts found",
           description: "Start a discussion or ask a question to engage with the community.",
           actionText: "Create Post"
         };
-      case ContentType.Knowledge:
+      case 'knowledge':
         return {
           icon: <BookOpen className="h-16 w-16 text-gray-300" />,
           title: "No knowledge entries found",
           description: "Share your expertise by creating detailed knowledge articles.",
           actionText: "Create Article"
         };
-      case ContentType.AI:
+      case 'ai':
         return {
           icon: <Brain className="h-16 w-16 text-gray-300" />,
           title: "No AI content found",

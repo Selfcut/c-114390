@@ -5,7 +5,8 @@ export enum ContentItemType {
   Media = 'media',
   Wiki = 'wiki',
   Knowledge = 'knowledge',
-  AI = 'ai'
+  AI = 'ai',
+  Research = 'research'
 }
 
 export type MediaType = 'image' | 'video' | 'youtube' | 'document' | 'text';

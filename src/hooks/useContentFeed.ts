@@ -1,8 +1,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { ContentViewMode, ContentType } from '@/types/unified-content-types';
+import { ContentViewMode, ContentType, UnifiedContentItem } from '@/types/unified-content-types';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { useUnifiedContentFeed } from './useUnifiedContentFeed';
+
+// Export ContentFeedItem for backward compatibility
+export type ContentFeedItem = UnifiedContentItem;
 
 // Wrapper hook for backward compatibility
 export const useContentFeed = (

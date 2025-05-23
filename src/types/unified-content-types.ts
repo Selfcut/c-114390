@@ -2,6 +2,7 @@
 // Unified content type system to replace scattered type definitions
 export type ContentViewMode = 'list' | 'grid' | 'feed';
 
+// Use string literal types instead of enum values for ContentType
 export type ContentType = 
   | 'quote' 
   | 'knowledge' 
@@ -11,6 +12,18 @@ export type ContentType =
   | 'ai' 
   | 'research'
   | 'all';
+
+// Add enum-like object for value access
+export const ContentTypeValues = {
+  Quote: 'quote' as const,
+  Knowledge: 'knowledge' as const,
+  Media: 'media' as const,
+  Forum: 'forum' as const,
+  Wiki: 'wiki' as const,
+  AI: 'ai' as const,
+  Research: 'research' as const,
+  All: 'all' as const,
+} as const;
 
 export interface UnifiedContentItem {
   id: string;

@@ -1,27 +1,33 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ContentFeedErrorProps {
   message: string;
   onRetry: () => void;
 }
 
-export const ContentFeedError: React.FC<ContentFeedErrorProps> = ({ message, onRetry }) => {
+export const ContentFeedError: React.FC<ContentFeedErrorProps> = ({
+  message,
+  onRetry
+}) => {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-      <div className="mb-4 text-destructive">
-        <AlertTriangle size={40} />
-      </div>
-      <h3 className="text-xl font-semibold mb-2">Error loading content</h3>
-      <p className="text-muted-foreground mb-4">
-        {message || "Something went wrong while loading the content."}
-      </p>
-      <Button onClick={onRetry} className="flex items-center gap-2">
-        <RefreshCw size={16} />
-        <span>Try again</span>
-      </Button>
-    </div>
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <AlertCircle className="h-16 w-16 text-red-300 mb-4" />
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">
+          Error Loading Content
+        </h3>
+        <p className="text-gray-500 text-center mb-6 max-w-md">
+          {message}
+        </p>
+        <Button onClick={onRetry} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </Button>
+      </CardContent>
+    </Card>
   );
 };

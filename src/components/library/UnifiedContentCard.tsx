@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageSquare, Eye, Bookmark } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Heart, Bookmark, MessageCircle, Eye } from 'lucide-react';
 import { UnifiedContentItem, ContentViewMode } from '@/types/unified-content-types';
+import { formatDistanceToNow } from 'date-fns';
 
 interface UnifiedContentCardProps {
   item: UnifiedContentItem;
@@ -28,6 +27,30 @@ export const UnifiedContentCard: React.FC<UnifiedContentCardProps> = ({
   onBookmark,
   onClick
 }) => {
+  const getTypeIcon = () => {
+    switch (item.type) {
+      case 'quote': return '💭';
+      case 'knowledge': return '📚';
+      case 'media': return '🎬';
+      case 'forum': return '💬';
+      case 'wiki': return '📝';
+      case 'research': return '🔬';
+      default: return '📄';
+    }
+  };
+
+  const getActionMetrics = () => {
+    const metrics = item.metrics;
+    return {
+      likes: metrics.likes || metrics.upvotes || 0,
+      comments: metrics.comments || 0,
+      bookmarks: metrics.bookmarks || 0,
+      views: metrics.views || 0
+    };
+  };
+
+  const actionMetrics = getActionMetrics();
+
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     onLike();
@@ -38,108 +61,165 @@ export const UnifiedContentCard: React.FC<UnifiedContentCardProps> = ({
     onBookmark();
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'quote': return 'bg-purple-100 text-purple-800';
-      case 'knowledge': return 'bg-blue-100 text-blue-800';
-      case 'media': return 'bg-green-100 text-green-800';
-      case 'forum': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   if (viewMode === 'grid') {
     return (
-      <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={onClick}>
+      <Card className="cursor-pointer hover:shadow-lg transition-shadow group" onClick={onClick}>
         {item.coverImage && (
-          <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-            <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover" />
+          <div className="aspect-video overflow-hidden rounded-t-lg">
+            <img 
+              src={item.coverImage} 
+              alt={item.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            />
           </div>
         )}
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className={getTypeColor(item.type)}>{item.type}</Badge>
-            <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
-            </span>
+            <span className="text-lg">{getTypeIcon()}</span>
+            <Badge variant="secondary" className="text-xs">
+              {item.type}
+            </Badge>
           </div>
+          
           <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.title}</h3>
-          {item.summary && (
-            <p className="text-muted-foreground text-sm line-clamp-3 mb-3">{item.summary}</p>
+          
+          {item.content && (
+            <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+              {item.content}
+            </p>
           )}
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 mb-3">
             <Avatar className="h-6 w-6">
               <AvatarImage src={item.author.avatar} alt={item.author.name} />
-              <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="text-xs">
+                {item.author.name.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <span className="text-sm text-muted-foreground">{item.author.name}</span>
           </div>
-        </CardContent>
-        <CardFooter className="p-4 pt-0 flex justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={handleLike} className="p-0 h-auto">
-              <Heart className={cn("h-4 w-4 mr-1", isLiked && "fill-red-500 text-red-500")} />
-              <span className="text-xs">{item.metrics?.likes || 0}</span>
-            </Button>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <MessageSquare className="h-4 w-4" />
-              <span className="text-xs">{item.metrics?.comments || 0}</span>
-            </div>
-            {item.metrics?.views !== undefined && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Eye className="h-4 w-4" />
-                <span className="text-xs">{item.metrics.views}</span>
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+            <span>{formatDistanceToNow(item.createdAt, { addSuffix: true })}</span>
+            {actionMetrics.views > 0 && (
+              <div className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                <span>{actionMetrics.views}</span>
               </div>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={handleBookmark} className="p-0 h-auto">
-            <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
-          </Button>
-        </CardFooter>
+
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {item.tags.slice(0, 3).map(tag => (
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between border-t pt-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                className={`h-8 px-2 ${isLiked ? 'text-red-500' : ''}`}
+              >
+                <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
+                <span className="text-xs">{actionMetrics.likes}</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBookmark}
+                className={`h-8 px-2 ${isBookmarked ? 'text-yellow-500' : ''}`}
+              >
+                <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MessageCircle className="h-3 w-3" />
+              <span>{actionMetrics.comments}</span>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     );
   }
 
+  // List view
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardContent className="p-4">
         <div className="flex gap-4">
-          {item.coverImage && (
-            <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-              <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover" />
+          {(item.coverImage || item.mediaUrl) && (
+            <div className="flex-shrink-0">
+              <img 
+                src={item.coverImage || item.mediaUrl} 
+                alt={item.title}
+                className="w-20 h-20 object-cover rounded-lg"
+              />
             </div>
           )}
+          
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <Badge className={getTypeColor(item.type)}>{item.type}</Badge>
+              <span className="text-base">{getTypeIcon()}</span>
+              <Badge variant="secondary" className="text-xs">
+                {item.type}
+              </Badge>
               <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                {formatDistanceToNow(item.createdAt, { addSuffix: true })}
               </span>
             </div>
-            <h3 className="font-semibold text-lg mb-1 line-clamp-1">{item.title}</h3>
-            {item.summary && (
-              <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.summary}</p>
+
+            <h3 className="font-semibold text-lg mb-2 line-clamp-1">{item.title}</h3>
+            
+            {item.content && (
+              <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                {item.content}
+              </p>
             )}
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
+                <Avatar className="h-6 w-6">
                   <AvatarImage src={item.author.avatar} alt={item.author.name} />
-                  <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="text-xs">
+                    {item.author.name.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="text-sm text-muted-foreground">{item.author.name}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm" onClick={handleLike} className="p-0 h-auto">
-                  <Heart className={cn("h-4 w-4 mr-1", isLiked && "fill-red-500 text-red-500")} />
-                  <span className="text-xs">{item.metrics?.likes || 0}</span>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLike}
+                  className={`h-8 px-2 ${isLiked ? 'text-red-500' : ''}`}
+                >
+                  <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
+                  <span className="text-xs">{actionMetrics.likes}</span>
                 </Button>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="text-xs">{item.metrics?.comments || 0}</span>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBookmark}
+                  className={`h-8 px-2 ${isBookmarked ? 'text-yellow-500' : ''}`}
+                >
+                  <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                </Button>
+
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MessageCircle className="h-3 w-3" />
+                  <span>{actionMetrics.comments}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleBookmark} className="p-0 h-auto">
-                  <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
-                </Button>
               </div>
             </div>
           </div>

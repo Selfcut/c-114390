@@ -2,10 +2,10 @@
 import React from 'react';
 import { useUnifiedContentFeed } from '@/hooks/useUnifiedContentFeed';
 import { UnifiedContentCard } from './UnifiedContentCard';
-import { ContentLoadingSkeleton } from './ContentLoadingSkeleton';
-import { ContentErrorBoundary } from './ContentErrorBoundary';
+import { ContentFeedSkeleton } from './ContentFeedSkeleton';
+import { ContentFeedError } from './ContentFeedError';
 import { ContentEmptyState } from './ContentEmptyState';
-import { ContentType, ContentViewMode } from '@/types/unified-content-types';
+import { ContentType, ContentViewMode, ContentTypeValues } from '@/types/unified-content-types';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,36 +17,37 @@ interface UnifiedContentFeedComponentProps {
 }
 
 export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentProps> = ({
-  contentType = ContentType.All,
+  contentType = ContentTypeValues.All,
   viewMode = 'list',
   onCreateContent
 }) => {
   const navigate = useNavigate();
   const {
-    items,
+    feedItems,
     isLoading,
     error,
     hasMore,
     loadMore,
     refetch,
-    userInteractions,
+    userLikes,
+    userBookmarks,
     handleLike,
     handleBookmark
-  } = useUnifiedContentFeed({ contentType });
+  } = useUnifiedContentFeed(contentType, viewMode);
 
   const handleContentClick = (id: string, type: ContentType) => {
     try {
       switch (type) {
-        case ContentType.Knowledge:
+        case 'knowledge':
           navigate(`/knowledge/${id}`);
           break;
-        case ContentType.Media:
+        case 'media':
           navigate(`/media/${id}`);
           break;
-        case ContentType.Quote:
+        case 'quote':
           navigate(`/quotes/${id}`);
           break;
-        case ContentType.Forum:
+        case 'forum':
           navigate(`/forum/${id}`);
           break;
         default:
@@ -58,29 +59,23 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
   };
 
   // Filter items based on content type
-  const filteredItems = contentType === ContentType.All 
-    ? items 
-    : items.filter(item => item.type === contentType);
+  const filteredItems = contentType === 'all' 
+    ? feedItems 
+    : feedItems.filter(item => item.type === contentType);
 
   // Error state
   if (error) {
     return (
-      <ContentErrorBoundary
-        error={error}
+      <ContentFeedError
+        message={error}
         onRetry={refetch}
-        onReset={() => {
-          // Reset to all content types
-          if (contentType !== ContentType.All) {
-            navigate('/library');
-          }
-        }}
       />
     );
   }
 
   // Loading state
   if (isLoading && filteredItems.length === 0) {
-    return <ContentLoadingSkeleton viewMode={viewMode} />;
+    return <ContentFeedSkeleton viewMode={viewMode} />;
   }
 
   // Empty state
@@ -103,8 +98,8 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
       <div className={containerClassName}>
         {filteredItems.map(item => {
           const stateKey = `${item.type}:${item.id}`;
-          const isLiked = userInteractions[`like_${stateKey}`] || false;
-          const isBookmarked = userInteractions[`bookmark_${stateKey}`] || false;
+          const isLiked = userLikes[stateKey] || false;
+          const isBookmarked = userBookmarks[stateKey] || false;
           
           return (
             <UnifiedContentCard
@@ -113,8 +108,8 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
               viewMode={viewMode}
               isLiked={isLiked}
               isBookmarked={isBookmarked}
-              onLike={() => handleLike(item.id, item.type)}
-              onBookmark={() => handleBookmark(item.id, item.type)}
+              onLike={() => handleLike(item.id, item.type as any)}
+              onBookmark={() => handleBookmark(item.id, item.type as any)}
               onClick={() => handleContentClick(item.id, item.type)}
             />
           );
