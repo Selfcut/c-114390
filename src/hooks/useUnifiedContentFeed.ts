@@ -67,7 +67,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 bookmarks,
                 created_at,
                 user_id,
-                profiles!inner(name, username, avatar_url)
+                profiles(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -89,7 +89,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 cover_image,
                 created_at,
                 user_id,
-                profiles!inner(name, username, avatar_url)
+                profiles(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -111,7 +111,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 views,
                 created_at,
                 user_id,
-                profiles!inner(name, username, avatar_url)
+                profiles(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -132,7 +132,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 views,
                 created_at,
                 user_id,
-                profiles!inner(name, username, avatar_url)
+                profiles(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -148,21 +148,23 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
 
         // Transform data to unified format
         const transformedItems = data.map(item => {
-          const profile = item.profiles;
-          const baseItem = {
+          const profile = item.profiles || {};
+          const baseItem: Partial<UnifiedContentItem> = {
             id: item.id,
             type: type,
             createdAt: item.created_at,
             author: {
-              name: profile?.name || 'Unknown',
-              username: profile?.username,
-              avatar: profile?.avatar_url
+              name: profile.name || 'Unknown',
+              username: profile.username,
+              avatar: profile.avatar_url
             }
           };
 
+          let contentItem: UnifiedContentItem;
+
           switch (type) {
             case ContentType.Quote:
-              return {
+              contentItem = {
                 ...baseItem,
                 title: `"${item.text.substring(0, 50)}..."`,
                 summary: item.text,
@@ -173,10 +175,11 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                   bookmarks: item.bookmarks
                 },
                 tags: item.tags || []
-              };
+              } as UnifiedContentItem;
+              break;
 
             case ContentType.Knowledge:
-              return {
+              contentItem = {
                 ...baseItem,
                 title: item.title,
                 summary: item.summary,
@@ -187,10 +190,11 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 },
                 tags: item.categories || [],
                 coverImage: item.cover_image
-              };
+              } as UnifiedContentItem;
+              break;
 
             case ContentType.Media:
-              return {
+              contentItem = {
                 ...baseItem,
                 title: item.title,
                 summary: item.content,
@@ -201,10 +205,11 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 },
                 mediaUrl: item.url,
                 mediaType: item.type as any
-              };
+              } as UnifiedContentItem;
+              break;
 
             case ContentType.Forum:
-              return {
+              contentItem = {
                 ...baseItem,
                 title: item.title,
                 summary: item.content?.substring(0, 200) + '...',
@@ -214,11 +219,18 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                   views: item.views
                 },
                 tags: item.tags || []
-              };
+              } as UnifiedContentItem;
+              break;
 
             default:
-              return baseItem;
+              contentItem = {
+                ...baseItem,
+                title: 'Unknown content',
+                summary: '',
+              } as UnifiedContentItem;
           }
+
+          return contentItem;
         });
 
         allItems.push(...transformedItems);

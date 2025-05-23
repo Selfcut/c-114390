@@ -20,9 +20,11 @@ export const ContentLoadingSkeleton: React.FC<ContentLoadingSkeletonProps> = ({
   return (
     <div className={containerClassName}>
       {Array.from({ length: count }).map((_, index) => (
-        <Card key={index} className="animate-pulse">
+        <Card key={index}>
           {viewMode === 'grid' && (
-            <div className="aspect-video bg-gray-200 rounded-t-lg" />
+            <div className="aspect-video bg-muted rounded-t-lg">
+              <Skeleton className="h-full w-full rounded-none rounded-t-lg" />
+            </div>
           )}
           <CardHeader className="pb-2">
             <div className="flex items-center space-x-2 mb-2">

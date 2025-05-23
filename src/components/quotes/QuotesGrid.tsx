@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { QuoteWithUser } from '@/lib/quotes/types';
 import { QuoteCard } from './QuoteCard';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 
@@ -32,7 +32,11 @@ export const QuotesGrid: React.FC<QuotesGridProps> = ({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {Array(8).fill(0).map((_, i) => (
-          <SkeletonCard key={i} />
+          <div key={i} className="rounded-lg border p-4">
+            <Skeleton className="h-24 w-full mb-4" />
+            <Skeleton className="h-4 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
         ))}
       </div>
     );

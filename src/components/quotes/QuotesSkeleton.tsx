@@ -1,6 +1,6 @@
 
 import React from "react";
-import { SkeletonCard } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface QuotesSkeletonProps {
   count?: number;
@@ -19,7 +19,11 @@ export const QuotesSkeleton: React.FC<QuotesSkeletonProps> = ({
       }
     >
       {Array(count).fill(0).map((_, i) => (
-        <SkeletonCard key={i} />
+        <div key={i} className="border rounded-lg p-4">
+          <Skeleton className="h-24 w-full mb-4" />
+          <Skeleton className="h-4 w-3/4 mb-2" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
       ))}
     </div>
   );
