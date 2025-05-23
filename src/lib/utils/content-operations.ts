@@ -1,19 +1,34 @@
 
-import { ContentType } from '@/types/contentTypes';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Normalize content type for database operations
  */
-export function normalizeContentType(type: string | ContentType | ContentItemType): string {
-  // If it's a string, lowercase it
-  if (typeof type === 'string') {
-    return type.toLowerCase();
-  } 
+export function normalizeContentType(type: string): string {
+  // Convert to lowercase string for consistency
+  const normalizedType = String(type).toLowerCase();
   
-  // If it's an enum, convert to string
-  return String(type).toLowerCase();
+  // Map types to ensure consistency
+  switch (normalizedType) {
+    case 'quotes':
+    case 'quote':
+      return 'quote';
+    case 'media':
+      return 'media';
+    case 'knowledge':
+      return 'knowledge';
+    case 'wiki':
+      return 'wiki';
+    case 'forum':
+      return 'forum';
+    case 'research':
+      return 'research';
+    case 'ai':
+      return 'ai';
+    default:
+      console.warn(`Unknown content type: ${normalizedType}, using as-is`);
+      return normalizedType;
+  }
 }
 
 /**
@@ -22,7 +37,7 @@ export function normalizeContentType(type: string | ContentType | ContentItemTyp
 export async function checkUserInteractions(
   userId: string, 
   contentId: string, 
-  contentType: string | ContentType | ContentItemType
+  contentType: string
 ): Promise<{ isLiked: boolean, isBookmarked: boolean }> {
   const normalizedType = normalizeContentType(contentType);
   
@@ -90,18 +105,13 @@ export async function checkUserInteractions(
   }
 }
 
-// Fix the recursive type issue by simplifying the function signatures
-type ContentId = string;
-type UserId = string;
-type ContentTypeString = string;
-
 /**
  * Toggle like status for content
  */
 export async function toggleLike(
-  userId: UserId,
-  contentId: ContentId,
-  contentType: ContentTypeString
+  userId: string,
+  contentId: string,
+  contentType: string
 ): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
@@ -202,9 +212,9 @@ export async function toggleLike(
  * Toggle bookmark status for content
  */
 export async function toggleBookmark(
-  userId: UserId,
-  contentId: ContentId,
-  contentType: ContentTypeString
+  userId: string,
+  contentId: string,
+  contentType: string
 ): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
