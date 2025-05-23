@@ -50,9 +50,8 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     if (onUpvote) {
       await onUpvote();
     } else if (isAuthenticated) {
-      // Use the context function if no custom handler is provided
-      // Fix: Pass post.id as string instead of isAuthenticated boolean
-      await toggleLike(post.id, 'forum', isAuthenticated ? 'authenticated' : '');
+      // Pass post.id and the correct content type to toggleLike
+      await toggleLike(post.id, 'forum');
     }
   };
 
@@ -67,8 +66,8 @@ export const PostFooter: React.FC<PostFooterProps> = ({
       return;
     }
 
-    // Fix: Pass post.id as string instead of isAuthenticated boolean
-    await toggleBookmark(post.id, 'forum', isAuthenticated ? 'authenticated' : '');
+    // Pass post.id and the correct content type to toggleBookmark
+    await toggleBookmark(post.id, 'forum');
   };
 
   const handleShare = async () => {

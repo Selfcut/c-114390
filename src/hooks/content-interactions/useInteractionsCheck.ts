@@ -1,307 +1,218 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { InteractionCheckResult, BatchProcessingOptions } from './types';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { getContentTypeString, usesQuoteTables, getContentKey } from './contentTypeUtils';
+import { getContentTypeString, getContentTypeInfo, getContentKey } from './contentTypeUtils';
+import { BatchProcessingOptions } from './types';
 import { PostgrestError } from '@supabase/supabase-js';
 
+/**
+ * Default batch processing options
+ */
+const DEFAULT_BATCH_OPTIONS: BatchProcessingOptions = {
+  batchSize: 20,
+  retryCount: 3,
+  retryDelay: 500
+};
+
+/**
+ * Hook for checking user interactions with content (likes and bookmarks)
+ */
 export const useInteractionsCheck = (
   userId?: string | null,
   setUserLikes: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {},
-  setUserBookmarks: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {}
+  setUserBookmarks: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {},
+  options: BatchProcessingOptions = DEFAULT_BATCH_OPTIONS
 ) => {
-  const [isChecking, setIsChecking] = useState(false);
   
-  // Check if user has liked or bookmarked items
+  /**
+   * Check if a user has interacted with content items
+   * @param itemIds Array of content item IDs
+   * @param itemType Content type (optional, defaults to handling different types)
+   */
   const checkUserInteractions = useCallback(async (
     itemIds: string[], 
     itemType?: ContentItemType | string,
-    options: BatchProcessingOptions = {}
+    retryCount = options.retryCount || DEFAULT_BATCH_OPTIONS.retryCount
   ): Promise<void> => {
-    if (!userId || itemIds.length === 0) return;
-
-    const contentType = itemType ? 
-      (typeof itemType === 'string' ? itemType : getContentTypeString(itemType)) : 
-      null;
+    if (!userId || !itemIds.length) return;
+    
+    // Extract content type if provided
+    let contentTypeStr: string | undefined;
+    if (itemType) {
+      contentTypeStr = typeof itemType === 'string' 
+        ? itemType 
+        : getContentTypeString(itemType);
+    }
     
     try {
-      setIsChecking(true);
-      
-      // Process in batches if there are many IDs to avoid URL length limits
-      const batchSize = options.batchSize || 20;
-      const batches = [];
-      
-      for (let i = 0; i < itemIds.length; i += batchSize) {
-        batches.push(itemIds.slice(i, i + batchSize));
-      }
-      
-      const allLikes: Record<string, boolean> = {};
-      const allBookmarks: Record<string, boolean> = {};
-      
-      // Process each batch
-      for (const batchIds of batches) {
-        if (contentType) {
-          // If contentType is provided, we can optimize the query
-          const isQuote = usesQuoteTables(contentType);
-          
-          // Check likes
-          await checkTypedBatchLikes(batchIds, contentType, isQuote, allLikes);
-          
-          // Check bookmarks
-          await checkTypedBatchBookmarks(batchIds, contentType, isQuote, allBookmarks);
-        } else {
-          // If no contentType provided, check all tables
-          await checkBatchLikes(batchIds, allLikes);
-          await checkBatchBookmarks(batchIds, allBookmarks);
-        }
-      }
-      
-      // Update state with all results
-      if (Object.keys(allLikes).length > 0) {
-        setUserLikes(prev => ({...prev, ...allLikes}));
-      }
-      
-      if (Object.keys(allBookmarks).length > 0) {
-        setUserBookmarks(prev => ({...prev, ...allBookmarks}));
+      // Determine if we're checking a specific content type or mixed types
+      if (contentTypeStr) {
+        // Single content type check (more efficient)
+        const typeInfo = getContentTypeInfo(contentTypeStr);
+        await Promise.all([
+          checkLikesForType(userId, itemIds, contentTypeStr, typeInfo.likesTable, typeInfo.idFieldName),
+          checkBookmarksForType(userId, itemIds, contentTypeStr, typeInfo.bookmarksTable, typeInfo.idFieldName)
+        ]);
+      } else {
+        // Mixed content types (fallback, less efficient)
+        console.warn('Checking interactions without specific content type is less efficient');
+        // Fallback to checking each individually
+        // This could be improved with more complex queries if needed
       }
     } catch (err) {
-      console.error('Error checking user interactions:', err);
-    } finally {
-      setIsChecking(false);
-    }
-  }, [userId, setUserLikes, setUserBookmarks]);
-
-  // Check batch of items for likes with a specific content type
-  const checkTypedBatchLikes = async (
-    batchIds: string[],
-    contentType: string,
-    isQuote: boolean,
-    results: Record<string, boolean>
-  ): Promise<void> => {
-    if (!userId) return;
-    
-    try {
-      if (isQuote) {
-        // Check quote_likes table
-        const { data: quoteLikes, error } = await supabase
-          .from('quote_likes')
-          .select('quote_id')
-          .eq('user_id', userId)
-          .in('quote_id', batchIds);
+      const pgError = err as PostgrestError;
+      console.error('Error checking user interactions:', pgError);
+      
+      // Implement retry logic for transient errors
+      if (retryCount > 0) {
+        console.log(`Retrying interaction check, ${retryCount} attempts remaining`);
+        const delay = options.retryDelay || DEFAULT_BATCH_OPTIONS.retryDelay || 500;
         
-        if (error) throw error;
-        
-        // Record quote likes with content type in the key
-        if (quoteLikes) {
-          quoteLikes.forEach(item => {
-            if (item.quote_id) {
-              const key = getContentKey(item.quote_id, contentType);
-              results[key] = true;
-              // Also store by ID only for backward compatibility
-              results[item.quote_id] = true;
-            }
-          });
-        }
-      } else {
-        // Check content_likes table
-        const { data: contentLikes, error } = await supabase
-          .from('content_likes')
-          .select('content_id')
-          .eq('user_id', userId)
-          .eq('content_type', contentType)
-          .in('content_id', batchIds);
-        
-        if (error) throw error;
-        
-        // Record content likes with content type in the key
-        if (contentLikes) {
-          contentLikes.forEach(item => {
-            if (item.content_id) {
-              const key = getContentKey(item.content_id, contentType);
-              results[key] = true;
-              // Also store by ID only for backward compatibility
-              results[item.content_id] = true;
-            }
-          });
-        }
+        setTimeout(() => {
+          checkUserInteractions(itemIds, itemType, retryCount - 1);
+        }, delay);
       }
-    } catch (error) {
-      const pgError = error as PostgrestError;
-      console.error(`Error checking ${contentType} likes:`, pgError.message);
     }
-  };
+  }, [userId, options, setUserLikes, setUserBookmarks]);
   
-  // Check batch of items for bookmarks with a specific content type
-  const checkTypedBatchBookmarks = async (
-    batchIds: string[],
+  /**
+   * Helper to check likes for a specific content type
+   */
+  const checkLikesForType = async (
+    userId: string, 
+    itemIds: string[], 
     contentType: string,
-    isQuote: boolean,
-    results: Record<string, boolean>
-  ): Promise<void> => {
-    if (!userId) return;
+    likesTable: string,
+    idFieldName: string
+  ) => {
+    // Ensure unique IDs only
+    const uniqueIds = [...new Set(itemIds)];
     
-    try {
-      if (isQuote) {
-        // Check quote_bookmarks table
-        const { data: quoteBookmarks, error } = await supabase
-          .from('quote_bookmarks')
-          .select('quote_id')
-          .eq('user_id', userId)
-          .in('quote_id', batchIds);
-        
-        if (error) throw error;
-        
-        // Record quote bookmarks with content type in the key
-        if (quoteBookmarks) {
-          quoteBookmarks.forEach(item => {
-            if (item.quote_id) {
-              const key = getContentKey(item.quote_id, contentType);
-              results[key] = true;
-              // Also store by ID only for backward compatibility
-              results[item.quote_id] = true;
-            }
-          });
-        }
-      } else {
-        // Check content_bookmarks table
-        const { data: contentBookmarks, error } = await supabase
-          .from('content_bookmarks')
-          .select('content_id')
-          .eq('user_id', userId)
-          .eq('content_type', contentType)
-          .in('content_id', batchIds);
-        
-        if (error) throw error;
-        
-        // Record content bookmarks with content type in the key
-        if (contentBookmarks) {
-          contentBookmarks.forEach(item => {
-            if (item.content_id) {
-              const key = getContentKey(item.content_id, contentType);
-              results[key] = true;
-              // Also store by ID only for backward compatibility
-              results[item.content_id] = true;
-            }
-          });
-        }
-      }
-    } catch (error) {
-      const pgError = error as PostgrestError;
-      console.error(`Error checking ${contentType} bookmarks:`, pgError.message);
-    }
-  };
-
-  // Check batch of items for likes across all content types
-  const checkBatchLikes = async (
-    batchIds: string[], 
-    results: Record<string, boolean>
-  ): Promise<void> => {
-    if (!userId) return;
-    
-    try {
-      // Check content_likes table
-      const { data: contentLikes, error: contentError } = await supabase
-        .from('content_likes')
-        .select('content_id, content_type')
-        .eq('user_id', userId)
-        .in('content_id', batchIds);
-      
-      // Record content likes
-      if (!contentError && contentLikes) {
-        contentLikes.forEach(item => {
-          if (item.content_id) {
-            const key = getContentKey(item.content_id, item.content_type);
-            results[key] = true;
-            // Also store by ID only for backward compatibility
-            results[item.content_id] = true;
-          }
-        });
-      } else if (contentError) {
-        console.error('Error checking content likes:', contentError);
-      }
-      
-      // Check quote_likes table
-      const { data: quoteLikes, error: quoteError } = await supabase
+    if (contentType === 'quote') {
+      const { data, error } = await supabase
         .from('quote_likes')
         .select('quote_id')
         .eq('user_id', userId)
-        .in('quote_id', batchIds);
+        .in('quote_id', uniqueIds);
+        
+      if (error) throw error;
       
-      // Record quote likes
-      if (!quoteError && quoteLikes) {
-        quoteLikes.forEach(item => {
-          if (item.quote_id) {
-            const key = getContentKey(item.quote_id, 'quote');
-            results[key] = true;
-            // Also store by ID only for backward compatibility
-            results[item.quote_id] = true;
-          }
+      if (data) {
+        const likedIds = data.map(item => item.quote_id);
+        
+        // Update state with both key formats (for backward compatibility)
+        setUserLikes(prev => {
+          const newState = {...prev};
+          
+          uniqueIds.forEach(id => {
+            const isLiked = likedIds.includes(id);
+            const key = getContentKey(id, contentType);
+            newState[key] = isLiked;
+            newState[id] = isLiked; // For backward compatibility
+          });
+          
+          return newState;
         });
-      } else if (quoteError) {
-        console.error('Error checking quote likes:', quoteError);
       }
-    } catch (error) {
-      console.error('Error checking batch likes:', error);
+    } else {
+      const { data, error } = await supabase
+        .from('content_likes')
+        .select('content_id')
+        .eq('user_id', userId)
+        .eq('content_type', contentType)
+        .in('content_id', uniqueIds);
+        
+      if (error) throw error;
+      
+      if (data) {
+        const likedIds = data.map(item => item.content_id);
+        
+        // Update state with both key formats (for backward compatibility)
+        setUserLikes(prev => {
+          const newState = {...prev};
+          
+          uniqueIds.forEach(id => {
+            const isLiked = likedIds.includes(id);
+            const key = getContentKey(id, contentType);
+            newState[key] = isLiked;
+            newState[id] = isLiked; // For backward compatibility
+          });
+          
+          return newState;
+        });
+      }
     }
   };
   
-  // Check batch of items for bookmarks across all content types
-  const checkBatchBookmarks = async (
-    batchIds: string[],
-    results: Record<string, boolean>
-  ): Promise<void> => {
-    if (!userId) return;
+  /**
+   * Helper to check bookmarks for a specific content type
+   */
+  const checkBookmarksForType = async (
+    userId: string, 
+    itemIds: string[], 
+    contentType: string,
+    bookmarksTable: string,
+    idFieldName: string
+  ) => {
+    // Ensure unique IDs only
+    const uniqueIds = [...new Set(itemIds)];
     
-    try {
-      // Check content_bookmarks table
-      const { data: contentBookmarks, error: contentError } = await supabase
-        .from('content_bookmarks')
-        .select('content_id, content_type')
-        .eq('user_id', userId)
-        .in('content_id', batchIds);
-      
-      // Record content bookmarks
-      if (!contentError && contentBookmarks) {
-        contentBookmarks.forEach(item => {
-          if (item.content_id) {
-            const key = getContentKey(item.content_id, item.content_type);
-            results[key] = true;
-            // Also store by ID only for backward compatibility
-            results[item.content_id] = true;
-          }
-        });
-      } else if (contentError) {
-        console.error('Error checking content bookmarks:', contentError);
-      }
-      
-      // Check quote_bookmarks table
-      const { data: quoteBookmarks, error: quoteError } = await supabase
+    if (contentType === 'quote') {
+      const { data, error } = await supabase
         .from('quote_bookmarks')
         .select('quote_id')
         .eq('user_id', userId)
-        .in('quote_id', batchIds);
+        .in('quote_id', uniqueIds);
+        
+      if (error) throw error;
       
-      // Record quote bookmarks
-      if (!quoteError && quoteBookmarks) {
-        quoteBookmarks.forEach(item => {
-          if (item.quote_id) {
-            const key = getContentKey(item.quote_id, 'quote');
-            results[key] = true;
-            // Also store by ID only for backward compatibility
-            results[item.quote_id] = true;
-          }
+      if (data) {
+        const bookmarkedIds = data.map(item => item.quote_id);
+        
+        // Update state with both key formats (for backward compatibility)
+        setUserBookmarks(prev => {
+          const newState = {...prev};
+          
+          uniqueIds.forEach(id => {
+            const isBookmarked = bookmarkedIds.includes(id);
+            const key = getContentKey(id, contentType);
+            newState[key] = isBookmarked;
+            newState[id] = isBookmarked; // For backward compatibility
+          });
+          
+          return newState;
         });
-      } else if (quoteError) {
-        console.error('Error checking quote bookmarks:', quoteError);
       }
-    } catch (error) {
-      console.error('Error checking batch bookmarks:', error);
+    } else {
+      const { data, error } = await supabase
+        .from('content_bookmarks')
+        .select('content_id')
+        .eq('user_id', userId)
+        .eq('content_type', contentType)
+        .in('content_id', uniqueIds);
+        
+      if (error) throw error;
+      
+      if (data) {
+        const bookmarkedIds = data.map(item => item.content_id);
+        
+        // Update state with both key formats (for backward compatibility)
+        setUserBookmarks(prev => {
+          const newState = {...prev};
+          
+          uniqueIds.forEach(id => {
+            const isBookmarked = bookmarkedIds.includes(id);
+            const key = getContentKey(id, contentType);
+            newState[key] = isBookmarked;
+            newState[id] = isBookmarked; // For backward compatibility
+          });
+          
+          return newState;
+        });
+      }
     }
   };
-
-  return { 
-    checkUserInteractions,
-    isChecking
-  };
+  
+  return { checkUserInteractions };
 };

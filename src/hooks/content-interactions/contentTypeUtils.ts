@@ -57,49 +57,6 @@ export const getContentTable = (contentType: string): string => {
 };
 
 /**
- * Determine if a content type uses quote-specific tables for interactions
- */
-export const usesQuoteTables = (contentType: string): boolean => {
-  return contentType === 'quote';
-};
-
-/**
- * Get the ID field name based on content type
- */
-export const getIdFieldName = (contentType: string): string => {
-  return contentType === 'quote' ? 'quote_id' : 'content_id';
-};
-
-/**
- * Get the likes table name for a given content type
- */
-export const getLikesTable = (contentType: string): string => {
-  return contentType === 'quote' ? 'quote_likes' : 'content_likes';
-};
-
-/**
- * Get the bookmarks table name for a given content type
- */
-export const getBookmarksTable = (contentType: string): string => {
-  return contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
-};
-
-/**
- * Get the counter field name for likes based on content type
- */
-export const getLikesCounterField = (contentType: string): string => {
-  return contentType === 'forum' ? 'upvotes' : 'likes';
-};
-
-/**
- * Get the counter field name for bookmarks based on content type
- * Note: Only quote content type tracks bookmarks count
- */
-export const getBookmarksCounterField = (contentType: string): string | undefined => {
-  return contentType === 'quote' ? 'bookmarks' : undefined;
-};
-
-/**
  * Convert a raw content ID and type to a consistent format for state tracking
  */
 export const getContentKey = (id: string, type: ContentItemType | string): string => {
