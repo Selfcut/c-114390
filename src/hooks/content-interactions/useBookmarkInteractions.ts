@@ -1,9 +1,8 @@
 
 import { useState, useCallback } from 'react';
-import { toggleBookmark } from '@/lib/utils/content-db-operations';
+import { toggleBookmark, normalizeContentType } from '@/lib/utils/content-operations';
 import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { normalizeContentType } from '@/lib/utils/content-type-utils';
 
 interface UseBookmarkInteractionsProps {
   contentId: string;
@@ -37,19 +36,17 @@ export const useBookmarkInteractions = ({
     setIsLoading(true);
     
     try {
-      // Use the utility function for bookmark operations
       const newIsBookmarked = await toggleBookmark(
         userId,
         contentId,
         normalizedContentType
       );
       
-      // Update the local state based on the result
       setIsBookmarked(newIsBookmarked);
       return newIsBookmarked;
     } catch (error: any) {
       console.error('Error toggling bookmark:', error.message);
-      return isBookmarked; // Return current state on error
+      return isBookmarked;
     } finally {
       setIsLoading(false);
     }

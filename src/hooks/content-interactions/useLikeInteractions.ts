@@ -1,9 +1,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { toggleLike, checkUserInteractions } from '@/lib/utils/content-db-operations';
+import { checkUserInteractions, toggleLike, normalizeContentType } from '@/lib/utils/content-operations';
 import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { normalizeContentType } from '@/lib/utils/content-type-utils';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,11 +29,6 @@ export const useLikeInteractions = ({
   const { toast } = useToast();
   
   const normalizedType = normalizeContentType(contentType);
-  
-  // Get the column name for likes based on content type
-  const getLikesColumnName = (type: string): string => {
-    return type === 'forum' ? 'upvotes' : 'likes';
-  };
 
   // Fetch initial like state on mount if authenticated
   useEffect(() => {
@@ -43,7 +37,6 @@ export const useLikeInteractions = ({
         try {
           setIsLoading(true);
           
-          // Use the utility function to check interactions
           const interactions = await checkUserInteractions(
             user.id,
             contentId,
@@ -77,34 +70,35 @@ export const useLikeInteractions = ({
       setIsLoading(true);
       
       // Optimistic update
-      setIsLiked(prev => !prev);
-      setLikeCount(prevCount => (isLiked ? prevCount - 1 : prevCount + 1));
+      const newIsLiked = !isLiked;
+      setIsLiked(newIsLiked);
+      setLikeCount(prevCount => newIsLiked ? prevCount + 1 : prevCount - 1);
       
       // Use the utility function for like operations
-      const newIsLiked = await toggleLike(
+      const result = await toggleLike(
         user.id,
         contentId,
         normalizedType
       );
       
       // Update state if the result is different from our optimistic update
-      if (newIsLiked !== !isLiked) {
-        setIsLiked(newIsLiked);
-        setLikeCount(prevCount => (newIsLiked ? initialLikeCount + 1 : initialLikeCount));
+      if (result !== newIsLiked) {
+        setIsLiked(result);
+        setLikeCount(prevCount => result ? prevCount + 1 : prevCount - 1);
       }
       
       // Notify parent component about like count change
       if (onLikeChange) {
-        onLikeChange(newIsLiked ? likeCount + 1 : likeCount - 1);
+        onLikeChange(result ? likeCount + 1 : likeCount - 1);
       }
       
-      return newIsLiked;
+      return result;
     } catch (error) {
       console.error('Error toggling like:', error);
       
       // Revert optimistic update on error
-      setIsLiked(prev => !prev);
-      setLikeCount(prevCount => (isLiked ? prevCount - 1 : prevCount + 1));
+      setIsLiked(!isLiked);
+      setLikeCount(prevCount => isLiked ? prevCount + 1 : prevCount - 1);
       
       toast({
         title: "Error",
@@ -116,7 +110,7 @@ export const useLikeInteractions = ({
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, user, contentId, isLiked, likeCount, normalizedType, initialLikeCount, onLikeChange, toast]);
+  }, [isAuthenticated, user, contentId, isLiked, likeCount, normalizedType, onLikeChange, toast]);
 
   return {
     isLiked,
