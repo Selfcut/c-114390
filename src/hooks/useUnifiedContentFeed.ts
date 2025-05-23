@@ -39,8 +39,8 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
       const currentPage = reset ? 0 : state.page;
       const offset = currentPage * limit;
       
-      // Fetch quotes with explicit join to profiles table
-      const { data: quotes, error: quotesError } = await supabase
+      // Fetch quotes with profiles via user_id
+      const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
         .select(`
           id,
@@ -52,18 +52,17 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           comments,
           bookmarks,
           created_at,
-          user_id,
-          profiles!inner (
-            name,
-            username,
-            avatar_url
-          )
+          user_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch knowledge entries with explicit join to profiles table
-      const { data: knowledge, error: knowledgeError } = await supabase
+      if (quotesError) {
+        console.error('Quotes error:', quotesError);
+      }
+
+      // Fetch knowledge entries
+      const { data: knowledgeData, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
           id,
@@ -75,18 +74,17 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           views,
           cover_image,
           created_at,
-          user_id,
-          profiles!inner (
-            name,
-            username,
-            avatar_url
-          )
+          user_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch media posts with explicit join to profiles table
-      const { data: media, error: mediaError } = await supabase
+      if (knowledgeError) {
+        console.error('Knowledge error:', knowledgeError);
+      }
+
+      // Fetch media posts
+      const { data: mediaData, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
           id,
@@ -98,18 +96,17 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           comments,
           views,
           created_at,
-          user_id,
-          profiles!inner (
-            name,
-            username,
-            avatar_url
-          )
+          user_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch forum posts with explicit join to profiles table
-      const { data: forum, error: forumError } = await supabase
+      if (mediaError) {
+        console.error('Media error:', mediaError);
+      }
+
+      // Fetch forum posts
+      const { data: forumData, error: forumError } = await supabase
         .from('forum_posts')
         .select(`
           id,
@@ -120,98 +117,122 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           comments,
           views,
           created_at,
-          user_id,
-          profiles!inner (
-            name,
-            username,
-            avatar_url
-          )
+          user_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (quotesError) console.error('Quotes error:', quotesError);
-      if (knowledgeError) console.error('Knowledge error:', knowledgeError);
-      if (mediaError) console.error('Media error:', mediaError);
-      if (forumError) console.error('Forum error:', forumError);
+      if (forumError) {
+        console.error('Forum error:', forumError);
+      }
 
-      // Transform data to unified format with proper null safety
+      // Get all unique user IDs
+      const allUserIds = new Set<string>();
+      [...(quotesData || []), ...(knowledgeData || []), ...(mediaData || []), ...(forumData || [])].forEach(item => {
+        if (item.user_id) allUserIds.add(item.user_id);
+      });
+
+      // Fetch profiles for all users
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, username, avatar_url')
+        .in('id', Array.from(allUserIds));
+
+      // Create a map of user profiles
+      const profilesMap = new Map();
+      (profilesData || []).forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      // Transform data to unified format
       const unifiedItems: UnifiedContentItem[] = [
-        ...(quotes || []).map(quote => ({
-          id: quote.id,
-          type: ContentType.Quote,
-          title: `"${quote.text.substring(0, 50)}..."`,
-          summary: quote.text,
-          content: quote.text,
-          author: {
-            name: Array.isArray(quote.profiles) ? quote.profiles[0]?.name : quote.profiles?.name || quote.author || 'Unknown',
-            username: Array.isArray(quote.profiles) ? quote.profiles[0]?.username : quote.profiles?.username,
-            avatar: Array.isArray(quote.profiles) ? quote.profiles[0]?.avatar_url : quote.profiles?.avatar_url
-          },
-          createdAt: quote.created_at,
-          metrics: {
-            likes: quote.likes,
-            comments: quote.comments,
-            bookmarks: quote.bookmarks
-          },
-          tags: quote.tags || []
-        })),
-        ...(knowledge || []).map(entry => ({
-          id: entry.id,
-          type: ContentType.Knowledge,
-          title: entry.title,
-          summary: entry.summary,
-          author: {
-            name: Array.isArray(entry.profiles) ? entry.profiles[0]?.name : entry.profiles?.name || 'Unknown',
-            username: Array.isArray(entry.profiles) ? entry.profiles[0]?.username : entry.profiles?.username,
-            avatar: Array.isArray(entry.profiles) ? entry.profiles[0]?.avatar_url : entry.profiles?.avatar_url
-          },
-          createdAt: entry.created_at,
-          metrics: {
-            likes: entry.likes,
-            comments: entry.comments,
-            views: entry.views
-          },
-          tags: entry.categories || [],
-          coverImage: entry.cover_image
-        })),
-        ...(media || []).map(post => ({
-          id: post.id,
-          type: ContentType.Media,
-          title: post.title,
-          summary: post.content,
-          author: {
-            name: Array.isArray(post.profiles) ? post.profiles[0]?.name : post.profiles?.name || 'Unknown',
-            username: Array.isArray(post.profiles) ? post.profiles[0]?.username : post.profiles?.username,
-            avatar: Array.isArray(post.profiles) ? post.profiles[0]?.avatar_url : post.profiles?.avatar_url
-          },
-          createdAt: post.created_at,
-          metrics: {
-            likes: post.likes,
-            comments: post.comments,
-            views: post.views
-          },
-          mediaUrl: post.url,
-          mediaType: post.type as any
-        })),
-        ...(forum || []).map(post => ({
-          id: post.id,
-          type: ContentType.Forum,
-          title: post.title,
-          summary: post.content?.substring(0, 200) + '...',
-          author: {
-            name: Array.isArray(post.profiles) ? post.profiles[0]?.name : post.profiles?.name || 'Unknown',
-            username: Array.isArray(post.profiles) ? post.profiles[0]?.username : post.profiles?.username,
-            avatar: Array.isArray(post.profiles) ? post.profiles[0]?.avatar_url : post.profiles?.avatar_url
-          },
-          createdAt: post.created_at,
-          metrics: {
-            likes: post.upvotes,
-            comments: post.comments,
-            views: post.views
-          },
-          tags: post.tags || []
-        }))
+        ...(quotesData || []).map(quote => {
+          const profile = profilesMap.get(quote.user_id);
+          return {
+            id: quote.id,
+            type: ContentType.Quote,
+            title: `"${quote.text.substring(0, 50)}..."`,
+            summary: quote.text,
+            content: quote.text,
+            author: {
+              name: profile?.name || quote.author || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: quote.created_at,
+            metrics: {
+              likes: quote.likes,
+              comments: quote.comments,
+              bookmarks: quote.bookmarks
+            },
+            tags: quote.tags || []
+          };
+        }),
+        ...(knowledgeData || []).map(entry => {
+          const profile = profilesMap.get(entry.user_id);
+          return {
+            id: entry.id,
+            type: ContentType.Knowledge,
+            title: entry.title,
+            summary: entry.summary,
+            author: {
+              name: profile?.name || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: entry.created_at,
+            metrics: {
+              likes: entry.likes,
+              comments: entry.comments,
+              views: entry.views
+            },
+            tags: entry.categories || [],
+            coverImage: entry.cover_image
+          };
+        }),
+        ...(mediaData || []).map(post => {
+          const profile = profilesMap.get(post.user_id);
+          return {
+            id: post.id,
+            type: ContentType.Media,
+            title: post.title,
+            summary: post.content,
+            author: {
+              name: profile?.name || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: post.created_at,
+            metrics: {
+              likes: post.likes,
+              comments: post.comments,
+              views: post.views
+            },
+            mediaUrl: post.url,
+            mediaType: post.type as any
+          };
+        }),
+        ...(forumData || []).map(post => {
+          const profile = profilesMap.get(post.user_id);
+          return {
+            id: post.id,
+            type: ContentType.Forum,
+            title: post.title,
+            summary: post.content?.substring(0, 200) + '...',
+            author: {
+              name: profile?.name || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: post.created_at,
+            metrics: {
+              likes: post.upvotes,
+              comments: post.comments,
+              views: post.views
+            },
+            tags: post.tags || []
+          };
+        })
       ];
 
       // Sort by creation date
