@@ -4,13 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ContentFeedState } from './types';
 import { mapKnowledgeToFeedItem, mapQuoteToFeedItem, mapMediaToFeedItem } from './contentMappers';
+import { ContentViewMode } from '@/types/unified-content-types';
 
 interface UseContentFetchDataProps {
   userId?: string | null;
   checkUserInteractions?: (itemIds: string[]) => Promise<void>;
+  viewMode?: ContentViewMode;
 }
 
-export const useContentFetchData = ({ userId, checkUserInteractions }: UseContentFetchDataProps) => {
+export const useContentFetchData = ({ userId, checkUserInteractions, viewMode = 'list' }: UseContentFetchDataProps) => {
   const [state, setState] = useState<ContentFeedState>({
     feedItems: [],
     isLoading: true,
@@ -84,7 +86,6 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
           title,
           content,
           created_at,
-          tags,
           url,
           type,
           likes,
@@ -115,10 +116,10 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
         }
       }
       
-      // Map data to ContentFeedItem format
-      const mappedKnowledge = knowledgeData ? knowledgeData.map(mapKnowledgeToFeedItem) : [];
-      const mappedQuotes = quotesData ? quotesData.map(mapQuoteToFeedItem) : [];
-      const mappedMedia = mediaData ? mediaData.map(mapMediaToFeedItem) : [];
+      // Map data to UnifiedContentItem format with proper viewMode parameter
+      const mappedKnowledge = knowledgeData ? knowledgeData.map(item => mapKnowledgeToFeedItem(item, viewMode)) : [];
+      const mappedQuotes = quotesData ? quotesData.map(item => mapQuoteToFeedItem(item, viewMode)) : [];
+      const mappedMedia = mediaData ? mediaData.map(item => mapMediaToFeedItem(item, viewMode)) : [];
       
       // Combine all items and sort by date
       const combinedItems = [
@@ -160,7 +161,7 @@ export const useContentFetchData = ({ userId, checkUserInteractions }: UseConten
       setState(prev => ({ ...prev, isLoading: false }));
       setIsInitialLoad(false);
     }
-  }, [state.page, userId, toast, checkUserInteractions]);
+  }, [state.page, userId, toast, checkUserInteractions, viewMode]);
 
   const refetch = useCallback(() => loadContent(true), [loadContent]);
   
