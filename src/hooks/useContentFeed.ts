@@ -2,11 +2,36 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
-import { ContentFeedItem } from '@/components/library/ContentFeedItem';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { useNavigate } from 'react-router-dom';
+import { useContentInteractions } from './useContentInteractions';
 
-// Mock data for demo purposes
+// Define the content feed item structure
+export interface ContentFeedItem {
+  id: string;
+  type: ContentItemType;
+  title: string;
+  summary?: string;
+  content?: string;
+  author: {
+    name: string;
+    avatar?: string;
+    username?: string;
+  };
+  createdAt: string;
+  metrics?: {
+    likes?: number;
+    comments?: number;
+    views?: number;
+    bookmarks?: number;
+  };
+  tags?: string[];
+  coverImage?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'youtube' | 'document' | 'text';
+}
+
+// Generate mock data for demo purposes
 const generateMockFeedItems = (): ContentFeedItem[] => {
   return [
     {
@@ -90,9 +115,16 @@ export const useContentFeed = () => {
   const [page, setPage] = useState(1);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
-  const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
+  
+  // Use the content interactions hook
+  const {
+    userLikes,
+    userBookmarks,
+    handleLike,
+    handleBookmark,
+    checkUserInteractions
+  } = useContentInteractions({ userId: user?.id });
   
   // Fetch content items
   const fetchContent = useCallback(async () => {
@@ -100,13 +132,12 @@ export const useContentFeed = () => {
       setIsLoading(true);
       setError(null);
       
-      // In a real app, we would fetch from the backend with pagination
-      // For now, simulate a delay and return mock data
+      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Simulate pagination
+      // Generate mock data
       const mockData = generateMockFeedItems();
-      const totalItems = 20; // In a real app, this would be the total count from backend
+      const totalItems = 20; // Total available items
       
       const itemsPerPage = 4;
       const start = (page - 1) * itemsPerPage;
@@ -125,31 +156,24 @@ export const useContentFeed = () => {
       
       setHasMore(pageItems.length < totalItems);
       
-      // Simulate user likes and bookmarks
-      if (user) {
-        setUserLikes({
-          '1': Math.random() > 0.5,
-          '3': Math.random() > 0.5
-        });
-        
-        setUserBookmarks({
-          '2': Math.random() > 0.5,
-          '4': Math.random() > 0.5
-        });
+      // Check user interactions for the items if user is logged in
+      if (user && pageItems.length > 0) {
+        const itemIds = pageItems.map(item => item.id);
+        await checkUserInteractions(itemIds, 'default');
       }
+      
     } catch (err) {
       console.error('Error fetching content:', err);
       setError('Failed to load content. Please try again later.');
     } finally {
       setIsLoading(false);
     }
-  }, [page, user]);
+  }, [page, user, checkUserInteractions]);
   
   // Load initial content
   useEffect(() => {
-    // Only run on initial load or when page changes
     fetchContent();
-  }, [fetchContent, page]);
+  }, [fetchContent]);
   
   // Function to load more content
   const loadMore = useCallback(() => {
@@ -161,110 +185,25 @@ export const useContentFeed = () => {
   // Refresh content (reset and fetch again)
   const refetch = useCallback(() => {
     setPage(1);
+    setFeedItems([]);
     fetchContent();
   }, [fetchContent]);
-  
-  // Handle like action
-  const handleLike = useCallback((contentId: string, contentType: ContentItemType) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to like content",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setUserLikes(prev => ({
-      ...prev,
-      [contentId]: !prev[contentId]
-    }));
-    
-    // Update like count in the feed item
-    setFeedItems(prevItems => prevItems.map(item => {
-      if (item.id === contentId) {
-        const currentLikes = item.metrics?.likes || 0;
-        const delta = userLikes[contentId] ? -1 : 1;
-        
-        return {
-          ...item,
-          metrics: {
-            ...item.metrics,
-            likes: Math.max(0, currentLikes + delta)
-          }
-        };
-      }
-      return item;
-    }));
-    
-    toast({
-      description: userLikes[contentId]
-        ? `You unliked this ${contentType}`
-        : `You liked this ${contentType}`
-    });
-    
-    // In a real app, we would call an API to update the like status
-    console.log(`User ${userLikes[contentId] ? 'unliked' : 'liked'} ${contentType} ${contentId}`);
-  }, [user, userLikes, toast]);
-  
-  // Handle bookmark action
-  const handleBookmark = useCallback((contentId: string, contentType: ContentItemType) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to bookmark content",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setUserBookmarks(prev => ({
-      ...prev,
-      [contentId]: !prev[contentId]
-    }));
-    
-    // Update bookmark count in the feed item
-    setFeedItems(prevItems => prevItems.map(item => {
-      if (item.id === contentId) {
-        const currentBookmarks = item.metrics?.bookmarks || 0;
-        const delta = userBookmarks[contentId] ? -1 : 1;
-        
-        return {
-          ...item,
-          metrics: {
-            ...item.metrics,
-            bookmarks: Math.max(0, currentBookmarks + delta)
-          }
-        };
-      }
-      return item;
-    }));
-    
-    toast({
-      description: userBookmarks[contentId]
-        ? `Removed from your bookmarks`
-        : `Added to your bookmarks`
-    });
-    
-    // In a real app, we would call an API to update the bookmark status
-    console.log(`User ${userBookmarks[contentId] ? 'removed' : 'added'} bookmark for ${contentType} ${contentId}`);
-  }, [user, userBookmarks, toast]);
   
   // Handle content click (navigation)
   const handleContentClick = useCallback((contentId: string, contentType: ContentItemType) => {
     // Determine the appropriate route based on content type
     let route;
     switch (contentType) {
-      case 'knowledge':
+      case ContentItemType.Knowledge:
         route = `/knowledge/${contentId}`;
         break;
-      case 'media':
+      case ContentItemType.Media:
         route = `/media/${contentId}`;
         break;
-      case 'quote':
+      case ContentItemType.Quote:
         route = `/quotes/${contentId}`;
         break;
-      case 'ai':
+      case ContentItemType.AI:
         route = `/ai/${contentId}`;
         break;
       default:

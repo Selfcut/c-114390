@@ -53,7 +53,10 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
   // Filter items based on content type
   const filteredItems = contentType === 'all' 
     ? feedItems 
-    : feedItems.filter(item => item.type === contentType);
+    : feedItems.filter(item => {
+        const itemTypeString = item.type.toString().toLowerCase();
+        return contentType === 'quotes' ? itemTypeString === 'quote' : itemTypeString === contentType;
+      });
     
   // Handle authentication required actions
   const handleAuthAction = useCallback((action: () => void) => {

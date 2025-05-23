@@ -1,17 +1,26 @@
 
-// Re-export simplified operations
-export {
-  checkUserInteractions,
+import { 
+  checkUserInteractions as checkUserInteractionsImpl,
   toggleLike,
   toggleBookmark,
   normalizeContentType
 } from './content-operations';
+
+// Re-export operations
+export {
+  toggleLike,
+  toggleBookmark,
+  normalizeContentType
+};
 
 // Explicitly define the user interaction status interface for better type safety
 export interface UserInteractionStatus {
   isLiked: boolean;
   isBookmarked: boolean;
 }
+
+// Direct export with alias to avoid naming conflicts
+export const checkUserInteractions = checkUserInteractionsImpl;
 
 // Implement proper batch check for interactions
 export const batchCheckInteractions = async (
@@ -24,9 +33,6 @@ export const batchCheckInteractions = async (
   }
   
   try {
-    // Import the function we need to use
-    const { checkUserInteractions } = await import('./content-operations');
-    
     // Create a result object to store all interaction statuses
     const results: Record<string, UserInteractionStatus> = {};
     
@@ -42,7 +48,7 @@ export const batchCheckInteractions = async (
     // Process each batch
     for (const batch of batches) {
       const batchPromises = batch.map(contentId => 
-        checkUserInteractions(userId, contentId, contentType)
+        checkUserInteractionsImpl(userId, contentId, contentType)
       );
       
       const batchResults = await Promise.all(batchPromises);
