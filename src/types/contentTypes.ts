@@ -1,5 +1,6 @@
+
 // Unified content types to replace scattered definitions
-export type { ContentType, ContentViewMode } from './unified-content-types';
+export { ContentType, type ContentViewMode } from './unified-content-types';
 
 // Re-export for backward compatibility
 export type { UnifiedContentItem as ContentItem } from './unified-content-types';

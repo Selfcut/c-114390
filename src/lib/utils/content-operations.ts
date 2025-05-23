@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType, getContentTableName } from '@/types/contentTypes';
 
@@ -40,21 +39,21 @@ function stringToContentType(type: string): ContentType {
   
   switch (normalizedType) {
     case 'quote':
-      return ContentType.Quote;
+      return 'quote' as ContentType;
     case 'media':
-      return ContentType.Media;
+      return 'media' as ContentType;
     case 'knowledge':
-      return ContentType.Knowledge;
+      return 'knowledge' as ContentType;
     case 'wiki':
-      return ContentType.Wiki;
+      return 'wiki' as ContentType;
     case 'forum':
-      return ContentType.Forum;
+      return 'forum' as ContentType;
     case 'research':
-      return ContentType.Research;
+      return 'research' as ContentType;
     case 'ai':
-      return ContentType.AI;
+      return 'ai' as ContentType;
     default:
-      return ContentType.Forum;
+      return 'forum' as ContentType;
   }
 }
 
