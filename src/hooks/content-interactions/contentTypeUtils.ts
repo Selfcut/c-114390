@@ -10,8 +10,10 @@ import { ContentTypeTables } from './types';
  * @returns A lowercase string representation of the content type
  */
 export const getContentTypeString = (type: ContentItemType): string => {
-  // No toString needed as enum values are already strings
-  return typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+  // Ensure we're working with a string before calling toLowerCase
+  // Since ContentItemType is an enum of string values, we can safely cast it
+  const typeString = String(type);
+  return typeString.toLowerCase();
 };
 
 /**
@@ -47,6 +49,7 @@ export const getContentTableName = (contentType: string): string => {
  * Safely handles both string and enum inputs for content type
  */
 export const getContentKey = (id: string, type: ContentItemType | string): string => {
-  const contentType = typeof type === 'string' ? type : getContentTypeString(type);
-  return `${contentType}:${id}`;
+  // Ensure we're working with a string before further manipulation
+  const contentType = typeof type === 'string' ? type : String(type);
+  return `${contentType.toLowerCase()}:${id}`;
 };

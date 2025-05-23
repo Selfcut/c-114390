@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserInteraction } from '@/contexts/UserInteractionContext';
 import { useAuth } from '@/lib/auth';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentType } from '@/types/contentTypes';
 
 interface PostFooterProps {
   post: {
@@ -58,7 +59,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     } else if (isAuthenticated && user?.id) {
       // Use the simplified API if available, otherwise use explicit userId
       if (likeContent) {
-        await likeContent(post.id, ContentItemType.Forum);
+        await likeContent(post.id, ContentType.Forum);
       } else {
         await toggleLike(post.id, 'forum', user.id);
       }
@@ -79,7 +80,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     if (user?.id) {
       // Use the simplified API if available, otherwise use explicit userId
       if (bookmarkContent) {
-        await bookmarkContent(post.id, ContentItemType.Forum);
+        await bookmarkContent(post.id, ContentType.Forum);
       } else {
         await toggleBookmark(post.id, 'forum', user.id);
       }

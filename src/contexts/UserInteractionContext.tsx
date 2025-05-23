@@ -108,7 +108,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     // Ensure contentType is a string
     const contentTypeStr = typeof contentType === 'string' 
       ? contentType 
-      : contentType.toLowerCase();
+      : String(contentType);
       
     return toggleLike(contentId, contentTypeStr, user.id);
   }, [toggleLike, user]);
@@ -185,7 +185,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     // Ensure contentType is a string
     const contentTypeStr = typeof contentType === 'string' 
       ? contentType 
-      : contentType.toLowerCase();
+      : String(contentType);
       
     return toggleBookmark(contentId, contentTypeStr, user.id);
   }, [toggleBookmark, user]);
