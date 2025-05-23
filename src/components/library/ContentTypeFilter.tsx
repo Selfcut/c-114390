@@ -1,42 +1,45 @@
 
 import React from 'react';
-import { BookOpen, Image, Quote, Brain, Users, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { ContentType } from '@/types/unified-content-types';
-
-// Export ContentType for backwards compatibility
-export { ContentType };
 
 interface ContentTypeFilterProps {
   activeType: string;
   onTypeChange: (type: string) => void;
-  className?: string;
 }
 
-export const ContentTypeFilter = ({ activeType, onTypeChange, className }: ContentTypeFilterProps) => {
-  const contentTypes = [
-    { id: 'all', label: 'All', icon: <BookOpen size={16} /> },
-    { id: 'knowledge', label: 'Knowledge', icon: <BookOpen size={16} /> },
-    { id: 'media', label: 'Media', icon: <Image size={16} /> },
-    { id: 'quote', label: 'Quotes', icon: <Quote size={16} /> },
-    { id: 'forum', label: 'Forum', icon: <Users size={16} /> },
-    { id: 'wiki', label: 'Wiki', icon: <Globe size={16} /> },
-    { id: 'ai', label: 'AI Generated', icon: <Brain size={16} /> },
-  ];
+const contentTypes = [
+  { key: 'all', label: 'All', icon: '🌐' },
+  { key: 'quote', label: 'Quotes', icon: '💭' },
+  { key: 'knowledge', label: 'Knowledge', icon: '📚' },
+  { key: 'media', label: 'Media', icon: '🎬' },
+  { key: 'forum', label: 'Forum', icon: '💬' },
+  { key: 'wiki', label: 'Wiki', icon: '📝' },
+  { key: 'ai', label: 'AI', icon: '🤖' }
+];
 
+export const ContentTypeFilter: React.FC<ContentTypeFilterProps> = ({
+  activeType,
+  onTypeChange
+}) => {
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+    <div className="flex flex-wrap gap-2">
       {contentTypes.map((type) => (
         <Button
-          key={type.id}
+          key={type.key}
+          variant={activeType === type.key ? "default" : "outline"}
           size="sm"
-          variant={activeType === type.id ? "default" : "outline"}
-          className="flex items-center gap-1.5"
-          onClick={() => onTypeChange(type.id)}
+          onClick={() => onTypeChange(type.key)}
+          className="flex items-center gap-2"
         >
-          {type.icon}
-          <span>{type.label}</span>
+          <span>{type.icon}</span>
+          {type.label}
+          {activeType === type.key && (
+            <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
+              Active
+            </Badge>
+          )}
         </Button>
       ))}
     </div>

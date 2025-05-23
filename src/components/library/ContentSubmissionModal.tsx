@@ -7,23 +7,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
 
 interface ContentSubmissionModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultTab?: 'knowledge' | 'media' | 'quote' | 'ai';
+  defaultTab?: string;
   onSubmitSuccess?: () => void;
 }
 
@@ -33,57 +29,83 @@ export const ContentSubmissionModal: React.FC<ContentSubmissionModalProps> = ({
   defaultTab = 'knowledge',
   onSubmitSuccess
 }) => {
-  const [contentType, setContentType] = useState<'knowledge' | 'media' | 'quote' | 'ai'>(defaultTab);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [summary, setSummary] = useState('');
-  const [tags, setTags] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleContentTypeChange = (value: string) => {
-    if (value === 'knowledge' || value === 'media' || value === 'quote' || value === 'ai') {
-      setContentType(value);
+  const handleSubmitKnowledge = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      const { error } = await supabase
+        .from('knowledge_entries')
+        .insert({
+          title: formData.get('title') as string,
+          summary: formData.get('summary') as string,
+          content: formData.get('content') as string,
+          categories: (formData.get('categories') as string).split(',').map(c => c.trim()),
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Knowledge entry created successfully!'
+      });
+      
+      onOpenChange(false);
+      onSubmitSuccess?.();
+    } catch (error) {
+      console.error('Error creating knowledge entry:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create knowledge entry',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitQuote = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!title.trim() || !content.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Title and content are required",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!user) return;
 
     setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
     
     try {
-      // Simulate submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const { error } = await supabase
+        .from('quotes')
+        .insert({
+          text: formData.get('text') as string,
+          author: formData.get('author') as string,
+          source: formData.get('source') as string,
+          category: formData.get('category') as string,
+          tags: (formData.get('tags') as string).split(',').map(t => t.trim()),
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
       toast({
-        title: "Success!",
-        description: "Your content has been submitted successfully",
+        title: 'Success',
+        description: 'Quote added successfully!'
       });
       
-      // Reset form
-      setTitle('');
-      setContent('');
-      setSummary('');
-      setTags('');
-      
-      onSubmitSuccess?.();
       onOpenChange(false);
-      
+      onSubmitSuccess?.();
     } catch (error) {
+      console.error('Error creating quote:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit content. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to add quote',
+        variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);
@@ -92,98 +114,86 @@ export const ContentSubmissionModal: React.FC<ContentSubmissionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Content</DialogTitle>
           <DialogDescription>
             Share your knowledge with the community
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="contentType">Content Type</Label>
-            <Select value={contentType} onValueChange={handleContentTypeChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select content type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="knowledge">Knowledge Entry</SelectItem>
-                <SelectItem value="media">Media Post</SelectItem>
-                <SelectItem value="quote">Quote</SelectItem>
-                <SelectItem value="ai">AI Content</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter title..."
-              required
-            />
-          </div>
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
+            <TabsTrigger value="quote">Quote</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="forum">Forum</TabsTrigger>
+          </TabsList>
 
-          {contentType !== 'quote' && (
-            <div className="space-y-2">
-              <Label htmlFor="summary">Summary</Label>
-              <Textarea
-                id="summary"
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                placeholder="Brief summary of your content..."
-                rows={2}
-              />
+          <TabsContent value="knowledge" className="space-y-4">
+            <form onSubmit={handleSubmitKnowledge} className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input id="title" name="title" required />
+              </div>
+              <div>
+                <Label htmlFor="summary">Summary</Label>
+                <Textarea id="summary" name="summary" required />
+              </div>
+              <div>
+                <Label htmlFor="content">Content</Label>
+                <Textarea id="content" name="content" rows={6} />
+              </div>
+              <div>
+                <Label htmlFor="categories">Categories (comma-separated)</Label>
+                <Input id="categories" name="categories" placeholder="science, technology, health" />
+              </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating...' : 'Create Knowledge Entry'}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="quote" className="space-y-4">
+            <form onSubmit={handleSubmitQuote} className="space-y-4">
+              <div>
+                <Label htmlFor="text">Quote Text</Label>
+                <Textarea id="text" name="text" required />
+              </div>
+              <div>
+                <Label htmlFor="author">Author</Label>
+                <Input id="author" name="author" required />
+              </div>
+              <div>
+                <Label htmlFor="source">Source (optional)</Label>
+                <Input id="source" name="source" />
+              </div>
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Input id="category" name="category" required />
+              </div>
+              <div>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input id="tags" name="tags" placeholder="motivation, life, success" />
+              </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add Quote'}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-4">
+            <div className="text-center py-8 text-muted-foreground">
+              Media submission coming soon...
             </div>
-          )}
+          </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">
-              {contentType === 'quote' ? 'Quote Text' : 'Content'}
-            </Label>
-            <Textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={
-                contentType === 'quote' 
-                  ? "Enter the quote text..." 
-                  : "Enter your content..."
-              }
-              rows={6}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <Input
-              id="tags"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="Enter tags separated by commas..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </Button>
-          </div>
-        </form>
+          <TabsContent value="forum" className="space-y-4">
+            <div className="text-center py-8 text-muted-foreground">
+              Forum post creation coming soon...
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

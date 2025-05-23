@@ -47,7 +47,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         ? [ContentType.Quote, ContentType.Knowledge, ContentType.Media, ContentType.Forum]
         : [contentType];
 
-      // Fetch each content type efficiently
+      // Fetch each content type with proper joins
       for (const type of typesToFetch) {
         let data: any[] = [];
         let error: any = null;
@@ -67,7 +67,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 bookmarks,
                 created_at,
                 user_id,
-                profiles(name, username, avatar_url)
+                profiles!inner(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -89,7 +89,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 cover_image,
                 created_at,
                 user_id,
-                profiles(name, username, avatar_url)
+                profiles!inner(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -111,7 +111,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 views,
                 created_at,
                 user_id,
-                profiles(name, username, avatar_url)
+                profiles!inner(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -132,7 +132,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
                 views,
                 created_at,
                 user_id,
-                profiles(name, username, avatar_url)
+                profiles!inner(name, username, avatar_url)
               `)
               .order('created_at', { ascending: false })
               .range(offset, offset + limit - 1);
@@ -146,10 +146,10 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           continue;
         }
 
-        // Transform data to unified format
-        const transformedItems = data.map(item => {
+        // Transform data to unified format with guaranteed title
+        const transformedItems: UnifiedContentItem[] = data.map(item => {
           const profile = item.profiles || {};
-          const baseItem: Partial<UnifiedContentItem> = {
+          const baseItem = {
             id: item.id,
             type: type,
             createdAt: item.created_at,
@@ -160,77 +160,69 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
             }
           };
 
-          let contentItem: UnifiedContentItem;
-
           switch (type) {
             case ContentType.Quote:
-              contentItem = {
+              return {
                 ...baseItem,
-                title: `"${item.text.substring(0, 50)}..."`,
-                summary: item.text,
+                title: `Quote by ${item.author}`,
+                summary: item.text.length > 100 ? item.text.substring(0, 100) + '...' : item.text,
                 content: item.text,
                 metrics: {
-                  likes: item.likes,
-                  comments: item.comments,
-                  bookmarks: item.bookmarks
+                  likes: item.likes || 0,
+                  comments: item.comments || 0,
+                  bookmarks: item.bookmarks || 0
                 },
                 tags: item.tags || []
-              } as UnifiedContentItem;
-              break;
+              };
 
             case ContentType.Knowledge:
-              contentItem = {
+              return {
                 ...baseItem,
-                title: item.title,
-                summary: item.summary,
+                title: item.title || 'Untitled Knowledge Entry',
+                summary: item.summary || '',
                 metrics: {
-                  likes: item.likes,
-                  comments: item.comments,
-                  views: item.views
+                  likes: item.likes || 0,
+                  comments: item.comments || 0,
+                  views: item.views || 0
                 },
                 tags: item.categories || [],
                 coverImage: item.cover_image
-              } as UnifiedContentItem;
-              break;
+              };
 
             case ContentType.Media:
-              contentItem = {
+              return {
                 ...baseItem,
-                title: item.title,
-                summary: item.content,
+                title: item.title || 'Untitled Media',
+                summary: item.content || '',
                 metrics: {
-                  likes: item.likes,
-                  comments: item.comments,
-                  views: item.views
+                  likes: item.likes || 0,
+                  comments: item.comments || 0,
+                  views: item.views || 0
                 },
                 mediaUrl: item.url,
                 mediaType: item.type as any
-              } as UnifiedContentItem;
-              break;
+              };
 
             case ContentType.Forum:
-              contentItem = {
+              return {
                 ...baseItem,
-                title: item.title,
-                summary: item.content?.substring(0, 200) + '...',
+                title: item.title || 'Untitled Post',
+                summary: item.content ? (item.content.length > 200 ? item.content.substring(0, 200) + '...' : item.content) : '',
                 metrics: {
-                  likes: item.upvotes,
-                  comments: item.comments,
-                  views: item.views
+                  likes: item.upvotes || 0,
+                  comments: item.comments || 0,
+                  views: item.views || 0
                 },
                 tags: item.tags || []
-              } as UnifiedContentItem;
-              break;
+              };
 
             default:
-              contentItem = {
+              return {
                 ...baseItem,
-                title: 'Unknown content',
-                summary: '',
-              } as UnifiedContentItem;
+                title: 'Unknown Content',
+                summary: ''
+              };
           }
-
-          return contentItem;
         });
 
         allItems.push(...transformedItems);
@@ -260,7 +252,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         isLoading: false
       }));
     }
-  }, [contentType, limit, user, state.page]);
+  }, [contentType, limit, user]);
 
   const loadUserInteractions = useCallback(async (items: UnifiedContentItem[]) => {
     if (!user) return;
@@ -346,16 +338,16 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
       return;
     }
 
-    try {
-      const stateKey = `${type}:${id}`;
-      const isLiked = userInteractions[`like_${stateKey}`];
-      
-      // Optimistic update
-      setUserInteractions(prev => ({
-        ...prev,
-        [`like_${stateKey}`]: !isLiked
-      }));
+    const stateKey = `${type}:${id}`;
+    const isLiked = userInteractions[`like_${stateKey}`];
+    
+    // Optimistic update
+    setUserInteractions(prev => ({
+      ...prev,
+      [`like_${stateKey}`]: !isLiked
+    }));
 
+    try {
       if (type === ContentType.Quote) {
         if (isLiked) {
           await supabase.from('quote_likes').delete().eq('quote_id', id).eq('user_id', user.id);
@@ -401,15 +393,12 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           });
         }
       }
-
     } catch (error) {
       console.error('Error handling like:', error);
       // Revert optimistic update
-      const stateKey = `${type}:${id}`;
-      const isLiked = userInteractions[`like_${stateKey}`];
       setUserInteractions(prev => ({
         ...prev,
-        [`like_${stateKey}`]: !isLiked
+        [`like_${stateKey}`]: isLiked
       }));
       
       toast({
@@ -430,16 +419,16 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
       return;
     }
 
-    try {
-      const stateKey = `${type}:${id}`;
-      const isBookmarked = userInteractions[`bookmark_${stateKey}`];
-      
-      // Optimistic update
-      setUserInteractions(prev => ({
-        ...prev,
-        [`bookmark_${stateKey}`]: !isBookmarked
-      }));
+    const stateKey = `${type}:${id}`;
+    const isBookmarked = userInteractions[`bookmark_${stateKey}`];
+    
+    // Optimistic update
+    setUserInteractions(prev => ({
+      ...prev,
+      [`bookmark_${stateKey}`]: !isBookmarked
+    }));
 
+    try {
       if (type === ContentType.Quote) {
         if (isBookmarked) {
           await supabase.from('quote_bookmarks').delete().eq('quote_id', id).eq('user_id', user.id);
@@ -470,15 +459,12 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           });
         }
       }
-
     } catch (error) {
       console.error('Error handling bookmark:', error);
       // Revert optimistic update
-      const stateKey = `${type}:${id}`;
-      const isBookmarked = userInteractions[`bookmark_${stateKey}`];
       setUserInteractions(prev => ({
         ...prev,
-        [`bookmark_${stateKey}`]: !isBookmarked
+        [`bookmark_${stateKey}`]: isBookmarked
       }));
       
       toast({
