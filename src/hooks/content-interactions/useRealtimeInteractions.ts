@@ -11,7 +11,8 @@ export const useRealtimeInteractions = (
   useEffect(() => {
     if (!userId) return;
 
-    const channel = supabase
+    // Channel for general content interactions
+    const contentChannel = supabase
       .channel('content-interactions')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'content_likes', filter: `user_id=eq.${userId}` },
@@ -38,9 +39,39 @@ export const useRealtimeInteractions = (
         }
       )
       .subscribe();
+      
+    // Channel for quote-specific interactions
+    const quoteChannel = supabase
+      .channel('quote-interactions')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'quote_likes', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const { quote_id } = payload.new;
+            setUserLikes(prev => ({ ...prev, [quote_id]: true }));
+          } else if (payload.eventType === 'DELETE') {
+            const { quote_id } = payload.old;
+            setUserLikes(prev => ({ ...prev, [quote_id]: false }));
+          }
+        }
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'quote_bookmarks', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const { quote_id } = payload.new;
+            setUserBookmarks(prev => ({ ...prev, [quote_id]: true }));
+          } else if (payload.eventType === 'DELETE') {
+            const { quote_id } = payload.old;
+            setUserBookmarks(prev => ({ ...prev, [quote_id]: false }));
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(contentChannel);
+      supabase.removeChannel(quoteChannel);
     };
   }, [userId, setUserLikes, setUserBookmarks]);
 };

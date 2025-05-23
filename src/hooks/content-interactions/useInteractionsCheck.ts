@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { InteractionCheckResult } from './types';
 
 export const useInteractionsCheck = (
   userId?: string | null,
@@ -7,43 +8,146 @@ export const useInteractionsCheck = (
   setUserBookmarks: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {}
 ) => {
   // Check if user has liked or bookmarked items
-  const checkUserInteractions = async (itemIds: string[]) => {
+  const checkUserInteractions = async (itemIds: string[]): Promise<void> => {
     if (!userId || itemIds.length === 0) return;
     
     try {
-      // Check likes
-      const { data: likesData } = await supabase
+      // Check likes in the content_likes table
+      const { data: contentLikesData, error: contentLikesError } = await supabase
         .from('content_likes')
         .select('content_id')
         .eq('user_id', userId)
         .in('content_id', itemIds);
         
-      if (likesData) {
-        const likes: Record<string, boolean> = {};
-        likesData.forEach(item => {
-          likes[item.content_id] = true;
-        });
-        setUserLikes(prev => ({...prev, ...likes}));
+      if (contentLikesError) {
+        console.error('Error checking content likes:', contentLikesError);
       }
       
-      // Check bookmarks
-      const { data: bookmarksData } = await supabase
+      // Check likes in the quote_likes table
+      const { data: quoteLikesData, error: quoteLikesError } = await supabase
+        .from('quote_likes')
+        .select('quote_id')
+        .eq('user_id', userId)
+        .in('quote_id', itemIds);
+        
+      if (quoteLikesError) {
+        console.error('Error checking quote likes:', quoteLikesError);
+      }
+      
+      // Combine likes from both tables
+      const allLikes: Record<string, boolean> = {};
+      
+      if (contentLikesData) {
+        contentLikesData.forEach(item => {
+          allLikes[item.content_id] = true;
+        });
+      }
+      
+      if (quoteLikesData) {
+        quoteLikesData.forEach(item => {
+          allLikes[item.quote_id] = true;
+        });
+      }
+      
+      // Update likes state
+      setUserLikes(prev => ({...prev, ...allLikes}));
+      
+      // Check bookmarks in the content_bookmarks table
+      const { data: contentBookmarksData, error: contentBookmarksError } = await supabase
         .from('content_bookmarks')
         .select('content_id')
         .eq('user_id', userId)
         .in('content_id', itemIds);
         
-      if (bookmarksData) {
-        const bookmarks: Record<string, boolean> = {};
-        bookmarksData.forEach(item => {
-          bookmarks[item.content_id] = true;
-        });
-        setUserBookmarks(prev => ({...prev, ...bookmarks}));
+      if (contentBookmarksError) {
+        console.error('Error checking content bookmarks:', contentBookmarksError);
       }
+      
+      // Check bookmarks in the quote_bookmarks table
+      const { data: quoteBookmarksData, error: quoteBookmarksError } = await supabase
+        .from('quote_bookmarks')
+        .select('quote_id')
+        .eq('user_id', userId)
+        .in('quote_id', itemIds);
+        
+      if (quoteBookmarksError) {
+        console.error('Error checking quote bookmarks:', quoteBookmarksError);
+      }
+      
+      // Combine bookmarks from both tables
+      const allBookmarks: Record<string, boolean> = {};
+      
+      if (contentBookmarksData) {
+        contentBookmarksData.forEach(item => {
+          allBookmarks[item.content_id] = true;
+        });
+      }
+      
+      if (quoteBookmarksData) {
+        quoteBookmarksData.forEach(item => {
+          allBookmarks[item.quote_id] = true;
+        });
+      }
+      
+      // Update bookmarks state
+      setUserBookmarks(prev => ({...prev, ...allBookmarks}));
     } catch (err) {
       console.error('Error checking user interactions:', err);
     }
   };
 
-  return { checkUserInteractions };
+  // Check interactions for a single content item
+  const checkSingleItemInteractions = async (
+    itemId: string, 
+    contentType: string = 'content'
+  ): Promise<InteractionCheckResult> => {
+    if (!userId) {
+      return { id: itemId, isLiked: false, isBookmarked: false };
+    }
+    
+    try {
+      const isQuoteType = contentType === 'quote';
+      const idField = isQuoteType ? 'quote_id' : 'content_id';
+      const likesTable = isQuoteType ? 'quote_likes' : 'content_likes';
+      const bookmarksTable = isQuoteType ? 'quote_bookmarks' : 'content_bookmarks';
+      
+      // Check likes
+      const { data: likeData, error: likeError } = await supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, itemId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (likeError) {
+        console.error(`Error checking like status in ${likesTable}:`, likeError);
+      }
+      
+      // Check bookmarks
+      const { data: bookmarkData, error: bookmarkError } = await supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, itemId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (bookmarkError) {
+        console.error(`Error checking bookmark status in ${bookmarksTable}:`, bookmarkError);
+      }
+      
+      return {
+        id: itemId,
+        isLiked: !!likeData,
+        isBookmarked: !!bookmarkData
+      };
+    } catch (err) {
+      console.error('Error checking item interactions:', err);
+      return { id: itemId, isLiked: false, isBookmarked: false };
+    }
+  };
+
+  return { 
+    checkUserInteractions,
+    checkSingleItemInteractions
+  };
 };

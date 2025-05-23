@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,8 @@ import { useAuth } from '@/lib/auth';
 import { EditQuoteModal } from './EditQuoteModal';
 import { DeleteQuoteDialog } from './DeleteQuoteDialog';
 import { PageLayout } from '@/components/layouts/PageLayout';
+import { useUserContentInteractions } from '@/hooks/useUserContentInteractions';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export function QuoteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -25,12 +28,25 @@ export function QuoteDetail() {
   
   const [quote, setQuote] = useState<QuoteWithUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('quote');
+
+  // Use the unified content interactions hook
+  const {
+    isLiked,
+    isBookmarked,
+    likeCount,
+    bookmarkCount,
+    toggleLike,
+    toggleBookmark
+  } = useUserContentInteractions({
+    contentId: id || '',
+    contentType: 'quote',
+    initialLikeCount: quote?.likes || 0,
+    initialBookmarkCount: quote?.bookmarks || 0
+  });
   
   // Fetch quote details
   useEffect(() => {
@@ -90,12 +106,6 @@ export function QuoteDetail() {
         };
         
         setQuote(formattedQuote);
-        
-        // Check if user has liked or bookmarked this quote
-        if (user) {
-          checkUserInteractions(id);
-        }
-        
       } catch (err) {
         console.error('Error:', err);
         toast({
@@ -109,39 +119,9 @@ export function QuoteDetail() {
     };
     
     fetchQuote();
-  }, [id, navigate, toast, user]);
+  }, [id, navigate, toast]);
   
-  // Check if user has liked or bookmarked this quote
-  const checkUserInteractions = async (quoteId: string) => {
-    if (!user) return;
-    
-    try {
-      // Check likes
-      const { data: likeData } = await supabase
-        .from('quote_likes')
-        .select()
-        .eq('quote_id', quoteId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      setIsLiked(!!likeData);
-      
-      // Check bookmarks
-      const { data: bookmarkData } = await supabase
-        .from('quote_bookmarks')
-        .select()
-        .eq('quote_id', quoteId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      setIsBookmarked(!!bookmarkData);
-      
-    } catch (err) {
-      console.error('Error checking interactions:', err);
-    }
-  };
-  
-  // Like a quote
+  // Handle like with the unified hook
   const handleLike = async () => {
     if (!user) {
       toast({
@@ -152,63 +132,16 @@ export function QuoteDetail() {
       return;
     }
     
-    if (!quote) return;
+    const success = await toggleLike();
     
-    try {
-      if (isLiked) {
-        // Unlike the quote
-        await supabase
-          .from('quote_likes')
-          .delete()
-          .eq('quote_id', quote.id)
-          .eq('user_id', user.id);
-        
-        // Update quote counter with consistent function name
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: quote.id,
-          column_name: 'likes',
-          table_name: 'quotes'
-        });
-        
-        setIsLiked(false);
-        setQuote(prev => prev ? { 
-          ...prev, 
-          likes: Math.max(0, (prev.likes || 0) - 1) 
-        } : null);
-        
-      } else {
-        // Like the quote
-        await supabase
-          .from('quote_likes')
-          .insert({
-            quote_id: quote.id,
-            user_id: user.id
-          });
-        
-        // Update quote counter with consistent function name
-        await supabase.rpc('increment_counter_fn', {
-          row_id: quote.id,
-          column_name: 'likes',
-          table_name: 'quotes'
-        });
-        
-        setIsLiked(true);
-        setQuote(prev => prev ? { 
-          ...prev, 
-          likes: (prev.likes || 0) + 1 
-        } : null);
-      }
-    } catch (error) {
-      console.error('Error liking quote:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update like status',
-        variant: 'destructive',
-      });
-    }
+    // Update the quote state to reflect the new like count from the hook
+    setQuote(prev => {
+      if (!prev) return null;
+      return { ...prev, likes: likeCount };
+    });
   };
   
-  // Bookmark a quote
+  // Handle bookmark with the unified hook
   const handleBookmark = async () => {
     if (!user) {
       toast({
@@ -219,60 +152,13 @@ export function QuoteDetail() {
       return;
     }
     
-    if (!quote) return;
+    const success = await toggleBookmark();
     
-    try {
-      if (isBookmarked) {
-        // Remove bookmark
-        await supabase
-          .from('quote_bookmarks')
-          .delete()
-          .eq('quote_id', quote.id)
-          .eq('user_id', user.id);
-        
-        // Update quote counter with consistent function name
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: quote.id,
-          column_name: 'bookmarks',
-          table_name: 'quotes'
-        });
-        
-        setIsBookmarked(false);
-        setQuote(prev => prev ? { 
-          ...prev, 
-          bookmarks: Math.max(0, (prev.bookmarks || 0) - 1) 
-        } : null);
-        
-      } else {
-        // Add bookmark
-        await supabase
-          .from('quote_bookmarks')
-          .insert({
-            quote_id: quote.id,
-            user_id: user.id
-          });
-        
-        // Update quote counter with consistent function name
-        await supabase.rpc('increment_counter_fn', {
-          row_id: quote.id,
-          column_name: 'bookmarks',
-          table_name: 'quotes'
-        });
-        
-        setIsBookmarked(true);
-        setQuote(prev => prev ? { 
-          ...prev, 
-          bookmarks: (prev.bookmarks || 0) + 1 
-        } : null);
-      }
-    } catch (error) {
-      console.error('Error bookmarking quote:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update bookmark status',
-        variant: 'destructive',
-      });
-    }
+    // Update the quote state to reflect the new bookmark count from the hook
+    setQuote(prev => {
+      if (!prev) return null;
+      return { ...prev, bookmarks: bookmarkCount };
+    });
   };
   
   // Function to handle quote updates from the edit modal
@@ -382,7 +268,7 @@ export function QuoteDetail() {
                 className="flex items-center space-x-1"
               >
                 <HeartIcon size={16} className={isLiked ? "fill-white" : ""} />
-                <span>{quote?.likes || 0}</span>
+                <span>{likeCount}</span>
               </Button>
               
               <Button 
@@ -392,7 +278,7 @@ export function QuoteDetail() {
                 className="flex items-center space-x-1"
               >
                 <BookmarkIcon size={16} className={isBookmarked ? "fill-white" : ""} />
-                <span>{quote?.bookmarks || 0}</span>
+                <span>{bookmarkCount}</span>
               </Button>
               
               <Button 

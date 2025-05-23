@@ -1,4 +1,6 @@
 
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+
 /**
  * Result of a content interaction (like, bookmark)
  */
@@ -36,7 +38,30 @@ export interface UseContentInteractionsProps {
 export interface UserInteractions {
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
-  handleLike: (contentId: string, contentType: import('@/components/library/content-items/ContentItemTypes').ContentItemType) => Promise<ContentInteractionResult | null>;
-  handleBookmark: (contentId: string, contentType: import('@/components/library/content-items/ContentItemTypes').ContentItemType) => Promise<ContentBookmarkResult | null>;
+  handleLike: (contentId: string, contentType: ContentItemType) => Promise<ContentInteractionResult | null>;
+  handleBookmark: (contentId: string, contentType: ContentItemType) => Promise<ContentBookmarkResult | null>;
   checkUserInteractions: (contentIds: string[]) => Promise<void>;
+}
+
+/**
+ * Interface for interaction check results
+ */
+export interface InteractionCheckResult {
+  id: string;
+  isLiked: boolean;
+  isBookmarked: boolean;
+}
+
+/**
+ * Props for content interaction components
+ */
+export interface ContentInteractionProps {
+  contentId: string;
+  contentType: ContentItemType;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+  likesCount?: number;
+  bookmarksCount?: number;
+  onLike?: (contentId: string, contentType: ContentItemType) => Promise<ContentInteractionResult | null>;
+  onBookmark?: (contentId: string, contentType: ContentItemType) => Promise<ContentBookmarkResult | null>;
 }
