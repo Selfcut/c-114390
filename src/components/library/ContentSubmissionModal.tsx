@@ -33,13 +33,19 @@ export const ContentSubmissionModal: React.FC<ContentSubmissionModalProps> = ({
   defaultTab = 'knowledge',
   onSubmitSuccess
 }) => {
-  const [contentType, setContentType] = useState(defaultTab);
+  const [contentType, setContentType] = useState<'knowledge' | 'media' | 'quote' | 'ai'>(defaultTab);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [summary, setSummary] = useState('');
   const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  const handleContentTypeChange = (value: string) => {
+    if (value === 'knowledge' || value === 'media' || value === 'quote' || value === 'ai') {
+      setContentType(value);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +103,7 @@ export const ContentSubmissionModal: React.FC<ContentSubmissionModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="contentType">Content Type</Label>
-            <Select value={contentType} onValueChange={setContentType}>
+            <Select value={contentType} onValueChange={handleContentTypeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select content type" />
               </SelectTrigger>
