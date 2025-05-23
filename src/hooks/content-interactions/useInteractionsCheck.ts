@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { normalizeContentType, getContentTypeString } from './contentTypeUtils';
+import { normalizeContentType } from '@/lib/utils/content-type-utils';
 
 interface UseInteractionsCheckProps {
   userId?: string | null;
@@ -14,6 +14,7 @@ interface UseInteractionsCheckProps {
 interface Interactions {
   isLiked: boolean;
   isBookmarked: boolean;
+  error?: Error;
 }
 
 /**
@@ -24,6 +25,8 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
     isLiked: false,
     isBookmarked: false,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  
   const normalizedType = normalizeContentType(contentType);
   
   useEffect(() => {
@@ -32,15 +35,17 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
     }
     
     const fetchInteractions = async () => {
+      setIsLoading(true);
+      
       try {
         let isLiked = false;
         let isBookmarked = false;
         
         // Determine if it's a quote
-        if (normalizedType === ContentType.Quote) {
+        if (normalizedType === 'quote') {
           // Check quote likes
           const { data: likeData, error: likeError } = await supabase
-            .from('quote_likes' as any)
+            .from('quote_likes')
             .select('id')
             .eq('quote_id', contentId)
             .eq('user_id', userId)
@@ -51,7 +56,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
           
           // Check quote bookmarks
           const { data: bookmarkData, error: bookmarkError } = await supabase
-            .from('quote_bookmarks' as any)
+            .from('quote_bookmarks')
             .select('id')
             .eq('quote_id', contentId)
             .eq('user_id', userId)
@@ -62,7 +67,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
         } else {
           // Check content likes
           const { data: likeData, error: likeError } = await supabase
-            .from('content_likes' as any)
+            .from('content_likes')
             .select('id')
             .eq('content_id', contentId)
             .eq('user_id', userId)
@@ -74,7 +79,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
           
           // Check content bookmarks
           const { data: bookmarkData, error: bookmarkError } = await supabase
-            .from('content_bookmarks' as any)
+            .from('content_bookmarks')
             .select('id')
             .eq('content_id', contentId)
             .eq('user_id', userId)
@@ -88,11 +93,20 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
         setInteractions({ isLiked, isBookmarked });
       } catch (error) {
         console.error("Error fetching interactions:", error);
+        setInteractions(prev => ({ 
+          ...prev, 
+          error: error instanceof Error ? error : new Error(String(error)) 
+        }));
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchInteractions();
-  }, [userId, contentId, contentType, normalizedType]);
+  }, [userId, contentId, normalizedType]);
   
-  return interactions;
+  return {
+    ...interactions,
+    isLoading
+  };
 };

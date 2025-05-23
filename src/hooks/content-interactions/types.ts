@@ -1,5 +1,6 @@
 
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentType } from '@/types/contentTypes';
 
 /**
  * The type of interaction a user can have with content
@@ -18,6 +19,7 @@ export interface InteractionCheckResult {
   id: string;
   isLiked: boolean;
   isBookmarked: boolean;
+  contentType?: string;
 }
 
 /**
@@ -43,6 +45,7 @@ export interface ContentBookmarkResult {
  */
 export interface UseContentInteractionsProps {
   userId?: string | null;
+  onInteractionChange?: (type: InteractionType, id: string, value: boolean) => void;
 }
 
 /**
@@ -63,11 +66,13 @@ export interface UserInteractions {
   loadingStates: Record<string, ContentLoadingState>;
   
   // Methods
-  handleLike: (id: string, itemType: ContentItemType | string) => Promise<ContentInteractionResult | null>;
-  handleBookmark: (id: string, itemType: ContentItemType | string) => Promise<ContentBookmarkResult | null>;
-  checkUserInteractions: (itemIds: string[], itemType?: ContentItemType | string) => Promise<void>;
+  handleLike: (id: string, itemType: string | ContentType | ContentItemType) => Promise<ContentInteractionResult>;
+  handleBookmark: (id: string, itemType: string | ContentType | ContentItemType) => Promise<ContentBookmarkResult>;
+  checkUserInteractions: (itemIds: string[], itemType?: string | ContentType | ContentItemType) => Promise<void>;
   getLoadingState: (id: string) => ContentLoadingState;
   isInteractionLoading: (id: string, type: InteractionType) => boolean;
+  isItemLiked?: (id: string, itemType: string | ContentType | ContentItemType) => boolean;
+  isItemBookmarked?: (id: string, itemType: string | ContentType | ContentItemType) => boolean;
 }
 
 /**
@@ -99,4 +104,14 @@ export interface BatchProcessingOptions {
   batchSize?: number;
   retryCount?: number;
   retryDelay?: number;
+}
+
+/**
+ * Interface for all content-related database operations
+ */
+export interface ContentDatabaseOperations {
+  checkUserInteraction: (userId: string, contentId: string, contentType: string) => Promise<InteractionCheckResult>;
+  toggleLike: (userId: string, contentId: string, contentType: string) => Promise<boolean>;
+  toggleBookmark: (userId: string, contentId: string, contentType: string) => Promise<boolean>;
+  batchCheckInteractions: (userId: string, contentIds: string[], contentType: string) => Promise<Record<string, InteractionCheckResult>>;
 }

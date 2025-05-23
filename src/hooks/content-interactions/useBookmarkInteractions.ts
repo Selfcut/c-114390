@@ -1,9 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { normalizeContentType, getContentTypeString } from './contentTypeUtils';
+import { normalizeContentType } from '@/lib/utils/content-type-utils';
 
 interface UseBookmarkInteractionsProps {
   contentId: string;
@@ -22,16 +22,19 @@ export const useBookmarkInteractions = ({
   initialBookmarkState = false,
 }: UseBookmarkInteractionsProps) => {
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarkState);
+  const [isLoading, setIsLoading] = useState(false);
   const normalizedContentType = normalizeContentType(contentType);
   
   /**
    * Toggles the bookmark status of the content.
    */
-  const toggleBookmark = async (): Promise<boolean> => {
+  const toggleBookmark = useCallback(async (): Promise<boolean> => {
     if (!userId) {
       console.warn('User ID is required to toggle bookmark.');
       return false;
     }
+    
+    setIsLoading(true);
     
     try {
       const isQuote = normalizedContentType === 'quote';
@@ -39,8 +42,8 @@ export const useBookmarkInteractions = ({
       const contentIdField = isQuote ? 'quote_id' : 'content_id';
       
       // Check if the content is already bookmarked
-      const { data: existingBookmark, error: checkError } = await supabase
-        .from(table as any) // Type assertion to bypass TypeScript restriction
+      const { data, error: checkError } = await supabase
+        .from(table)
         .select('id')
         .eq('user_id', userId)
         .eq(contentIdField, contentId)
@@ -50,13 +53,13 @@ export const useBookmarkInteractions = ({
         throw new Error(checkError.message);
       }
       
-      // Fix: Check if existingBookmark exists AND has an id property
-      if (existingBookmark && 'id' in existingBookmark) {
+      // Check if data exists AND has an id property
+      if (data && 'id' in data) {
         // Remove the bookmark
         const { error: deleteError } = await supabase
-          .from(table as any) // Type assertion to bypass TypeScript restriction
+          .from(table)
           .delete()
-          .eq('id', existingBookmark.id);
+          .eq('id', data.id);
         
         if (deleteError) {
           throw new Error(deleteError.message);
@@ -66,7 +69,7 @@ export const useBookmarkInteractions = ({
         return false;
       } else {
         // Add the bookmark
-        const insertPayload: any = {
+        const insertPayload: Record<string, any> = {
           user_id: userId,
         };
         
@@ -78,8 +81,8 @@ export const useBookmarkInteractions = ({
         }
         
         const { error: insertError } = await supabase
-          .from(table as any) // Type assertion to bypass TypeScript restriction
-          .insert(insertPayload); // Use typed payload
+          .from(table)
+          .insert(insertPayload);
         
         if (insertError) {
           throw new Error(insertError.message);
@@ -91,11 +94,14 @@ export const useBookmarkInteractions = ({
     } catch (error: any) {
       console.error('Error toggling bookmark:', error.message);
       return false;
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [userId, contentId, normalizedContentType]);
   
   return {
     isBookmarked,
+    isLoading,
     toggleBookmark,
   };
 };
