@@ -28,7 +28,9 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     bookmarkedItems,
     isLoading,
     toggleLike,
-    toggleBookmark
+    toggleBookmark,
+    likeContent,
+    bookmarkContent
   } = useUserInteraction();
 
   // Check if this post is liked or bookmarked
@@ -51,8 +53,12 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     if (onUpvote) {
       await onUpvote();
     } else if (isAuthenticated && user?.id) {
-      // Pass post.id, content type, and the user ID to toggleLike
-      await toggleLike(post.id, 'forum', user.id);
+      // Use the simplified API if available, otherwise use explicit userId
+      if (likeContent) {
+        await likeContent(post.id, 'forum');
+      } else {
+        await toggleLike(post.id, 'forum', user.id);
+      }
     }
   };
 
@@ -68,8 +74,12 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     }
 
     if (user?.id) {
-      // Pass post.id, content type, and the user ID to toggleBookmark
-      await toggleBookmark(post.id, 'forum', user.id);
+      // Use the simplified API if available, otherwise use explicit userId
+      if (bookmarkContent) {
+        await bookmarkContent(post.id, 'forum');
+      } else {
+        await toggleBookmark(post.id, 'forum', user.id);
+      }
     }
   };
 

@@ -24,14 +24,14 @@ export function isValidContentType(type: string): type is ContentType {
  * Convert a ContentType enum to string
  */
 export function contentTypeToString(type: ContentType | string): string {
-  return typeof type === 'string' ? type : type.toString();
+  return typeof type === 'string' ? type : type;
 }
 
 /**
  * Get the database table name for a content type
  */
 export function getContentTable(type: ContentType | string): string {
-  const contentType = typeof type === 'string' ? type : type.toString();
+  const contentType = typeof type === 'string' ? type : type;
   
   switch (contentType) {
     case ContentType.Quote:
@@ -58,7 +58,7 @@ export function getContentTable(type: ContentType | string): string {
  * Create a consistent content key format for state tracking
  */
 export function getContentKey(id: string, type: ContentType | string): string {
-  const contentType = typeof type === 'string' ? type : type.toString();
+  const contentType = typeof type === 'string' ? type : type;
   return `${contentType}:${id}`;
 }
 
@@ -94,7 +94,7 @@ export interface ContentTableInfo {
  * Get all table and field information for a content type
  */
 export function getContentTypeInfo(contentType: ContentType | string): ContentTableInfo {
-  const typeStr = typeof contentType === 'string' ? contentType : contentType.toString();
+  const typeStr = typeof contentType === 'string' ? contentType : contentType;
   const isQuote = typeStr === ContentType.Quote;
   
   return {

@@ -1,6 +1,6 @@
 
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { ContentType, getContentTable, getContentTypeInfo as getTypeInfo } from '@/types/contentTypes';
+import { ContentType, getContentTypeInfo as getTypeInfo } from '@/types/contentTypes';
 import { ContentTypeTables } from './types';
 
 /**
@@ -35,8 +35,9 @@ export const getContentTypeInfo = (contentType: string): ContentTypeTables => {
  * @param contentType The string representation of the content type
  * @returns The name of the table that stores this content type
  */
-export const getContentTable = (contentType: string): string => {
-  return getContentTable(contentType);
+export const getContentTableName = (contentType: string): string => {
+  const { contentTable } = getTypeInfo(contentType);
+  return contentTable;
 };
 
 /**
