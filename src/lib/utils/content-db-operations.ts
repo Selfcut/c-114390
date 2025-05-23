@@ -3,19 +3,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeContentType, getContentTableInfo } from './content-type-utils';
 import { ContentType } from '@/types/contentTypes';
 
-// Define literal table types for Supabase queries
-const QUOTE_LIKES_TABLE = 'quote_likes';
-const CONTENT_LIKES_TABLE = 'content_likes';
-const QUOTE_BOOKMARKS_TABLE = 'quote_bookmarks';
-const CONTENT_BOOKMARKS_TABLE = 'content_bookmarks';
+// Define literal string types for table names to avoid type recursion
+type QuoteLikesTable = 'quote_likes';
+type ContentLikesTable = 'content_likes';
+type QuoteBookmarksTable = 'quote_bookmarks';
+type ContentBookmarksTable = 'content_bookmarks';
+
+// Define constants for table names
+const QUOTE_LIKES_TABLE = 'quote_likes' as QuoteLikesTable;
+const CONTENT_LIKES_TABLE = 'content_likes' as ContentLikesTable;
+const QUOTE_BOOKMARKS_TABLE = 'quote_bookmarks' as QuoteBookmarksTable;
+const CONTENT_BOOKMARKS_TABLE = 'content_bookmarks' as ContentBookmarksTable;
 
 // Define strongly typed interfaces for database operations
-interface QuoteInteractionPayload {
+interface QuoteLikePayload {
   quote_id: string;
   user_id: string;
 }
 
-interface ContentInteractionPayload {
+interface ContentLikePayload {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
+interface QuoteBookmarkPayload {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentBookmarkPayload {
   content_id: string;
   user_id: string;
   content_type: string;
@@ -57,7 +74,7 @@ export const checkUserInteractions = async (
     
     // Check if user has liked the content
     if (normalizedType === 'quote') {
-      // Use constants for table names to avoid type recursion
+      // Handle quote interactions
       const { data: likeResult, error: likeError } = await supabase
         .from(QUOTE_LIKES_TABLE)
         .select('id')
@@ -78,7 +95,7 @@ export const checkUserInteractions = async (
       if (bookmarkError) throw bookmarkError;
       bookmarkData = bookmarkResult;
     } else {
-      // Use constants for table names
+      // Handle other content types
       const { data: likeResult, error: likeError } = await supabase
         .from(CONTENT_LIKES_TABLE)
         .select('id')
@@ -133,7 +150,7 @@ export const toggleLike = async (
     let existingLike = null;
     
     if (normalizedType === 'quote') {
-      // Handle quote likes with explicit table name
+      // Handle quote likes
       const { data, error: checkError } = await supabase
         .from(QUOTE_LIKES_TABLE)
         .select('id')
@@ -163,7 +180,7 @@ export const toggleLike = async (
         return false; // No longer liked
       } else {
         // Insert new like
-        const payload: QuoteInteractionPayload = {
+        const payload: QuoteLikePayload = {
           user_id: userId,
           quote_id: contentId
         };
@@ -184,7 +201,7 @@ export const toggleLike = async (
         return true; // Now liked
       }
     } else {
-      // Handle other content types with explicit table name
+      // Handle other content types
       const { data, error: checkError } = await supabase
         .from(CONTENT_LIKES_TABLE)
         .select('id')
@@ -215,7 +232,7 @@ export const toggleLike = async (
         return false; // No longer liked
       } else {
         // Insert new like
-        const payload: ContentInteractionPayload = {
+        const payload: ContentLikePayload = {
           user_id: userId,
           content_id: contentId,
           content_type: normalizedType
@@ -264,7 +281,7 @@ export const toggleBookmark = async (
     let existingBookmark = null;
     
     if (normalizedType === 'quote') {
-      // Use constant for table name
+      // Handle quote bookmarks
       const { data, error: checkError } = await supabase
         .from(QUOTE_BOOKMARKS_TABLE)
         .select('id')
@@ -296,7 +313,7 @@ export const toggleBookmark = async (
         return false; // No longer bookmarked
       } else {
         // Insert new bookmark
-        const payload: QuoteInteractionPayload = {
+        const payload: QuoteBookmarkPayload = {
           user_id: userId,
           quote_id: contentId
         };
@@ -319,7 +336,7 @@ export const toggleBookmark = async (
         return true; // Now bookmarked
       }
     } else {
-      // Use constant for table name
+      // Handle other content types
       const { data, error: checkError } = await supabase
         .from(CONTENT_BOOKMARKS_TABLE)
         .select('id')
@@ -352,7 +369,7 @@ export const toggleBookmark = async (
         return false; // No longer bookmarked
       } else {
         // Insert new bookmark
-        const payload: ContentInteractionPayload = {
+        const payload: ContentBookmarkPayload = {
           user_id: userId,
           content_id: contentId,
           content_type: normalizedType
@@ -402,8 +419,7 @@ export const batchCheckInteractions = async (
     });
     
     if (normalizedType === 'quote') {
-      // Use constants for table names
-      // Batch check likes
+      // Batch check likes for quotes
       const { data: likesData, error: likesError } = await supabase
         .from(QUOTE_LIKES_TABLE)
         .select('quote_id')
@@ -419,7 +435,7 @@ export const batchCheckInteractions = async (
         });
       }
       
-      // Batch check bookmarks
+      // Batch check bookmarks for quotes
       const { data: bookmarksData, error: bookmarksError } = await supabase
         .from(QUOTE_BOOKMARKS_TABLE)
         .select('quote_id')
@@ -435,8 +451,7 @@ export const batchCheckInteractions = async (
         });
       }
     } else {
-      // Use constants for table names
-      // Batch check likes
+      // Batch check likes for other content types
       const { data: likesData, error: likesError } = await supabase
         .from(CONTENT_LIKES_TABLE)
         .select('content_id')
@@ -453,7 +468,7 @@ export const batchCheckInteractions = async (
         });
       }
       
-      // Batch check bookmarks
+      // Batch check bookmarks for other content types
       const { data: bookmarksData, error: bookmarksError } = await supabase
         .from(CONTENT_BOOKMARKS_TABLE)
         .select('content_id')
