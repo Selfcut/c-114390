@@ -1,7 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { getContentTableInfo } from '@/lib/utils/content-type-utils';
-import { ContentType } from '@/types/contentTypes';
 
 export interface UserInteractionStatus {
   isLiked: boolean;
@@ -19,7 +17,7 @@ export const checkUserInteractions = async (
 
   try {
     const tableInfo = getContentTableInfo(contentType);
-    const isQuote = contentType === ContentType.Quote;
+    const isQuote = contentType === 'quote';
     
     let likeQuery;
     if (isQuote) {
@@ -76,7 +74,7 @@ export const toggleLike = async (
   
   try {
     const tableInfo = getContentTableInfo(contentType);
-    const isQuote = contentType === ContentType.Quote;
+    const isQuote = contentType === 'quote';
     
     let existingLikeQuery;
     if (isQuote) {
@@ -162,7 +160,7 @@ export const toggleBookmark = async (
   
   try {
     const tableInfo = getContentTableInfo(contentType);
-    const isQuote = contentType === ContentType.Quote;
+    const isQuote = contentType === 'quote';
     
     let existingBookmarkQuery;
     if (isQuote) {
@@ -253,7 +251,7 @@ export const batchCheckInteractions = async (
   }
   
   const results: Record<string, UserInteractionStatus> = {};
-  const isQuote = contentType === ContentType.Quote;
+  const isQuote = contentType === 'quote';
   
   try {
     let likesQuery;

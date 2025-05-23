@@ -20,7 +20,7 @@ export const checkContentInteractions = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<{ isLiked: boolean, isBookmarked: boolean }> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+  const isQuote = normalizedType === 'quote';
   
   if (isQuote) {
     return await checkQuoteInteractions(userId, contentId);
@@ -38,7 +38,7 @@ export const addContentLike = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+  const isQuote = normalizedType === 'quote';
   
   if (isQuote) {
     return await addQuoteLike(userId, contentId);
@@ -56,7 +56,7 @@ export const removeContentLike = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+  const isQuote = normalizedType === 'quote';
   
   if (isQuote) {
     return await removeQuoteLike(userId, contentId);
@@ -74,7 +74,7 @@ export const addContentBookmark = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+  const isQuote = normalizedType === 'quote';
   
   if (isQuote) {
     return await addQuoteBookmark(userId, contentId);
@@ -92,7 +92,7 @@ export const removeContentBookmark = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+  const isQuote = normalizedType === 'quote';
   
   if (isQuote) {
     return await removeQuoteBookmark(userId, contentId);

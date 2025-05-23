@@ -34,49 +34,49 @@ export const useContentTables = (options: ContentTypeOptions) => {
     }
     
     switch (contentTypeStr) {
-      case ContentType.Media:
+      case 'media':
         return {
           likesTable: 'media_likes',
           contentTable: 'media_posts',
           contentIdField: 'post_id',
           commentsTable: 'media_comments'
         };
-      case ContentType.Knowledge:
+      case 'knowledge':
         return {
           likesTable: 'content_likes',
           contentTable: 'knowledge_entries',
           contentIdField: 'content_id',
           commentsTable: 'content_comments'
         };
-      case ContentType.Quote:
+      case 'quote':
         return {
           likesTable: 'quote_likes',
           contentTable: 'quotes',
           contentIdField: 'quote_id',
           commentsTable: 'quote_comments'
         };
-      case ContentType.Wiki:
+      case 'wiki':
         return {
           likesTable: 'content_likes',
           contentTable: 'wiki_articles',
           contentIdField: 'content_id',
           commentsTable: 'content_comments'
         };
-      case ContentType.Forum:
+      case 'forum':
         return {
           likesTable: 'content_likes',
           contentTable: 'forum_posts',
           contentIdField: 'content_id',
           commentsTable: 'content_comments'
         };
-      case ContentType.Research:
+      case 'research':
         return {
           likesTable: 'content_likes',
           contentTable: 'research_papers',
           contentIdField: 'content_id',
           commentsTable: 'content_comments'
         };
-      case ContentType.AI:
+      case 'ai':
         return {
           likesTable: 'content_likes',
           contentTable: 'ai_content',
