@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ContentInteractionResult } from './types';
-import { getContentTypeString, getContentTable, getContentTypeInfo } from './contentTypeUtils';
+import { getContentTypeString, getContentTypeInfo } from './contentTypeUtils';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export const useLikeInteractions = (
