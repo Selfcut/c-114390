@@ -1,14 +1,15 @@
 
-import { ContentFeedItem } from '@/hooks/useContentFeed';
+import { UnifiedContentItem } from '@/types/unified-content-types';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentViewMode } from '@/types/unified-content-types';
 
 /**
- * Map a knowledge entry from database to ContentFeedItem format
+ * Map a knowledge entry from database to UnifiedContentItem format
  */
-export function mapKnowledgeToFeedItem(knowledgeEntry: any): ContentFeedItem {
+export function mapKnowledgeToFeedItem(knowledgeEntry: any, viewMode: ContentViewMode): UnifiedContentItem {
   return {
     id: knowledgeEntry.id,
-    type: ContentItemType.Knowledge,
+    type: 'knowledge',
     title: knowledgeEntry.title,
     summary: knowledgeEntry.summary,
     content: knowledgeEntry.content,
@@ -17,9 +18,10 @@ export function mapKnowledgeToFeedItem(knowledgeEntry: any): ContentFeedItem {
       avatar: knowledgeEntry.profiles?.avatar_url,
       username: knowledgeEntry.profiles?.username
     },
-    createdAt: knowledgeEntry.created_at,
+    createdAt: new Date(knowledgeEntry.created_at),
     tags: knowledgeEntry.categories || [],
     coverImage: knowledgeEntry.cover_image,
+    viewMode,
     metrics: {
       likes: knowledgeEntry.likes || 0,
       comments: knowledgeEntry.comments || 0,
@@ -29,12 +31,12 @@ export function mapKnowledgeToFeedItem(knowledgeEntry: any): ContentFeedItem {
 }
 
 /**
- * Map a quote from database to ContentFeedItem format
+ * Map a quote from database to UnifiedContentItem format
  */
-export function mapQuoteToFeedItem(quote: any): ContentFeedItem {
+export function mapQuoteToFeedItem(quote: any, viewMode: ContentViewMode): UnifiedContentItem {
   return {
     id: quote.id,
-    type: ContentItemType.Quote,
+    type: 'quote',
     title: quote.author ? `Quote from ${quote.author}` : 'Quote',
     content: quote.text,
     author: {
@@ -42,8 +44,9 @@ export function mapQuoteToFeedItem(quote: any): ContentFeedItem {
       avatar: quote.profiles?.avatar_url,
       username: quote.profiles?.username
     },
-    createdAt: quote.created_at,
+    createdAt: new Date(quote.created_at),
     tags: quote.tags || [],
+    viewMode,
     metrics: {
       likes: quote.likes || 0,
       comments: quote.comments || 0,
@@ -53,9 +56,9 @@ export function mapQuoteToFeedItem(quote: any): ContentFeedItem {
 }
 
 /**
- * Map a media post from database to ContentFeedItem format
+ * Map a media post from database to UnifiedContentItem format
  */
-export function mapMediaToFeedItem(media: any): ContentFeedItem {
+export function mapMediaToFeedItem(media: any, viewMode: ContentViewMode): UnifiedContentItem {
   let mediaType: 'image' | 'video' | 'youtube' | 'document' | 'text' = 'image';
   
   if (media.type) {
@@ -79,7 +82,7 @@ export function mapMediaToFeedItem(media: any): ContentFeedItem {
   
   return {
     id: media.id,
-    type: ContentItemType.Media,
+    type: 'media',
     title: media.title,
     summary: media.content,
     author: {
@@ -87,10 +90,11 @@ export function mapMediaToFeedItem(media: any): ContentFeedItem {
       avatar: media.profiles?.avatar_url,
       username: media.profiles?.username
     },
-    createdAt: media.created_at,
+    createdAt: new Date(media.created_at),
     tags: media.tags || [],
     mediaUrl: media.url,
     mediaType: mediaType,
+    viewMode,
     metrics: {
       likes: media.likes || 0,
       comments: media.comments || 0,
@@ -100,12 +104,12 @@ export function mapMediaToFeedItem(media: any): ContentFeedItem {
 }
 
 /**
- * Map an AI generated content from database to ContentFeedItem format
+ * Map an AI generated content from database to UnifiedContentItem format
  */
-export function mapAIContentToFeedItem(aiContent: any): ContentFeedItem {
+export function mapAIContentToFeedItem(aiContent: any, viewMode: ContentViewMode): UnifiedContentItem {
   return {
     id: aiContent.id,
-    type: ContentItemType.AI,
+    type: 'ai',
     title: aiContent.title,
     summary: aiContent.summary,
     content: aiContent.content,
@@ -113,8 +117,9 @@ export function mapAIContentToFeedItem(aiContent: any): ContentFeedItem {
       name: 'AI Assistant',
       avatar: '/lovable-uploads/d8b5e246-d962-466e-ad7d-61985e448fb9.png'
     },
-    createdAt: aiContent.created_at,
+    createdAt: new Date(aiContent.created_at),
     tags: aiContent.tags || [],
+    viewMode,
     metrics: {
       likes: aiContent.likes || 0,
       comments: aiContent.comments || 0,
