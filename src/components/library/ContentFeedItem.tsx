@@ -3,7 +3,6 @@ import React from 'react';
 import { UnifiedContentItem } from './UnifiedContentItem';
 import { ContentItemProps, ContentItemType, ContentViewMode, MediaType } from './content-items/ContentItemTypes';
 
-// Define the type for our feed items
 export interface ContentFeedItem {
   id: string;
   type: ContentItemType;
@@ -65,12 +64,10 @@ export const ContentFeedItemComponent: React.FC<ContentFeedItemComponentProps> =
     }
   };
 
-  // Get the user interaction state
   const stateKey = `${item.type}:${item.id}`;
   const isLiked = userLikes?.[stateKey] || false;
   const isBookmarked = userBookmarks?.[stateKey] || false;
 
-  // Format data for the ContentItem props
   const contentProps: ContentItemProps = {
     id: item.id,
     type: item.type,

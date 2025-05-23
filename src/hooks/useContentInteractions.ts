@@ -1,10 +1,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { ContentType } from '@/types/contentTypes';
+import { ContentItemType, ContentType } from '@/types/contentTypes';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { getContentStateKey } from '@/lib/utils/content-type-utils';
 import { 
   checkUserInteractions, 
   toggleLike, 
@@ -14,57 +12,32 @@ import {
 } from '@/lib/utils/content-db-operations';
 import { useInteractionsState } from './content-interactions/useInteractionsState';
 
-/**
- * Hook configuration props
- */
 export interface UseContentInteractionsProps {
   userId?: string | null;
 }
 
-/**
- * Result of a like interaction operation
- */
 export interface ContentInteractionResult {
   isLiked: boolean;
   id: string;
   contentType?: string;
 }
 
-/**
- * Result of a bookmark interaction operation
- */
 export interface ContentBookmarkResult {
   isBookmarked: boolean;
   id: string;
   contentType?: string;
 }
 
-/**
- * Loading states for content interactions
- */
 export interface ContentLoadingState {
   isLikeLoading: boolean;
   isBookmarkLoading: boolean;
 }
 
-/**
- * Type of interaction
- */
 export type InteractionType = 'like' | 'bookmark';
 
-/**
- * User interactions return type
- */
 export interface UserInteractions {
-  // State
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
-  loadingStates: {
-    likeLoadingStates: Record<string, boolean>;
-    bookmarkLoadingStates: Record<string, boolean>;
-  };
-  
-  // Methods
   handleLike: (id: string, itemType: string | ContentType | ContentItemType) => Promise<ContentInteractionResult>;
   handleBookmark: (id: string, itemType: string | ContentType | ContentItemType) => Promise<ContentBookmarkResult>;
   checkUserInteractions: (itemIds: string[], itemType?: string | ContentType | ContentItemType) => Promise<void>;
@@ -74,9 +47,6 @@ export interface UserInteractions {
   isItemBookmarked: (id: string, itemType: string | ContentType | ContentItemType) => boolean;
 }
 
-/**
- * Hook for managing content interactions (likes and bookmarks)
- */
 export const useContentInteractions = ({ userId }: UseContentInteractionsProps): UserInteractions => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -85,7 +55,6 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
   const {
     likedItems: userLikes,
     bookmarkedItems: userBookmarks,
-    loadingStates,
     getLoadingState: getItemLoadingState,
     isInteractionLoading: isItemInteractionLoading,
     setLikeState,
@@ -96,17 +65,14 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
     isItemBookmarked
   } = useInteractionsState();
   
-  // Get loading state for a content item
   const getLoadingState = useCallback((id: string): ContentLoadingState => {
     return getItemLoadingState(id, 'default');
   }, [getItemLoadingState]);
   
-  // Check if a specific interaction type is loading
   const isInteractionLoading = useCallback((id: string, type: InteractionType): boolean => {
     return isItemInteractionLoading(id, 'default', type);
   }, [isItemInteractionLoading]);
   
-  // Handle like interaction
   const handleLike = useCallback(async (
     id: string, 
     itemType: string | ContentType | ContentItemType
@@ -125,22 +91,16 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       };
     }
     
-    // Set loading state
-    setLikeLoadingState(id, itemType, true);
+    setLikeLoadingState(id, String(itemType), true);
     
     try {
-      // Get current state for optimistic update
-      const wasLiked = isItemLiked(id, itemType);
+      const wasLiked = isItemLiked(id, String(itemType));
+      setLikeState(id, String(itemType), !wasLiked);
       
-      // Optimistic update
-      setLikeState(id, itemType, !wasLiked);
-      
-      // Perform the actual operation
       const isLiked = await toggleLike(effectiveUserId, id, String(itemType));
       
-      // If operation failed, revert to previous state
       if (isLiked !== !wasLiked) {
-        setLikeState(id, itemType, wasLiked);
+        setLikeState(id, String(itemType), wasLiked);
       }
       
       return {
@@ -150,9 +110,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       };
     } catch (error) {
       console.error('Error handling like:', error);
-      
-      // Revert on error
-      setLikeState(id, itemType, isItemLiked(id, itemType));
+      setLikeState(id, String(itemType), isItemLiked(id, String(itemType)));
       
       toast({
         title: "Error",
@@ -161,17 +119,15 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       });
       
       return {
-        isLiked: isItemLiked(id, itemType),
+        isLiked: isItemLiked(id, String(itemType)),
         id,
         contentType: String(itemType)
       };
     } finally {
-      // Clear loading state
-      setLikeLoadingState(id, itemType, false);
+      setLikeLoadingState(id, String(itemType), false);
     }
   }, [effectiveUserId, toast, isItemLiked, setLikeState, setLikeLoadingState]);
   
-  // Handle bookmark interaction
   const handleBookmark = useCallback(async (
     id: string, 
     itemType: string | ContentType | ContentItemType
@@ -190,22 +146,16 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       };
     }
     
-    // Set loading state
-    setBookmarkLoadingState(id, itemType, true);
+    setBookmarkLoadingState(id, String(itemType), true);
     
     try {
-      // Get current state for optimistic update
-      const wasBookmarked = isItemBookmarked(id, itemType);
+      const wasBookmarked = isItemBookmarked(id, String(itemType));
+      setBookmarkState(id, String(itemType), !wasBookmarked);
       
-      // Optimistic update
-      setBookmarkState(id, itemType, !wasBookmarked);
-      
-      // Perform the actual operation
       const isBookmarked = await toggleBookmark(effectiveUserId, id, String(itemType));
       
-      // If operation failed, revert to previous state
       if (isBookmarked !== !wasBookmarked) {
-        setBookmarkState(id, itemType, wasBookmarked);
+        setBookmarkState(id, String(itemType), wasBookmarked);
       }
       
       return {
@@ -215,9 +165,7 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       };
     } catch (error) {
       console.error('Error handling bookmark:', error);
-      
-      // Revert on error
-      setBookmarkState(id, itemType, isItemBookmarked(id, itemType));
+      setBookmarkState(id, String(itemType), isItemBookmarked(id, String(itemType)));
       
       toast({
         title: "Error",
@@ -226,17 +174,15 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       });
       
       return {
-        isBookmarked: isItemBookmarked(id, itemType),
+        isBookmarked: isItemBookmarked(id, String(itemType)),
         id,
         contentType: String(itemType)
       };
     } finally {
-      // Clear loading state
-      setBookmarkLoadingState(id, itemType, false);
+      setBookmarkLoadingState(id, String(itemType), false);
     }
   }, [effectiveUserId, toast, isItemBookmarked, setBookmarkState, setBookmarkLoadingState]);
   
-  // Check user interactions in batch
   const checkUserInteractionsImpl = useCallback(async (
     itemIds: string[], 
     itemType?: string | ContentType | ContentItemType
@@ -245,15 +191,12 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
     
     try {
       const type = itemType || 'default';
-      
-      // Use batch operation for efficiency
       const results = await batchCheckInteractions(effectiveUserId, itemIds, String(type));
       
-      // Update states based on results
       Object.entries(results).forEach(([id, status]) => {
         const interactionStatus = status as UserInteractionStatus;
-        setLikeState(id, type, interactionStatus.isLiked);
-        setBookmarkState(id, type, interactionStatus.isBookmarked);
+        setLikeState(id, String(type), interactionStatus.isLiked);
+        setBookmarkState(id, String(type), interactionStatus.isBookmarked);
       });
     } catch (error) {
       console.error('Error checking user interactions:', error);
@@ -263,7 +206,6 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
   return {
     userLikes,
     userBookmarks,
-    loadingStates,
     handleLike,
     handleBookmark,
     checkUserInteractions: checkUserInteractionsImpl,

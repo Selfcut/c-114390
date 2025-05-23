@@ -14,7 +14,7 @@ export const useInteractionsState = () => {
    * Generate a consistent state key for content
    */
   const getStateKey = useCallback((id: string, type: string): string => {
-    const contentType = String(type).toLowerCase();
+    const contentType = type ? String(type).toLowerCase() : 'unknown';
     return `${contentType}:${id}`;
   }, []);
 

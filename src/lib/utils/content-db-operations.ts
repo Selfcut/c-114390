@@ -3,17 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { getContentTableInfo } from '@/lib/utils/content-type-utils';
 import { ContentType } from '@/types/contentTypes';
 
-/**
- * User interaction status result
- */
 export interface UserInteractionStatus {
   isLiked: boolean;
   isBookmarked: boolean;
 }
 
-/**
- * Check if a user has liked or bookmarked a specific content item
- */
 export const checkUserInteractions = async (
   userId: string,
   contentId: string,
@@ -27,7 +21,6 @@ export const checkUserInteractions = async (
     const tableInfo = getContentTableInfo(contentType);
     const isQuote = contentType === ContentType.Quote;
     
-    // Check likes
     let likeQuery;
     if (isQuote) {
       likeQuery = await supabase
@@ -46,7 +39,6 @@ export const checkUserInteractions = async (
         .maybeSingle();
     }
     
-    // Check bookmarks
     let bookmarkQuery;
     if (isQuote) {
       bookmarkQuery = await supabase
@@ -75,9 +67,6 @@ export const checkUserInteractions = async (
   }
 };
 
-/**
- * Toggle like status for a content item
- */
 export const toggleLike = async (
   userId: string,
   contentId: string,
@@ -89,7 +78,6 @@ export const toggleLike = async (
     const tableInfo = getContentTableInfo(contentType);
     const isQuote = contentType === ContentType.Quote;
     
-    // Check if already liked
     let existingLikeQuery;
     if (isQuote) {
       existingLikeQuery = await supabase
@@ -111,7 +99,6 @@ export const toggleLike = async (
     const isLiked = !!existingLikeQuery.data;
     
     if (isLiked) {
-      // Remove like
       if (isQuote) {
         await supabase
           .from('quote_likes')
@@ -127,7 +114,6 @@ export const toggleLike = async (
           .eq('content_type', contentType);
       }
       
-      // Decrement like count
       await supabase.rpc('decrement_counter_fn', {
         row_id: contentId,
         column_name: tableInfo.likesColumnName,
@@ -136,7 +122,6 @@ export const toggleLike = async (
       
       return false;
     } else {
-      // Add like
       if (isQuote) {
         await supabase
           .from('quote_likes')
@@ -154,7 +139,6 @@ export const toggleLike = async (
           });
       }
       
-      // Increment like count
       await supabase.rpc('increment_counter_fn', {
         row_id: contentId,
         column_name: tableInfo.likesColumnName,
@@ -169,9 +153,6 @@ export const toggleLike = async (
   }
 };
 
-/**
- * Toggle bookmark status for a content item
- */
 export const toggleBookmark = async (
   userId: string,
   contentId: string,
@@ -183,7 +164,6 @@ export const toggleBookmark = async (
     const tableInfo = getContentTableInfo(contentType);
     const isQuote = contentType === ContentType.Quote;
     
-    // Check if already bookmarked
     let existingBookmarkQuery;
     if (isQuote) {
       existingBookmarkQuery = await supabase
@@ -205,7 +185,6 @@ export const toggleBookmark = async (
     const isBookmarked = !!existingBookmarkQuery.data;
     
     if (isBookmarked) {
-      // Remove bookmark
       if (isQuote) {
         await supabase
           .from('quote_bookmarks')
@@ -221,7 +200,6 @@ export const toggleBookmark = async (
           .eq('content_type', contentType);
       }
       
-      // Only quotes track bookmark counts
       if (isQuote && tableInfo.bookmarksColumnName) {
         await supabase.rpc('decrement_counter_fn', {
           row_id: contentId,
@@ -232,7 +210,6 @@ export const toggleBookmark = async (
       
       return false;
     } else {
-      // Add bookmark
       if (isQuote) {
         await supabase
           .from('quote_bookmarks')
@@ -250,7 +227,6 @@ export const toggleBookmark = async (
           });
       }
       
-      // Only quotes track bookmark counts
       if (isQuote && tableInfo.bookmarksColumnName) {
         await supabase.rpc('increment_counter_fn', {
           row_id: contentId,
@@ -267,9 +243,6 @@ export const toggleBookmark = async (
   }
 };
 
-/**
- * Batch check user interactions for multiple content items
- */
 export const batchCheckInteractions = async (
   userId: string,
   contentIds: string[],
@@ -283,7 +256,6 @@ export const batchCheckInteractions = async (
   const isQuote = contentType === ContentType.Quote;
   
   try {
-    // Batch check likes
     let likesQuery;
     if (isQuote) {
       likesQuery = await supabase
@@ -300,7 +272,6 @@ export const batchCheckInteractions = async (
         .in('content_id', contentIds);
     }
     
-    // Batch check bookmarks
     let bookmarksQuery;
     if (isQuote) {
       bookmarksQuery = await supabase
@@ -317,12 +288,10 @@ export const batchCheckInteractions = async (
         .in('content_id', contentIds);
     }
     
-    // Initialize all results to false
     contentIds.forEach(id => {
       results[id] = { isLiked: false, isBookmarked: false };
     });
     
-    // Mark liked items
     if (likesQuery.data) {
       likesQuery.data.forEach(item => {
         const id = isQuote ? item.quote_id : item.content_id;
@@ -332,7 +301,6 @@ export const batchCheckInteractions = async (
       });
     }
     
-    // Mark bookmarked items
     if (bookmarksQuery.data) {
       bookmarksQuery.data.forEach(item => {
         const id = isQuote ? item.quote_id : item.content_id;

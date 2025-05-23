@@ -1,7 +1,4 @@
 
-/**
- * Enum for content item types
- */
 export enum ContentItemType {
   Quote = 'quote',
   Forum = 'forum',
@@ -11,28 +8,15 @@ export enum ContentItemType {
   AI = 'ai'
 }
 
-/**
- * Media types for content items
- */
 export type MediaType = 'image' | 'video' | 'youtube' | 'document' | 'text';
-
-/**
- * Content view modes
- */
 export type ContentViewMode = 'grid' | 'list' | 'feed';
 
-/**
- * Author information
- */
 export interface ContentItemAuthor {
   name: string;
   avatar?: string;
   username?: string;
 }
 
-/**
- * Content metrics
- */
 export interface ContentItemMetrics {
   likes?: number;
   comments?: number;
@@ -40,9 +24,6 @@ export interface ContentItemMetrics {
   bookmarks?: number;
 }
 
-/**
- * Props for content item components
- */
 export interface ContentItemProps {
   id: string;
   type: ContentItemType;

@@ -14,10 +14,24 @@ export enum ContentType {
 }
 
 /**
+ * Content item type for components (same as ContentType for consistency)
+ */
+export enum ContentItemType {
+  Quote = 'quote',
+  Forum = 'forum',
+  Media = 'media',
+  Wiki = 'wiki',
+  Knowledge = 'knowledge',
+  AI = 'ai'
+}
+
+/**
  * Map UI content type to database content type
  */
 export const mapUItoDBContentType = (uiType: string): string => {
-  const normalizedType = typeof uiType === 'string' ? uiType.toLowerCase() : '';
+  if (!uiType || typeof uiType !== 'string') return 'all';
+  
+  const normalizedType = uiType.toLowerCase();
   
   switch (normalizedType) {
     case 'all':
@@ -52,7 +66,9 @@ export function isValidContentType(type: string): type is ContentType {
  * Get database table name for a content type
  */
 export function getContentTableName(type: string): string {
-  const normalizedType = String(type).toLowerCase();
+  if (!type || typeof type !== 'string') return 'content';
+  
+  const normalizedType = type.toLowerCase();
   
   switch (normalizedType) {
     case ContentType.Quote.toLowerCase():
@@ -89,7 +105,16 @@ export interface ContentTypeInfo {
  * Get content type information for database operations
  */
 export function getContentTypeInfo(type: string): ContentTypeInfo {
-  const normalizedType = String(type).toLowerCase();
+  if (!type || typeof type !== 'string') {
+    return {
+      contentTable: 'content',
+      likesTable: 'content_likes',
+      bookmarksTable: 'content_bookmarks',
+      likesColumnName: 'likes'
+    };
+  }
+  
+  const normalizedType = type.toLowerCase();
   const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   return {
