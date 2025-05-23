@@ -40,7 +40,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
       const currentPage = reset ? 0 : state.page;
       const offset = currentPage * limit;
       
-      // Fetch quotes
+      // Fetch quotes with proper join
       const { data: quotes, error: quotesError } = await supabase
         .from('quotes')
         .select(`
@@ -54,7 +54,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           bookmarks,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles!quotes_user_id_fkey (
             name,
             username,
             avatar_url
@@ -63,7 +63,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch knowledge entries
+      // Fetch knowledge entries with proper join
       const { data: knowledge, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
@@ -77,7 +77,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           cover_image,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles!knowledge_entries_user_id_fkey (
             name,
             username,
             avatar_url
@@ -86,7 +86,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch media posts
+      // Fetch media posts with proper join
       const { data: media, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
@@ -100,7 +100,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           views,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles!media_posts_user_id_fkey (
             name,
             username,
             avatar_url
@@ -109,7 +109,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch forum posts
+      // Fetch forum posts with proper join
       const { data: forum, error: forumError } = await supabase
         .from('forum_posts')
         .select(`
@@ -122,7 +122,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           views,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles!forum_posts_user_id_fkey (
             name,
             username,
             avatar_url
@@ -131,11 +131,12 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (quotesError || knowledgeError || mediaError || forumError) {
-        throw new Error('Failed to fetch content');
-      }
+      if (quotesError) console.error('Quotes error:', quotesError);
+      if (knowledgeError) console.error('Knowledge error:', knowledgeError);
+      if (mediaError) console.error('Media error:', mediaError);
+      if (forumError) console.error('Forum error:', forumError);
 
-      // Transform data to unified format
+      // Transform data to unified format with null safety
       const unifiedItems: UnifiedContentItem[] = [
         ...(quotes || []).map(quote => ({
           id: quote.id,
@@ -225,6 +226,11 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         isLoading: false
       }));
 
+      // Load user interactions if user is logged in
+      if (user && unifiedItems.length > 0) {
+        await loadUserInteractions(unifiedItems);
+      }
+
     } catch (error) {
       console.error('Error fetching content:', error);
       setState(prev => ({
@@ -233,7 +239,62 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         isLoading: false
       }));
     }
-  }, [state.page, limit]);
+  }, [state.page, limit, user]);
+
+  const loadUserInteractions = useCallback(async (items: UnifiedContentItem[]) => {
+    if (!user) return;
+
+    try {
+      const interactions: Record<string, boolean> = {};
+      
+      // Check likes for each content type
+      for (const item of items) {
+        const stateKey = `${item.type}:${item.id}`;
+        
+        if (item.type === ContentType.Quote) {
+          const { data: likes } = await supabase
+            .from('quote_likes')
+            .select('id')
+            .eq('quote_id', item.id)
+            .eq('user_id', user.id)
+            .single();
+          
+          const { data: bookmarks } = await supabase
+            .from('quote_bookmarks')
+            .select('id')
+            .eq('quote_id', item.id)
+            .eq('user_id', user.id)
+            .single();
+          
+          interactions[`like_${stateKey}`] = !!likes;
+          interactions[`bookmark_${stateKey}`] = !!bookmarks;
+        } else {
+          const { data: likes } = await supabase
+            .from('content_likes')
+            .select('id')
+            .eq('content_id', item.id)
+            .eq('user_id', user.id)
+            .eq('content_type', item.type)
+            .single();
+          
+          const { data: bookmarks } = await supabase
+            .from('content_bookmarks')
+            .select('id')
+            .eq('content_id', item.id)
+            .eq('user_id', user.id)
+            .eq('content_type', item.type)
+            .single();
+          
+          interactions[`like_${stateKey}`] = !!likes;
+          interactions[`bookmark_${stateKey}`] = !!bookmarks;
+        }
+      }
+      
+      setUserInteractions(prev => ({ ...prev, ...interactions }));
+    } catch (error) {
+      console.error('Error loading user interactions:', error);
+    }
+  }, [user]);
 
   const loadMore = useCallback(() => {
     if (!state.isLoading && state.hasMore) {

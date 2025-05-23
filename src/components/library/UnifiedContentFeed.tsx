@@ -24,8 +24,8 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
     setRefreshKey(prev => prev + 1);
   };
 
-  // Map our unified ContentType to the legacy ContentType for the filter
-  const mapToLegacyType = (type: ContentType) => {
+  // Map our unified ContentType to the string values expected by ContentTypeFilter
+  const mapToFilterType = (type: ContentType): string => {
     switch (type) {
       case ContentType.All:
         return 'all';
@@ -34,7 +34,7 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
       case ContentType.Media:
         return 'media';
       case ContentType.Quote:
-        return 'quotes';
+        return 'quote';
       case ContentType.Forum:
         return 'forum';
       case ContentType.Wiki:
@@ -46,7 +46,7 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
     }
   };
 
-  const mapFromLegacyType = (type: string): ContentType => {
+  const mapFromFilterType = (type: string): ContentType => {
     switch (type) {
       case 'all':
         return ContentType.All;
@@ -54,7 +54,7 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
         return ContentType.Knowledge;
       case 'media':
         return ContentType.Media;
-      case 'quotes':
+      case 'quote':
         return ContentType.Quote;
       case 'forum':
         return ContentType.Forum;
@@ -72,8 +72,8 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <ContentTypeFilter
-            activeType={mapToLegacyType(contentType)}
-            onTypeChange={(type) => setContentType(mapFromLegacyType(type))}
+            activeType={mapToFilterType(contentType)}
+            onTypeChange={(type) => setContentType(mapFromFilterType(type))}
           />
           <ViewSwitcher
             activeMode={viewMode}

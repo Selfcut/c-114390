@@ -1,23 +1,24 @@
 
 import React from 'react';
-import { BookOpen, Image, Quote, Brain } from 'lucide-react';
+import { BookOpen, Image, Quote, Brain, Users, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-export type ContentType = 'all' | 'knowledge' | 'media' | 'quotes' | 'ai';
+import { ContentType } from '@/types/unified-content-types';
 
 interface ContentTypeFilterProps {
-  activeType: ContentType;
-  onChange: (type: ContentType) => void;
+  activeType: string;
+  onTypeChange: (type: string) => void;
   className?: string;
 }
 
-export const ContentTypeFilter = ({ activeType, onChange, className }: ContentTypeFilterProps) => {
+export const ContentTypeFilter = ({ activeType, onTypeChange, className }: ContentTypeFilterProps) => {
   const contentTypes = [
     { id: 'all', label: 'All', icon: <BookOpen size={16} /> },
     { id: 'knowledge', label: 'Knowledge', icon: <BookOpen size={16} /> },
     { id: 'media', label: 'Media', icon: <Image size={16} /> },
-    { id: 'quotes', label: 'Quotes', icon: <Quote size={16} /> },
+    { id: 'quote', label: 'Quotes', icon: <Quote size={16} /> },
+    { id: 'forum', label: 'Forum', icon: <Users size={16} /> },
+    { id: 'wiki', label: 'Wiki', icon: <Globe size={16} /> },
     { id: 'ai', label: 'AI Generated', icon: <Brain size={16} /> },
   ];
 
@@ -29,7 +30,7 @@ export const ContentTypeFilter = ({ activeType, onChange, className }: ContentTy
           size="sm"
           variant={activeType === type.id ? "default" : "outline"}
           className="flex items-center gap-1.5"
-          onClick={() => onChange(type.id as ContentType)}
+          onClick={() => onTypeChange(type.id)}
         >
           {type.icon}
           <span>{type.label}</span>
