@@ -132,6 +132,7 @@ const Library = () => {
           <UnifiedContentFeed 
             defaultContentType={activeContentType} 
             defaultViewMode={activeViewMode}
+            onCreateContent={handleCreateContent}
           />
         </div>
         

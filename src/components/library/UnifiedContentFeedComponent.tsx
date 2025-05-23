@@ -1,20 +1,25 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useUnifiedContentFeed } from '@/hooks/useUnifiedContentFeed';
 import { UnifiedContentCard } from './UnifiedContentCard';
+import { ContentLoadingSkeleton } from './ContentLoadingSkeleton';
+import { ContentErrorBoundary } from './ContentErrorBoundary';
+import { ContentEmptyState } from './ContentEmptyState';
 import { ContentType, ContentViewMode } from '@/types/unified-content-types';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface UnifiedContentFeedComponentProps {
   contentType?: ContentType;
   viewMode?: ContentViewMode;
+  onCreateContent?: () => void;
 }
 
 export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentProps> = ({
   contentType = ContentType.All,
-  viewMode = 'list'
+  viewMode = 'list',
+  onCreateContent
 }) => {
   const navigate = useNavigate();
   const {
@@ -30,21 +35,25 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
   } = useUnifiedContentFeed({ contentType });
 
   const handleContentClick = (id: string, type: ContentType) => {
-    switch (type) {
-      case ContentType.Knowledge:
-        navigate(`/knowledge/${id}`);
-        break;
-      case ContentType.Media:
-        navigate(`/media/${id}`);
-        break;
-      case ContentType.Quote:
-        navigate(`/quotes/${id}`);
-        break;
-      case ContentType.Forum:
-        navigate(`/forum/${id}`);
-        break;
-      default:
-        navigate(`/content/${id}`);
+    try {
+      switch (type) {
+        case ContentType.Knowledge:
+          navigate(`/knowledge/${id}`);
+          break;
+        case ContentType.Media:
+          navigate(`/media/${id}`);
+          break;
+        case ContentType.Quote:
+          navigate(`/quotes/${id}`);
+          break;
+        case ContentType.Forum:
+          navigate(`/forum/${id}`);
+          break;
+        default:
+          navigate(`/content/${id}`);
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
     }
   };
 
@@ -53,36 +62,35 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
     ? items 
     : items.filter(item => item.type === contentType);
 
+  // Error state
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Button onClick={refetch} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Try Again
-        </Button>
-      </div>
+      <ContentErrorBoundary
+        error={error}
+        onRetry={refetch}
+        onReset={() => {
+          // Reset to all content types
+          if (contentType !== ContentType.All) {
+            navigate('/library');
+          }
+        }}
+      />
     );
   }
 
+  // Loading state
   if (isLoading && filteredItems.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-        <p>Loading content...</p>
-      </div>
-    );
+    return <ContentLoadingSkeleton viewMode={viewMode} />;
   }
 
+  // Empty state
   if (filteredItems.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 mb-4">No content found</p>
-        <Button onClick={refetch} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+      <ContentEmptyState
+        contentType={contentType}
+        onRefresh={refetch}
+        onCreateContent={onCreateContent}
+      />
     );
   }
 
@@ -100,7 +108,7 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
           
           return (
             <UnifiedContentCard
-              key={item.id}
+              key={`${item.type}-${item.id}`}
               item={item}
               viewMode={viewMode}
               isLiked={isLiked}
@@ -119,6 +127,7 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
             onClick={loadMore} 
             disabled={isLoading}
             variant="outline"
+            className="min-w-32"
           >
             {isLoading ? (
               <>

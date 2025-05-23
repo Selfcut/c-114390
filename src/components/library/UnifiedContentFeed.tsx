@@ -10,11 +10,13 @@ import { RefreshCw } from 'lucide-react';
 interface UnifiedContentFeedProps {
   defaultContentType?: ContentType;
   defaultViewMode?: ContentViewMode;
+  onCreateContent?: () => void;
 }
 
 export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({ 
   defaultContentType = ContentType.All, 
-  defaultViewMode = 'list' 
+  defaultViewMode = 'list',
+  onCreateContent
 }) => {
   const [contentType, setContentType] = useState<ContentType>(defaultContentType);
   const [viewMode, setViewMode] = useState<ContentViewMode>(defaultViewMode);
@@ -89,6 +91,7 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
         key={refreshKey}
         contentType={contentType}
         viewMode={viewMode}
+        onCreateContent={onCreateContent}
       />
     </div>
   );
