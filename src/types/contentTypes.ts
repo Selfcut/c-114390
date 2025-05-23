@@ -51,23 +51,23 @@ export function isValidContentType(type: string): type is ContentType {
 /**
  * Get database table name for a content type
  */
-export function getContentTableName(type: ContentType | string): string {
-  const normalizedType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+export function getContentTableName(type: string): string {
+  const normalizedType = String(type).toLowerCase();
   
   switch (normalizedType) {
-    case ContentType.Quote:
+    case ContentType.Quote.toLowerCase():
       return 'quotes';
-    case ContentType.Forum:
+    case ContentType.Forum.toLowerCase():
       return 'forum_posts';
-    case ContentType.Media:
+    case ContentType.Media.toLowerCase():
       return 'media_posts';
-    case ContentType.Wiki:
+    case ContentType.Wiki.toLowerCase():
       return 'wiki_articles';
-    case ContentType.Knowledge:
+    case ContentType.Knowledge.toLowerCase():
       return 'knowledge_entries';
-    case ContentType.Research:
+    case ContentType.Research.toLowerCase():
       return 'research_papers';
-    case ContentType.AI:
+    case ContentType.AI.toLowerCase():
       return 'ai_content';
     default:
       return 'content';
@@ -88,8 +88,8 @@ export interface ContentTypeInfo {
 /**
  * Get content type information for database operations
  */
-export function getContentTypeInfo(type: ContentType | string): ContentTypeInfo {
-  const normalizedType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+export function getContentTypeInfo(type: string): ContentTypeInfo {
+  const normalizedType = String(type).toLowerCase();
   const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   return {
