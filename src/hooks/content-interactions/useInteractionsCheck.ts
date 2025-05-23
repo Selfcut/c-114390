@@ -96,7 +96,7 @@ export const useInteractionsCheck = (
     }
   };
 
-  // Check interactions for a single content item
+  // Check interactions for a single content item with fixed type issues
   const checkSingleItemInteractions = async (
     itemId: string, 
     contentType: string = 'content'
@@ -107,32 +107,48 @@ export const useInteractionsCheck = (
     
     try {
       const isQuoteType = contentType === 'quote';
-      const idField = isQuoteType ? 'quote_id' : 'content_id';
       const likesTable = isQuoteType ? 'quote_likes' : 'content_likes';
       const bookmarksTable = isQuoteType ? 'quote_bookmarks' : 'content_bookmarks';
+      const idField = isQuoteType ? 'quote_id' : 'content_id';
       
-      // Check likes
-      const { data: likeData, error: likeError } = await supabase
-        .from(likesTable)
-        .select('id')
-        .eq(idField, itemId)
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (likeError) {
-        console.error(`Error checking like status in ${likesTable}:`, likeError);
+      // Check likes using type assertion for table names
+      let likeData = null;
+      if (isQuoteType) {
+        const result = await supabase
+          .from('quote_likes')
+          .select('id')
+          .eq('quote_id', itemId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        likeData = result.data;
+      } else {
+        const result = await supabase
+          .from('content_likes')
+          .select('id')
+          .eq('content_id', itemId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        likeData = result.data;
       }
       
-      // Check bookmarks
-      const { data: bookmarkData, error: bookmarkError } = await supabase
-        .from(bookmarksTable)
-        .select('id')
-        .eq(idField, itemId)
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (bookmarkError) {
-        console.error(`Error checking bookmark status in ${bookmarksTable}:`, bookmarkError);
+      // Check bookmarks using type assertion for table names
+      let bookmarkData = null;
+      if (isQuoteType) {
+        const result = await supabase
+          .from('quote_bookmarks')
+          .select('id')
+          .eq('quote_id', itemId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        bookmarkData = result.data;
+      } else {
+        const result = await supabase
+          .from('content_bookmarks')
+          .select('id')
+          .eq('content_id', itemId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        bookmarkData = result.data;
       }
       
       return {

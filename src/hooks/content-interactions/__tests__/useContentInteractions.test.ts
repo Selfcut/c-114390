@@ -7,6 +7,15 @@ import { useContentInteractions } from '../../../hooks/useContentInteractions';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
+// Explicitly declare jest as a global
+declare global {
+  const jest: any;
+  const describe: any;
+  const beforeEach: any;
+  const test: any;
+  const expect: any;
+}
+
 // Mock Supabase client
 jest.mock('@/integrations/supabase/client', () => ({
   supabase: {
