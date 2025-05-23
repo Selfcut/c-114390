@@ -9,7 +9,8 @@ import {
   checkUserInteractions, 
   toggleLike, 
   toggleBookmark,
-  batchCheckInteractions
+  batchCheckInteractions,
+  UserInteractionStatus
 } from '@/lib/utils/content-db-operations';
 import { useInteractionsState } from './content-interactions/useInteractionsState';
 
@@ -247,8 +248,10 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       
       // Update states based on results
       Object.entries(results).forEach(([id, status]) => {
-        setLikeState(id, type, status.isLiked);
-        setBookmarkState(id, type, status.isBookmarked);
+        // Type assertion to ensure TypeScript knows the shape of 'status'
+        const interactionStatus = status as UserInteractionStatus;
+        setLikeState(id, type, interactionStatus.isLiked);
+        setBookmarkState(id, type, interactionStatus.isBookmarked);
       });
     } catch (error) {
       console.error('Error checking user interactions:', error);
