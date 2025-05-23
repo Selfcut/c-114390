@@ -18,11 +18,15 @@ export const useRealtimeInteractions = (
         { event: '*', schema: 'public', table: 'content_likes', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const { content_id } = payload.new;
-            setUserLikes(prev => ({ ...prev, [content_id]: true }));
+            const { content_id } = payload.new as { content_id: string };
+            if (content_id) {
+              setUserLikes(prev => ({ ...prev, [content_id]: true }));
+            }
           } else if (payload.eventType === 'DELETE') {
-            const { content_id } = payload.old;
-            setUserLikes(prev => ({ ...prev, [content_id]: false }));
+            const { content_id } = payload.old as { content_id: string };
+            if (content_id) {
+              setUserLikes(prev => ({ ...prev, [content_id]: false }));
+            }
           }
         }
       )
@@ -30,11 +34,15 @@ export const useRealtimeInteractions = (
         { event: '*', schema: 'public', table: 'content_bookmarks', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const { content_id } = payload.new;
-            setUserBookmarks(prev => ({ ...prev, [content_id]: true }));
+            const { content_id } = payload.new as { content_id: string };
+            if (content_id) {
+              setUserBookmarks(prev => ({ ...prev, [content_id]: true }));
+            }
           } else if (payload.eventType === 'DELETE') {
-            const { content_id } = payload.old;
-            setUserBookmarks(prev => ({ ...prev, [content_id]: false }));
+            const { content_id } = payload.old as { content_id: string };
+            if (content_id) {
+              setUserBookmarks(prev => ({ ...prev, [content_id]: false }));
+            }
           }
         }
       )
@@ -47,11 +55,15 @@ export const useRealtimeInteractions = (
         { event: '*', schema: 'public', table: 'quote_likes', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const { quote_id } = payload.new;
-            setUserLikes(prev => ({ ...prev, [quote_id]: true }));
+            const { quote_id } = payload.new as { quote_id: string };
+            if (quote_id) {
+              setUserLikes(prev => ({ ...prev, [quote_id]: true }));
+            }
           } else if (payload.eventType === 'DELETE') {
-            const { quote_id } = payload.old;
-            setUserLikes(prev => ({ ...prev, [quote_id]: false }));
+            const { quote_id } = payload.old as { quote_id: string };
+            if (quote_id) {
+              setUserLikes(prev => ({ ...prev, [quote_id]: false }));
+            }
           }
         }
       )
@@ -59,11 +71,15 @@ export const useRealtimeInteractions = (
         { event: '*', schema: 'public', table: 'quote_bookmarks', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const { quote_id } = payload.new;
-            setUserBookmarks(prev => ({ ...prev, [quote_id]: true }));
+            const { quote_id } = payload.new as { quote_id: string };
+            if (quote_id) {
+              setUserBookmarks(prev => ({ ...prev, [quote_id]: true }));
+            }
           } else if (payload.eventType === 'DELETE') {
-            const { quote_id } = payload.old;
-            setUserBookmarks(prev => ({ ...prev, [quote_id]: false }));
+            const { quote_id } = payload.old as { quote_id: string };
+            if (quote_id) {
+              setUserBookmarks(prev => ({ ...prev, [quote_id]: false }));
+            }
           }
         }
       )

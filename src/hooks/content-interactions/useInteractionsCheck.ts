@@ -39,13 +39,13 @@ export const useInteractionsCheck = (
       
       if (contentLikesData) {
         contentLikesData.forEach(item => {
-          allLikes[item.content_id] = true;
+          if (item.content_id) allLikes[item.content_id] = true;
         });
       }
       
       if (quoteLikesData) {
         quoteLikesData.forEach(item => {
-          allLikes[item.quote_id] = true;
+          if (item.quote_id) allLikes[item.quote_id] = true;
         });
       }
       
@@ -79,13 +79,13 @@ export const useInteractionsCheck = (
       
       if (contentBookmarksData) {
         contentBookmarksData.forEach(item => {
-          allBookmarks[item.content_id] = true;
+          if (item.content_id) allBookmarks[item.content_id] = true;
         });
       }
       
       if (quoteBookmarksData) {
         quoteBookmarksData.forEach(item => {
-          allBookmarks[item.quote_id] = true;
+          if (item.quote_id) allBookmarks[item.quote_id] = true;
         });
       }
       
@@ -107,54 +107,61 @@ export const useInteractionsCheck = (
     
     try {
       const isQuoteType = contentType === 'quote';
-      const likesTable = isQuoteType ? 'quote_likes' : 'content_likes';
-      const bookmarksTable = isQuoteType ? 'quote_bookmarks' : 'content_bookmarks';
-      const idField = isQuoteType ? 'quote_id' : 'content_id';
       
-      // Check likes using type assertion for table names
-      let likeData = null;
+      // Check likes
+      let isLiked = false;
+      
       if (isQuoteType) {
-        const result = await supabase
+        // Check quote likes
+        const { data: likeData } = await supabase
           .from('quote_likes')
           .select('id')
           .eq('quote_id', itemId)
           .eq('user_id', userId)
           .maybeSingle();
-        likeData = result.data;
+          
+        isLiked = !!likeData;
       } else {
-        const result = await supabase
+        // Check content likes
+        const { data: likeData } = await supabase
           .from('content_likes')
           .select('id')
           .eq('content_id', itemId)
           .eq('user_id', userId)
           .maybeSingle();
-        likeData = result.data;
+          
+        isLiked = !!likeData;
       }
       
-      // Check bookmarks using type assertion for table names
-      let bookmarkData = null;
+      // Check bookmarks
+      let isBookmarked = false;
+      
       if (isQuoteType) {
-        const result = await supabase
+        // Check quote bookmarks
+        const { data: bookmarkData } = await supabase
           .from('quote_bookmarks')
           .select('id')
           .eq('quote_id', itemId)
           .eq('user_id', userId)
           .maybeSingle();
-        bookmarkData = result.data;
+          
+        isBookmarked = !!bookmarkData;
       } else {
-        const result = await supabase
+        // Check content bookmarks
+        const { data: bookmarkData } = await supabase
           .from('content_bookmarks')
           .select('id')
           .eq('content_id', itemId)
           .eq('user_id', userId)
           .maybeSingle();
-        bookmarkData = result.data;
+          
+        isBookmarked = !!bookmarkData;
       }
       
       return {
         id: itemId,
-        isLiked: !!likeData,
-        isBookmarked: !!bookmarkData
+        isLiked,
+        isBookmarked
       };
     } catch (err) {
       console.error('Error checking item interactions:', err);

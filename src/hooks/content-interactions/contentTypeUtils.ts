@@ -5,22 +5,7 @@ import { ContentItemType } from '@/components/library/content-items/ContentItemT
  * Convert ContentItemType enum to string format used in database
  */
 export const getContentTypeString = (type: ContentItemType): string => {
-  switch (type) {
-    case ContentItemType.Quote:
-      return 'quote';
-    case ContentItemType.Forum:
-      return 'forum';
-    case ContentItemType.Media:
-      return 'media';
-    case ContentItemType.Wiki:
-      return 'wiki';
-    case ContentItemType.Knowledge:
-      return 'knowledge';
-    case ContentItemType.AI:
-      return 'ai';
-    default:
-      return 'unknown';
-  }
+  return type.toString().toLowerCase();
 };
 
 /**

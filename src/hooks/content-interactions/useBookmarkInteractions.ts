@@ -25,46 +25,60 @@ export const useBookmarkInteractions = (
     
     const isBookmarked = userBookmarks[id];
     const contentTypeStr = getContentTypeString(itemType);
+    const isQuoteType = contentTypeStr === 'quote';
     
     try {
       if (isBookmarked) {
         // Remove bookmark
-        await supabase
-          .from('content_bookmarks')
-          .delete()
-          .eq('user_id', userId)
-          .eq('content_id', id);
-          
-        setUserBookmarks(prev => ({...prev, [id]: false}));
-        
-        // Update counter if it's a quote with consistent function name
-        if (contentTypeStr === 'quote') {
+        if (isQuoteType) {
+          await supabase
+            .from('quote_bookmarks')
+            .delete()
+            .eq('user_id', userId)
+            .eq('quote_id', id);
+            
+          // Update counter if it's a quote
           await supabase.rpc('decrement_counter_fn', {
             row_id: id,
             column_name: 'bookmarks',
             table_name: 'quotes'
           });
+        } else {
+          await supabase
+            .from('content_bookmarks')
+            .delete()
+            .eq('user_id', userId)
+            .eq('content_id', id);
         }
+          
+        setUserBookmarks(prev => ({...prev, [id]: false}));
       } else {
         // Add bookmark
-        await supabase
-          .from('content_bookmarks')
-          .insert({
-            user_id: userId,
-            content_id: id,
-            content_type: contentTypeStr
-          });
-          
-        setUserBookmarks(prev => ({...prev, [id]: true}));
-        
-        // Update counter if it's a quote with consistent function name
-        if (contentTypeStr === 'quote') {
+        if (isQuoteType) {
+          await supabase
+            .from('quote_bookmarks')
+            .insert({
+              user_id: userId,
+              quote_id: id
+            });
+            
+          // Update counter if it's a quote
           await supabase.rpc('increment_counter_fn', {
             row_id: id,
             column_name: 'bookmarks', 
             table_name: 'quotes'
           });
+        } else {
+          await supabase
+            .from('content_bookmarks')
+            .insert({
+              user_id: userId,
+              content_id: id,
+              content_type: contentTypeStr
+            });
         }
+          
+        setUserBookmarks(prev => ({...prev, [id]: true}));
       }
       
       return {

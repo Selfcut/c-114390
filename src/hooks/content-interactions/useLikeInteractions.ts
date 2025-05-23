@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ContentInteractionResult } from './types';
@@ -26,48 +25,80 @@ export const useLikeInteractions = (
     
     const isLiked = userLikes[id];
     const contentTypeStr = getContentTypeString(itemType);
+    const isQuoteType = contentTypeStr === 'quote';
     
     try {
       if (isLiked) {
         // Unlike
-        await supabase
-          .from('content_likes')
-          .delete()
-          .eq('user_id', userId)
-          .eq('content_id', id);
+        if (isQuoteType) {
+          await supabase
+            .from('quote_likes')
+            .delete()
+            .eq('user_id', userId)
+            .eq('quote_id', id);
+            
+          // Update counter in quotes table
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: id,
+            column_name: 'likes',
+            table_name: 'quotes'
+          });
+        } else {
+          await supabase
+            .from('content_likes')
+            .delete()
+            .eq('user_id', userId)
+            .eq('content_id', id);
+            
+          // Update counter in the appropriate table
+          const tableName = getContentTable(contentTypeStr);
+          const columnName = contentTypeStr === 'forum' ? 'upvotes' : 'likes';
+            
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: id,
+            column_name: columnName,
+            table_name: tableName
+          });
+        }
           
         setUserLikes(prev => ({...prev, [id]: false}));
-        
-        // Update counter in the appropriate table with consistent function name
-        const tableName = getContentTable(contentTypeStr);
-            
-        // Update the likes count using consistent RPC function name
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: id,
-          column_name: 'likes',
-          table_name: tableName
-        });
       } else {
         // Like
-        await supabase
-          .from('content_likes')
-          .insert({
-            user_id: userId,
-            content_id: id,
-            content_type: contentTypeStr
+        if (isQuoteType) {
+          await supabase
+            .from('quote_likes')
+            .insert({
+              user_id: userId,
+              quote_id: id
+            });
+            
+          // Update counter in quotes table
+          await supabase.rpc('increment_counter_fn', {
+            row_id: id,
+            column_name: 'likes',
+            table_name: 'quotes'
           });
+        } else {
+          await supabase
+            .from('content_likes')
+            .insert({
+              user_id: userId,
+              content_id: id,
+              content_type: contentTypeStr
+            });
+            
+          // Update counter in the appropriate table
+          const tableName = getContentTable(contentTypeStr);
+          const columnName = contentTypeStr === 'forum' ? 'upvotes' : 'likes';
+            
+          await supabase.rpc('increment_counter_fn', {
+            row_id: id,
+            column_name: columnName,
+            table_name: tableName
+          });
+        }
           
         setUserLikes(prev => ({...prev, [id]: true}));
-        
-        // Update counter in the appropriate table with consistent function name
-        const tableName = getContentTable(contentTypeStr);
-            
-        // Update the likes count using consistent RPC function name
-        await supabase.rpc('increment_counter_fn', {
-          row_id: id,
-          column_name: 'likes',
-          table_name: tableName
-        });
       }
       
       return {
