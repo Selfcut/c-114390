@@ -1,137 +1,161 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContentType, getContentTypeInfo } from '@/types/contentTypes';
+import { ContentType } from '@/types/unified-content-types';
+import { getContentTableInfo } from '@/types/contentTypes';
 
-export const toggleUserInteraction = async (
-  type: 'like' | 'bookmark',
+export async function toggleUserInteraction(
+  interactionType: 'like' | 'bookmark',
   userId: string,
   contentId: string,
-  contentType: ContentType | string
-): Promise<boolean> => {
-  const normalizedType = typeof contentType === 'string' ? contentType as ContentType : contentType;
-  const typeInfo = getContentTypeInfo(normalizedType);
-  const isLike = type === 'like';
-  
-  try {
-    // Check if interaction exists
-    let checkData;
-    let checkError;
-    
-    if (normalizedType === ContentType.Quote) {
-      const tableName = isLike ? 'quote_likes' : 'quote_bookmarks';
-      const { data, error } = await supabase
-        .from(tableName as any)
-        .select('id')
-        .eq('quote_id', contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
-      checkData = data;
-      checkError = error;
-    } else if (normalizedType === ContentType.Media && isLike) {
-      const { data, error } = await supabase
-        .from('media_likes')
-        .select('id')
-        .eq('post_id', contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
-      checkData = data;
-      checkError = error;
-    } else {
-      // Use content_likes or content_bookmarks with content_type
-      const tableName = isLike ? 'content_likes' : 'content_bookmarks';
-      const { data, error } = await supabase
-        .from(tableName as any)
-        .select('id')
-        .eq('content_id', contentId)
-        .eq('user_id', userId)
-        .eq('content_type', normalizedType)
-        .maybeSingle();
-      checkData = data;
-      checkError = error;
-    }
-    
-    if (checkError) throw checkError;
+  contentType: ContentType
+): Promise<boolean> {
+  if (!userId || !contentId) {
+    throw new Error('User ID and content ID are required');
+  }
 
-    if (checkData) {
-      // Remove interaction
-      if (normalizedType === ContentType.Quote) {
-        const tableName = isLike ? 'quote_likes' : 'quote_bookmarks';
-        const { error } = await supabase
-          .from(tableName as any)
-          .delete()
-          .eq(typeInfo.contentIdField, contentId)
-          .eq('user_id', userId);
-        if (error) throw error;
-      } else if (normalizedType === ContentType.Media && isLike) {
-        const { error } = await supabase
-          .from('media_likes')
-          .delete()
-          .eq('post_id', contentId)
-          .eq('user_id', userId);
-        if (error) throw error;
+  try {
+    const tableInfo = getContentTableInfo(contentType);
+    const isQuote = contentType === 'quote';
+    
+    if (interactionType === 'like') {
+      // Handle likes
+      let existingLikeQuery;
+      if (isQuote) {
+        existingLikeQuery = await supabase
+          .from('quote_likes')
+          .select('id')
+          .eq('quote_id', contentId)
+          .eq('user_id', userId)
+          .maybeSingle();
       } else {
-        const tableName = isLike ? 'content_likes' : 'content_bookmarks';
-        const { error } = await supabase
-          .from(tableName as any)
-          .delete()
+        existingLikeQuery = await supabase
+          .from('content_likes')
+          .select('id')
           .eq('content_id', contentId)
           .eq('user_id', userId)
-          .eq('content_type', normalizedType);
-        if (error) throw error;
+          .eq('content_type', contentType)
+          .maybeSingle();
       }
       
-      // Decrement counter
-      const columnName = isLike ? typeInfo.likesColumnName : typeInfo.bookmarksColumnName;
-      if (columnName) {
+      const isLiked = !!existingLikeQuery.data;
+      
+      if (isLiked) {
+        // Remove like
+        if (isQuote) {
+          await supabase
+            .from('quote_likes')
+            .delete()
+            .eq('quote_id', contentId)
+            .eq('user_id', userId);
+        } else {
+          await supabase
+            .from('content_likes')
+            .delete()
+            .eq('content_id', contentId)
+            .eq('user_id', userId)
+            .eq('content_type', contentType);
+        }
+        
+        // Decrement counter
         await supabase.rpc('decrement_counter_fn', {
           row_id: contentId,
-          column_name: columnName,
-          table_name: typeInfo.contentTable
+          column_name: tableInfo.likesColumnName,
+          table_name: tableInfo.contentTable
         });
-      }
-      
-      return false;
-    } else {
-      // Add interaction
-      const insertPayload: any = { user_id: userId };
-      
-      if (normalizedType === ContentType.Quote) {
-        insertPayload.quote_id = contentId;
-        const tableName = isLike ? 'quote_likes' : 'quote_bookmarks';
-        const { error } = await supabase
-          .from(tableName as any)
-          .insert(insertPayload);
-        if (error) throw error;
-      } else if (normalizedType === ContentType.Media && isLike) {
-        insertPayload.post_id = contentId;
-        const { error } = await supabase
-          .from('media_likes')
-          .insert(insertPayload);
-        if (error) throw error;
+        
+        return false;
       } else {
-        insertPayload.content_id = contentId;
-        insertPayload.content_type = normalizedType;
-        const tableName = isLike ? 'content_likes' : 'content_bookmarks';
-        const { error } = await supabase
-          .from(tableName as any)
-          .insert(insertPayload);
-        if (error) throw error;
-      }
-      
-      // Increment counter
-      const columnName = isLike ? typeInfo.likesColumnName : typeInfo.bookmarksColumnName;
-      if (columnName) {
+        // Add like
+        if (isQuote) {
+          await supabase
+            .from('quote_likes')
+            .insert({
+              quote_id: contentId,
+              user_id: userId
+            });
+        } else {
+          await supabase
+            .from('content_likes')
+            .insert({
+              content_id: contentId,
+              user_id: userId,
+              content_type: contentType
+            });
+        }
+        
+        // Increment counter
         await supabase.rpc('increment_counter_fn', {
           row_id: contentId,
-          column_name: columnName,
-          table_name: typeInfo.contentTable
+          column_name: tableInfo.likesColumnName,
+          table_name: tableInfo.contentTable
         });
+        
+        return true;
+      }
+    } else {
+      // Handle bookmarks
+      let existingBookmarkQuery;
+      if (isQuote) {
+        existingBookmarkQuery = await supabase
+          .from('quote_bookmarks')
+          .select('id')
+          .eq('quote_id', contentId)
+          .eq('user_id', userId)
+          .maybeSingle();
+      } else {
+        existingBookmarkQuery = await supabase
+          .from('content_bookmarks')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', userId)
+          .eq('content_type', contentType)
+          .maybeSingle();
       }
       
-      return true;
+      const isBookmarked = !!existingBookmarkQuery.data;
+      
+      if (isBookmarked) {
+        // Remove bookmark
+        if (isQuote) {
+          await supabase
+            .from('quote_bookmarks')
+            .delete()
+            .eq('quote_id', contentId)
+            .eq('user_id', userId);
+        } else {
+          await supabase
+            .from('content_bookmarks')
+            .delete()
+            .eq('content_id', contentId)
+            .eq('user_id', userId)
+            .eq('content_type', contentType);
+        }
+        
+        return false;
+      } else {
+        // Add bookmark
+        if (isQuote) {
+          await supabase
+            .from('quote_bookmarks')
+            .insert({
+              quote_id: contentId,
+              user_id: userId
+            });
+        } else {
+          await supabase
+            .from('content_bookmarks')
+            .insert({
+              content_id: contentId,
+              user_id: userId,
+              content_type: contentType
+            });
+        }
+        
+        return true;
+      }
     }
   } catch (error) {
-    console.error(`Error toggling ${type}:`, error);
+    console.error(`Error toggling ${interactionType}:`, error);
     throw error;
   }
-};
+}

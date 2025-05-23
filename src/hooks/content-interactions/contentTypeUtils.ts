@@ -1,12 +1,11 @@
 
 import { ContentType } from '@/types/contentTypes';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 /**
  * Normalize content type to use with database operations
  * This ensures consistent representation regardless of the source enum
  */
-export function normalizeContentType(type: string | ContentType | ContentItemType): string {
+export function normalizeContentType(type: string | ContentType): string {
   // Handle various types of input
   let normalizedType: string;
   
@@ -20,19 +19,19 @@ export function normalizeContentType(type: string | ContentType | ContentItemTyp
   switch (normalizedType) {
     case 'quotes':
     case 'quote':
-      return ContentType.Quote;
+      return 'quote';
     case 'media':
-      return ContentType.Media;
+      return 'media';
     case 'knowledge':
-      return ContentType.Knowledge;
+      return 'knowledge';
     case 'wiki':
-      return ContentType.Wiki;
+      return 'wiki';
     case 'forum':
-      return ContentType.Forum;
+      return 'forum';
     case 'research':
-      return ContentType.Research;
+      return 'research';
     case 'ai':
-      return ContentType.AI;
+      return 'ai';
     default:
       console.warn(`Unknown content type: ${normalizedType}, using as-is`);
       return normalizedType;
@@ -42,7 +41,7 @@ export function normalizeContentType(type: string | ContentType | ContentItemTyp
 /**
  * Get a consistent state key for content interactions
  */
-export function getContentStateKey(id: string, type: string | ContentType | ContentItemType): string {
+export function getContentStateKey(id: string, type: string | ContentType): string {
   const normalizedType = normalizeContentType(type);
   return `${normalizedType}:${id}`;
 }
@@ -51,6 +50,6 @@ export function getContentStateKey(id: string, type: string | ContentType | Cont
  * Create a consistent content key format for state tracking
  * Alias of getContentStateKey for backward compatibility
  */
-export function getContentKey(id: string, type: string | ContentType | ContentItemType): string {
+export function getContentKey(id: string, type: string | ContentType): string {
   return getContentStateKey(id, type);
 }

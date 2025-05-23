@@ -108,9 +108,9 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
               item={item}
               userLikes={userLikes}
               userBookmarks={userBookmarks}
-              onLike={handleLikeWithAuth}
-              onBookmark={handleBookmarkWithAuth}
-              onClick={handleItemClick}
+              onLike={(id: string) => handleLikeWithAuth(id, item.type)}
+              onBookmark={(id: string) => handleBookmarkWithAuth(id, item.type)}
+              onClick={(id: string) => handleItemClick(id, item.type)}
               viewMode={viewMode}
             />
           ))

@@ -5,7 +5,6 @@ import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserInteraction } from '@/contexts/UserInteractionContext';
 import { useAuth } from '@/lib/auth';
-import { ContentType } from '@/types/contentTypes';
 import { getContentKey } from '@/hooks/content-interactions/contentTypeUtils';
 
 interface PostFooterProps {
@@ -35,7 +34,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
   } = useUserInteraction();
 
   // Use consistent content key generation
-  const contentKey = getContentKey(post.id, ContentType.Forum);
+  const contentKey = getContentKey(post.id, 'forum');
   const isLiked = likedItems[contentKey] || false;
   const isBookmarked = bookmarkedItems[contentKey] || false;
 
@@ -53,7 +52,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     if (onUpvote) {
       await onUpvote();
     } else if (isAuthenticated && user?.id) {
-      await likeContent(post.id, ContentType.Forum);
+      await likeContent(post.id, 'forum');
     }
   };
 
@@ -69,7 +68,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     }
 
     if (user?.id) {
-      await bookmarkContent(post.id, ContentType.Forum);
+      await bookmarkContent(post.id, 'forum');
     }
   };
 
