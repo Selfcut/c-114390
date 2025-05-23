@@ -24,6 +24,9 @@ export const batchCheckInteractions = async (
   }
   
   try {
+    // Import the function we need to use
+    const { checkUserInteractions } = await import('./content-operations');
+    
     // Create a result object to store all interaction statuses
     const results: Record<string, UserInteractionStatus> = {};
     
