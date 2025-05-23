@@ -2,11 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Increment a counter for a specific row in a table
+ * Increment a counter in a database table
  */
 export const incrementCounter = async (
-  rowId: string, 
-  columnName: string, 
+  rowId: string,
+  columnName: string,
   tableName: string
 ): Promise<void> => {
   try {
@@ -21,11 +21,11 @@ export const incrementCounter = async (
 };
 
 /**
- * Decrement a counter for a specific row in a table
+ * Decrement a counter in a database table
  */
 export const decrementCounter = async (
-  rowId: string, 
-  columnName: string, 
+  rowId: string,
+  columnName: string,
   tableName: string
 ): Promise<void> => {
   try {

@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentType } from '@/types/contentTypes';
@@ -58,7 +59,10 @@ export interface UserInteractions {
   // State
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
-  loadingStates: Record<string, ContentLoadingState>;
+  loadingStates: {
+    likeLoadingStates: Record<string, boolean>;
+    bookmarkLoadingStates: Record<string, boolean>;
+  };
   
   // Methods
   handleLike: (id: string, itemType: string | ContentType | ContentItemType) => Promise<ContentInteractionResult>;

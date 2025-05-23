@@ -15,7 +15,7 @@ export const useInteractionsState = () => {
    * Generate a consistent state key for content
    */
   const getStateKey = useCallback((id: string, type: string | ContentType): string => {
-    const contentType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+    const contentType = typeof type === 'string' ? type.toLowerCase() : type.toString().toLowerCase();
     return `${contentType}:${id}`;
   }, []);
 
@@ -95,6 +95,7 @@ export const useInteractionsState = () => {
   return {
     likedItems,
     bookmarkedItems,
+    loadingStates: { likeLoadingStates, bookmarkLoadingStates },
     getStateKey,
     isItemLiked,
     isItemBookmarked,

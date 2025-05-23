@@ -1,5 +1,6 @@
 
-import { ContentType, ContentItemType } from '@/types/contentTypes';
+import { ContentType } from '@/types/contentTypes';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 /**
  * Normalizes content type from any representation to a standard string format

@@ -17,7 +17,9 @@ export enum ContentType {
  * Map UI content type to database content type
  */
 export const mapUItoDBContentType = (uiType: string): string => {
-  switch (uiType.toLowerCase()) {
+  const normalizedType = typeof uiType === 'string' ? uiType.toLowerCase() : '';
+  
+  switch (normalizedType) {
     case 'all':
       return 'all';
     case 'quotes':
@@ -35,7 +37,7 @@ export const mapUItoDBContentType = (uiType: string): string => {
     case 'research':
       return 'research';
     default:
-      return uiType.toLowerCase();
+      return normalizedType;
   }
 };
 
@@ -50,9 +52,9 @@ export function isValidContentType(type: string): type is ContentType {
  * Get database table name for a content type
  */
 export function getContentTableName(type: ContentType | string): string {
-  const contentType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+  const normalizedType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
   
-  switch (contentType) {
+  switch (normalizedType) {
     case ContentType.Quote:
       return 'quotes';
     case ContentType.Forum:
@@ -70,4 +72,31 @@ export function getContentTableName(type: ContentType | string): string {
     default:
       return 'content';
   }
+}
+
+/**
+ * Content table information interface
+ */
+export interface ContentTypeInfo {
+  contentTable: string;
+  likesTable: string;
+  bookmarksTable: string;
+  likesColumnName: string;
+  bookmarksColumnName?: string;
+}
+
+/**
+ * Get content type information for database operations
+ */
+export function getContentTypeInfo(type: ContentType | string): ContentTypeInfo {
+  const normalizedType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+  
+  return {
+    contentTable: getContentTableName(normalizedType),
+    likesTable: isQuote ? 'quote_likes' : 'content_likes',
+    bookmarksTable: isQuote ? 'quote_bookmarks' : 'content_bookmarks',
+    likesColumnName: normalizedType === ContentType.Forum.toLowerCase() ? 'upvotes' : 'likes',
+    bookmarksColumnName: 'bookmarks'
+  };
 }

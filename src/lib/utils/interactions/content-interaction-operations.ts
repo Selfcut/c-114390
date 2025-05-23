@@ -8,7 +8,8 @@ import {
   removeGeneralContentBookmark 
 } from './general-content-interactions';
 import { normalizeContentType } from '@/hooks/content-interactions/contentTypeUtils';
-import { ContentType, ContentItemType } from '@/types/contentTypes';
+import { ContentType } from '@/types/contentTypes';
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 /**
  * Check if a user has liked or bookmarked a piece of content
@@ -19,7 +20,7 @@ export const checkContentInteractions = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<{ isLiked: boolean, isBookmarked: boolean }> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote;
+  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   if (isQuote) {
     return await checkQuoteInteractions(userId, contentId);
@@ -37,7 +38,7 @@ export const addContentLike = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote;
+  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   if (isQuote) {
     return await addQuoteLike(userId, contentId);
@@ -55,7 +56,7 @@ export const removeContentLike = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote;
+  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   if (isQuote) {
     return await removeQuoteLike(userId, contentId);
@@ -73,7 +74,7 @@ export const addContentBookmark = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote;
+  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   if (isQuote) {
     return await addQuoteBookmark(userId, contentId);
@@ -91,7 +92,7 @@ export const removeContentBookmark = async (
   contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
   const normalizedType = normalizeContentType(contentType);
-  const isQuote = normalizedType === ContentType.Quote;
+  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
   
   if (isQuote) {
     return await removeQuoteBookmark(userId, contentId);
