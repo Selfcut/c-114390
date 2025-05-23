@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentType } from '@/types/contentTypes';
@@ -248,7 +247,6 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
       
       // Update states based on results
       Object.entries(results).forEach(([id, status]) => {
-        // Type assertion to ensure TypeScript knows the shape of 'status'
         const interactionStatus = status as UserInteractionStatus;
         setLikeState(id, type, interactionStatus.isLiked);
         setBookmarkState(id, type, interactionStatus.isBookmarked);

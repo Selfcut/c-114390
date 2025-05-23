@@ -1,7 +1,7 @@
 
 // Re-export simplified operations
 export {
-  checkUserInteractions as checkUserInteractions,
+  checkUserInteractions,
   toggleLike,
   toggleBookmark,
   normalizeContentType
@@ -13,12 +13,46 @@ export interface UserInteractionStatus {
   isBookmarked: boolean;
 }
 
-// Legacy compatibility exports
+// Implement proper batch check for interactions
 export const batchCheckInteractions = async (
   userId: string,
   contentIds: string[],
   contentType: string
 ): Promise<Record<string, UserInteractionStatus>> => {
-  // Implementation would go here if needed
-  return {};
+  if (!userId || !contentIds.length) {
+    return {};
+  }
+  
+  try {
+    // Create a result object to store all interaction statuses
+    const results: Record<string, UserInteractionStatus> = {};
+    
+    // Process in smaller batches for better performance
+    const batchSize = 20;
+    const batches = [];
+    
+    // Split content IDs into batches
+    for (let i = 0; i < contentIds.length; i += batchSize) {
+      batches.push(contentIds.slice(i, i + batchSize));
+    }
+    
+    // Process each batch
+    for (const batch of batches) {
+      const batchPromises = batch.map(contentId => 
+        checkUserInteractions(userId, contentId, contentType)
+      );
+      
+      const batchResults = await Promise.all(batchPromises);
+      
+      // Store results with content ID as key
+      batch.forEach((contentId, index) => {
+        results[contentId] = batchResults[index];
+      });
+    }
+    
+    return results;
+  } catch (error) {
+    console.error('Error in batch checking interactions:', error);
+    return {};
+  }
 };
