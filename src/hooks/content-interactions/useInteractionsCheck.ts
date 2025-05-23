@@ -46,12 +46,14 @@ export const useInteractionsCheck = (
     batchIds: string[], 
     results: Record<string, boolean>
   ): Promise<void> => {
+    if (!userId) return;
+    
     try {
       // Check content_likes table
       const { data: contentLikes, error: contentError } = await supabase
         .from('content_likes')
         .select('content_id')
-        .eq('user_id', userId!)
+        .eq('user_id', userId)
         .in('content_id', batchIds);
       
       // Record content likes
@@ -59,13 +61,15 @@ export const useInteractionsCheck = (
         contentLikes.forEach(item => {
           if (item.content_id) results[item.content_id] = true;
         });
+      } else if (contentError) {
+        console.error('Error checking content likes:', contentError);
       }
       
       // Check quote_likes table
       const { data: quoteLikes, error: quoteError } = await supabase
         .from('quote_likes')
         .select('quote_id')
-        .eq('user_id', userId!)
+        .eq('user_id', userId)
         .in('quote_id', batchIds);
       
       // Record quote likes
@@ -73,6 +77,8 @@ export const useInteractionsCheck = (
         quoteLikes.forEach(item => {
           if (item.quote_id) results[item.quote_id] = true;
         });
+      } else if (quoteError) {
+        console.error('Error checking quote likes:', quoteError);
       }
     } catch (error) {
       console.error('Error checking batch likes:', error);
@@ -84,12 +90,14 @@ export const useInteractionsCheck = (
     batchIds: string[],
     results: Record<string, boolean>
   ): Promise<void> => {
+    if (!userId) return;
+    
     try {
       // Check content_bookmarks table
       const { data: contentBookmarks, error: contentError } = await supabase
         .from('content_bookmarks')
         .select('content_id')
-        .eq('user_id', userId!)
+        .eq('user_id', userId)
         .in('content_id', batchIds);
       
       // Record content bookmarks
@@ -97,13 +105,15 @@ export const useInteractionsCheck = (
         contentBookmarks.forEach(item => {
           if (item.content_id) results[item.content_id] = true;
         });
+      } else if (contentError) {
+        console.error('Error checking content bookmarks:', contentError);
       }
       
       // Check quote_bookmarks table
       const { data: quoteBookmarks, error: quoteError } = await supabase
         .from('quote_bookmarks')
         .select('quote_id')
-        .eq('user_id', userId!)
+        .eq('user_id', userId)
         .in('quote_id', batchIds);
       
       // Record quote bookmarks
@@ -111,6 +121,8 @@ export const useInteractionsCheck = (
         quoteBookmarks.forEach(item => {
           if (item.quote_id) results[item.quote_id] = true;
         });
+      } else if (quoteError) {
+        console.error('Error checking quote bookmarks:', quoteError);
       }
     } catch (error) {
       console.error('Error checking batch bookmarks:', error);

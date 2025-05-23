@@ -31,11 +31,13 @@ export const useBookmarkInteractions = (
       if (isBookmarked) {
         // Remove bookmark
         if (contentTypeStr === 'quote') {
-          await supabase
+          const { error } = await supabase
             .from('quote_bookmarks')
             .delete()
             .eq('user_id', userId)
             .eq('quote_id', id);
+            
+          if (error) throw error;
             
           // Only update bookmarks counter for quotes - other content types don't track this
           if (typeInfo.bookmarksColumnName) {
@@ -46,24 +48,28 @@ export const useBookmarkInteractions = (
             });
           }
         } else {
-          await supabase
+          const { error } = await supabase
             .from('content_bookmarks')
             .delete()
             .eq('user_id', userId)
             .eq('content_id', id)
             .eq('content_type', contentTypeStr);
+            
+          if (error) throw error;
         }
           
         setUserBookmarks(prev => ({...prev, [id]: false}));
       } else {
         // Add bookmark
         if (contentTypeStr === 'quote') {
-          await supabase
+          const { error } = await supabase
             .from('quote_bookmarks')
             .insert({
               user_id: userId,
               quote_id: id
             });
+            
+          if (error) throw error;
             
           // Only update bookmarks counter for quotes - other content types don't track this
           if (typeInfo.bookmarksColumnName) {
@@ -74,13 +80,15 @@ export const useBookmarkInteractions = (
             });
           }
         } else {
-          await supabase
+          const { error } = await supabase
             .from('content_bookmarks')
             .insert({
               user_id: userId,
               content_id: id,
               content_type: contentTypeStr
             });
+            
+          if (error) throw error;
         }
           
         setUserBookmarks(prev => ({...prev, [id]: true}));
