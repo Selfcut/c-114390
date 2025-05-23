@@ -3,19 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeContentType, getContentTableInfo } from './content-type-utils';
 import { ContentType } from '@/types/contentTypes';
 
-// Define literal string types for table names to avoid type recursion
-type QuoteLikesTable = 'quote_likes';
-type ContentLikesTable = 'content_likes';
-type QuoteBookmarksTable = 'quote_bookmarks';
-type ContentBookmarksTable = 'content_bookmarks';
+// Use literal string constants to prevent type recursion
+const QUOTE_LIKES_TABLE = 'quote_likes';
+const CONTENT_LIKES_TABLE = 'content_likes';
+const QUOTE_BOOKMARKS_TABLE = 'quote_bookmarks';
+const CONTENT_BOOKMARKS_TABLE = 'content_bookmarks';
 
-// Define constants for table names
-const QUOTE_LIKES_TABLE = 'quote_likes' as QuoteLikesTable;
-const CONTENT_LIKES_TABLE = 'content_likes' as ContentLikesTable;
-const QUOTE_BOOKMARKS_TABLE = 'quote_bookmarks' as QuoteBookmarksTable;
-const CONTENT_BOOKMARKS_TABLE = 'content_bookmarks' as ContentBookmarksTable;
-
-// Define strongly typed interfaces for database operations
+// Define explicit interfaces for database operations
 interface QuoteLikePayload {
   quote_id: string;
   user_id: string;
@@ -69,12 +63,10 @@ export const checkUserInteractions = async (
   try {
     const normalizedType = normalizeContentType(contentType);
     const { contentIdField } = getContentTableInfo(normalizedType);
-    let likeData = null;
-    let bookmarkData = null;
     
-    // Check if user has liked the content
+    // Separate code paths for quote vs other content types
     if (normalizedType === 'quote') {
-      // Handle quote interactions
+      // Handle quote interactions - using explicit literal strings
       const { data: likeResult, error: likeError } = await supabase
         .from(QUOTE_LIKES_TABLE)
         .select('id')
@@ -83,7 +75,6 @@ export const checkUserInteractions = async (
         .maybeSingle();
         
       if (likeError) throw likeError;
-      likeData = likeResult;
       
       const { data: bookmarkResult, error: bookmarkError } = await supabase
         .from(QUOTE_BOOKMARKS_TABLE)
@@ -93,9 +84,13 @@ export const checkUserInteractions = async (
         .maybeSingle();
         
       if (bookmarkError) throw bookmarkError;
-      bookmarkData = bookmarkResult;
+      
+      return {
+        isLiked: !!likeResult,
+        isBookmarked: !!bookmarkResult
+      };
     } else {
-      // Handle other content types
+      // Handle other content types - using explicit literal strings
       const { data: likeResult, error: likeError } = await supabase
         .from(CONTENT_LIKES_TABLE)
         .select('id')
@@ -105,7 +100,6 @@ export const checkUserInteractions = async (
         .maybeSingle();
         
       if (likeError) throw likeError;
-      likeData = likeResult;
       
       const { data: bookmarkResult, error: bookmarkError } = await supabase
         .from(CONTENT_BOOKMARKS_TABLE)
@@ -116,13 +110,12 @@ export const checkUserInteractions = async (
         .maybeSingle();
         
       if (bookmarkError) throw bookmarkError;
-      bookmarkData = bookmarkResult;
+      
+      return {
+        isLiked: !!likeResult,
+        isBookmarked: !!bookmarkResult
+      };
     }
-    
-    return {
-      isLiked: !!likeData,
-      isBookmarked: !!bookmarkData
-    };
   } catch (error) {
     console.error('Error checking user interactions:', error);
     return { isLiked: false, isBookmarked: false };
@@ -146,11 +139,9 @@ export const toggleLike = async (
       likesColumnName 
     } = getContentTableInfo(normalizedType);
     
-    // Check if the user has already liked this content
-    let existingLike = null;
-    
+    // Separate code paths for quotes vs other content
     if (normalizedType === 'quote') {
-      // Handle quote likes
+      // Check if the user has already liked this quote
       const { data, error: checkError } = await supabase
         .from(QUOTE_LIKES_TABLE)
         .select('id')
@@ -159,14 +150,13 @@ export const toggleLike = async (
         .maybeSingle();
         
       if (checkError) throw checkError;
-      existingLike = data;
       
       // If like exists, remove it
-      if (existingLike && 'id' in existingLike) {
+      if (data && 'id' in data) {
         const { error: deleteError } = await supabase
           .from(QUOTE_LIKES_TABLE)
           .delete()
-          .eq('id', existingLike.id);
+          .eq('id', data.id);
           
         if (deleteError) throw deleteError;
         
@@ -179,7 +169,7 @@ export const toggleLike = async (
         
         return false; // No longer liked
       } else {
-        // Insert new like
+        // Insert new like with explicit payload type
         const payload: QuoteLikePayload = {
           user_id: userId,
           quote_id: contentId
@@ -211,14 +201,13 @@ export const toggleLike = async (
         .maybeSingle();
         
       if (checkError) throw checkError;
-      existingLike = data;
       
       // If like exists, remove it
-      if (existingLike && 'id' in existingLike) {
+      if (data && 'id' in data) {
         const { error: deleteError } = await supabase
           .from(CONTENT_LIKES_TABLE)
           .delete()
-          .eq('id', existingLike.id);
+          .eq('id', data.id);
           
         if (deleteError) throw deleteError;
         
@@ -231,7 +220,7 @@ export const toggleLike = async (
         
         return false; // No longer liked
       } else {
-        // Insert new like
+        // Insert new like with explicit payload type
         const payload: ContentLikePayload = {
           user_id: userId,
           content_id: contentId,
@@ -277,11 +266,9 @@ export const toggleBookmark = async (
       bookmarksColumnName 
     } = getContentTableInfo(normalizedType);
     
-    // Check if the user has already bookmarked this content
-    let existingBookmark = null;
-    
+    // Separate code paths for quotes vs other content
     if (normalizedType === 'quote') {
-      // Handle quote bookmarks
+      // Check if the user has already bookmarked this quote
       const { data, error: checkError } = await supabase
         .from(QUOTE_BOOKMARKS_TABLE)
         .select('id')
@@ -290,14 +277,13 @@ export const toggleBookmark = async (
         .maybeSingle();
         
       if (checkError) throw checkError;
-      existingBookmark = data;
       
       // If bookmark exists, remove it
-      if (existingBookmark && 'id' in existingBookmark) {
+      if (data && 'id' in data) {
         const { error: deleteError } = await supabase
           .from(QUOTE_BOOKMARKS_TABLE)
           .delete()
-          .eq('id', existingBookmark.id);
+          .eq('id', data.id);
           
         if (deleteError) throw deleteError;
         
@@ -312,7 +298,7 @@ export const toggleBookmark = async (
         
         return false; // No longer bookmarked
       } else {
-        // Insert new bookmark
+        // Insert new bookmark with explicit payload type
         const payload: QuoteBookmarkPayload = {
           user_id: userId,
           quote_id: contentId
@@ -346,14 +332,13 @@ export const toggleBookmark = async (
         .maybeSingle();
         
       if (checkError) throw checkError;
-      existingBookmark = data;
       
       // If bookmark exists, remove it
-      if (existingBookmark && 'id' in existingBookmark) {
+      if (data && 'id' in data) {
         const { error: deleteError } = await supabase
           .from(CONTENT_BOOKMARKS_TABLE)
           .delete()
-          .eq('id', existingBookmark.id);
+          .eq('id', data.id);
           
         if (deleteError) throw deleteError;
         
@@ -368,7 +353,7 @@ export const toggleBookmark = async (
         
         return false; // No longer bookmarked
       } else {
-        // Insert new bookmark
+        // Insert new bookmark with explicit payload type
         const payload: ContentBookmarkPayload = {
           user_id: userId,
           content_id: contentId,
@@ -418,6 +403,7 @@ export const batchCheckInteractions = async (
       result[id] = { isLiked: false, isBookmarked: false };
     });
     
+    // Use separate code paths to avoid type recursion
     if (normalizedType === 'quote') {
       // Batch check likes for quotes
       const { data: likesData, error: likesError } = await supabase
