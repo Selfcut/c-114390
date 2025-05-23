@@ -90,13 +90,18 @@ export async function checkUserInteractions(
   }
 }
 
+// Fix the recursive type issue by simplifying the function signatures
+type ContentId = string;
+type UserId = string;
+type ContentTypeString = string;
+
 /**
  * Toggle like status for content
  */
 export async function toggleLike(
-  userId: string,
-  contentId: string,
-  contentType: string | ContentType | ContentItemType
+  userId: UserId,
+  contentId: ContentId,
+  contentType: ContentTypeString
 ): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
@@ -197,9 +202,9 @@ export async function toggleLike(
  * Toggle bookmark status for content
  */
 export async function toggleBookmark(
-  userId: string,
-  contentId: string,
-  contentType: string | ContentType | ContentItemType
+  userId: UserId,
+  contentId: ContentId,
+  contentType: ContentTypeString
 ): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';

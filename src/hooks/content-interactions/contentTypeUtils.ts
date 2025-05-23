@@ -46,3 +46,11 @@ export function getContentStateKey(id: string, type: string | ContentType | Cont
   const normalizedType = normalizeContentType(type);
   return `${normalizedType}:${id}`;
 }
+
+/**
+ * Create a consistent content key format for state tracking
+ * Alias of getContentStateKey for backward compatibility
+ */
+export function getContentKey(id: string, type: string | ContentType | ContentItemType): string {
+  return getContentStateKey(id, type);
+}

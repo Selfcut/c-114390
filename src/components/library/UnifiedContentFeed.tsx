@@ -2,20 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { ContentFeedControls } from './ContentFeedControls';
 import { ContentFeed } from './ContentFeed';
-import { ContentType } from './ContentTypeFilter';
+import { ContentType as UIContentType } from './ContentTypeFilter';
 import { ViewMode } from './ViewSwitcher';
 import { useToast } from '@/hooks/use-toast';
 
 interface UnifiedContentFeedProps {
-  defaultContentType?: ContentType;
+  defaultContentType?: UIContentType;
   defaultViewMode?: ViewMode;
 }
 
-export const UnifiedContentFeed = ({ 
+export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({ 
   defaultContentType = 'all', 
   defaultViewMode = 'list' 
 }: UnifiedContentFeedProps) => {
-  const [contentType, setContentType] = useState<ContentType>(defaultContentType);
+  const [contentType, setContentType] = useState<UIContentType>(defaultContentType);
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
   const { toast } = useToast();
   const [lastRefresh, setLastRefresh] = useState<Date | undefined>(undefined);

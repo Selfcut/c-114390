@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ContentItemType } from './content-items/ContentItemTypes';
 
 interface ContentFeedProps {
-  contentType: ContentType;
+  contentType: ContentType | 'all' | 'quotes';
   viewMode: ViewMode;
   lastRefresh?: Date;
 }

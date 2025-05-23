@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { ContentTypeFilter, type ContentType } from './ContentTypeFilter';
-import { ViewSwitcher, type ViewMode } from './ViewSwitcher';
 import { Button } from '@/components/ui/button';
+import { ContentTypeFilter, ContentType } from './ContentTypeFilter';
+import { ViewSwitcher, ViewMode } from './ViewSwitcher';
 import { RefreshCw } from 'lucide-react';
 
 interface ContentFeedControlsProps {
@@ -10,8 +10,7 @@ interface ContentFeedControlsProps {
   viewMode: ViewMode;
   onContentTypeChange: (type: ContentType) => void;
   onViewModeChange: (mode: ViewMode) => void;
-  onRefresh?: () => void;
-  className?: string;
+  onRefresh: () => void;
 }
 
 export const ContentFeedControls: React.FC<ContentFeedControlsProps> = ({
@@ -20,27 +19,28 @@ export const ContentFeedControls: React.FC<ContentFeedControlsProps> = ({
   onContentTypeChange,
   onViewModeChange,
   onRefresh,
-  className
 }) => {
   return (
-    <div className={`flex flex-col md:flex-row justify-between gap-4 ${className}`}>
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b">
       <ContentTypeFilter 
         activeType={contentType} 
         onChange={onContentTypeChange} 
-        className="mb-2"
       />
+      
       <div className="flex items-center gap-2">
-        {onRefresh && (
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={onRefresh} 
-            aria-label="Refresh content"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        )}
-        <ViewSwitcher viewMode={viewMode} onChange={onViewModeChange} />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onRefresh}
+          aria-label="Refresh content"
+        >
+          <RefreshCw size={18} />
+        </Button>
+        
+        <ViewSwitcher 
+          activeView={viewMode} 
+          onChange={onViewModeChange} 
+        />
       </div>
     </div>
   );

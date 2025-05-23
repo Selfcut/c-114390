@@ -1,34 +1,37 @@
 
 import React from 'react';
-import { LayoutGrid, LayoutList, ListFilter } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { LayoutGrid, List } from 'lucide-react';
 
 export type ViewMode = 'grid' | 'list' | 'feed';
 
 interface ViewSwitcherProps {
-  viewMode: ViewMode;
-  onChange: (value: ViewMode) => void;
-  className?: string;
+  activeView: ViewMode;
+  onChange: (view: ViewMode) => void;
 }
 
-export const ViewSwitcher = ({ viewMode, onChange, className }: ViewSwitcherProps) => {
+export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({ activeView, onChange }) => {
   return (
-    <ToggleGroup 
-      type="single"
-      value={viewMode}
-      onValueChange={(value) => value && onChange(value as ViewMode)}
-      className={cn("flex border rounded-md overflow-hidden", className)}
-    >
-      <ToggleGroupItem value="grid" aria-label="Grid view" className="data-[state=on]:bg-accent">
-        <LayoutGrid size={18} />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="list" aria-label="List view" className="data-[state=on]:bg-accent">
-        <LayoutList size={18} />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="feed" aria-label="Feed view" className="data-[state=on]:bg-accent">
-        <ListFilter size={18} />
-      </ToggleGroupItem>
-    </ToggleGroup>
+    <div className="flex items-center gap-1 border rounded-md">
+      <Button
+        variant={activeView === 'grid' ? 'default' : 'ghost'}
+        size="sm"
+        className="px-2.5 py-1.5 h-auto"
+        onClick={() => onChange('grid')}
+        aria-label="Grid view"
+      >
+        <LayoutGrid size={16} />
+      </Button>
+      
+      <Button
+        variant={activeView === 'list' ? 'default' : 'ghost'}
+        size="sm"
+        className="px-2.5 py-1.5 h-auto"
+        onClick={() => onChange('list')}
+        aria-label="List view"
+      >
+        <List size={16} />
+      </Button>
+    </div>
   );
 };
