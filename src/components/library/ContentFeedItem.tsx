@@ -65,6 +65,11 @@ export const ContentFeedItemComponent: React.FC<ContentFeedItemComponentProps> =
     }
   };
 
+  // Get the user interaction state
+  const stateKey = `${item.type}:${item.id}`;
+  const isLiked = userLikes?.[stateKey] || false;
+  const isBookmarked = userBookmarks?.[stateKey] || false;
+
   // Format data for the ContentItem props
   const contentProps: ContentItemProps = {
     id: item.id,
@@ -83,8 +88,8 @@ export const ContentFeedItemComponent: React.FC<ContentFeedItemComponentProps> =
     coverImage: item.coverImage,
     mediaUrl: item.mediaUrl,
     mediaType: item.mediaType,
-    isLiked: userLikes?.[item.id] || false,
-    isBookmarked: userBookmarks?.[item.id] || false,
+    isLiked: isLiked,
+    isBookmarked: isBookmarked,
     viewMode,
     onLike: handleLike,
     onBookmark: handleBookmark,

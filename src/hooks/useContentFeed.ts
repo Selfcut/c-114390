@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { useNavigate } from 'react-router-dom';
 import { useContentInteractions } from './useContentInteractions';
+import { getContentStateKey } from '@/hooks/content-interactions/contentTypeUtils';
 
 // Define the content feed item structure
 export interface ContentFeedItem {
@@ -159,7 +160,14 @@ export const useContentFeed = () => {
       // Check user interactions for the items if user is logged in
       if (user && pageItems.length > 0) {
         const itemIds = pageItems.map(item => item.id);
-        await checkUserInteractions(itemIds, 'default');
+        const contentTypes = pageItems.map(item => item.type);
+        
+        // Check interactions for each item
+        for (let i = 0; i < itemIds.length; i++) {
+          const itemKey = getContentStateKey(itemIds[i], contentTypes[i]);
+          // We don't need to await here as we're just updating UI state
+          checkUserInteractions([itemKey], contentTypes[i].toString());
+        }
       }
       
     } catch (err) {

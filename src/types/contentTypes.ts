@@ -27,10 +27,33 @@ export function isValidContentType(type: string): type is ContentType {
 
 /**
  * Convert a ContentType enum to string
- * No toString() call needed since enum values are already strings
  */
 export function contentTypeToString(type: ContentType | string): string {
   return typeof type === 'string' ? type : type;
+}
+
+/**
+ * Create a consistent content key format for state tracking
+ */
+export function getContentKey(id: string, type: ContentType | string): string {
+  const contentType = typeof type === 'string' ? type : type;
+  return `${contentType}:${id}`;
+}
+
+/**
+ * Get content type from a content key
+ */
+export function getTypeFromKey(key: string): string | null {
+  const parts = key.split(':');
+  return parts.length > 1 ? parts[0] : null;
+}
+
+/**
+ * Get content ID from a content key
+ */
+export function getIdFromKey(key: string): string | null {
+  const parts = key.split(':');
+  return parts.length > 1 ? parts[1] : null;
 }
 
 /**
@@ -58,30 +81,6 @@ export function getContentTable(type: ContentType | string): string {
       console.warn(`Unknown content type: ${contentType}, defaulting to forum_posts`);
       return 'forum_posts';
   }
-}
-
-/**
- * Create a consistent content key format for state tracking
- */
-export function getContentKey(id: string, type: ContentType | string): string {
-  const contentType = typeof type === 'string' ? type : type;
-  return `${contentType}:${id}`;
-}
-
-/**
- * Get content type from a content key
- */
-export function getTypeFromKey(key: string): string | null {
-  const parts = key.split(':');
-  return parts.length > 1 ? parts[0] : null;
-}
-
-/**
- * Get content ID from a content key
- */
-export function getIdFromKey(key: string): string | null {
-  const parts = key.split(':');
-  return parts.length > 1 ? parts[1] : null;
 }
 
 /**

@@ -6,7 +6,7 @@ import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
 import { ContentFeedItemComponent } from './ContentFeedItem';
-import { ContentType } from './ContentTypeFilter';
+import { ContentType } from '@/types/contentTypes';
 import { ViewMode } from './ViewSwitcher';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -85,7 +85,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);
       // Call the original handler
-      handleContentClick(contentId, contentType);
+      handleContentClick(contentId,  contentType);
     } catch (err) {
       console.error("Error handling content click:", err);
       // Fallback if the main handler fails
