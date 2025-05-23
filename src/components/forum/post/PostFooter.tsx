@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserInteraction } from '@/contexts/UserInteractionContext';
+import { useAuth } from '@/lib/auth';
 
 interface PostFooterProps {
   post: {
@@ -22,6 +22,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
   onUpvote 
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const {
     likedItems,
     bookmarkedItems,
@@ -49,9 +50,9 @@ export const PostFooter: React.FC<PostFooterProps> = ({
 
     if (onUpvote) {
       await onUpvote();
-    } else if (isAuthenticated) {
-      // Pass post.id and the correct content type to toggleLike
-      await toggleLike(post.id, 'forum');
+    } else if (isAuthenticated && user?.id) {
+      // Pass post.id, content type, and the user ID to toggleLike
+      await toggleLike(post.id, 'forum', user.id);
     }
   };
 
@@ -66,8 +67,10 @@ export const PostFooter: React.FC<PostFooterProps> = ({
       return;
     }
 
-    // Pass post.id and the correct content type to toggleBookmark
-    await toggleBookmark(post.id, 'forum');
+    if (user?.id) {
+      // Pass post.id, content type, and the user ID to toggleBookmark
+      await toggleBookmark(post.id, 'forum', user.id);
+    }
   };
 
   const handleShare = async () => {

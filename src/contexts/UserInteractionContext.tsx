@@ -1,13 +1,19 @@
 
-// Update this file to fix the invalidateQueries issues
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toggleUserInteraction } from '@/lib/utils/supabase-utils'; 
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 
 interface UserInteractionContextType {
+  // Backward compatible API that explicitly requires userId
   toggleLike: (contentId: string, contentType: string, userId: string) => Promise<boolean>;
   toggleBookmark: (contentId: string, contentType: string, userId: string) => Promise<boolean>;
+  
+  // Simplified API that uses the current user's ID automatically
+  likeContent: (contentId: string, contentType: string) => Promise<boolean>;
+  bookmarkContent: (contentId: string, contentType: string) => Promise<boolean>;
+  
   likedItems: Record<string, boolean>;
   bookmarkedItems: Record<string, boolean>;
   isLoading: boolean;
@@ -20,13 +26,14 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
   const [bookmarkedItems, setBookmarkedItems] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Generate a unique cache key for an item
   const getCacheKey = (contentId: string, contentType: string): string => {
     return `${contentType}:${contentId}`;
   };
 
-  // Toggle like for a content item
+  // Toggle like for a content item (with explicit userId)
   const toggleLike = useCallback(async (
     contentId: string, 
     contentType: string, 
@@ -82,7 +89,19 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     }
   }, [likedItems, queryClient]);
   
-  // Toggle bookmark for a content item
+  // Simplified like function that uses current user
+  const likeContent = useCallback(async (
+    contentId: string,
+    contentType: string
+  ): Promise<boolean> => {
+    if (!user?.id) {
+      toast.error('You must be logged in to like content');
+      return false;
+    }
+    return toggleLike(contentId, contentType, user.id);
+  }, [toggleLike, user]);
+  
+  // Toggle bookmark for a content item (with explicit userId)
   const toggleBookmark = useCallback(async (
     contentId: string, 
     contentType: string, 
@@ -137,11 +156,25 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     }
   }, [bookmarkedItems, queryClient]);
 
+  // Simplified bookmark function that uses current user
+  const bookmarkContent = useCallback(async (
+    contentId: string,
+    contentType: string
+  ): Promise<boolean> => {
+    if (!user?.id) {
+      toast.error('You must be logged in to bookmark content');
+      return false;
+    }
+    return toggleBookmark(contentId, contentType, user.id);
+  }, [toggleBookmark, user]);
+
   return (
     <UserInteractionContext.Provider 
       value={{ 
         toggleLike, 
         toggleBookmark, 
+        likeContent,
+        bookmarkContent,
         likedItems, 
         bookmarkedItems,
         isLoading
