@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ContentBookmarkResult } from './types';
-import { getContentTypeString, getContentTable } from './contentTypeUtils';
+import { getContentTypeString, getContentTypeInfo } from './contentTypeUtils';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export const useBookmarkInteractions = (
@@ -25,36 +25,39 @@ export const useBookmarkInteractions = (
     
     const isBookmarked = userBookmarks[id];
     const contentTypeStr = getContentTypeString(itemType);
-    const isQuoteType = contentTypeStr === 'quote';
+    const typeInfo = getContentTypeInfo(contentTypeStr);
     
     try {
       if (isBookmarked) {
         // Remove bookmark
-        if (isQuoteType) {
+        if (contentTypeStr === 'quote') {
           await supabase
             .from('quote_bookmarks')
             .delete()
             .eq('user_id', userId)
             .eq('quote_id', id);
             
-          // Update counter if it's a quote
-          await supabase.rpc('decrement_counter_fn', {
-            row_id: id,
-            column_name: 'bookmarks',
-            table_name: 'quotes'
-          });
+          // Only update bookmarks counter for quotes - other content types don't track this
+          if (typeInfo.bookmarksColumnName) {
+            await supabase.rpc('decrement_counter_fn', {
+              row_id: id,
+              column_name: typeInfo.bookmarksColumnName,
+              table_name: typeInfo.contentTable
+            });
+          }
         } else {
           await supabase
             .from('content_bookmarks')
             .delete()
             .eq('user_id', userId)
-            .eq('content_id', id);
+            .eq('content_id', id)
+            .eq('content_type', contentTypeStr);
         }
           
         setUserBookmarks(prev => ({...prev, [id]: false}));
       } else {
         // Add bookmark
-        if (isQuoteType) {
+        if (contentTypeStr === 'quote') {
           await supabase
             .from('quote_bookmarks')
             .insert({
@@ -62,12 +65,14 @@ export const useBookmarkInteractions = (
               quote_id: id
             });
             
-          // Update counter if it's a quote
-          await supabase.rpc('increment_counter_fn', {
-            row_id: id,
-            column_name: 'bookmarks', 
-            table_name: 'quotes'
-          });
+          // Only update bookmarks counter for quotes - other content types don't track this
+          if (typeInfo.bookmarksColumnName) {
+            await supabase.rpc('increment_counter_fn', {
+              row_id: id,
+              column_name: typeInfo.bookmarksColumnName,
+              table_name: typeInfo.contentTable
+            });
+          }
         } else {
           await supabase
             .from('content_bookmarks')

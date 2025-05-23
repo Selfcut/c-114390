@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { InteractionCheckResult } from './types';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export const useInteractionsCheck = (
   userId?: string | null,
@@ -12,91 +13,111 @@ export const useInteractionsCheck = (
     if (!userId || itemIds.length === 0) return;
     
     try {
-      // Check likes in the content_likes table
-      const { data: contentLikesData, error: contentLikesError } = await supabase
-        .from('content_likes')
-        .select('content_id')
-        .eq('user_id', userId)
-        .in('content_id', itemIds);
-        
-      if (contentLikesError) {
-        console.error('Error checking content likes:', contentLikesError);
+      // Process in batches if there are many IDs to avoid URL length limits
+      const batchSize = 20;
+      const batches = [];
+      
+      for (let i = 0; i < itemIds.length; i += batchSize) {
+        batches.push(itemIds.slice(i, i + batchSize));
       }
       
-      // Check likes in the quote_likes table
-      const { data: quoteLikesData, error: quoteLikesError } = await supabase
-        .from('quote_likes')
-        .select('quote_id')
-        .eq('user_id', userId)
-        .in('quote_id', itemIds);
-        
-      if (quoteLikesError) {
-        console.error('Error checking quote likes:', quoteLikesError);
-      }
-      
-      // Combine likes from both tables
       const allLikes: Record<string, boolean> = {};
-      
-      if (contentLikesData) {
-        contentLikesData.forEach(item => {
-          if (item.content_id) allLikes[item.content_id] = true;
-        });
-      }
-      
-      if (quoteLikesData) {
-        quoteLikesData.forEach(item => {
-          if (item.quote_id) allLikes[item.quote_id] = true;
-        });
-      }
-      
-      // Update likes state
-      setUserLikes(prev => ({...prev, ...allLikes}));
-      
-      // Check bookmarks in the content_bookmarks table
-      const { data: contentBookmarksData, error: contentBookmarksError } = await supabase
-        .from('content_bookmarks')
-        .select('content_id')
-        .eq('user_id', userId)
-        .in('content_id', itemIds);
-        
-      if (contentBookmarksError) {
-        console.error('Error checking content bookmarks:', contentBookmarksError);
-      }
-      
-      // Check bookmarks in the quote_bookmarks table
-      const { data: quoteBookmarksData, error: quoteBookmarksError } = await supabase
-        .from('quote_bookmarks')
-        .select('quote_id')
-        .eq('user_id', userId)
-        .in('quote_id', itemIds);
-        
-      if (quoteBookmarksError) {
-        console.error('Error checking quote bookmarks:', quoteBookmarksError);
-      }
-      
-      // Combine bookmarks from both tables
       const allBookmarks: Record<string, boolean> = {};
       
-      if (contentBookmarksData) {
-        contentBookmarksData.forEach(item => {
-          if (item.content_id) allBookmarks[item.content_id] = true;
-        });
+      // Process each batch
+      for (const batchIds of batches) {
+        // Check likes
+        await checkBatchLikes(batchIds, allLikes);
+        
+        // Check bookmarks
+        await checkBatchBookmarks(batchIds, allBookmarks);
       }
       
-      if (quoteBookmarksData) {
-        quoteBookmarksData.forEach(item => {
-          if (item.quote_id) allBookmarks[item.quote_id] = true;
-        });
-      }
-      
-      // Update bookmarks state
+      // Update state with all results
+      setUserLikes(prev => ({...prev, ...allLikes}));
       setUserBookmarks(prev => ({...prev, ...allBookmarks}));
     } catch (err) {
       console.error('Error checking user interactions:', err);
     }
   };
 
-  // Check interactions for a single content item with fixed type issues
+  // Check batch of items for likes
+  const checkBatchLikes = async (
+    batchIds: string[], 
+    results: Record<string, boolean>
+  ): Promise<void> => {
+    try {
+      // Check content_likes table
+      const { data: contentLikes, error: contentError } = await supabase
+        .from('content_likes')
+        .select('content_id')
+        .eq('user_id', userId!)
+        .in('content_id', batchIds);
+      
+      // Record content likes
+      if (!contentError && contentLikes) {
+        contentLikes.forEach(item => {
+          if (item.content_id) results[item.content_id] = true;
+        });
+      }
+      
+      // Check quote_likes table
+      const { data: quoteLikes, error: quoteError } = await supabase
+        .from('quote_likes')
+        .select('quote_id')
+        .eq('user_id', userId!)
+        .in('quote_id', batchIds);
+      
+      // Record quote likes
+      if (!quoteError && quoteLikes) {
+        quoteLikes.forEach(item => {
+          if (item.quote_id) results[item.quote_id] = true;
+        });
+      }
+    } catch (error) {
+      console.error('Error checking batch likes:', error);
+    }
+  };
+  
+  // Check batch of items for bookmarks
+  const checkBatchBookmarks = async (
+    batchIds: string[],
+    results: Record<string, boolean>
+  ): Promise<void> => {
+    try {
+      // Check content_bookmarks table
+      const { data: contentBookmarks, error: contentError } = await supabase
+        .from('content_bookmarks')
+        .select('content_id')
+        .eq('user_id', userId!)
+        .in('content_id', batchIds);
+      
+      // Record content bookmarks
+      if (!contentError && contentBookmarks) {
+        contentBookmarks.forEach(item => {
+          if (item.content_id) results[item.content_id] = true;
+        });
+      }
+      
+      // Check quote_bookmarks table
+      const { data: quoteBookmarks, error: quoteError } = await supabase
+        .from('quote_bookmarks')
+        .select('quote_id')
+        .eq('user_id', userId!)
+        .in('quote_id', batchIds);
+      
+      // Record quote bookmarks
+      if (!quoteError && quoteBookmarks) {
+        quoteBookmarks.forEach(item => {
+          if (item.quote_id) results[item.quote_id] = true;
+        });
+      }
+    } catch (error) {
+      console.error('Error checking batch bookmarks:', error);
+    }
+  };
+
+  // Check interactions for a single content item
   const checkSingleItemInteractions = async (
     itemId: string, 
     contentType: string = 'content'
@@ -106,56 +127,72 @@ export const useInteractionsCheck = (
     }
     
     try {
-      const isQuoteType = contentType === 'quote';
+      const isQuote = contentType === 'quote';
       
       // Check likes
       let isLiked = false;
+      let likeError: PostgrestError | null = null;
       
-      if (isQuoteType) {
+      if (isQuote) {
         // Check quote likes
-        const { data: likeData } = await supabase
+        const result = await supabase
           .from('quote_likes')
           .select('id')
           .eq('quote_id', itemId)
           .eq('user_id', userId)
           .maybeSingle();
           
-        isLiked = !!likeData;
+        isLiked = !!result.data;
+        likeError = result.error;
       } else {
         // Check content likes
-        const { data: likeData } = await supabase
+        const result = await supabase
           .from('content_likes')
           .select('id')
           .eq('content_id', itemId)
           .eq('user_id', userId)
+          .eq('content_type', contentType)
           .maybeSingle();
           
-        isLiked = !!likeData;
+        isLiked = !!result.data;
+        likeError = result.error;
+      }
+      
+      if (likeError) {
+        console.error('Error checking like status:', likeError);
       }
       
       // Check bookmarks
       let isBookmarked = false;
+      let bookmarkError: PostgrestError | null = null;
       
-      if (isQuoteType) {
+      if (isQuote) {
         // Check quote bookmarks
-        const { data: bookmarkData } = await supabase
+        const result = await supabase
           .from('quote_bookmarks')
           .select('id')
           .eq('quote_id', itemId)
           .eq('user_id', userId)
           .maybeSingle();
           
-        isBookmarked = !!bookmarkData;
+        isBookmarked = !!result.data;
+        bookmarkError = result.error;
       } else {
         // Check content bookmarks
-        const { data: bookmarkData } = await supabase
+        const result = await supabase
           .from('content_bookmarks')
           .select('id')
           .eq('content_id', itemId)
           .eq('user_id', userId)
+          .eq('content_type', contentType)
           .maybeSingle();
           
-        isBookmarked = !!bookmarkData;
+        isBookmarked = !!result.data;
+        bookmarkError = result.error;
+      }
+      
+      if (bookmarkError) {
+        console.error('Error checking bookmark status:', bookmarkError);
       }
       
       return {

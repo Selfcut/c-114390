@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export const useRealtimeInteractions = (
   userId?: string | null,
@@ -11,9 +12,12 @@ export const useRealtimeInteractions = (
   useEffect(() => {
     if (!userId) return;
 
-    // Channel for general content interactions
-    const contentChannel = supabase
-      .channel('content-interactions')
+    // Create channels for different interaction tables
+    const channels: RealtimeChannel[] = [];
+
+    // Channel for content likes
+    const contentLikesChannel = supabase
+      .channel('content-likes-' + userId.substring(0, 8))
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'content_likes', filter: `user_id=eq.${userId}` },
         (payload) => {
@@ -30,6 +34,13 @@ export const useRealtimeInteractions = (
           }
         }
       )
+      .subscribe();
+      
+    channels.push(contentLikesChannel);
+    
+    // Channel for content bookmarks
+    const contentBookmarksChannel = supabase
+      .channel('content-bookmarks-' + userId.substring(0, 8))
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'content_bookmarks', filter: `user_id=eq.${userId}` },
         (payload) => {
@@ -48,9 +59,11 @@ export const useRealtimeInteractions = (
       )
       .subscribe();
       
-    // Channel for quote-specific interactions
-    const quoteChannel = supabase
-      .channel('quote-interactions')
+    channels.push(contentBookmarksChannel);
+    
+    // Channel for quote likes
+    const quoteLikesChannel = supabase
+      .channel('quote-likes-' + userId.substring(0, 8))
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'quote_likes', filter: `user_id=eq.${userId}` },
         (payload) => {
@@ -67,6 +80,13 @@ export const useRealtimeInteractions = (
           }
         }
       )
+      .subscribe();
+      
+    channels.push(quoteLikesChannel);
+    
+    // Channel for quote bookmarks
+    const quoteBookmarksChannel = supabase
+      .channel('quote-bookmarks-' + userId.substring(0, 8))
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'quote_bookmarks', filter: `user_id=eq.${userId}` },
         (payload) => {
@@ -84,10 +104,14 @@ export const useRealtimeInteractions = (
         }
       )
       .subscribe();
+      
+    channels.push(quoteBookmarksChannel);
 
+    // Clean up all channels on unmount
     return () => {
-      supabase.removeChannel(contentChannel);
-      supabase.removeChannel(quoteChannel);
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
   }, [userId, setUserLikes, setUserBookmarks]);
 };

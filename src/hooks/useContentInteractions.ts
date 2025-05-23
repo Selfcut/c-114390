@@ -9,11 +9,16 @@ import { useRealtimeInteractions } from './content-interactions/useRealtimeInter
 
 export type { UseContentInteractionsProps } from './content-interactions/types';
 
+/**
+ * Hook for managing content interactions (likes and bookmarks)
+ * @param props Hook configuration
+ * @returns User interaction state and handlers
+ */
 export const useContentInteractions = ({ userId }: UseContentInteractionsProps): UserInteractions => {
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
   const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
   
-  // Use the sub-hooks
+  // Use the individual interaction hooks
   const { handleLike } = useLikeInteractions(userId, userLikes, setUserLikes);
   const { handleBookmark } = useBookmarkInteractions(userId, userBookmarks, setUserBookmarks);
   const { checkUserInteractions } = useInteractionsCheck(userId, setUserLikes, setUserBookmarks);

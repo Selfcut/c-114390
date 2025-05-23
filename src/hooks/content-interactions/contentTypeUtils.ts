@@ -1,11 +1,28 @@
 
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentTypeTables } from './types';
 
 /**
  * Convert ContentItemType enum to string format used in database
  */
 export const getContentTypeString = (type: ContentItemType): string => {
   return type.toString().toLowerCase();
+};
+
+/**
+ * Get all table and field information for a content type
+ */
+export const getContentTypeInfo = (contentType: string): ContentTypeTables => {
+  const isQuote = contentType === 'quote';
+  
+  return {
+    contentTable: getContentTable(contentType),
+    likesTable: isQuote ? 'quote_likes' : 'content_likes',
+    bookmarksTable: isQuote ? 'quote_bookmarks' : 'content_bookmarks',
+    idFieldName: isQuote ? 'quote_id' : 'content_id',
+    likesColumnName: contentType === 'forum' ? 'upvotes' : 'likes',
+    bookmarksColumnName: isQuote ? 'bookmarks' : undefined
+  };
 };
 
 /**

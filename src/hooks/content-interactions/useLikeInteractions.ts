@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ContentInteractionResult } from './types';
-import { getContentTypeString, getContentTable } from './contentTypeUtils';
+import { getContentTypeString, getContentTable, getContentTypeInfo } from './contentTypeUtils';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
 export const useLikeInteractions = (
@@ -25,12 +25,12 @@ export const useLikeInteractions = (
     
     const isLiked = userLikes[id];
     const contentTypeStr = getContentTypeString(itemType);
-    const isQuoteType = contentTypeStr === 'quote';
+    const typeInfo = getContentTypeInfo(contentTypeStr);
     
     try {
       if (isLiked) {
-        // Unlike
-        if (isQuoteType) {
+        // Unlike content
+        if (contentTypeStr === 'quote') {
           await supabase
             .from('quote_likes')
             .delete()
@@ -40,31 +40,29 @@ export const useLikeInteractions = (
           // Update counter in quotes table
           await supabase.rpc('decrement_counter_fn', {
             row_id: id,
-            column_name: 'likes',
-            table_name: 'quotes'
+            column_name: typeInfo.likesColumnName,
+            table_name: typeInfo.contentTable
           });
         } else {
           await supabase
             .from('content_likes')
             .delete()
             .eq('user_id', userId)
-            .eq('content_id', id);
+            .eq('content_id', id)
+            .eq('content_type', contentTypeStr);
             
           // Update counter in the appropriate table
-          const tableName = getContentTable(contentTypeStr);
-          const columnName = contentTypeStr === 'forum' ? 'upvotes' : 'likes';
-            
           await supabase.rpc('decrement_counter_fn', {
             row_id: id,
-            column_name: columnName,
-            table_name: tableName
+            column_name: typeInfo.likesColumnName,
+            table_name: typeInfo.contentTable
           });
         }
           
         setUserLikes(prev => ({...prev, [id]: false}));
       } else {
-        // Like
-        if (isQuoteType) {
+        // Like content
+        if (contentTypeStr === 'quote') {
           await supabase
             .from('quote_likes')
             .insert({
@@ -75,8 +73,8 @@ export const useLikeInteractions = (
           // Update counter in quotes table
           await supabase.rpc('increment_counter_fn', {
             row_id: id,
-            column_name: 'likes',
-            table_name: 'quotes'
+            column_name: typeInfo.likesColumnName,
+            table_name: typeInfo.contentTable
           });
         } else {
           await supabase
@@ -88,13 +86,10 @@ export const useLikeInteractions = (
             });
             
           // Update counter in the appropriate table
-          const tableName = getContentTable(contentTypeStr);
-          const columnName = contentTypeStr === 'forum' ? 'upvotes' : 'likes';
-            
           await supabase.rpc('increment_counter_fn', {
             row_id: id,
-            column_name: columnName,
-            table_name: tableName
+            column_name: typeInfo.likesColumnName,
+            table_name: typeInfo.contentTable
           });
         }
           
