@@ -1,127 +1,63 @@
 
-/**
- * Unified content type system to ensure consistency across the application
- */
-export enum ContentType {
-  All = 'all',
-  Knowledge = 'knowledge',
-  Media = 'media',
-  Quote = 'quote',
-  Forum = 'forum',
-  Wiki = 'wiki',
-  AI = 'ai',
-  Research = 'research'
-}
+// Unified content types to replace scattered definitions
+export { ContentType, ContentViewMode } from './unified-content-types';
 
-/**
- * Content item type for components (same as ContentType for consistency)
- */
-export enum ContentItemType {
-  Quote = 'quote',
-  Forum = 'forum',
-  Media = 'media',
-  Wiki = 'wiki',
-  Knowledge = 'knowledge',
-  AI = 'ai'
-}
+// Re-export for backward compatibility
+export type { UnifiedContentItem as ContentItem } from './unified-content-types';
 
-/**
- * Map UI content type to database content type
- */
-export const mapUItoDBContentType = (uiType: string): string => {
-  if (!uiType || typeof uiType !== 'string') return 'all';
-  
-  const normalizedType = uiType.toLowerCase();
-  
-  switch (normalizedType) {
-    case 'all':
-      return 'all';
-    case 'quotes':
-      return 'quote';
-    case 'knowledge':
-      return 'knowledge';
-    case 'media':
-      return 'media';
-    case 'ai':
-      return 'ai';
-    case 'forum':
-      return 'forum';
-    case 'wiki':
-      return 'wiki';
-    case 'research':
-      return 'research';
-    default:
-      return normalizedType;
-  }
+// Utility functions for content type handling
+export const isValidContentType = (type: string): type is ContentType => {
+  return Object.values(ContentType).includes(type as ContentType);
 };
 
-/**
- * Type guard to check if a string is a valid ContentType
- */
-export function isValidContentType(type: string): type is ContentType {
-  return Object.values(ContentType).includes(type as ContentType);
-}
-
-/**
- * Get database table name for a content type
- */
-export function getContentTableName(type: string): string {
-  if (!type || typeof type !== 'string') return 'content';
-  
-  const normalizedType = type.toLowerCase();
-  
-  switch (normalizedType) {
-    case ContentType.Quote.toLowerCase():
-      return 'quotes';
-    case ContentType.Forum.toLowerCase():
-      return 'forum_posts';
-    case ContentType.Media.toLowerCase():
-      return 'media_posts';
-    case ContentType.Wiki.toLowerCase():
-      return 'wiki_articles';
-    case ContentType.Knowledge.toLowerCase():
-      return 'knowledge_entries';
-    case ContentType.Research.toLowerCase():
-      return 'research_papers';
-    case ContentType.AI.toLowerCase():
-      return 'ai_content';
-    default:
-      return 'content';
+export const normalizeContentType = (type: string | ContentType): ContentType => {
+  if (isValidContentType(type)) {
+    return type;
   }
-}
+  console.warn(`Invalid content type: ${type}, defaulting to 'forum'`);
+  return ContentType.Forum;
+};
 
-/**
- * Content table information interface
- */
 export interface ContentTypeInfo {
   contentTable: string;
   likesTable: string;
   bookmarksTable: string;
+  contentIdField: string;
   likesColumnName: string;
-  bookmarksColumnName?: string;
+  bookmarksColumnName: string;
 }
 
-/**
- * Get content type information for database operations
- */
-export function getContentTypeInfo(type: string): ContentTypeInfo {
-  if (!type || typeof type !== 'string') {
-    return {
-      contentTable: 'content',
-      likesTable: 'content_likes',
-      bookmarksTable: 'content_bookmarks',
-      likesColumnName: 'likes'
-    };
-  }
-  
-  const normalizedType = type.toLowerCase();
-  const isQuote = normalizedType === ContentType.Quote.toLowerCase();
+export const getContentTypeInfo = (contentType: ContentType): ContentTypeInfo => {
+  const isQuote = contentType === ContentType.Quote;
+  const isMedia = contentType === ContentType.Media;
   
   return {
-    contentTable: getContentTableName(normalizedType),
-    likesTable: isQuote ? 'quote_likes' : 'content_likes',
+    contentTable: getContentTableName(contentType),
+    likesTable: isQuote ? 'quote_likes' : isMedia ? 'media_likes' : 'content_likes',
     bookmarksTable: isQuote ? 'quote_bookmarks' : 'content_bookmarks',
-    likesColumnName: normalizedType === ContentType.Forum.toLowerCase() ? 'upvotes' : 'likes',
+    contentIdField: isQuote ? 'quote_id' : isMedia ? 'post_id' : 'content_id',
+    likesColumnName: contentType === ContentType.Forum ? 'upvotes' : 'likes',
     bookmarksColumnName: 'bookmarks'
   };
-}
+};
+
+export const getContentTableName = (contentType: ContentType): string => {
+  switch (contentType) {
+    case ContentType.Quote:
+      return 'quotes';
+    case ContentType.Forum:
+      return 'forum_posts';
+    case ContentType.Media:
+      return 'media_posts';
+    case ContentType.Wiki:
+      return 'wiki_articles';
+    case ContentType.Knowledge:
+      return 'knowledge_entries';
+    case ContentType.Research:
+      return 'research_papers';
+    case ContentType.AI:
+      return 'ai_content';
+    default:
+      return 'forum_posts';
+  }
+};

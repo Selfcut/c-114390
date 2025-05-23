@@ -78,7 +78,7 @@ export const useContentFetchData = ({ userId, checkUserInteractions, viewMode = 
         .order('created_at', { ascending: false })
         .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
       
-      // Get media posts
+      // Get media posts - now includes tags column
       const { data: mediaData, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
@@ -88,6 +88,7 @@ export const useContentFetchData = ({ userId, checkUserInteractions, viewMode = 
           created_at,
           url,
           type,
+          tags,
           likes,
           comments,
           views,

@@ -1,6 +1,5 @@
 
-import { UnifiedContentItem } from '@/types/unified-content-types';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { UnifiedContentItem, ContentType } from '@/types/unified-content-types';
 import { ContentViewMode } from '@/types/unified-content-types';
 
 /**
@@ -9,7 +8,7 @@ import { ContentViewMode } from '@/types/unified-content-types';
 export function mapKnowledgeToFeedItem(knowledgeEntry: any, viewMode: ContentViewMode): UnifiedContentItem {
   return {
     id: knowledgeEntry.id,
-    type: 'knowledge',
+    type: ContentType.Knowledge,
     title: knowledgeEntry.title,
     summary: knowledgeEntry.summary,
     content: knowledgeEntry.content,
@@ -36,7 +35,7 @@ export function mapKnowledgeToFeedItem(knowledgeEntry: any, viewMode: ContentVie
 export function mapQuoteToFeedItem(quote: any, viewMode: ContentViewMode): UnifiedContentItem {
   return {
     id: quote.id,
-    type: 'quote',
+    type: ContentType.Quote,
     title: quote.author ? `Quote from ${quote.author}` : 'Quote',
     content: quote.text,
     author: {
@@ -82,7 +81,7 @@ export function mapMediaToFeedItem(media: any, viewMode: ContentViewMode): Unifi
   
   return {
     id: media.id,
-    type: 'media',
+    type: ContentType.Media,
     title: media.title,
     summary: media.content,
     author: {
@@ -109,7 +108,7 @@ export function mapMediaToFeedItem(media: any, viewMode: ContentViewMode): Unifi
 export function mapAIContentToFeedItem(aiContent: any, viewMode: ContentViewMode): UnifiedContentItem {
   return {
     id: aiContent.id,
-    type: 'ai',
+    type: ContentType.AI,
     title: aiContent.title,
     summary: aiContent.summary,
     content: aiContent.content,

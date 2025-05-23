@@ -1,33 +1,10 @@
 
-import { supabase } from '@/integrations/supabase/client';
-
-// Content interaction interfaces for better type safety
 export interface ContentInteractions {
-  hasLiked: boolean;
-  hasBookmarked: boolean;
+  likes: Record<string, boolean>;
+  bookmarks: Record<string, boolean>;
 }
 
-// Define explicit interfaces for insert operations to avoid deep type instantiation
-export interface QuoteLikeInsert {
-  quote_id: string;
-  user_id: string;
+export interface InteractionResult {
+  success: boolean;
+  newState: boolean;
 }
-
-export interface QuoteBookmarkInsert {
-  quote_id: string;
-  user_id: string;
-}
-
-export interface ContentLikeInsert {
-  content_id: string;
-  user_id: string;
-  content_type: string;
-}
-
-export interface ContentBookmarkInsert {
-  content_id: string;
-  user_id: string;
-  content_type: string;
-}
-
-export type InteractionType = 'like' | 'bookmark';

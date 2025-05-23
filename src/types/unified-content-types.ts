@@ -2,27 +2,28 @@
 // Unified content type system to replace scattered type definitions
 export type ContentViewMode = 'list' | 'grid' | 'feed';
 
-// Use string literal types instead of enum values for ContentType
-export type ContentType = 
-  | 'quote' 
-  | 'knowledge' 
-  | 'media' 
-  | 'forum' 
-  | 'wiki' 
-  | 'ai' 
-  | 'research'
-  | 'all';
+// Unified ContentType enum - replace all string literal usage
+export enum ContentType {
+  Quote = 'quote',
+  Knowledge = 'knowledge', 
+  Media = 'media',
+  Forum = 'forum',
+  Wiki = 'wiki',
+  AI = 'ai',
+  Research = 'research',
+  All = 'all'
+}
 
-// Add enum-like object for value access
+// Legacy values object for backward compatibility
 export const ContentTypeValues = {
-  Quote: 'quote' as const,
-  Knowledge: 'knowledge' as const,
-  Media: 'media' as const,
-  Forum: 'forum' as const,
-  Wiki: 'wiki' as const,
-  AI: 'ai' as const,
-  Research: 'research' as const,
-  All: 'all' as const,
+  Quote: ContentType.Quote,
+  Knowledge: ContentType.Knowledge,
+  Media: ContentType.Media,
+  Forum: ContentType.Forum,
+  Wiki: ContentType.Wiki,
+  AI: ContentType.AI,
+  Research: ContentType.Research,
+  All: ContentType.All,
 } as const;
 
 export interface UnifiedContentItem {
