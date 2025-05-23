@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export type ContentType = 'forum' | 'quote' | 'media' | 'knowledge' | 'wiki' | 'ai';
 
@@ -13,23 +13,20 @@ interface UseUserContentInteractionsProps {
   initialBookmarkCount?: number;
 }
 
-/**
- * Hook for handling user interactions with content (likes, bookmarks)
- */
 export const useUserContentInteractions = ({
   contentId,
   contentType,
   initialLikeCount = 0,
-  initialBookmarkCount = 0
+  initialBookmarkCount = 0,
 }: UseUserContentInteractionsProps) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [bookmarkCount, setBookmarkCount] = useState(initialBookmarkCount);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
   // Get the table name for this content type
   const getTableName = (type: ContentType): string => {
     switch (type) {
@@ -79,36 +76,65 @@ export const useUserContentInteractions = ({
         const likeTable = getLikeTable(contentType);
         const bookmarkTable = getBookmarkTable(contentType);
         const idField = getIdField(contentType);
-        const contentTypeField = contentType !== 'quote' ? { content_type: contentType } : {};
         
         // Check likes
-        const { data: likeData, error: likeError } = await supabase
-          .from(likeTable)
-          .select('id')
-          .eq(idField, contentId)
-          .eq('user_id', user.id)
-          .eq(...(contentType !== 'quote' ? ['content_type', contentType] : [] as any))
-          .maybeSingle();
-          
-        if (!likeError) {
-          setIsLiked(!!likeData);
+        if (likeTable === 'quote_likes') {
+          const { data: likeData, error: likeError } = await supabase
+            .from(likeTable)
+            .select('id')
+            .eq(idField, contentId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+          if (!likeError) {
+            setIsLiked(!!likeData);
+          } else {
+            console.error(`Error checking like status in ${likeTable}:`, likeError);
+          }
         } else {
-          console.error(`Error checking like status in ${likeTable}:`, likeError);
+          const { data: likeData, error: likeError } = await supabase
+            .from(likeTable)
+            .select('id')
+            .eq(idField, contentId)
+            .eq('user_id', user.id)
+            .eq('content_type', contentType)
+            .maybeSingle();
+            
+          if (!likeError) {
+            setIsLiked(!!likeData);
+          } else {
+            console.error(`Error checking like status in ${likeTable}:`, likeError);
+          }
         }
         
         // Check bookmarks
-        const { data: bookmarkData, error: bookmarkError } = await supabase
-          .from(bookmarkTable)
-          .select('id')
-          .eq(idField, contentId)
-          .eq('user_id', user.id)
-          .eq(...(contentType !== 'quote' ? ['content_type', contentType] : [] as any))
-          .maybeSingle();
-          
-        if (!bookmarkError) {
-          setIsBookmarked(!!bookmarkData);
+        if (bookmarkTable === 'quote_bookmarks') {
+          const { data: bookmarkData, error: bookmarkError } = await supabase
+            .from(bookmarkTable)
+            .select('id')
+            .eq(idField, contentId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+          if (!bookmarkError) {
+            setIsBookmarked(!!bookmarkData);
+          } else {
+            console.error(`Error checking bookmark status in ${bookmarkTable}:`, bookmarkError);
+          }
         } else {
-          console.error(`Error checking bookmark status in ${bookmarkTable}:`, bookmarkError);
+          const { data: bookmarkData, error: bookmarkError } = await supabase
+            .from(bookmarkTable)
+            .select('id')
+            .eq(idField, contentId)
+            .eq('user_id', user.id)
+            .eq('content_type', contentType)
+            .maybeSingle();
+            
+          if (!bookmarkError) {
+            setIsBookmarked(!!bookmarkData);
+          } else {
+            console.error(`Error checking bookmark status in ${bookmarkTable}:`, bookmarkError);
+          }
         }
       } catch (err) {
         console.error('Error checking user interactions:', err);
@@ -140,14 +166,24 @@ export const useUserContentInteractions = ({
       
       if (isLiked) {
         // Unlike content
-        const { error } = await supabase
-          .from(likeTable)
-          .delete()
-          .eq(idField, contentId)
-          .eq('user_id', user.id)
-          .eq(...(contentType !== 'quote' ? ['content_type', contentType] : [] as any));
-          
-        if (error) throw error;
+        if (likeTable === 'quote_likes') {
+          const { error } = await supabase
+            .from(likeTable)
+            .delete()
+            .eq(idField, contentId)
+            .eq('user_id', user.id);
+            
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from(likeTable)
+            .delete()
+            .eq(idField, contentId)
+            .eq('user_id', user.id)
+            .eq('content_type', contentType);
+            
+          if (error) throw error;
+        }
         
         // Decrement like count with consistent function name
         await supabase.rpc('decrement_counter_fn', {
@@ -161,15 +197,26 @@ export const useUserContentInteractions = ({
         toast({ description: 'Like removed' });
       } else {
         // Like content
-        const insertData = contentType === 'quote' 
-          ? { quote_id: contentId, user_id: user.id } 
-          : { content_id: contentId, user_id: user.id, content_type: contentType };
-          
-        const { error } = await supabase
-          .from(likeTable)
-          .insert(insertData);
-          
-        if (error) throw error;
+        if (likeTable === 'quote_likes') {
+          const { error } = await supabase
+            .from(likeTable)
+            .insert({ 
+              quote_id: contentId, 
+              user_id: user.id 
+            });
+            
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from(likeTable)
+            .insert({ 
+              content_id: contentId, 
+              user_id: user.id, 
+              content_type: contentType 
+            });
+            
+          if (error) throw error;
+        }
         
         // Increment like count with consistent function name
         await supabase.rpc('increment_counter_fn', {
@@ -218,14 +265,24 @@ export const useUserContentInteractions = ({
       
       if (isBookmarked) {
         // Remove bookmark
-        const { error } = await supabase
-          .from(bookmarkTable)
-          .delete()
-          .eq(idField, contentId)
-          .eq('user_id', user.id)
-          .eq(...(contentType !== 'quote' ? ['content_type', contentType] : [] as any));
-          
-        if (error) throw error;
+        if (bookmarkTable === 'quote_bookmarks') {
+          const { error } = await supabase
+            .from(bookmarkTable)
+            .delete()
+            .eq(idField, contentId)
+            .eq('user_id', user.id);
+            
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from(bookmarkTable)
+            .delete()
+            .eq(idField, contentId)
+            .eq('user_id', user.id)
+            .eq('content_type', contentType);
+            
+          if (error) throw error;
+        }
         
         // Only quotes track bookmark counts
         if (contentType === 'quote') {
@@ -242,15 +299,26 @@ export const useUserContentInteractions = ({
         toast({ description: 'Bookmark removed' });
       } else {
         // Add bookmark
-        const insertData = contentType === 'quote' 
-          ? { quote_id: contentId, user_id: user.id } 
-          : { content_id: contentId, user_id: user.id, content_type: contentType };
-          
-        const { error } = await supabase
-          .from(bookmarkTable)
-          .insert(insertData);
-          
-        if (error) throw error;
+        if (bookmarkTable === 'quote_bookmarks') {
+          const { error } = await supabase
+            .from(bookmarkTable)
+            .insert({ 
+              quote_id: contentId, 
+              user_id: user.id 
+            });
+            
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from(bookmarkTable)
+            .insert({ 
+              content_id: contentId, 
+              user_id: user.id, 
+              content_type: contentType 
+            });
+            
+          if (error) throw error;
+        }
         
         // Only quotes track bookmark counts
         if (contentType === 'quote') {

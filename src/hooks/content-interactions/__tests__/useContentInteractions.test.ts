@@ -3,7 +3,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useContentInteractions } from '../../useContentInteractions';
+import { useContentInteractions } from '../../../hooks/useContentInteractions';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
@@ -42,7 +42,7 @@ describe('useContentInteractions Hook', () => {
   test('handleLike should call supabase for content like', async () => {
     // Mock the supabase response for content_likes
     const mockInsert = jest.fn().mockResolvedValue({ data: null, error: null });
-    supabase.from = jest.fn().mockImplementation((table) => {
+    (supabase.from as jest.Mock) = jest.fn().mockImplementation((table) => {
       return {
         insert: mockInsert,
         delete: jest.fn().mockResolvedValue({ data: null, error: null }),
@@ -74,7 +74,7 @@ describe('useContentInteractions Hook', () => {
   test('handleBookmark should call supabase for content bookmark', async () => {
     // Mock the supabase response for content_bookmarks
     const mockInsert = jest.fn().mockResolvedValue({ data: null, error: null });
-    supabase.from = jest.fn().mockImplementation((table) => {
+    (supabase.from as jest.Mock) = jest.fn().mockImplementation((table) => {
       return {
         insert: mockInsert,
         delete: jest.fn().mockResolvedValue({ data: null, error: null }),
