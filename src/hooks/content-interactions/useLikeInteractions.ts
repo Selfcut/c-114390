@@ -7,6 +7,20 @@ import { normalizeContentType, getContentTableInfo } from '@/lib/utils/content-t
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
+// Define strongly typed interfaces for database operations
+interface QuoteLikePayload {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentLikePayload {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
+type LikePayload = QuoteLikePayload | ContentLikePayload;
+
 interface UseLikeInteractionsProps {
   contentId: string;
   contentType: string | ContentType | ContentItemType;
@@ -30,7 +44,7 @@ export const useLikeInteractions = ({
   const { toast } = useToast();
   
   const normalizedType = normalizeContentType(contentType);
-  const { contentTable, likesTable, contentIdField, likesColumnName } = getContentTableInfo(normalizedType);
+  const { contentTable, likesColumnName } = getContentTableInfo(normalizedType);
 
   // Fetch initial like state on mount if authenticated
   useEffect(() => {
@@ -38,18 +52,35 @@ export const useLikeInteractions = ({
       const fetchInitialLikeState = async () => {
         try {
           setIsLoading(true);
-          const { data, error } = await supabase
-            .from(likesTable)
-            .select('id')
-            .eq(contentIdField, contentId)
-            .eq('user_id', user.id)
-            .maybeSingle();
           
-          if (error) {
-            throw error;
+          if (normalizedType === 'quote') {
+            const { data, error } = await supabase
+              .from('quote_likes')
+              .select('id')
+              .eq('quote_id', contentId)
+              .eq('user_id', user.id)
+              .maybeSingle();
+            
+            if (error) {
+              throw error;
+            }
+            
+            setIsLiked(!!data);
+          } else {
+            const { data, error } = await supabase
+              .from('content_likes')
+              .select('id')
+              .eq('content_id', contentId)
+              .eq('user_id', user.id)
+              .eq('content_type', normalizedType)
+              .maybeSingle();
+            
+            if (error) {
+              throw error;
+            }
+            
+            setIsLiked(!!data);
           }
-          
-          setIsLiked(!!data);
         } catch (error) {
           console.error('Error fetching initial like state:', error);
         } finally {
@@ -59,7 +90,7 @@ export const useLikeInteractions = ({
       
       fetchInitialLikeState();
     }
-  }, [isAuthenticated, user, contentId, likesTable, contentIdField]);
+  }, [isAuthenticated, user, contentId, normalizedType]);
 
   // Function to toggle like
   const toggleLike = useCallback(async () => {
@@ -79,53 +110,104 @@ export const useLikeInteractions = ({
       setIsLiked(prev => !prev);
       setLikeCount(prevCount => (isLiked ? prevCount - 1 : prevCount + 1));
       
-      // Determine if we should insert or delete based on current state
-      if (isLiked) {
-        // Unlike: Delete the like
-        const { error } = await supabase
-          .from(likesTable)
-          .delete()
-          .eq(contentIdField, contentId)
-          .eq('user_id', user.id);
-        
-        if (error) {
-          throw error;
+      if (normalizedType === 'quote') {
+        // Handle quote likes
+        if (isLiked) {
+          // Unlike: Delete the like
+          const { data, error: findError } = await supabase
+            .from('quote_likes')
+            .select('id')
+            .eq('quote_id', contentId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+          if (findError) throw findError;
+          
+          if (data) {
+            const { error: deleteError } = await supabase
+              .from('quote_likes')
+              .delete()
+              .eq('id', data.id);
+            
+            if (deleteError) throw deleteError;
+          }
+          
+          // Decrement counter in the content table
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: contentId,
+            column_name: likesColumnName,
+            table_name: contentTable
+          });
+        } else {
+          // Like: Insert a new like
+          const likeData: QuoteLikePayload = {
+            user_id: user.id,
+            quote_id: contentId
+          };
+          
+          const { error } = await supabase
+            .from('quote_likes')
+            .insert(likeData);
+          
+          if (error) throw error;
+          
+          // Increment counter in the content table
+          await supabase.rpc('increment_counter_fn', {
+            row_id: contentId,
+            column_name: likesColumnName,
+            table_name: contentTable
+          });
         }
-        
-        // Decrement counter in the content table
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: contentId,
-          column_name: likesColumnName,
-          table_name: contentTable
-        });
       } else {
-        // Like: Insert a new like
-        const insertData: Record<string, any> = {
-          user_id: user.id,
-        };
-        
-        // Add the proper content ID field
-        insertData[contentIdField] = contentId;
-        
-        // Conditionally add content_type if it's not a quote
-        if (normalizedType !== 'quote') {
-          insertData['content_type'] = normalizedType;
+        // Handle other content types
+        if (isLiked) {
+          // Unlike: Delete the like
+          const { data, error: findError } = await supabase
+            .from('content_likes')
+            .select('id')
+            .eq('content_id', contentId)
+            .eq('user_id', user.id)
+            .eq('content_type', normalizedType)
+            .maybeSingle();
+            
+          if (findError) throw findError;
+          
+          if (data) {
+            const { error: deleteError } = await supabase
+              .from('content_likes')
+              .delete()
+              .eq('id', data.id);
+            
+            if (deleteError) throw deleteError;
+          }
+          
+          // Decrement counter in the content table
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: contentId,
+            column_name: likesColumnName,
+            table_name: contentTable
+          });
+        } else {
+          // Like: Insert a new like
+          const likeData: ContentLikePayload = {
+            user_id: user.id,
+            content_id: contentId,
+            content_type: normalizedType
+          };
+          
+          const { error } = await supabase
+            .from('content_likes')
+            .insert(likeData);
+          
+          if (error) throw error;
+          
+          // Increment counter in the content table
+          await supabase.rpc('increment_counter_fn', {
+            row_id: contentId,
+            column_name: likesColumnName,
+            table_name: contentTable
+          });
         }
-        
-        const { error } = await supabase
-          .from(likesTable)
-          .insert(insertData);
-        
-        if (error) {
-          throw error;
-        }
-        
-        // Increment counter in the content table
-        await supabase.rpc('increment_counter_fn', {
-          row_id: contentId,
-          column_name: likesColumnName,
-          table_name: contentTable
-        });
       }
       
       // Notify parent component about like count change
@@ -151,7 +233,7 @@ export const useLikeInteractions = ({
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, user, contentId, isLiked, likeCount, likesTable, contentIdField, normalizedType, contentTable, likesColumnName, onLikeChange, toast]);
+  }, [isAuthenticated, user, contentId, isLiked, likeCount, normalizedType, contentTable, likesColumnName, onLikeChange, toast]);
 
   return {
     isLiked,

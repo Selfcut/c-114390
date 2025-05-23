@@ -12,6 +12,20 @@ interface UseBookmarkInteractionsProps {
   initialBookmarkState?: boolean;
 }
 
+// Define strongly typed interfaces for database operations
+interface QuoteBookmarkPayload {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentBookmarkPayload {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
+type BookmarkPayload = QuoteBookmarkPayload | ContentBookmarkPayload;
+
 /**
  * Manages bookmark interactions for different content types.
  */
@@ -42,54 +56,96 @@ export const useBookmarkInteractions = ({
       const contentIdField = isQuote ? 'quote_id' : 'content_id';
       
       // Check if the content is already bookmarked
-      const { data, error: checkError } = await supabase
-        .from(table)
-        .select('id')
-        .eq('user_id', userId)
-        .eq(contentIdField, contentId)
-        .maybeSingle();
-      
-      if (checkError) {
-        throw new Error(checkError.message);
-      }
-      
-      // Check if data exists AND has an id property
-      if (data && 'id' in data) {
-        // Remove the bookmark
-        const { error: deleteError } = await supabase
-          .from(table)
-          .delete()
-          .eq('id', data.id);
+      if (isQuote) {
+        const { data, error: checkError } = await supabase
+          .from('quote_bookmarks')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('quote_id', contentId)
+          .maybeSingle();
         
-        if (deleteError) {
-          throw new Error(deleteError.message);
+        if (checkError) {
+          throw new Error(checkError.message);
         }
         
-        setIsBookmarked(false);
-        return false;
+        // Check if data exists AND has an id property
+        if (data && 'id' in data) {
+          // Remove the bookmark
+          const { error: deleteError } = await supabase
+            .from('quote_bookmarks')
+            .delete()
+            .eq('id', data.id);
+          
+          if (deleteError) {
+            throw new Error(deleteError.message);
+          }
+          
+          setIsBookmarked(false);
+          return false;
+        } else {
+          // Add the bookmark with proper typing
+          const bookmarkData: QuoteBookmarkPayload = {
+            user_id: userId,
+            quote_id: contentId
+          };
+          
+          const { error: insertError } = await supabase
+            .from('quote_bookmarks')
+            .insert(bookmarkData);
+          
+          if (insertError) {
+            throw new Error(insertError.message);
+          }
+          
+          setIsBookmarked(true);
+          return true;
+        }
       } else {
-        // Add the bookmark
-        const insertPayload: Record<string, any> = {
-          user_id: userId,
-        };
+        // Handle content_bookmarks table
+        const { data, error: checkError } = await supabase
+          .from('content_bookmarks')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('content_id', contentId)
+          .eq('content_type', normalizedContentType)
+          .maybeSingle();
         
-        // Add the proper ID field based on content type
-        insertPayload[contentIdField] = contentId;
-        
-        if (!isQuote) {
-          insertPayload.content_type = normalizedContentType;
+        if (checkError) {
+          throw new Error(checkError.message);
         }
         
-        const { error: insertError } = await supabase
-          .from(table)
-          .insert(insertPayload);
-        
-        if (insertError) {
-          throw new Error(insertError.message);
+        if (data && 'id' in data) {
+          // Remove the bookmark
+          const { error: deleteError } = await supabase
+            .from('content_bookmarks')
+            .delete()
+            .eq('id', data.id);
+          
+          if (deleteError) {
+            throw new Error(deleteError.message);
+          }
+          
+          setIsBookmarked(false);
+          return false;
+        } else {
+          // Add the bookmark with proper typing
+          const bookmarkData: ContentBookmarkPayload = {
+            user_id: userId,
+            content_id: contentId,
+            content_type: normalizedContentType
+          };
+          
+          const { error: insertError } = await supabase
+            .from('content_bookmarks')
+            .insert(bookmarkData);
+          
+          if (insertError) {
+            throw new Error(insertError.message);
+          }
+          
+          setIsBookmarked(true);
+          return true;
         }
-        
-        setIsBookmarked(true);
-        return true;
       }
     } catch (error: any) {
       console.error('Error toggling bookmark:', error.message);

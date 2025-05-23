@@ -3,6 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeContentType, getContentTableInfo } from './content-type-utils';
 import { ContentType } from '@/types/contentTypes';
 
+// Define strongly typed interfaces for database operations
+interface QuoteInteractionPayload {
+  quote_id: string;
+  user_id: string;
+}
+
+interface ContentInteractionPayload {
+  content_id: string;
+  user_id: string;
+  content_type: string;
+}
+
 /**
  * Error handler for database operations
  */
@@ -34,26 +46,53 @@ export const checkUserInteractions = async (
   try {
     const normalizedType = normalizeContentType(contentType);
     const { likesTable, bookmarksTable, contentIdField } = getContentTableInfo(normalizedType);
+    let likeData = null;
+    let bookmarkData = null;
     
     // Check if user has liked the content
-    const { data: likeData, error: likeError } = await supabase
-      .from(likesTable)
-      .select('id')
-      .eq(contentIdField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
+    if (normalizedType === 'quote') {
+      const likeResult = await supabase
+        .from('quote_likes')
+        .select('id')
+        .eq(contentIdField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (likeResult.error) throw likeResult.error;
+      likeData = likeResult.data;
       
-    if (likeError) throw likeError;
-    
-    // Check if user has bookmarked the content
-    const { data: bookmarkData, error: bookmarkError } = await supabase
-      .from(bookmarksTable)
-      .select('id')
-      .eq(contentIdField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
+      const bookmarkResult = await supabase
+        .from('quote_bookmarks')
+        .select('id')
+        .eq(contentIdField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (bookmarkResult.error) throw bookmarkResult.error;
+      bookmarkData = bookmarkResult.data;
+    } else {
+      const likeResult = await supabase
+        .from('content_likes')
+        .select('id')
+        .eq(contentIdField, contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
+        
+      if (likeResult.error) throw likeResult.error;
+      likeData = likeResult.data;
       
-    if (bookmarkError) throw bookmarkError;
+      const bookmarkResult = await supabase
+        .from('content_bookmarks')
+        .select('id')
+        .eq(contentIdField, contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
+        
+      if (bookmarkResult.error) throw bookmarkResult.error;
+      bookmarkData = bookmarkResult.data;
+    }
     
     return {
       isLiked: !!likeData,
@@ -79,66 +118,115 @@ export const toggleLike = async (
     const normalizedType = normalizeContentType(contentType);
     const { 
       contentTable, 
-      likesTable, 
-      contentIdField, 
       likesColumnName 
     } = getContentTableInfo(normalizedType);
     
     // Check if the user has already liked this content
-    const { data: existingLike, error: checkError } = await supabase
-      .from(likesTable)
-      .select('id')
-      .eq(contentIdField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (checkError) throw checkError;
+    let existingLike = null;
     
-    // If like exists, remove it
-    if (existingLike && 'id' in existingLike) {
-      const { error: deleteError } = await supabase
-        .from(likesTable)
-        .delete()
-        .eq('id', existingLike.id);
+    if (normalizedType === 'quote') {
+      const { data, error: checkError } = await supabase
+        .from('quote_likes')
+        .select('id')
+        .eq('quote_id', contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
         
-      if (deleteError) throw deleteError;
+      if (checkError) throw checkError;
+      existingLike = data;
       
-      // Decrement the like counter
-      await supabase.rpc('decrement_counter_fn', {
-        row_id: contentId,
-        column_name: likesColumnName,
-        table_name: contentTable
-      });
-      
-      return false; // No longer liked
-    } else {
-      // Insert new like
-      const payload: Record<string, any> = {
-        user_id: userId,
-      };
-      
-      // Set the correct ID field based on content type
-      payload[contentIdField] = contentId;
-      
-      // Add content_type for non-quote content
-      if (normalizedType !== 'quote') {
-        payload.content_type = normalizedType;
+      // If like exists, remove it
+      if (existingLike && 'id' in existingLike) {
+        const { error: deleteError } = await supabase
+          .from('quote_likes')
+          .delete()
+          .eq('id', existingLike.id);
+          
+        if (deleteError) throw deleteError;
+        
+        // Decrement the like counter
+        await supabase.rpc('decrement_counter_fn', {
+          row_id: contentId,
+          column_name: likesColumnName,
+          table_name: contentTable
+        });
+        
+        return false; // No longer liked
+      } else {
+        // Insert new like
+        const payload: QuoteInteractionPayload = {
+          user_id: userId,
+          quote_id: contentId
+        };
+        
+        const { error: insertError } = await supabase
+          .from('quote_likes')
+          .insert(payload);
+          
+        if (insertError) throw insertError;
+        
+        // Increment the like counter
+        await supabase.rpc('increment_counter_fn', {
+          row_id: contentId,
+          column_name: likesColumnName,
+          table_name: contentTable
+        });
+        
+        return true; // Now liked
       }
-      
-      const { error: insertError } = await supabase
-        .from(likesTable)
-        .insert(payload);
+    } else {
+      // Handle other content types
+      const { data, error: checkError } = await supabase
+        .from('content_likes')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
         
-      if (insertError) throw insertError;
+      if (checkError) throw checkError;
+      existingLike = data;
       
-      // Increment the like counter
-      await supabase.rpc('increment_counter_fn', {
-        row_id: contentId,
-        column_name: likesColumnName,
-        table_name: contentTable
-      });
-      
-      return true; // Now liked
+      // If like exists, remove it
+      if (existingLike && 'id' in existingLike) {
+        const { error: deleteError } = await supabase
+          .from('content_likes')
+          .delete()
+          .eq('id', existingLike.id);
+          
+        if (deleteError) throw deleteError;
+        
+        // Decrement the like counter
+        await supabase.rpc('decrement_counter_fn', {
+          row_id: contentId,
+          column_name: likesColumnName,
+          table_name: contentTable
+        });
+        
+        return false; // No longer liked
+      } else {
+        // Insert new like
+        const payload: ContentInteractionPayload = {
+          user_id: userId,
+          content_id: contentId,
+          content_type: normalizedType
+        };
+        
+        const { error: insertError } = await supabase
+          .from('content_likes')
+          .insert(payload);
+          
+        if (insertError) throw insertError;
+        
+        // Increment the like counter
+        await supabase.rpc('increment_counter_fn', {
+          row_id: contentId,
+          column_name: likesColumnName,
+          table_name: contentTable
+        });
+        
+        return true; // Now liked
+      }
     }
   } catch (error) {
     console.error('Error toggling like:', error);
@@ -160,70 +248,123 @@ export const toggleBookmark = async (
     const normalizedType = normalizeContentType(contentType);
     const { 
       contentTable, 
-      bookmarksTable, 
-      contentIdField, 
       bookmarksColumnName 
     } = getContentTableInfo(normalizedType);
     
     // Check if the user has already bookmarked this content
-    const { data: existingBookmark, error: checkError } = await supabase
-      .from(bookmarksTable)
-      .select('id')
-      .eq(contentIdField, contentId)
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (checkError) throw checkError;
+    let existingBookmark = null;
     
-    // If bookmark exists, remove it
-    if (existingBookmark && 'id' in existingBookmark) {
-      const { error: deleteError } = await supabase
-        .from(bookmarksTable)
-        .delete()
-        .eq('id', existingBookmark.id);
+    if (normalizedType === 'quote') {
+      const { data, error: checkError } = await supabase
+        .from('quote_bookmarks')
+        .select('id')
+        .eq('quote_id', contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
         
-      if (deleteError) throw deleteError;
+      if (checkError) throw checkError;
+      existingBookmark = data;
       
-      // Only decrement counter if the column exists for this content type
-      if (bookmarksColumnName) {
-        await supabase.rpc('decrement_counter_fn', {
-          row_id: contentId,
-          column_name: bookmarksColumnName,
-          table_name: contentTable
-        });
+      // If bookmark exists, remove it
+      if (existingBookmark && 'id' in existingBookmark) {
+        const { error: deleteError } = await supabase
+          .from('quote_bookmarks')
+          .delete()
+          .eq('id', existingBookmark.id);
+          
+        if (deleteError) throw deleteError;
+        
+        // Only decrement counter if the column exists for this content type
+        if (bookmarksColumnName) {
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: contentId,
+            column_name: bookmarksColumnName,
+            table_name: contentTable
+          });
+        }
+        
+        return false; // No longer bookmarked
+      } else {
+        // Insert new bookmark
+        const payload: QuoteInteractionPayload = {
+          user_id: userId,
+          quote_id: contentId
+        };
+        
+        const { error: insertError } = await supabase
+          .from('quote_bookmarks')
+          .insert(payload);
+          
+        if (insertError) throw insertError;
+        
+        // Only increment counter if the column exists for this content type
+        if (bookmarksColumnName) {
+          await supabase.rpc('increment_counter_fn', {
+            row_id: contentId,
+            column_name: bookmarksColumnName,
+            table_name: contentTable
+          });
+        }
+        
+        return true; // Now bookmarked
       }
-      
-      return false; // No longer bookmarked
     } else {
-      // Insert new bookmark
-      const payload: Record<string, any> = {
-        user_id: userId,
-      };
-      
-      // Set the correct ID field based on content type
-      payload[contentIdField] = contentId;
-      
-      // Add content_type for non-quote content
-      if (normalizedType !== 'quote') {
-        payload.content_type = normalizedType;
-      }
-      
-      const { error: insertError } = await supabase
-        .from(bookmarksTable)
-        .insert(payload);
+      // Handle other content types
+      const { data, error: checkError } = await supabase
+        .from('content_bookmarks')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
         
-      if (insertError) throw insertError;
+      if (checkError) throw checkError;
+      existingBookmark = data;
       
-      // Only increment counter if the column exists for this content type
-      if (bookmarksColumnName) {
-        await supabase.rpc('increment_counter_fn', {
-          row_id: contentId,
-          column_name: bookmarksColumnName,
-          table_name: contentTable
-        });
+      // If bookmark exists, remove it
+      if (existingBookmark && 'id' in existingBookmark) {
+        const { error: deleteError } = await supabase
+          .from('content_bookmarks')
+          .delete()
+          .eq('id', existingBookmark.id);
+          
+        if (deleteError) throw deleteError;
+        
+        // Only decrement counter if the column exists for this content type
+        if (bookmarksColumnName) {
+          await supabase.rpc('decrement_counter_fn', {
+            row_id: contentId,
+            column_name: bookmarksColumnName,
+            table_name: contentTable
+          });
+        }
+        
+        return false; // No longer bookmarked
+      } else {
+        // Insert new bookmark
+        const payload: ContentInteractionPayload = {
+          user_id: userId,
+          content_id: contentId,
+          content_type: normalizedType
+        };
+        
+        const { error: insertError } = await supabase
+          .from('content_bookmarks')
+          .insert(payload);
+          
+        if (insertError) throw insertError;
+        
+        // Only increment counter if the column exists for this content type
+        if (bookmarksColumnName) {
+          await supabase.rpc('increment_counter_fn', {
+            row_id: contentId,
+            column_name: bookmarksColumnName,
+            table_name: contentTable
+          });
+        }
+        
+        return true; // Now bookmarked
       }
-      
-      return true; // Now bookmarked
     }
   } catch (error) {
     console.error('Error toggling bookmark:', error);
@@ -243,7 +384,6 @@ export const batchCheckInteractions = async (
   
   try {
     const normalizedType = normalizeContentType(contentType);
-    const { likesTable, bookmarksTable, contentIdField } = getContentTableInfo(normalizedType);
     const result: Record<string, UserInteractionStatus> = {};
     
     // Initialize default values
@@ -251,36 +391,72 @@ export const batchCheckInteractions = async (
       result[id] = { isLiked: false, isBookmarked: false };
     });
     
-    // Batch check likes
-    const { data: likesData, error: likesError } = await supabase
-      .from(likesTable)
-      .select('id, ' + contentIdField)
-      .eq('user_id', userId)
-      .in(contentIdField, contentIds);
+    if (normalizedType === 'quote') {
+      // Batch check likes
+      const { data: likesData, error: likesError } = await supabase
+        .from('quote_likes')
+        .select('quote_id')
+        .eq('user_id', userId)
+        .in('quote_id', contentIds);
+        
+      if (!likesError && likesData) {
+        likesData.forEach(like => {
+          const contentId = like.quote_id;
+          if (result[contentId]) {
+            result[contentId].isLiked = true;
+          }
+        });
+      }
       
-    if (!likesError && likesData) {
-      likesData.forEach(like => {
-        const contentId = like[contentIdField as keyof typeof like] as string;
-        if (result[contentId]) {
-          result[contentId].isLiked = true;
-        }
-      });
-    }
-    
-    // Batch check bookmarks
-    const { data: bookmarksData, error: bookmarksError } = await supabase
-      .from(bookmarksTable)
-      .select('id, ' + contentIdField)
-      .eq('user_id', userId)
-      .in(contentIdField, contentIds);
+      // Batch check bookmarks
+      const { data: bookmarksData, error: bookmarksError } = await supabase
+        .from('quote_bookmarks')
+        .select('quote_id')
+        .eq('user_id', userId)
+        .in('quote_id', contentIds);
+        
+      if (!bookmarksError && bookmarksData) {
+        bookmarksData.forEach(bookmark => {
+          const contentId = bookmark.quote_id;
+          if (result[contentId]) {
+            result[contentId].isBookmarked = true;
+          }
+        });
+      }
+    } else {
+      // Batch check likes
+      const { data: likesData, error: likesError } = await supabase
+        .from('content_likes')
+        .select('content_id')
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .in('content_id', contentIds);
+        
+      if (!likesError && likesData) {
+        likesData.forEach(like => {
+          const contentId = like.content_id;
+          if (result[contentId]) {
+            result[contentId].isLiked = true;
+          }
+        });
+      }
       
-    if (!bookmarksError && bookmarksData) {
-      bookmarksData.forEach(bookmark => {
-        const contentId = bookmark[contentIdField as keyof typeof bookmark] as string;
-        if (result[contentId]) {
-          result[contentId].isBookmarked = true;
-        }
-      });
+      // Batch check bookmarks
+      const { data: bookmarksData, error: bookmarksError } = await supabase
+        .from('content_bookmarks')
+        .select('content_id')
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .in('content_id', contentIds);
+        
+      if (!bookmarksError && bookmarksData) {
+        bookmarksData.forEach(bookmark => {
+          const contentId = bookmark.content_id;
+          if (result[contentId]) {
+            result[contentId].isBookmarked = true;
+          }
+        });
+      }
     }
     
     return result;
