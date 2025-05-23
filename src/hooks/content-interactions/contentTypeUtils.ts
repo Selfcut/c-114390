@@ -46,10 +46,10 @@ export const getContentTable = (contentType: string): string => {
       return 'wiki_articles';
     case 'knowledge':
       return 'knowledge_entries';
-    case 'ai':
-      return 'ai_content';
     case 'research':
       return 'research_papers';
+    case 'ai':
+      return 'ai_content';
     default:
       console.warn(`Unknown content type: ${contentType}, defaulting to forum_posts`);
       return 'forum_posts';
@@ -82,4 +82,27 @@ export const getLikesTable = (contentType: string): string => {
  */
 export const getBookmarksTable = (contentType: string): string => {
   return contentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
+};
+
+/**
+ * Get the counter field name for likes based on content type
+ */
+export const getLikesCounterField = (contentType: string): string => {
+  return contentType === 'forum' ? 'upvotes' : 'likes';
+};
+
+/**
+ * Get the counter field name for bookmarks based on content type
+ * Note: Only quote content type tracks bookmarks count
+ */
+export const getBookmarksCounterField = (contentType: string): string | undefined => {
+  return contentType === 'quote' ? 'bookmarks' : undefined;
+};
+
+/**
+ * Convert a raw content ID and type to a consistent format for state tracking
+ */
+export const getContentKey = (id: string, type: ContentItemType | string): string => {
+  const contentType = typeof type === 'string' ? type : getContentTypeString(type);
+  return `${contentType}:${id}`;
 };

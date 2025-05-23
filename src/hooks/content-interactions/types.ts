@@ -7,6 +7,11 @@ import { ContentItemType } from '@/components/library/content-items/ContentItemT
 export type InteractionType = 'like' | 'bookmark';
 
 /**
+ * Status of an interaction operation
+ */
+export type InteractionStatus = 'idle' | 'loading' | 'success' | 'error';
+
+/**
  * Result of checking if a user has interacted with items
  */
 export interface InteractionCheckResult {
@@ -21,6 +26,7 @@ export interface InteractionCheckResult {
 export interface ContentInteractionResult {
   isLiked: boolean;
   id: string;
+  contentType?: string;
 }
 
 /**
@@ -29,6 +35,7 @@ export interface ContentInteractionResult {
 export interface ContentBookmarkResult {
   isBookmarked: boolean;
   id: string;
+  contentType?: string;
 }
 
 /**
@@ -39,14 +46,28 @@ export interface UseContentInteractionsProps {
 }
 
 /**
+ * Structure for tracking loading states by content item
+ */
+export interface ContentLoadingState {
+  isLikeLoading: boolean;
+  isBookmarkLoading: boolean;
+}
+
+/**
  * Return type for useContentInteractions hook
  */
 export interface UserInteractions {
+  // State
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
-  handleLike: (id: string, itemType: ContentItemType) => Promise<ContentInteractionResult | null>;
-  handleBookmark: (id: string, itemType: ContentItemType) => Promise<ContentBookmarkResult | null>;
-  checkUserInteractions: (itemIds: string[]) => Promise<void>;
+  loadingStates: Record<string, ContentLoadingState>;
+  
+  // Methods
+  handleLike: (id: string, itemType: ContentItemType | string) => Promise<ContentInteractionResult | null>;
+  handleBookmark: (id: string, itemType: ContentItemType | string) => Promise<ContentBookmarkResult | null>;
+  checkUserInteractions: (itemIds: string[], itemType?: ContentItemType | string) => Promise<void>;
+  getLoadingState: (id: string) => ContentLoadingState;
+  isInteractionLoading: (id: string, type: InteractionType) => boolean;
 }
 
 /**
@@ -59,4 +80,23 @@ export interface ContentTypeTables {
   idFieldName: string;
   likesColumnName: string;
   bookmarksColumnName?: string;
+}
+
+/**
+ * Database operation error
+ */
+export interface DatabaseError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
+
+/**
+ * Batch processing options
+ */
+export interface BatchProcessingOptions {
+  batchSize?: number;
+  retryCount?: number;
+  retryDelay?: number;
 }

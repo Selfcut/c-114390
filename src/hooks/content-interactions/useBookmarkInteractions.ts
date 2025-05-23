@@ -1,31 +1,55 @@
 
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ContentBookmarkResult } from './types';
-import { getContentTypeString, getContentTypeInfo } from './contentTypeUtils';
+import { ContentBookmarkResult, ContentLoadingState } from './types';
+import { getContentTypeString, getContentTypeInfo, getContentKey } from './contentTypeUtils';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export const useBookmarkInteractions = (
   userId?: string | null,
   userBookmarks: Record<string, boolean> = {},
-  setUserBookmarks: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {}
+  setUserBookmarks: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {},
+  loadingStates: Record<string, ContentLoadingState> = {},
+  setLoadingStates: React.Dispatch<React.SetStateAction<Record<string, ContentLoadingState>>> = () => {}
 ) => {
   const { toast } = useToast();
   
+  const setBookmarkLoadingState = useCallback((id: string, contentType: string | ContentItemType, isLoading: boolean) => {
+    const contentTypeStr = typeof contentType === 'string' ? contentType : getContentTypeString(contentType);
+    const key = getContentKey(id, contentTypeStr);
+    
+    setLoadingStates(prev => {
+      const current = prev[key] || { isLikeLoading: false, isBookmarkLoading: false };
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          isBookmarkLoading: isLoading
+        }
+      };
+    });
+  }, [setLoadingStates]);
+  
   // Handle bookmark interaction with consistent RPC function name
-  const handleBookmark = async (id: string, itemType: ContentItemType): Promise<ContentBookmarkResult | null> => {
+  const handleBookmark = useCallback(async (id: string, itemType: ContentItemType | string): Promise<ContentBookmarkResult | null> => {
     if (!userId) {
       toast({
         title: "Authentication required",
-        description: "Please log in to bookmark content",
+        description: "Please sign in to bookmark content",
         variant: "destructive"
       });
       return null;
     }
     
-    const isBookmarked = userBookmarks[id];
-    const contentTypeStr = getContentTypeString(itemType);
+    const contentTypeStr = typeof itemType === 'string' ? itemType : getContentTypeString(itemType);
+    const key = getContentKey(id, contentTypeStr);
+    const isBookmarked = userBookmarks[key] || userBookmarks[id] || false; // Check both formats for backward compatibility
     const typeInfo = getContentTypeInfo(contentTypeStr);
+    
+    // Set loading state
+    setBookmarkLoadingState(id, contentTypeStr, true);
     
     try {
       if (isBookmarked) {
@@ -47,6 +71,10 @@ export const useBookmarkInteractions = (
               table_name: typeInfo.contentTable
             });
           }
+          
+          toast({
+            description: "Bookmark removed"
+          });
         } else {
           const { error } = await supabase
             .from('content_bookmarks')
@@ -56,9 +84,19 @@ export const useBookmarkInteractions = (
             .eq('content_type', contentTypeStr);
             
           if (error) throw error;
+          
+          toast({
+            description: "Bookmark removed"
+          });
         }
           
-        setUserBookmarks(prev => ({...prev, [id]: false}));
+        // Update state with both key formats
+        setUserBookmarks(prev => {
+          const newState = {...prev};
+          newState[key] = false;
+          newState[id] = false; // For backward compatibility
+          return newState;
+        });
       } else {
         // Add bookmark
         if (contentTypeStr === 'quote') {
@@ -79,6 +117,10 @@ export const useBookmarkInteractions = (
               table_name: typeInfo.contentTable
             });
           }
+          
+          toast({
+            description: "Content bookmarked"
+          });
         } else {
           const { error } = await supabase
             .from('content_bookmarks')
@@ -89,26 +131,41 @@ export const useBookmarkInteractions = (
             });
             
           if (error) throw error;
+          
+          toast({
+            description: "Content bookmarked"
+          });
         }
           
-        setUserBookmarks(prev => ({...prev, [id]: true}));
+        // Update state with both key formats
+        setUserBookmarks(prev => {
+          const newState = {...prev};
+          newState[key] = true;
+          newState[id] = true; // For backward compatibility
+          return newState;
+        });
       }
       
       return {
         isBookmarked: !isBookmarked,
-        id
+        id,
+        contentType: contentTypeStr
       };
       
     } catch (err) {
-      console.error('Error updating bookmark:', err);
+      const pgError = err as PostgrestError;
+      console.error('Error updating bookmark:', pgError);
       toast({
         title: "Action failed",
         description: "Failed to update bookmark status",
         variant: "destructive"
       });
       return null;
+    } finally {
+      // Clear loading state
+      setBookmarkLoadingState(id, contentTypeStr, false);
     }
-  };
+  }, [userId, userBookmarks, toast, setUserBookmarks, setBookmarkLoadingState]);
 
   return { handleBookmark };
 };
