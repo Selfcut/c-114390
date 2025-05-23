@@ -1,43 +1,82 @@
 
-import { BrowserRouter as Router } from "react-router-dom";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { Toaster } from "./components/ui/toaster";
-import { ThemeProvider } from "./components/providers/ThemeProvider";
-import { AuthProvider } from "./lib/auth";
-import { ReactQueryProvider } from './components/providers/ReactQueryProvider';
-import { AppRoutes } from "./components/routing/AppRoutes";
-import { HelmetProvider } from 'react-helmet-async';
-import { ScrollToTop } from "./components/ui/ScrollToTop";
-import { UserInteractionProvider } from "./contexts/UserInteractionContext";
-import { useEffect } from "react";
-import "./styles/dark-mode.css";
-import "./styles/light-mode.css";
-import "./styles/global.css";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/lib/auth/auth-context";
+import { UserInteractionProvider } from "@/contexts/UserInteractionContext";
+import { Navbar } from "@/components/layouts/Navbar";
+import { ProtectedRoute } from "@/components/routing/ProtectedRoute";
+import { AuthCallback } from "@/components/routing/AuthCallback";
+
+// Pages
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import Forum from "./pages/Forum";
+import ForumPost from "./pages/ForumPost";
+import Media from "./pages/Media";
+import Knowledge from "./pages/Knowledge";
+import Profile from "./pages/Profile";
+import Words from "./pages/Words";
+import Notes from "./pages/Notes";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 3,
+    },
+  },
+});
 
 function App() {
-  useEffect(() => {
-    // Log initialization
-    console.info("Application fully loaded: Styles and animations initialized");
-  }, []);
-
   return (
-    <HelmetProvider>
-      <ThemeProvider>
-        <ErrorBoundary>
-          <ReactQueryProvider>
-            <AuthProvider>
-              <UserInteractionProvider>
-                <Router>
-                  <ScrollToTop />
-                  <AppRoutes />
-                  <Toaster />
-                </Router>
-              </UserInteractionProvider>
-            </AuthProvider>
-          </ReactQueryProvider>
-        </ErrorBoundary>
-      </ThemeProvider>
-    </HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <UserInteractionProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="min-h-screen bg-background">
+                <Navbar />
+                <main className="pt-16">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/forum" element={<Forum />} />
+                    <Route path="/forum/:id" element={<ForumPost />} />
+                    <Route path="/media" element={<Media />} />
+                    <Route path="/knowledge" element={<Knowledge />} />
+                    <Route path="/words" element={<Words />} />
+                    <Route path="/notes" element={<Notes />} />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </main>
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </UserInteractionProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

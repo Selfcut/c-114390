@@ -1,200 +1,108 @@
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { toggleUserInteraction } from '@/lib/utils/supabase-utils'; 
-import { toast } from 'sonner';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useAuth } from '@/lib/auth';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { ContentType } from '@/types/contentTypes';
-import { normalizeContentType, getContentKey } from '@/hooks/content-interactions/contentTypeUtils';
+import { ContentType } from '@/types/unified-content-types';
+import { toggleUserInteraction, checkUserContentInteractions } from '@/lib/utils/content-interactions';
+import { toast } from 'sonner';
 
 interface UserInteractionContextType {
-  // Backward compatible API that explicitly requires userId
-  toggleLike: (contentId: string, contentType: string, userId: string) => Promise<boolean>;
-  toggleBookmark: (contentId: string, contentType: string, userId: string) => Promise<boolean>;
-  
-  // Simplified API that uses the current user's ID automatically
-  likeContent: (contentId: string, contentType: string | ContentItemType | ContentType) => Promise<boolean>;
-  bookmarkContent: (contentId: string, contentType: string | ContentItemType | ContentType) => Promise<boolean>;
-  
   likedItems: Record<string, boolean>;
   bookmarkedItems: Record<string, boolean>;
   isLoading: boolean;
+  likeContent: (contentId: string, contentType: string | ContentType) => Promise<boolean>;
+  bookmarkContent: (contentId: string, contentType: string | ContentType) => Promise<boolean>;
+  checkInteractions: (contentId: string, contentType: string | ContentType) => Promise<void>;
+  setLikedItems: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  setBookmarkedItems: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
 const UserInteractionContext = createContext<UserInteractionContextType | undefined>(undefined);
 
-export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserInteractionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
   const [bookmarkedItems, setBookmarkedItems] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
 
-  // Toggle like for a content item (with explicit userId)
-  const toggleLike = useCallback(async (
-    contentId: string, 
-    contentType: string, 
-    userId: string
-  ): Promise<boolean> => {
-    const normalizedType = normalizeContentType(contentType);
-    const cacheKey = getContentKey(contentId, normalizedType);
-    
-    // Optimistic update
-    setLikedItems(prev => ({
-      ...prev,
-      [cacheKey]: !prev[cacheKey]
-    }));
-    
+  const getContentKey = useCallback((contentId: string, contentType: string | ContentType) => {
+    const typeStr = typeof contentType === 'string' ? contentType : contentType.toString();
+    return `${typeStr}:${contentId}`;
+  }, []);
+
+  const likeContent = useCallback(async (contentId: string, contentType: string | ContentType): Promise<boolean> => {
+    if (!user?.id) {
+      toast.error('Please sign in to like content');
+      return false;
+    }
+
     setIsLoading(true);
     try {
-      // Perform the actual API call
-      const isLiked = await toggleUserInteraction('like', userId, contentId, normalizedType);
+      const normalizedType = typeof contentType === 'string' ? contentType : contentType;
+      const newState = await toggleUserInteraction('like', user.id, contentId, normalizedType as ContentType);
       
-      // Update state with the actual result
-      setLikedItems(prev => ({
-        ...prev,
-        [cacheKey]: isLiked
-      }));
+      const key = getContentKey(contentId, contentType);
+      setLikedItems(prev => ({ ...prev, [key]: newState }));
       
-      // Invalidate queries based on content type
-      await invalidateContentQueries(contentId, normalizedType);
-      
-      // Return the new state
-      return isLiked;
+      return newState;
     } catch (error) {
-      console.error('Error toggling like:', error);
-      
-      // Revert optimistic update on error
-      setLikedItems(prev => ({
-        ...prev,
-        [cacheKey]: !prev[cacheKey]
-      }));
-      
-      toast.error('Failed to update like status. Please try again.');
-      return !likedItems[cacheKey];
+      console.error('Error liking content:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
-  }, [likedItems, queryClient]);
-  
-  // Helper function to invalidate the appropriate queries
-  const invalidateContentQueries = useCallback(async (contentId: string, contentType: string) => {
-    if (contentType === 'quote') {
-      await queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      await queryClient.invalidateQueries({ queryKey: ['quote', contentId] });
-    } else if (contentType === 'forum') {
-      await queryClient.invalidateQueries({ queryKey: ['forum'] });
-      await queryClient.invalidateQueries({ queryKey: ['forum', 'post', contentId] });
-    } else if (contentType === 'research') {
-      await queryClient.invalidateQueries({ queryKey: ['research'] });
-      await queryClient.invalidateQueries({ queryKey: ['research', contentId] });
-    } else {
-      // Generic invalidation for other content types
-      await queryClient.invalidateQueries({ queryKey: [contentType] });
-      await queryClient.invalidateQueries({ queryKey: [contentType, contentId] });
-    }
-  }, [queryClient]);
-  
-  // Simplified like function that uses current user
-  const likeContent = useCallback(async (
-    contentId: string,
-    contentType: string | ContentItemType | ContentType
-  ): Promise<boolean> => {
+  }, [user?.id, getContentKey]);
+
+  const bookmarkContent = useCallback(async (contentId: string, contentType: string | ContentType): Promise<boolean> => {
     if (!user?.id) {
-      toast.error('You must be logged in to like content');
+      toast.error('Please sign in to bookmark content');
       return false;
     }
-    
-    // Normalize content type
-    const contentTypeStr = normalizeContentType(contentType);
-      
-    return toggleLike(contentId, contentTypeStr, user.id);
-  }, [toggleLike, user]);
-  
-  // Toggle bookmark for a content item (with explicit userId)
-  const toggleBookmark = useCallback(async (
-    contentId: string, 
-    contentType: string, 
-    userId: string
-  ): Promise<boolean> => {
-    const normalizedType = normalizeContentType(contentType);
-    const cacheKey = getContentKey(contentId, normalizedType);
-    
-    // Optimistic update
-    setBookmarkedItems(prev => ({
-      ...prev,
-      [cacheKey]: !prev[cacheKey]
-    }));
-    
+
     setIsLoading(true);
     try {
-      // Perform the actual API call
-      const isBookmarked = await toggleUserInteraction('bookmark', userId, contentId, normalizedType);
+      const normalizedType = typeof contentType === 'string' ? contentType : contentType;
+      const newState = await toggleUserInteraction('bookmark', user.id, contentId, normalizedType as ContentType);
       
-      // Update state with the actual result
-      setBookmarkedItems(prev => ({
-        ...prev,
-        [cacheKey]: isBookmarked
-      }));
+      const key = getContentKey(contentId, contentType);
+      setBookmarkedItems(prev => ({ ...prev, [key]: newState }));
       
-      // Invalidate queries based on content type
-      await invalidateContentQueries(contentId, normalizedType);
-      
-      return isBookmarked;
+      return newState;
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
-      
-      // Revert optimistic update on error
-      setBookmarkedItems(prev => ({
-        ...prev,
-        [cacheKey]: !prev[cacheKey]
-      }));
-      
-      toast.error('Failed to update bookmark status. Please try again.');
-      return !bookmarkedItems[cacheKey];
+      console.error('Error bookmarking content:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
-  }, [bookmarkedItems, invalidateContentQueries]);
+  }, [user?.id, getContentKey]);
 
-  // Simplified bookmark function that uses current user
-  const bookmarkContent = useCallback(async (
-    contentId: string,
-    contentType: string | ContentItemType | ContentType
-  ): Promise<boolean> => {
-    if (!user?.id) {
-      toast.error('You must be logged in to bookmark content');
-      return false;
-    }
-    
-    // Normalize content type
-    const contentTypeStr = normalizeContentType(contentType);
+  const checkInteractions = useCallback(async (contentId: string, contentType: string | ContentType) => {
+    if (!user?.id) return;
+
+    try {
+      const normalizedType = typeof contentType === 'string' ? contentType : contentType;
+      const { isLiked, isBookmarked } = await checkUserContentInteractions(user.id, contentId, normalizedType as ContentType);
       
-    return toggleBookmark(contentId, contentTypeStr, user.id);
-  }, [toggleBookmark, user]);
+      const key = getContentKey(contentId, contentType);
+      setLikedItems(prev => ({ ...prev, [key]: isLiked }));
+      setBookmarkedItems(prev => ({ ...prev, [key]: isBookmarked }));
+    } catch (error) {
+      console.error('Error checking interactions:', error);
+    }
+  }, [user?.id, getContentKey]);
 
-  // Memoize context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => ({ 
-    toggleLike, 
-    toggleBookmark, 
+  const value: UserInteractionContextType = {
+    likedItems,
+    bookmarkedItems,
+    isLoading,
     likeContent,
     bookmarkContent,
-    likedItems, 
-    bookmarkedItems,
-    isLoading
-  }), [
-    toggleLike, 
-    toggleBookmark, 
-    likeContent,
-    bookmarkContent,
-    likedItems, 
-    bookmarkedItems,
-    isLoading
-  ]);
+    checkInteractions,
+    setLikedItems,
+    setBookmarkedItems
+  };
 
   return (
-    <UserInteractionContext.Provider value={contextValue}>
+    <UserInteractionContext.Provider value={value}>
       {children}
     </UserInteractionContext.Provider>
   );
