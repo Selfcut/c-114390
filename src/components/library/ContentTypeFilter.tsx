@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ContentType } from '@/types/unified-content-types';
 
+// Export ContentType for backwards compatibility
+export { ContentType };
+
 interface ContentTypeFilterProps {
   activeType: string;
   onTypeChange: (type: string) => void;

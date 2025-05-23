@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { LayoutGrid, List } from 'lucide-react';
 import { ContentViewMode } from '@/types/unified-content-types';
 
+// Export ViewMode type for backwards compatibility
+export type ViewMode = ContentViewMode;
+
 interface ViewSwitcherProps {
   activeMode: ContentViewMode;
   onModeChange: (mode: ContentViewMode) => void;

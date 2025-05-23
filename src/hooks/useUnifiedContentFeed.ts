@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -40,7 +39,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
       const currentPage = reset ? 0 : state.page;
       const offset = currentPage * limit;
       
-      // Fetch quotes with proper join
+      // Fetch quotes with explicit join to profiles table
       const { data: quotes, error: quotesError } = await supabase
         .from('quotes')
         .select(`
@@ -54,7 +53,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           bookmarks,
           created_at,
           user_id,
-          profiles!quotes_user_id_fkey (
+          profiles!inner (
             name,
             username,
             avatar_url
@@ -63,7 +62,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch knowledge entries with proper join
+      // Fetch knowledge entries with explicit join to profiles table
       const { data: knowledge, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
@@ -77,7 +76,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           cover_image,
           created_at,
           user_id,
-          profiles!knowledge_entries_user_id_fkey (
+          profiles!inner (
             name,
             username,
             avatar_url
@@ -86,7 +85,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch media posts with proper join
+      // Fetch media posts with explicit join to profiles table
       const { data: media, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
@@ -100,7 +99,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           views,
           created_at,
           user_id,
-          profiles!media_posts_user_id_fkey (
+          profiles!inner (
             name,
             username,
             avatar_url
@@ -109,7 +108,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Fetch forum posts with proper join
+      // Fetch forum posts with explicit join to profiles table
       const { data: forum, error: forumError } = await supabase
         .from('forum_posts')
         .select(`
@@ -122,7 +121,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           views,
           created_at,
           user_id,
-          profiles!forum_posts_user_id_fkey (
+          profiles!inner (
             name,
             username,
             avatar_url
@@ -136,7 +135,7 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
       if (mediaError) console.error('Media error:', mediaError);
       if (forumError) console.error('Forum error:', forumError);
 
-      // Transform data to unified format with null safety
+      // Transform data to unified format with proper null safety
       const unifiedItems: UnifiedContentItem[] = [
         ...(quotes || []).map(quote => ({
           id: quote.id,
@@ -145,9 +144,9 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           summary: quote.text,
           content: quote.text,
           author: {
-            name: quote.profiles?.name || quote.author || 'Unknown',
-            username: quote.profiles?.username,
-            avatar: quote.profiles?.avatar_url
+            name: Array.isArray(quote.profiles) ? quote.profiles[0]?.name : quote.profiles?.name || quote.author || 'Unknown',
+            username: Array.isArray(quote.profiles) ? quote.profiles[0]?.username : quote.profiles?.username,
+            avatar: Array.isArray(quote.profiles) ? quote.profiles[0]?.avatar_url : quote.profiles?.avatar_url
           },
           createdAt: quote.created_at,
           metrics: {
@@ -163,9 +162,9 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           title: entry.title,
           summary: entry.summary,
           author: {
-            name: entry.profiles?.name || 'Unknown',
-            username: entry.profiles?.username,
-            avatar: entry.profiles?.avatar_url
+            name: Array.isArray(entry.profiles) ? entry.profiles[0]?.name : entry.profiles?.name || 'Unknown',
+            username: Array.isArray(entry.profiles) ? entry.profiles[0]?.username : entry.profiles?.username,
+            avatar: Array.isArray(entry.profiles) ? entry.profiles[0]?.avatar_url : entry.profiles?.avatar_url
           },
           createdAt: entry.created_at,
           metrics: {
@@ -182,9 +181,9 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           title: post.title,
           summary: post.content,
           author: {
-            name: post.profiles?.name || 'Unknown',
-            username: post.profiles?.username,
-            avatar: post.profiles?.avatar_url
+            name: Array.isArray(post.profiles) ? post.profiles[0]?.name : post.profiles?.name || 'Unknown',
+            username: Array.isArray(post.profiles) ? post.profiles[0]?.username : post.profiles?.username,
+            avatar: Array.isArray(post.profiles) ? post.profiles[0]?.avatar_url : post.profiles?.avatar_url
           },
           createdAt: post.created_at,
           metrics: {
@@ -201,9 +200,9 @@ export const useUnifiedContentFeed = (options: UseUnifiedContentFeedOptions = {}
           title: post.title,
           summary: post.content?.substring(0, 200) + '...',
           author: {
-            name: post.profiles?.name || 'Unknown',
-            username: post.profiles?.username,
-            avatar: post.profiles?.avatar_url
+            name: Array.isArray(post.profiles) ? post.profiles[0]?.name : post.profiles?.name || 'Unknown',
+            username: Array.isArray(post.profiles) ? post.profiles[0]?.username : post.profiles?.username,
+            avatar: Array.isArray(post.profiles) ? post.profiles[0]?.avatar_url : post.profiles?.avatar_url
           },
           createdAt: post.created_at,
           metrics: {
