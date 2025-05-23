@@ -1038,6 +1038,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      batch_decrement_counter_fn: {
+        Args: { row_ids: string[]; column_name: string; table_name: string }
+        Returns: undefined
+      }
+      batch_increment_counter_fn: {
+        Args: { row_ids: string[]; column_name: string; table_name: string }
+        Returns: undefined
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown

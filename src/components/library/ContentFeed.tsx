@@ -1,21 +1,19 @@
 
 import React, { useEffect, useCallback } from 'react';
-import { useContentFeed } from '@/hooks/useContentFeed';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
 import { ContentFeedItemComponent } from './ContentFeedItem';
-import { ContentType } from '@/types/contentTypes';
-import { ContentViewMode } from '@/types/unified-content-types';
+import { ContentViewMode, ContentType } from '@/types/unified-content-types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ContentItemType } from './content-items/ContentItemTypes';
-import { mapUItoDBContentType } from '@/types/contentTypes';
+import { useUnifiedContentFeed } from '@/hooks/useUnifiedContentFeed';
 
 interface ContentFeedProps {
-  contentType: string;
+  contentType: ContentType;
   viewMode: ContentViewMode;
   lastRefresh?: Date;
 }
@@ -41,27 +39,15 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     handleLike,
     handleBookmark,
     handleContentClick
-  } = useContentFeed();
+  } = useUnifiedContentFeed(contentType, viewMode);
 
   // Refetch when content type or manual refresh changes
   useEffect(() => {
-    // Only refetch if we have explicit triggers to avoid infinite loops
     if (lastRefresh) {
       refetch();
     }
   }, [lastRefresh, refetch]);
   
-  // Filter items based on content type
-  const filteredItems = contentType === 'all' 
-    ? feedItems 
-    : feedItems.filter(item => {
-        const itemTypeString = item.type.toString().toLowerCase();
-        const dbContentType = mapUItoDBContentType(contentType);
-        return dbContentType === 'quotes' 
-          ? itemTypeString === 'quote' 
-          : itemTypeString === dbContentType;
-      });
-    
   // Handle authentication required actions
   const handleAuthAction = useCallback((action: () => void) => {
     if (!user) {
@@ -85,18 +71,16 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
   
   // Custom content click handler that can include analytics
   const handleItemClick = useCallback((contentId: string, contentType: ContentItemType) => {
-    // Track content click
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);
-      // Call the original handler
       handleContentClick(contentId, contentType);
     } catch (err) {
       console.error("Error handling content click:", err);
-      // Fallback if the main handler fails
-      const path = contentType === 'knowledge' ? `/knowledge/${contentId}` :
-                   contentType === 'media' ? `/media/${contentId}` :
-                   contentType === 'quote' ? `/quotes/${contentId}` :
-                   contentType === 'ai' ? `/ai-content/${contentId}` : '/';
+      // Fallback navigation
+      const path = contentType === ContentItemType.Knowledge ? `/knowledge/${contentId}` :
+                   contentType === ContentItemType.Media ? `/media/${contentId}` :
+                   contentType === ContentItemType.Quote ? `/quotes/${contentId}` :
+                   contentType === ContentItemType.Forum ? `/forum/${contentId}` : '/';
       navigate(path);
     }
   }, [handleContentClick, navigate]);
@@ -115,11 +99,11 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     <>
       <div className={containerClassName}>
         {/* Initial loading state */}
-        {isLoading && filteredItems.length === 0 ? (
+        {isLoading && feedItems.length === 0 ? (
           <ContentFeedSkeleton viewMode={viewMode} />
-        ) : filteredItems.length > 0 ? (
+        ) : feedItems.length > 0 ? (
           // Content items
-          filteredItems.map(item => (
+          feedItems.map(item => (
             <ContentFeedItemComponent
               key={item.id}
               item={item}
@@ -138,12 +122,12 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
       </div>
       
       {/* Load more button */}
-      {hasMore && !isLoading && filteredItems.length > 0 && (
+      {hasMore && !isLoading && feedItems.length > 0 && (
         <LoadMoreButton isLoading={false} onClick={loadMore} />
       )}
       
       {/* Loading more indicator */}
-      {isLoading && filteredItems.length > 0 && (
+      {isLoading && feedItems.length > 0 && (
         <ContentFeedLoading />
       )}
     </>

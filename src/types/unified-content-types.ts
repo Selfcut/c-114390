@@ -1,54 +1,50 @@
 
-/**
- * Unified content type system for the entire application
- */
-export enum ContentType {
-  All = 'all',
-  Knowledge = 'knowledge',
-  Media = 'media',
-  Quote = 'quote',
-  Forum = 'forum',
-  Wiki = 'wiki',
-  AI = 'ai',
-  Research = 'research'
-}
+// Unified content type system to replace scattered type definitions
+export type ContentViewMode = 'list' | 'grid' | 'feed';
 
-export type MediaType = 'image' | 'video' | 'youtube' | 'document' | 'text';
-export type ContentViewMode = 'grid' | 'list' | 'feed';
-
-export interface ContentAuthor {
-  name: string;
-  avatar?: string;
-  username?: string;
-}
-
-export interface ContentMetrics {
-  likes?: number;
-  comments?: number;
-  views?: number;
-  bookmarks?: number;
-}
+export type ContentType = 
+  | 'quote' 
+  | 'knowledge' 
+  | 'media' 
+  | 'forum' 
+  | 'wiki' 
+  | 'ai' 
+  | 'research'
+  | 'all';
 
 export interface UnifiedContentItem {
   id: string;
   type: ContentType;
   title: string;
-  summary?: string;
   content?: string;
-  author: ContentAuthor;
-  createdAt: string;
-  metrics?: ContentMetrics;
+  summary?: string;
+  author: {
+    name: string;
+    avatar?: string;
+    username?: string;
+  };
+  createdAt: Date;
+  metrics: {
+    likes?: number;
+    comments?: number;
+    bookmarks?: number;
+    views?: number;
+    upvotes?: number;
+  };
   tags?: string[];
-  coverImage?: string;
+  viewMode: ContentViewMode;
   mediaUrl?: string;
-  mediaType?: MediaType;
+  mediaType?: string;
+  coverImage?: string;
+  categories?: string[];
 }
 
-export interface ContentInteractionState {
-  isLiked: boolean;
-  isBookmarked: boolean;
-  isLikeLoading: boolean;
-  isBookmarkLoading: boolean;
+export interface ContentFilters {
+  searchQuery?: string;
+  contentType?: ContentType;
+  tags?: string[];
+  category?: string;
+  sortBy?: 'newest' | 'oldest' | 'popular' | 'most_liked' | 'most_bookmarked';
 }
 
 export interface ContentFeedState {
@@ -57,4 +53,14 @@ export interface ContentFeedState {
   error: string | null;
   hasMore: boolean;
   page: number;
+  totalCount: number;
+}
+
+export interface UserInteractionState {
+  likes: Record<string, boolean>;
+  bookmarks: Record<string, boolean>;
+  loadingStates: Record<string, {
+    isLikeLoading: boolean;
+    isBookmarkLoading: boolean;
+  }>;
 }
