@@ -12,6 +12,10 @@ interface UseBookmarkInteractionsProps {
   initialBookmarkState?: boolean;
 }
 
+// Define table types to avoid TypeScript recursion
+type QuoteBookmarksTable = 'quote_bookmarks';
+type ContentBookmarksTable = 'content_bookmarks';
+
 // Define strongly typed interfaces for database operations
 interface QuoteBookmarkPayload {
   quote_id: string;
@@ -23,8 +27,6 @@ interface ContentBookmarkPayload {
   user_id: string;
   content_type: string;
 }
-
-type BookmarkPayload = QuoteBookmarkPayload | ContentBookmarkPayload;
 
 /**
  * Manages bookmark interactions for different content types.
@@ -52,13 +54,13 @@ export const useBookmarkInteractions = ({
     
     try {
       const isQuote = normalizedContentType === 'quote';
-      const table = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
-      const contentIdField = isQuote ? 'quote_id' : 'content_id';
       
       // Check if the content is already bookmarked
       if (isQuote) {
+        const bookmarksTable = 'quote_bookmarks' as QuoteBookmarksTable;
+        
         const { data, error: checkError } = await supabase
-          .from('quote_bookmarks')
+          .from(bookmarksTable)
           .select('id')
           .eq('user_id', userId)
           .eq('quote_id', contentId)
@@ -72,7 +74,7 @@ export const useBookmarkInteractions = ({
         if (data && 'id' in data) {
           // Remove the bookmark
           const { error: deleteError } = await supabase
-            .from('quote_bookmarks')
+            .from(bookmarksTable)
             .delete()
             .eq('id', data.id);
           
@@ -90,7 +92,7 @@ export const useBookmarkInteractions = ({
           };
           
           const { error: insertError } = await supabase
-            .from('quote_bookmarks')
+            .from(bookmarksTable)
             .insert(bookmarkData);
           
           if (insertError) {
@@ -102,8 +104,10 @@ export const useBookmarkInteractions = ({
         }
       } else {
         // Handle content_bookmarks table
+        const bookmarksTable = 'content_bookmarks' as ContentBookmarksTable;
+        
         const { data, error: checkError } = await supabase
-          .from('content_bookmarks')
+          .from(bookmarksTable)
           .select('id')
           .eq('user_id', userId)
           .eq('content_id', contentId)
@@ -117,7 +121,7 @@ export const useBookmarkInteractions = ({
         if (data && 'id' in data) {
           // Remove the bookmark
           const { error: deleteError } = await supabase
-            .from('content_bookmarks')
+            .from(bookmarksTable)
             .delete()
             .eq('id', data.id);
           
@@ -136,7 +140,7 @@ export const useBookmarkInteractions = ({
           };
           
           const { error: insertError } = await supabase
-            .from('content_bookmarks')
+            .from(bookmarksTable)
             .insert(bookmarkData);
           
           if (insertError) {

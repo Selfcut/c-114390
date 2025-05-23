@@ -7,6 +7,10 @@ import { normalizeContentType, getContentTableInfo } from '@/lib/utils/content-t
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
+// Define table types to avoid TypeScript recursion
+type QuoteLikesTable = 'quote_likes';
+type ContentLikesTable = 'content_likes';
+
 // Define strongly typed interfaces for database operations
 interface QuoteLikePayload {
   quote_id: string;
@@ -18,8 +22,6 @@ interface ContentLikePayload {
   user_id: string;
   content_type: string;
 }
-
-type LikePayload = QuoteLikePayload | ContentLikePayload;
 
 interface UseLikeInteractionsProps {
   contentId: string;
@@ -54,8 +56,10 @@ export const useLikeInteractions = ({
           setIsLoading(true);
           
           if (normalizedType === 'quote') {
+            const likesTable = 'quote_likes' as QuoteLikesTable;
+            
             const { data, error } = await supabase
-              .from('quote_likes')
+              .from(likesTable)
               .select('id')
               .eq('quote_id', contentId)
               .eq('user_id', user.id)
@@ -67,8 +71,10 @@ export const useLikeInteractions = ({
             
             setIsLiked(!!data);
           } else {
+            const likesTable = 'content_likes' as ContentLikesTable;
+            
             const { data, error } = await supabase
-              .from('content_likes')
+              .from(likesTable)
               .select('id')
               .eq('content_id', contentId)
               .eq('user_id', user.id)
@@ -111,11 +117,13 @@ export const useLikeInteractions = ({
       setLikeCount(prevCount => (isLiked ? prevCount - 1 : prevCount + 1));
       
       if (normalizedType === 'quote') {
+        const quoteLikesTable = 'quote_likes' as QuoteLikesTable;
+        
         // Handle quote likes
         if (isLiked) {
           // Unlike: Delete the like
           const { data, error: findError } = await supabase
-            .from('quote_likes')
+            .from(quoteLikesTable)
             .select('id')
             .eq('quote_id', contentId)
             .eq('user_id', user.id)
@@ -125,7 +133,7 @@ export const useLikeInteractions = ({
           
           if (data) {
             const { error: deleteError } = await supabase
-              .from('quote_likes')
+              .from(quoteLikesTable)
               .delete()
               .eq('id', data.id);
             
@@ -146,7 +154,7 @@ export const useLikeInteractions = ({
           };
           
           const { error } = await supabase
-            .from('quote_likes')
+            .from(quoteLikesTable)
             .insert(likeData);
           
           if (error) throw error;
@@ -160,10 +168,12 @@ export const useLikeInteractions = ({
         }
       } else {
         // Handle other content types
+        const contentLikesTable = 'content_likes' as ContentLikesTable;
+        
         if (isLiked) {
           // Unlike: Delete the like
           const { data, error: findError } = await supabase
-            .from('content_likes')
+            .from(contentLikesTable)
             .select('id')
             .eq('content_id', contentId)
             .eq('user_id', user.id)
@@ -174,7 +184,7 @@ export const useLikeInteractions = ({
           
           if (data) {
             const { error: deleteError } = await supabase
-              .from('content_likes')
+              .from(contentLikesTable)
               .delete()
               .eq('id', data.id);
             
@@ -196,7 +206,7 @@ export const useLikeInteractions = ({
           };
           
           const { error } = await supabase
-            .from('content_likes')
+            .from(contentLikesTable)
             .insert(likeData);
           
           if (error) throw error;

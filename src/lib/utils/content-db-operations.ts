@@ -3,6 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeContentType, getContentTableInfo } from './content-type-utils';
 import { ContentType } from '@/types/contentTypes';
 
+// Use literal types instead of creating potential recursive types
+type QuoteLikesTable = 'quote_likes';
+type ContentLikesTable = 'content_likes';
+type QuoteBookmarksTable = 'quote_bookmarks';
+type ContentBookmarksTable = 'content_bookmarks';
+
 // Define strongly typed interfaces for database operations
 interface QuoteInteractionPayload {
   quote_id: string;
@@ -45,14 +51,16 @@ export const checkUserInteractions = async (
 
   try {
     const normalizedType = normalizeContentType(contentType);
-    const { likesTable, bookmarksTable, contentIdField } = getContentTableInfo(normalizedType);
+    const { contentIdField } = getContentTableInfo(normalizedType);
     let likeData = null;
     let bookmarkData = null;
     
     // Check if user has liked the content
     if (normalizedType === 'quote') {
+      const likesTable = 'quote_likes' as QuoteLikesTable;
+      
       const likeResult = await supabase
-        .from('quote_likes')
+        .from(likesTable)
         .select('id')
         .eq(contentIdField, contentId)
         .eq('user_id', userId)
@@ -61,8 +69,10 @@ export const checkUserInteractions = async (
       if (likeResult.error) throw likeResult.error;
       likeData = likeResult.data;
       
+      const bookmarksTable = 'quote_bookmarks' as QuoteBookmarksTable;
+      
       const bookmarkResult = await supabase
-        .from('quote_bookmarks')
+        .from(bookmarksTable)
         .select('id')
         .eq(contentIdField, contentId)
         .eq('user_id', userId)
@@ -71,8 +81,10 @@ export const checkUserInteractions = async (
       if (bookmarkResult.error) throw bookmarkResult.error;
       bookmarkData = bookmarkResult.data;
     } else {
+      const likesTable = 'content_likes' as ContentLikesTable;
+      
       const likeResult = await supabase
-        .from('content_likes')
+        .from(likesTable)
         .select('id')
         .eq(contentIdField, contentId)
         .eq('user_id', userId)
@@ -82,8 +94,10 @@ export const checkUserInteractions = async (
       if (likeResult.error) throw likeResult.error;
       likeData = likeResult.data;
       
+      const bookmarksTable = 'content_bookmarks' as ContentBookmarksTable;
+      
       const bookmarkResult = await supabase
-        .from('content_bookmarks')
+        .from(bookmarksTable)
         .select('id')
         .eq(contentIdField, contentId)
         .eq('user_id', userId)
@@ -125,8 +139,10 @@ export const toggleLike = async (
     let existingLike = null;
     
     if (normalizedType === 'quote') {
+      const quoteLikesTable = 'quote_likes' as QuoteLikesTable;
+      
       const { data, error: checkError } = await supabase
-        .from('quote_likes')
+        .from(quoteLikesTable)
         .select('id')
         .eq('quote_id', contentId)
         .eq('user_id', userId)
@@ -138,7 +154,7 @@ export const toggleLike = async (
       // If like exists, remove it
       if (existingLike && 'id' in existingLike) {
         const { error: deleteError } = await supabase
-          .from('quote_likes')
+          .from(quoteLikesTable)
           .delete()
           .eq('id', existingLike.id);
           
@@ -160,7 +176,7 @@ export const toggleLike = async (
         };
         
         const { error: insertError } = await supabase
-          .from('quote_likes')
+          .from(quoteLikesTable)
           .insert(payload);
           
         if (insertError) throw insertError;
@@ -176,8 +192,10 @@ export const toggleLike = async (
       }
     } else {
       // Handle other content types
+      const contentLikesTable = 'content_likes' as ContentLikesTable;
+      
       const { data, error: checkError } = await supabase
-        .from('content_likes')
+        .from(contentLikesTable)
         .select('id')
         .eq('content_id', contentId)
         .eq('user_id', userId)
@@ -190,7 +208,7 @@ export const toggleLike = async (
       // If like exists, remove it
       if (existingLike && 'id' in existingLike) {
         const { error: deleteError } = await supabase
-          .from('content_likes')
+          .from(contentLikesTable)
           .delete()
           .eq('id', existingLike.id);
           
@@ -213,7 +231,7 @@ export const toggleLike = async (
         };
         
         const { error: insertError } = await supabase
-          .from('content_likes')
+          .from(contentLikesTable)
           .insert(payload);
           
         if (insertError) throw insertError;
@@ -255,8 +273,10 @@ export const toggleBookmark = async (
     let existingBookmark = null;
     
     if (normalizedType === 'quote') {
+      const quoteBookmarksTable = 'quote_bookmarks' as QuoteBookmarksTable;
+      
       const { data, error: checkError } = await supabase
-        .from('quote_bookmarks')
+        .from(quoteBookmarksTable)
         .select('id')
         .eq('quote_id', contentId)
         .eq('user_id', userId)
@@ -268,7 +288,7 @@ export const toggleBookmark = async (
       // If bookmark exists, remove it
       if (existingBookmark && 'id' in existingBookmark) {
         const { error: deleteError } = await supabase
-          .from('quote_bookmarks')
+          .from(quoteBookmarksTable)
           .delete()
           .eq('id', existingBookmark.id);
           
@@ -292,7 +312,7 @@ export const toggleBookmark = async (
         };
         
         const { error: insertError } = await supabase
-          .from('quote_bookmarks')
+          .from(quoteBookmarksTable)
           .insert(payload);
           
         if (insertError) throw insertError;
@@ -310,8 +330,10 @@ export const toggleBookmark = async (
       }
     } else {
       // Handle other content types
+      const contentBookmarksTable = 'content_bookmarks' as ContentBookmarksTable;
+      
       const { data, error: checkError } = await supabase
-        .from('content_bookmarks')
+        .from(contentBookmarksTable)
         .select('id')
         .eq('content_id', contentId)
         .eq('user_id', userId)
@@ -324,7 +346,7 @@ export const toggleBookmark = async (
       // If bookmark exists, remove it
       if (existingBookmark && 'id' in existingBookmark) {
         const { error: deleteError } = await supabase
-          .from('content_bookmarks')
+          .from(contentBookmarksTable)
           .delete()
           .eq('id', existingBookmark.id);
           
@@ -349,7 +371,7 @@ export const toggleBookmark = async (
         };
         
         const { error: insertError } = await supabase
-          .from('content_bookmarks')
+          .from(contentBookmarksTable)
           .insert(payload);
           
         if (insertError) throw insertError;
@@ -392,9 +414,12 @@ export const batchCheckInteractions = async (
     });
     
     if (normalizedType === 'quote') {
+      const quoteLikesTable = 'quote_likes' as QuoteLikesTable;
+      const quoteBookmarksTable = 'quote_bookmarks' as QuoteBookmarksTable;
+      
       // Batch check likes
       const { data: likesData, error: likesError } = await supabase
-        .from('quote_likes')
+        .from(quoteLikesTable)
         .select('quote_id')
         .eq('user_id', userId)
         .in('quote_id', contentIds);
@@ -410,7 +435,7 @@ export const batchCheckInteractions = async (
       
       // Batch check bookmarks
       const { data: bookmarksData, error: bookmarksError } = await supabase
-        .from('quote_bookmarks')
+        .from(quoteBookmarksTable)
         .select('quote_id')
         .eq('user_id', userId)
         .in('quote_id', contentIds);
@@ -424,9 +449,12 @@ export const batchCheckInteractions = async (
         });
       }
     } else {
+      const contentLikesTable = 'content_likes' as ContentLikesTable;
+      const contentBookmarksTable = 'content_bookmarks' as ContentBookmarksTable;
+      
       // Batch check likes
       const { data: likesData, error: likesError } = await supabase
-        .from('content_likes')
+        .from(contentLikesTable)
         .select('content_id')
         .eq('user_id', userId)
         .eq('content_type', normalizedType)
@@ -443,7 +471,7 @@ export const batchCheckInteractions = async (
       
       // Batch check bookmarks
       const { data: bookmarksData, error: bookmarksError } = await supabase
-        .from('content_bookmarks')
+        .from(contentBookmarksTable)
         .select('content_id')
         .eq('user_id', userId)
         .eq('content_type', normalizedType)
