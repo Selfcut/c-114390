@@ -4,8 +4,31 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useContentInteractions } from './useContentInteractions';
 import { ContentItemType } from '@/types/contentTypes';
-import { ContentFeedItem } from '@/components/library/ContentFeedItem';
 import { useNavigate } from 'react-router-dom';
+
+export interface ContentFeedItem {
+  id: string;
+  type: ContentItemType;
+  title: string;
+  summary?: string;
+  content?: string;
+  author: {
+    name: string;
+    avatar?: string;
+    username?: string;
+  };
+  createdAt: string;
+  metrics?: {
+    likes?: number;
+    comments?: number;
+    views?: number;
+    bookmarks?: number;
+  };
+  tags?: string[];
+  coverImage?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'youtube' | 'document' | 'text';
+}
 
 interface UseContentFeedReturn {
   feedItems: ContentFeedItem[];
@@ -47,7 +70,7 @@ export const useContentFeed = (): UseContentFeedReturn => {
       
       const currentOffset = reset ? 0 : offset;
       
-      // Fetch from multiple content tables
+      // Fetch from multiple content tables - we'll get profile data separately
       const [quotesResult, knowledgeResult, mediaResult, forumResult] = await Promise.all([
         // Quotes
         supabase
@@ -62,11 +85,7 @@ export const useContentFeed = (): UseContentFeedReturn => {
             comments,
             bookmarks,
             created_at,
-            profiles:user_id (
-              name,
-              username,
-              avatar_url
-            )
+            user_id
           `)
           .order('created_at', { ascending: false })
           .range(currentOffset, currentOffset + limit - 1),
@@ -84,11 +103,7 @@ export const useContentFeed = (): UseContentFeedReturn => {
             views,
             cover_image,
             created_at,
-            profiles:user_id (
-              name,
-              username,
-              avatar_url
-            )
+            user_id
           `)
           .order('created_at', { ascending: false })
           .range(currentOffset, currentOffset + limit - 1),
@@ -106,11 +121,7 @@ export const useContentFeed = (): UseContentFeedReturn => {
             comments,
             views,
             created_at,
-            profiles:user_id (
-              name,
-              username,
-              avatar_url
-            )
+            user_id
           `)
           .order('created_at', { ascending: false })
           .range(currentOffset, currentOffset + limit - 1),
@@ -127,100 +138,128 @@ export const useContentFeed = (): UseContentFeedReturn => {
             comments,
             views,
             created_at,
-            profiles:user_id (
-              name,
-              username,
-              avatar_url
-            )
+            user_id
           `)
           .order('created_at', { ascending: false })
           .range(currentOffset, currentOffset + limit - 1)
       ]);
 
+      // Get all unique user IDs from the results
+      const allUserIds = [
+        ...(quotesResult.data || []).map(item => item.user_id),
+        ...(knowledgeResult.data || []).map(item => item.user_id),
+        ...(mediaResult.data || []).map(item => item.user_id),
+        ...(forumResult.data || []).map(item => item.user_id)
+      ].filter((id, index, array) => array.indexOf(id) === index && id);
+
+      // Fetch profile data for all users
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, username, avatar_url')
+        .in('id', allUserIds);
+
+      // Create a map for quick profile lookup
+      const profilesMap = new Map();
+      (profilesData || []).forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
       // Transform data to unified format
       const unifiedItems: ContentFeedItem[] = [
         // Quotes
-        ...(quotesResult.data || []).map(quote => ({
-          id: quote.id,
-          type: ContentItemType.Quote,
-          title: `"${quote.text.substring(0, 50)}..."`,
-          summary: quote.text,
-          content: quote.text,
-          author: {
-            name: quote.profiles?.name || quote.author,
-            username: quote.profiles?.username,
-            avatar: quote.profiles?.avatar_url
-          },
-          createdAt: quote.created_at,
-          metrics: {
-            likes: quote.likes,
-            comments: quote.comments,
-            bookmarks: quote.bookmarks
-          },
-          tags: quote.tags || []
-        })),
+        ...(quotesResult.data || []).map(quote => {
+          const profile = profilesMap.get(quote.user_id);
+          return {
+            id: quote.id,
+            type: ContentItemType.Quote,
+            title: `"${quote.text.substring(0, 50)}..."`,
+            summary: quote.text,
+            content: quote.text,
+            author: {
+              name: profile?.name || quote.author || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: quote.created_at,
+            metrics: {
+              likes: quote.likes,
+              comments: quote.comments,
+              bookmarks: quote.bookmarks
+            },
+            tags: quote.tags || []
+          };
+        }),
 
         // Knowledge entries
-        ...(knowledgeResult.data || []).map(entry => ({
-          id: entry.id,
-          type: ContentItemType.Knowledge,
-          title: entry.title,
-          summary: entry.summary,
-          author: {
-            name: entry.profiles?.name || 'Unknown',
-            username: entry.profiles?.username,
-            avatar: entry.profiles?.avatar_url
-          },
-          createdAt: entry.created_at,
-          metrics: {
-            likes: entry.likes,
-            comments: entry.comments,
-            views: entry.views
-          },
-          tags: entry.categories || [],
-          coverImage: entry.cover_image
-        })),
+        ...(knowledgeResult.data || []).map(entry => {
+          const profile = profilesMap.get(entry.user_id);
+          return {
+            id: entry.id,
+            type: ContentItemType.Knowledge,
+            title: entry.title,
+            summary: entry.summary,
+            author: {
+              name: profile?.name || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: entry.created_at,
+            metrics: {
+              likes: entry.likes,
+              comments: entry.comments,
+              views: entry.views
+            },
+            tags: entry.categories || [],
+            coverImage: entry.cover_image
+          };
+        }),
 
         // Media posts
-        ...(mediaResult.data || []).map(media => ({
-          id: media.id,
-          type: ContentItemType.Media,
-          title: media.title,
-          summary: media.content,
-          author: {
-            name: media.profiles?.name || 'Unknown',
-            username: media.profiles?.username,
-            avatar: media.profiles?.avatar_url
-          },
-          createdAt: media.created_at,
-          metrics: {
-            likes: media.likes,
-            comments: media.comments,
-            views: media.views
-          },
-          mediaUrl: media.url,
-          mediaType: media.type as any
-        })),
+        ...(mediaResult.data || []).map(media => {
+          const profile = profilesMap.get(media.user_id);
+          return {
+            id: media.id,
+            type: ContentItemType.Media,
+            title: media.title,
+            summary: media.content,
+            author: {
+              name: profile?.name || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: media.created_at,
+            metrics: {
+              likes: media.likes,
+              comments: media.comments,
+              views: media.views
+            },
+            mediaUrl: media.url,
+            mediaType: media.type as any
+          };
+        }),
 
         // Forum posts
-        ...(forumResult.data || []).map(post => ({
-          id: post.id,
-          type: ContentItemType.Forum,
-          title: post.title,
-          summary: post.content?.substring(0, 200) + '...',
-          author: {
-            name: post.profiles?.name || 'Unknown',
-            username: post.profiles?.username,
-            avatar: post.profiles?.avatar_url
-          },
-          createdAt: post.created_at,
-          metrics: {
-            likes: post.upvotes,
-            comments: post.comments,
-            views: post.views
-          },
-          tags: post.tags || []
-        }))
+        ...(forumResult.data || []).map(post => {
+          const profile = profilesMap.get(post.user_id);
+          return {
+            id: post.id,
+            type: ContentItemType.Forum,
+            title: post.title,
+            summary: post.content?.substring(0, 200) + '...',
+            author: {
+              name: profile?.name || 'Unknown',
+              username: profile?.username,
+              avatar: profile?.avatar_url
+            },
+            createdAt: post.created_at,
+            metrics: {
+              likes: post.upvotes,
+              comments: post.comments,
+              views: post.views
+            },
+            tags: post.tags || []
+          };
+        })
       ];
 
       // Sort by creation date

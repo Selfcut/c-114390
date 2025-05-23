@@ -3,32 +3,11 @@ import React from 'react';
 import { UnifiedContentItem } from './UnifiedContentItem';
 import { ContentItemProps, ContentItemType, ContentViewMode, MediaType } from './content-items/ContentItemTypes';
 
-export interface ContentFeedItem {
-  id: string;
-  type: ContentItemType;
-  title: string;
-  summary?: string;
-  content?: string;
-  author: {
-    name: string;
-    avatar?: string;
-    username?: string;
-  };
-  createdAt: string;
-  metrics?: {
-    likes?: number;
-    comments?: number;
-    views?: number;
-    bookmarks?: number;
-  };
-  tags?: string[];
-  coverImage?: string;
-  mediaUrl?: string;
-  mediaType?: MediaType;
-}
+// Import the interface from the hook
+export { ContentFeedItem } from '@/hooks/useContentFeed';
 
 interface ContentFeedItemComponentProps {
-  item: ContentFeedItem;
+  item: import('@/hooks/useContentFeed').ContentFeedItem;
   userLikes?: Record<string, boolean>;
   userBookmarks?: Record<string, boolean>;
   onLike?: (id: string, type: ContentItemType) => void;
