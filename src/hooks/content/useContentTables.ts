@@ -1,9 +1,10 @@
 
 import { useMemo } from 'react';
 import { ContentType, isValidContentType } from '@/types/contentTypes';
+import { normalizeContentType } from '@/hooks/content-interactions/contentTypeUtils';
 
 export interface ContentTypeOptions {
-  contentType: string;
+  contentType: string | ContentType;
 }
 
 interface TableNames {
@@ -18,11 +19,11 @@ interface TableNames {
  * Uses consistent type handling with ContentType enum
  */
 export const useContentTables = (options: ContentTypeOptions) => {
-  const { contentType } = options;
+  const contentTypeStr = normalizeContentType(options.contentType);
   
   const tableNames = useMemo<TableNames>(() => {
     // Validate content type
-    if (!contentType) {
+    if (!contentTypeStr) {
       console.warn('Content type not provided, defaulting to forum');
       return {
         likesTable: 'content_likes',
@@ -32,7 +33,7 @@ export const useContentTables = (options: ContentTypeOptions) => {
       };
     }
     
-    switch (contentType) {
+    switch (contentTypeStr) {
       case ContentType.Media:
         return {
           likesTable: 'media_likes',
@@ -68,16 +69,30 @@ export const useContentTables = (options: ContentTypeOptions) => {
           contentIdField: 'content_id',
           commentsTable: 'content_comments'
         };
-      default:
-        console.warn(`Unknown content type: ${contentType}, using generic tables`);
+      case ContentType.Research:
         return {
           likesTable: 'content_likes',
-          contentTable: contentType,
+          contentTable: 'research_papers',
+          contentIdField: 'content_id',
+          commentsTable: 'content_comments'
+        };
+      case ContentType.AI:
+        return {
+          likesTable: 'content_likes',
+          contentTable: 'ai_content',
+          contentIdField: 'content_id',
+          commentsTable: 'content_comments'
+        };
+      default:
+        console.warn(`Unknown content type: ${contentTypeStr}, using generic tables`);
+        return {
+          likesTable: 'content_likes',
+          contentTable: contentTypeStr,
           contentIdField: 'content_id',
           commentsTable: 'content_comments'
         };
     }
-  }, [contentType]);
+  }, [contentTypeStr]);
   
   const getTableNames = () => tableNames;
   

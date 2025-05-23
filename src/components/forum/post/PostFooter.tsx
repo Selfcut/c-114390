@@ -5,8 +5,8 @@ import { Bookmark, Eye, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserInteraction } from '@/contexts/UserInteractionContext';
 import { useAuth } from '@/lib/auth';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentType } from '@/types/contentTypes';
+import { getContentKey } from '@/hooks/content-interactions/contentTypeUtils';
 
 interface PostFooterProps {
   post: {
@@ -30,18 +30,14 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     likedItems,
     bookmarkedItems,
     isLoading,
-    toggleLike,
-    toggleBookmark,
     likeContent,
     bookmarkContent
   } = useUserInteraction();
 
-  // Check if this post is liked or bookmarked using forum content type
-  const contentKey = `forum:${post.id}`;
+  // Use consistent content key generation
+  const contentKey = getContentKey(post.id, ContentType.Forum);
   const isLiked = likedItems[contentKey] || false;
   const isBookmarked = bookmarkedItems[contentKey] || false;
-  const isLikeLoading = isLoading;
-  const isBookmarkLoading = isLoading;
 
   // Handle like with optional custom onUpvote handler
   const handleLike = async () => {
@@ -57,12 +53,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     if (onUpvote) {
       await onUpvote();
     } else if (isAuthenticated && user?.id) {
-      // Use the simplified API if available, otherwise use explicit userId
-      if (likeContent) {
-        await likeContent(post.id, ContentType.Forum);
-      } else {
-        await toggleLike(post.id, 'forum', user.id);
-      }
+      await likeContent(post.id, ContentType.Forum);
     }
   };
 
@@ -78,12 +69,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
     }
 
     if (user?.id) {
-      // Use the simplified API if available, otherwise use explicit userId
-      if (bookmarkContent) {
-        await bookmarkContent(post.id, ContentType.Forum);
-      } else {
-        await toggleBookmark(post.id, 'forum', user.id);
-      }
+      await bookmarkContent(post.id, ContentType.Forum);
     }
   };
 
@@ -124,7 +110,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
           size="sm"
           className={`flex items-center gap-2 ${isLiked ? 'text-primary' : ''}`}
           onClick={handleLike}
-          disabled={isLikeLoading || !isAuthenticated}
+          disabled={isLoading || !isAuthenticated}
           aria-label={isLiked ? "Unlike" : "Like"}
         >
           <ThumbsUp size={16} className={isLiked ? 'fill-primary' : ''} />
@@ -136,7 +122,7 @@ export const PostFooter: React.FC<PostFooterProps> = ({
           size="sm"
           className={`flex items-center gap-2 ${isBookmarked ? 'text-primary' : ''}`}
           onClick={handleBookmark}
-          disabled={isBookmarkLoading || !isAuthenticated}
+          disabled={isLoading || !isAuthenticated}
           aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
         >
           <Bookmark size={16} className={isBookmarked ? 'fill-primary' : ''} />

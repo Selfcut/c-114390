@@ -1,4 +1,6 @@
 
+import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+
 /**
  * Standardized content types for consistent usage across the application
  * This provides proper TypeScript type safety and intellisense
@@ -12,6 +14,9 @@ export enum ContentType {
   Research = 'research',
   AI = 'ai'
 }
+
+// Re-export ContentItemType for consistency in imports
+export { ContentItemType };
 
 /**
  * Type guard to check if a string is a valid ContentType
@@ -95,7 +100,7 @@ export interface ContentTableInfo {
  * Get all table and field information for a content type
  */
 export function getContentTypeInfo(contentType: ContentType | string): ContentTableInfo {
-  const typeStr = typeof contentType === 'string' ? contentType : contentType;
+  const typeStr = typeof contentType === 'string' ? contentType.toLowerCase() : contentType;
   const isQuote = typeStr === ContentType.Quote;
   
   return {

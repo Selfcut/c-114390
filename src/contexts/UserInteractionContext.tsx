@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentType } from '@/types/contentTypes';
-import { getContentKey } from '@/hooks/content-interactions/contentTypeUtils';
+import { normalizeContentType, getContentKey } from '@/hooks/content-interactions/contentTypeUtils';
 
 interface UserInteractionContextType {
   // Backward compatible API that explicitly requires userId
@@ -31,18 +31,14 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Generate a unique cache key for an item - memoized for performance
-  const getCacheKey = useCallback((contentId: string, contentType: string): string => {
-    return `${contentType}:${contentId}`;
-  }, []);
-
   // Toggle like for a content item (with explicit userId)
   const toggleLike = useCallback(async (
     contentId: string, 
     contentType: string, 
     userId: string
   ): Promise<boolean> => {
-    const cacheKey = getCacheKey(contentId, contentType);
+    const normalizedType = normalizeContentType(contentType);
+    const cacheKey = getContentKey(contentId, normalizedType);
     
     // Optimistic update
     setLikedItems(prev => ({
@@ -53,7 +49,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     setIsLoading(true);
     try {
       // Perform the actual API call
-      const isLiked = await toggleUserInteraction('like', userId, contentId, contentType);
+      const isLiked = await toggleUserInteraction('like', userId, contentId, normalizedType);
       
       // Update state with the actual result
       setLikedItems(prev => ({
@@ -61,22 +57,8 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
         [cacheKey]: isLiked
       }));
       
-      // Determine which query keys to invalidate based on content type
-      if (contentType === 'quote') {
-        // For React Query v5, use objects for invalidateQueries
-        await queryClient.invalidateQueries({ queryKey: ['quotes'] });
-        await queryClient.invalidateQueries({ queryKey: ['quote', contentId] });
-      } else if (contentType === 'forum') {
-        await queryClient.invalidateQueries({ queryKey: ['forum'] });
-        await queryClient.invalidateQueries({ queryKey: ['forum', 'post', contentId] });
-      } else if (contentType === 'research') {
-        await queryClient.invalidateQueries({ queryKey: ['research'] });
-        await queryClient.invalidateQueries({ queryKey: ['research', contentId] });
-      } else {
-        // Generic invalidation for other content types
-        await queryClient.invalidateQueries({ queryKey: [contentType] });
-        await queryClient.invalidateQueries({ queryKey: [contentType, contentId] });
-      }
+      // Invalidate queries based on content type
+      await invalidateContentQueries(contentId, normalizedType);
       
       // Return the new state
       return isLiked;
@@ -94,7 +76,25 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     } finally {
       setIsLoading(false);
     }
-  }, [likedItems, queryClient, getCacheKey]);
+  }, [likedItems, queryClient]);
+  
+  // Helper function to invalidate the appropriate queries
+  const invalidateContentQueries = useCallback(async (contentId: string, contentType: string) => {
+    if (contentType === 'quote') {
+      await queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      await queryClient.invalidateQueries({ queryKey: ['quote', contentId] });
+    } else if (contentType === 'forum') {
+      await queryClient.invalidateQueries({ queryKey: ['forum'] });
+      await queryClient.invalidateQueries({ queryKey: ['forum', 'post', contentId] });
+    } else if (contentType === 'research') {
+      await queryClient.invalidateQueries({ queryKey: ['research'] });
+      await queryClient.invalidateQueries({ queryKey: ['research', contentId] });
+    } else {
+      // Generic invalidation for other content types
+      await queryClient.invalidateQueries({ queryKey: [contentType] });
+      await queryClient.invalidateQueries({ queryKey: [contentType, contentId] });
+    }
+  }, [queryClient]);
   
   // Simplified like function that uses current user
   const likeContent = useCallback(async (
@@ -106,10 +106,8 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
       return false;
     }
     
-    // Ensure contentType is a string
-    const contentTypeStr = typeof contentType === 'string' 
-      ? contentType 
-      : String(contentType);
+    // Normalize content type
+    const contentTypeStr = normalizeContentType(contentType);
       
     return toggleLike(contentId, contentTypeStr, user.id);
   }, [toggleLike, user]);
@@ -120,7 +118,8 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     contentType: string, 
     userId: string
   ): Promise<boolean> => {
-    const cacheKey = getCacheKey(contentId, contentType);
+    const normalizedType = normalizeContentType(contentType);
+    const cacheKey = getContentKey(contentId, normalizedType);
     
     // Optimistic update
     setBookmarkedItems(prev => ({
@@ -131,7 +130,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     setIsLoading(true);
     try {
       // Perform the actual API call
-      const isBookmarked = await toggleUserInteraction('bookmark', userId, contentId, contentType);
+      const isBookmarked = await toggleUserInteraction('bookmark', userId, contentId, normalizedType);
       
       // Update state with the actual result
       setBookmarkedItems(prev => ({
@@ -140,21 +139,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
       }));
       
       // Invalidate queries based on content type
-      if (contentType === 'quote') {
-        // For React Query v5, use objects for invalidateQueries
-        await queryClient.invalidateQueries({ queryKey: ['quotes'] });
-        await queryClient.invalidateQueries({ queryKey: ['quote', contentId] });
-      } else if (contentType === 'forum') {
-        await queryClient.invalidateQueries({ queryKey: ['forum'] });
-        await queryClient.invalidateQueries({ queryKey: ['forum', 'post', contentId] });
-      } else if (contentType === 'research') {
-        await queryClient.invalidateQueries({ queryKey: ['research'] });
-        await queryClient.invalidateQueries({ queryKey: ['research', contentId] });
-      } else {
-        // Generic invalidation for other content types
-        await queryClient.invalidateQueries({ queryKey: [contentType] });
-        await queryClient.invalidateQueries({ queryKey: [contentType, contentId] });
-      }
+      await invalidateContentQueries(contentId, normalizedType);
       
       return isBookmarked;
     } catch (error) {
@@ -171,7 +156,7 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
     } finally {
       setIsLoading(false);
     }
-  }, [bookmarkedItems, queryClient, getCacheKey]);
+  }, [bookmarkedItems, invalidateContentQueries]);
 
   // Simplified bookmark function that uses current user
   const bookmarkContent = useCallback(async (
@@ -183,10 +168,8 @@ export const UserInteractionProvider: React.FC<{ children: React.ReactNode }> = 
       return false;
     }
     
-    // Ensure contentType is a string
-    const contentTypeStr = typeof contentType === 'string' 
-      ? contentType 
-      : String(contentType);
+    // Normalize content type
+    const contentTypeStr = normalizeContentType(contentType);
       
     return toggleBookmark(contentId, contentTypeStr, user.id);
   }, [toggleBookmark, user]);

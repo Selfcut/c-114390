@@ -7,6 +7,8 @@ import {
   addGeneralContentBookmark, 
   removeGeneralContentBookmark 
 } from './general-content-interactions';
+import { normalizeContentType } from '@/hooks/content-interactions/contentTypeUtils';
+import { ContentType, ContentItemType } from '@/types/contentTypes';
 
 /**
  * Check if a user has liked or bookmarked a piece of content
@@ -14,14 +16,15 @@ import {
 export const checkContentInteractions = async (
   userId: string, 
   contentId: string, 
-  contentType: string
+  contentType: string | ContentType | ContentItemType
 ): Promise<{ isLiked: boolean, isBookmarked: boolean }> => {
-  const isQuote = contentType === 'quote';
+  const normalizedType = normalizeContentType(contentType);
+  const isQuote = normalizedType === ContentType.Quote;
   
   if (isQuote) {
     return await checkQuoteInteractions(userId, contentId);
   } else {
-    return await checkGeneralContentInteractions(userId, contentId, contentType);
+    return await checkGeneralContentInteractions(userId, contentId, normalizedType);
   }
 };
 
@@ -31,14 +34,15 @@ export const checkContentInteractions = async (
 export const addContentLike = async (
   userId: string,
   contentId: string,
-  contentType: string
+  contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
-  const isQuote = contentType === 'quote';
+  const normalizedType = normalizeContentType(contentType);
+  const isQuote = normalizedType === ContentType.Quote;
   
   if (isQuote) {
     return await addQuoteLike(userId, contentId);
   } else {
-    return await addGeneralContentLike(userId, contentId, contentType);
+    return await addGeneralContentLike(userId, contentId, normalizedType);
   }
 };
 
@@ -48,14 +52,15 @@ export const addContentLike = async (
 export const removeContentLike = async (
   userId: string,
   contentId: string,
-  contentType: string
+  contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
-  const isQuote = contentType === 'quote';
+  const normalizedType = normalizeContentType(contentType);
+  const isQuote = normalizedType === ContentType.Quote;
   
   if (isQuote) {
     return await removeQuoteLike(userId, contentId);
   } else {
-    return await removeGeneralContentLike(userId, contentId, contentType);
+    return await removeGeneralContentLike(userId, contentId, normalizedType);
   }
 };
 
@@ -65,14 +70,15 @@ export const removeContentLike = async (
 export const addContentBookmark = async (
   userId: string,
   contentId: string,
-  contentType: string
+  contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
-  const isQuote = contentType === 'quote';
+  const normalizedType = normalizeContentType(contentType);
+  const isQuote = normalizedType === ContentType.Quote;
   
   if (isQuote) {
     return await addQuoteBookmark(userId, contentId);
   } else {
-    return await addGeneralContentBookmark(userId, contentId, contentType);
+    return await addGeneralContentBookmark(userId, contentId, normalizedType);
   }
 };
 
@@ -82,13 +88,14 @@ export const addContentBookmark = async (
 export const removeContentBookmark = async (
   userId: string,
   contentId: string,
-  contentType: string
+  contentType: string | ContentType | ContentItemType
 ): Promise<boolean> => {
-  const isQuote = contentType === 'quote';
+  const normalizedType = normalizeContentType(contentType);
+  const isQuote = normalizedType === ContentType.Quote;
   
   if (isQuote) {
     return await removeQuoteBookmark(userId, contentId);
   } else {
-    return await removeGeneralContentBookmark(userId, contentId, contentType);
+    return await removeGeneralContentBookmark(userId, contentId, normalizedType);
   }
 };
