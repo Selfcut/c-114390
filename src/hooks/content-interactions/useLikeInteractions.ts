@@ -1,173 +1,147 @@
-
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { ContentInteractionResult, ContentLoadingState } from './types';
-import { getContentTypeString, getContentTypeInfo, getContentKey } from './contentTypeUtils';
+import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { PostgrestError } from '@supabase/supabase-js';
+import { normalizeContentType, getContentTypeString } from './contentTypeUtils';
+import { useAuth } from '@/lib/auth';
+import { toast } from '@/components/ui/use-toast';
+import { useContentTables } from '@/hooks/content/useContentTables';
 
-export const useLikeInteractions = (
-  userId?: string | null, 
-  userLikes: Record<string, boolean> = {},
-  setUserLikes: React.Dispatch<React.SetStateAction<Record<string, boolean>>> = () => {},
-  loadingStates: Record<string, ContentLoadingState> = {},
-  setLoadingStates: React.Dispatch<React.SetStateAction<Record<string, ContentLoadingState>>> = () => {}
-) => {
-  const { toast } = useToast();
+interface UseLikeInteractionsProps {
+  contentId: string;
+  contentType: string | ContentType | ContentItemType;
+  initialLikeCount?: number;
+  onLikeChange?: (newLikeCount: number) => void;
+}
+
+/**
+ * Hook for managing like interactions for different content types
+ */
+export const useLikeInteractions = ({
+  contentId,
+  contentType,
+  initialLikeCount = 0,
+  onLikeChange,
+}: UseLikeInteractionsProps) => {
+  const { user, isAuthenticated } = useAuth();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const { getTableNames } = useContentTables({ contentType });
+  const tableNames = getTableNames();
   
-  const setLikeLoadingState = useCallback((id: string, contentType: string | ContentItemType, isLoading: boolean) => {
-    const contentTypeStr = typeof contentType === 'string' ? contentType : getContentTypeString(contentType);
-    const key = getContentKey(id, contentTypeStr);
-    
-    setLoadingStates(prev => {
-      const current = prev[key] || { isLikeLoading: false, isBookmarkLoading: false };
-      return {
-        ...prev,
-        [key]: {
-          ...current,
-          isLikeLoading: isLoading
+  const { contentTable, likesTable, contentIdField } = tableNames;
+
+  // Fetch initial like state on mount if authenticated
+  useState(() => {
+    if (isAuthenticated && user) {
+      const fetchInitialLikeState = async () => {
+        try {
+          const { data, error } = await supabase
+            .from(likesTable)
+            .select('id')
+            .eq(contentIdField, contentId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (error) {
+            throw error;
+          }
+          
+          setIsLiked(!!data);
+        } catch (error) {
+          console.error('Error fetching initial like state:', error);
         }
       };
-    });
-  }, [setLoadingStates]);
+      
+      fetchInitialLikeState();
+    }
+  }, [isAuthenticated, user, contentId, likesTable, contentIdField]);
 
-  // Handle like interaction with consistent RPC function name
-  const handleLike = useCallback(async (id: string, itemType: ContentItemType | string): Promise<ContentInteractionResult | null> => {
-    if (!userId) {
+  // Function to toggle like
+  const toggleLike = async () => {
+    if (!isAuthenticated || !user) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to like content",
-        variant: "destructive"
+        title: 'Authentication required',
+        description: 'You must be logged in to like this content.',
+        variant: 'destructive'
       });
-      return null;
+      return;
     }
     
-    const contentTypeStr = typeof itemType === 'string' ? itemType : getContentTypeString(itemType);
-    const key = getContentKey(id, contentTypeStr);
-    const isLiked = userLikes[key] || userLikes[id] || false; // Check both formats for backward compatibility
-    const typeInfo = getContentTypeInfo(contentTypeStr);
-    
-    // Set loading state
-    setLikeLoadingState(id, contentTypeStr, true);
-    
     try {
+      // Optimistic update
+      setIsLiked(prev => !prev);
+      setLikeCount(prevCount => (isLiked ? prevCount - 1 : prevCount + 1));
+      
+      // Determine if we should insert or delete based on current state
       if (isLiked) {
-        // Unlike content
-        if (contentTypeStr === 'quote') {
-          const { error } = await supabase
-            .from('quote_likes')
-            .delete()
-            .eq('user_id', userId)
-            .eq('quote_id', id);
-            
-          if (error) throw error;
-            
-          // Update counter in quotes table
-          await supabase.rpc('decrement_counter_fn', {
-            row_id: id,
-            column_name: typeInfo.likesColumnName,
-            table_name: typeInfo.contentTable
-          });
-        } else {
-          const { error } = await supabase
-            .from('content_likes')
-            .delete()
-            .eq('user_id', userId)
-            .eq('content_id', id)
-            .eq('content_type', contentTypeStr);
-            
-          if (error) throw error;
-            
-          // Update counter in the appropriate table
-          await supabase.rpc('decrement_counter_fn', {
-            row_id: id,
-            column_name: typeInfo.likesColumnName,
-            table_name: typeInfo.contentTable
-          });
-        }
-          
-        // Update state with both key formats
-        setUserLikes(prev => {
-          const newState = {...prev};
-          newState[key] = false;
-          newState[id] = false; // For backward compatibility
-          return newState;
-        });
+        // Unlike: Delete the like
+        const { error } = await supabase
+          .from(likesTable)
+          .delete()
+          .eq(contentIdField, contentId)
+          .eq('user_id', user.id);
         
-        toast({
-          description: "Like removed"
+        if (error) {
+          throw error;
+        }
+        
+        // Decrement counter in the content table
+        await supabase.rpc('decrement_counter_fn', {
+          row_id: contentId,
+          column_name: 'likes',
+          table_name: contentTable
         });
       } else {
-        // Like content
-        if (contentTypeStr === 'quote') {
-          const { error } = await supabase
-            .from('quote_likes')
-            .insert({
-              user_id: userId,
-              quote_id: id
-            });
-            
-          if (error) throw error;
-            
-          // Update counter in quotes table
-          await supabase.rpc('increment_counter_fn', {
-            row_id: id,
-            column_name: typeInfo.likesColumnName,
-            table_name: typeInfo.contentTable
-          });
-        } else {
-          const { error } = await supabase
-            .from('content_likes')
-            .insert({
-              user_id: userId,
-              content_id: id,
-              content_type: contentTypeStr
-            });
-            
-          if (error) throw error;
-            
-          // Update counter in the appropriate table
-          await supabase.rpc('increment_counter_fn', {
-            row_id: id,
-            column_name: typeInfo.likesColumnName,
-            table_name: typeInfo.contentTable
-          });
-        }
-          
-        // Update state with both key formats
-        setUserLikes(prev => {
-          const newState = {...prev};
-          newState[key] = true;
-          newState[id] = true; // For backward compatibility
-          return newState;
-        });
+        // Like: Insert a new like
+        const insertData = {
+          user_id: user.id,
+          [contentIdField]: contentId,
+        };
         
-        toast({
-          description: "Content liked"
+        // Conditionally add content_type if it's not a quote
+        if (contentType !== 'quote') {
+          insertData['content_type'] = normalizeContentType(contentType);
+        }
+        
+        const { error } = await supabase
+          .from(likesTable)
+          .insert([insertData]);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Increment counter in the content table
+        await supabase.rpc('increment_counter_fn', {
+          row_id: contentId,
+          column_name: 'likes',
+          table_name: contentTable
         });
       }
       
-      return {
-        isLiked: !isLiked,
-        id,
-        contentType: contentTypeStr
-      };
+      // Notify parent component about like count change
+      if (onLikeChange) {
+        onLikeChange(isLiked ? likeCount - 1 : likeCount + 1);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
       
-    } catch (err) {
-      const pgError = err as PostgrestError;
-      console.error('Error updating like:', pgError);
+      // Revert optimistic update on error
+      setIsLiked(prev => !prev);
+      setLikeCount(prevCount => (isLiked ? prevCount + 1 : prevCount - 1));
+      
       toast({
-        title: "Action failed",
-        description: "Failed to update like status",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to update like. Please try again.',
+        variant: 'destructive'
       });
-      return null;
-    } finally {
-      // Clear loading state
-      setLikeLoadingState(id, contentTypeStr, false);
     }
-  }, [userId, userLikes, toast, setUserLikes, setLikeLoadingState]);
+  };
 
-  return { handleLike };
+  return {
+    isLiked,
+    likeCount,
+    toggleLike,
+  };
 };

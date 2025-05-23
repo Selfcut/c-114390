@@ -3,7 +3,7 @@ import { QuoteWithUser, QuoteFilterOptions, QuoteSortOption } from '@/lib/quotes
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseQuery } from './useSupabaseQuery';
 import { useAuth } from '@/lib/auth';
-import { incrementCounter, decrementCounter } from '@/lib/utils/supabase-utils';
+import { incrementCounter, decrementCounter } from '@/lib/utils/counter-operations';
 
 export function useMemoizedQuotes(initialOptions?: QuoteFilterOptions) {
   const { user, isAuthenticated } = useAuth();

@@ -1,7 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuoteWithUser, QuoteFilterOptions } from './types';
-import { batchOperations } from '@/lib/utils/supabase-utils';
 
 /**
  * Optimized function to fetch quotes with caching and batching support

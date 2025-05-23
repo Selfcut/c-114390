@@ -4,6 +4,9 @@ import { toast } from 'sonner';
 import { ContentType, getContentTypeInfo } from '@/types/contentTypes';
 import { normalizeContentType } from '@/hooks/content-interactions/contentTypeUtils';
 
+// Export counter operations for backward compatibility
+export { incrementCounter, decrementCounter } from './counter-operations';
+
 /**
  * Type for user interaction with content
  */
@@ -115,27 +118,24 @@ export const toggleUserInteraction = async (
       return false;
     } else {
       // Add interaction if it doesn't exist
-      let insertError;
+      const insertPayload: Record<string, any> = {
+        user_id: userId
+      };
       
-      if (normalizedType === 'quote') {
-        const insertResult = await supabase
-          .from(tableName)
-          .insert({
-            user_id: userId,
-            [idField]: contentId
-          });
-        insertError = insertResult.error;
-      } else {
-        const insertResult = await supabase
-          .from(tableName)
-          .insert({
-            user_id: userId,
-            [idField]: contentId,
-            content_type: normalizedType
-          });
-        insertError = insertResult.error;
+      // Set the proper ID field based on content type
+      insertPayload[idField] = contentId;
+      
+      // Only add content_type for non-quote tables
+      if (normalizedType !== 'quote') {
+        insertPayload.content_type = normalizedType;
       }
       
+      // Perform the insert operation
+      const insertResult = await supabase
+        .from(tableName)
+        .insert(insertPayload);
+      
+      const insertError = insertResult.error;
       if (insertError) throw insertError;
       
       // Increment counter in the appropriate table

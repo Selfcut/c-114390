@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "./ui/use-toast";
 import { Textarea } from "./ui/textarea";
 import { Skeleton } from "./ui/skeleton";
-import { incrementCounter } from "@/lib/utils/supabase-utils";
+import { incrementCounter } from "@/lib/utils/counter-operations";
 
 interface QuoteCommentModalProps {
   quoteId: string;

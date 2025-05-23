@@ -15,6 +15,14 @@ export const normalizeContentType = (type: string | ContentType | ContentItemTyp
 };
 
 /**
+ * Convert a ContentItemType to its string representation for database use
+ * Added for backward compatibility
+ */
+export const getContentTypeString = (itemType: ContentItemType | string | ContentType): string => {
+  return normalizeContentType(itemType);
+};
+
+/**
  * Get all table and field information for a content type
  * @param contentType The content type (can be string, ContentType enum, or ContentItemType enum)
  * @returns An object containing table names and field names
