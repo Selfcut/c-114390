@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { ContentType, getContentTableName } from '@/types/contentTypes';
 
 /**
  * Normalize content type for database operations
@@ -43,12 +44,11 @@ export async function checkUserInteractions(
   
   try {
     const isQuote = normalizedType === 'quote';
+    let hasLiked = false;
+    let hasBookmarked = false;
     
-    let likesResult;
-    let bookmarksResult;
-    
+    // Check likes
     if (isQuote) {
-      // For quotes, use the specific tables without content_type field
       const { data: likeData, error: likeError } = await supabase
         .from('quote_likes')
         .select('id')
@@ -56,22 +56,9 @@ export async function checkUserInteractions(
         .eq('user_id', userId)
         .maybeSingle();
         
-      const { data: bookmarkData, error: bookmarkError } = await supabase
-        .from('quote_bookmarks')
-        .select('id')
-        .eq('quote_id', contentId)
-        .eq('user_id', userId)
-        .maybeSingle();
-        
       if (likeError) throw likeError;
-      if (bookmarkError) throw bookmarkError;
-      
-      return {
-        isLiked: !!likeData,
-        isBookmarked: !!bookmarkData
-      };
+      hasLiked = !!likeData;
     } else {
-      // For other content types, include the content_type field
       const { data: likeData, error: likeError } = await supabase
         .from('content_likes')
         .select('id')
@@ -80,6 +67,22 @@ export async function checkUserInteractions(
         .eq('content_type', normalizedType)
         .maybeSingle();
         
+      if (likeError) throw likeError;
+      hasLiked = !!likeData;
+    }
+    
+    // Check bookmarks
+    if (isQuote) {
+      const { data: bookmarkData, error: bookmarkError } = await supabase
+        .from('quote_bookmarks')
+        .select('id')
+        .eq('quote_id', contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (bookmarkError) throw bookmarkError;
+      hasBookmarked = !!bookmarkData;
+    } else {
       const { data: bookmarkData, error: bookmarkError } = await supabase
         .from('content_bookmarks')
         .select('id')
@@ -88,14 +91,11 @@ export async function checkUserInteractions(
         .eq('content_type', normalizedType)
         .maybeSingle();
         
-      if (likeError) throw likeError;
       if (bookmarkError) throw bookmarkError;
-      
-      return {
-        isLiked: !!likeData,
-        isBookmarked: !!bookmarkData
-      };
+      hasBookmarked = !!bookmarkData;
     }
+    
+    return { isLiked: hasLiked, isBookmarked: hasBookmarked };
   } catch (error) {
     console.error('Error checking interactions:', error);
     return { isLiked: false, isBookmarked: false };
@@ -114,13 +114,12 @@ export async function toggleLike(
   const isQuote = normalizedType === 'quote';
   
   try {
-    // Determine tables to use
-    const contentTable = isQuote ? 'quotes' : `${normalizedType}_posts`;
+    // Determine tables and fields
+    const contentTable = getContentTableName(normalizedType);
     const likesColumn = normalizedType === 'forum' ? 'upvotes' : 'likes';
-    
-    // Check if like already exists
     let existingLike;
     
+    // Check if like already exists
     if (isQuote) {
       const { data, error } = await supabase
         .from('quote_likes')
@@ -150,17 +149,14 @@ export async function toggleLike(
         const { error } = await supabase
           .from('quote_likes')
           .delete()
-          .eq('quote_id', contentId)
-          .eq('user_id', userId);
+          .eq('id', existingLike.id);
           
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('content_likes')
           .delete()
-          .eq('content_id', contentId)
-          .eq('user_id', userId)
-          .eq('content_type', normalizedType);
+          .eq('id', existingLike.id);
           
         if (error) throw error;
       }
@@ -223,13 +219,12 @@ export async function toggleBookmark(
   const isQuote = normalizedType === 'quote';
   
   try {
-    // Determine tables to use
-    const contentTable = isQuote ? 'quotes' : `${normalizedType}_posts`;
+    // Determine tables and fields
+    const contentTable = getContentTableName(normalizedType);
     const bookmarksColumn = isQuote ? 'bookmarks' : undefined;
-    
-    // Check if bookmark already exists
     let existingBookmark;
     
+    // Check if bookmark already exists
     if (isQuote) {
       const { data, error } = await supabase
         .from('quote_bookmarks')
@@ -259,17 +254,14 @@ export async function toggleBookmark(
         const { error } = await supabase
           .from('quote_bookmarks')
           .delete()
-          .eq('quote_id', contentId)
-          .eq('user_id', userId);
+          .eq('id', existingBookmark.id);
           
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('content_bookmarks')
           .delete()
-          .eq('content_id', contentId)
-          .eq('user_id', userId)
-          .eq('content_type', normalizedType);
+          .eq('id', existingBookmark.id);
           
         if (error) throw error;
       }

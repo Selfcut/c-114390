@@ -1,132 +1,108 @@
 
 import { useState, useCallback } from 'react';
-import { getContentStateKey } from './contentTypeUtils';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { ContentType } from '@/types/contentTypes';
 
-export interface ContentLoadingState {
-  isLikeLoading: boolean;
-  isBookmarkLoading: boolean;
-}
-
-export type InteractionType = 'like' | 'bookmark';
-
-export function useInteractionsState() {
-  // State for liked items
+/**
+ * Hook for managing interaction states like likes and bookmarks
+ */
+export const useInteractionsState = () => {
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
-  
-  // State for bookmarked items
   const [bookmarkedItems, setBookmarkedItems] = useState<Record<string, boolean>>({});
-  
-  // State for loading interactions
-  const [loadingStates, setLoadingStates] = useState<Record<string, ContentLoadingState>>({});
-  
-  // Set like state for a content item
-  const setLikeState = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType, 
-    isLiked: boolean
-  ) => {
-    const key = getContentStateKey(id, contentType);
-    setLikedItems(prev => ({
-      ...prev,
-      [key]: isLiked
-    }));
+  const [likeLoadingStates, setLikeLoadingStates] = useState<Record<string, boolean>>({});
+  const [bookmarkLoadingStates, setBookmarkLoadingStates] = useState<Record<string, boolean>>({});
+
+  /**
+   * Generate a consistent state key for content
+   */
+  const getStateKey = useCallback((id: string, type: string | ContentType): string => {
+    const contentType = typeof type === 'string' ? type.toLowerCase() : type.toLowerCase();
+    return `${contentType}:${id}`;
   }, []);
-  
-  // Set bookmark state for a content item
-  const setBookmarkState = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType, 
-    isBookmarked: boolean
-  ) => {
-    const key = getContentStateKey(id, contentType);
-    setBookmarkedItems(prev => ({
-      ...prev,
-      [key]: isBookmarked
-    }));
-  }, []);
-  
-  // Set like loading state for a content item
-  const setLikeLoadingState = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType, 
-    isLoading: boolean
-  ) => {
-    const key = getContentStateKey(id, contentType);
-    setLoadingStates(prev => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] || { isLikeLoading: false, isBookmarkLoading: false }),
-        isLikeLoading: isLoading
-      }
-    }));
-  }, []);
-  
-  // Set bookmark loading state for a content item
-  const setBookmarkLoadingState = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType, 
-    isLoading: boolean
-  ) => {
-    const key = getContentStateKey(id, contentType);
-    setLoadingStates(prev => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] || { isLikeLoading: false, isBookmarkLoading: false }),
-        isBookmarkLoading: isLoading
-      }
-    }));
-  }, []);
-  
-  // Get loading state for a content item
-  const getLoadingState = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType
-  ): ContentLoadingState => {
-    const key = getContentStateKey(id, contentType);
-    return loadingStates[key] || { isLikeLoading: false, isBookmarkLoading: false };
-  }, [loadingStates]);
-  
-  // Check if a specific interaction is loading
+
+  /**
+   * Check if an item is liked
+   */
+  const isItemLiked = useCallback((id: string, type: string | ContentType): boolean => {
+    const key = getStateKey(id, type);
+    return likedItems[key] || false;
+  }, [likedItems, getStateKey]);
+
+  /**
+   * Check if an item is bookmarked
+   */
+  const isItemBookmarked = useCallback((id: string, type: string | ContentType): boolean => {
+    const key = getStateKey(id, type);
+    return bookmarkedItems[key] || false;
+  }, [bookmarkedItems, getStateKey]);
+
+  /**
+   * Set like state for a content item
+   */
+  const setLikeState = useCallback((id: string, type: string | ContentType, isLiked: boolean) => {
+    const key = getStateKey(id, type);
+    setLikedItems(prev => ({ ...prev, [key]: isLiked }));
+  }, [getStateKey]);
+
+  /**
+   * Set bookmark state for a content item
+   */
+  const setBookmarkState = useCallback((id: string, type: string | ContentType, isBookmarked: boolean) => {
+    const key = getStateKey(id, type);
+    setBookmarkedItems(prev => ({ ...prev, [key]: isBookmarked }));
+  }, [getStateKey]);
+
+  /**
+   * Set like loading state for a content item
+   */
+  const setLikeLoadingState = useCallback((id: string, type: string | ContentType, isLoading: boolean) => {
+    const key = getStateKey(id, type);
+    setLikeLoadingStates(prev => ({ ...prev, [key]: isLoading }));
+  }, [getStateKey]);
+
+  /**
+   * Set bookmark loading state for a content item
+   */
+  const setBookmarkLoadingState = useCallback((id: string, type: string | ContentType, isLoading: boolean) => {
+    const key = getStateKey(id, type);
+    setBookmarkLoadingStates(prev => ({ ...prev, [key]: isLoading }));
+  }, [getStateKey]);
+
+  /**
+   * Get loading state for a content item
+   */
+  const getLoadingState = useCallback((id: string, type: string | ContentType) => {
+    const key = getStateKey(id, type);
+    return {
+      isLikeLoading: likeLoadingStates[key] || false,
+      isBookmarkLoading: bookmarkLoadingStates[key] || false
+    };
+  }, [getStateKey, likeLoadingStates, bookmarkLoadingStates]);
+
+  /**
+   * Check if an interaction is loading
+   */
   const isInteractionLoading = useCallback((
     id: string, 
-    contentType: string | ContentType | ContentItemType, 
-    interactionType: InteractionType
+    type: string | ContentType, 
+    interactionType: 'like' | 'bookmark'
   ): boolean => {
-    const state = getLoadingState(id, contentType);
-    return interactionType === 'like' ? state.isLikeLoading : state.isBookmarkLoading;
-  }, [getLoadingState]);
-  
-  // Check if a content item is liked
-  const isItemLiked = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType
-  ): boolean => {
-    const key = getContentStateKey(id, contentType);
-    return !!likedItems[key];
-  }, [likedItems]);
-  
-  // Check if a content item is bookmarked
-  const isItemBookmarked = useCallback((
-    id: string, 
-    contentType: string | ContentType | ContentItemType
-  ): boolean => {
-    const key = getContentStateKey(id, contentType);
-    return !!bookmarkedItems[key];
-  }, [bookmarkedItems]);
-  
+    const key = getStateKey(id, type);
+    return interactionType === 'like' 
+      ? likeLoadingStates[key] || false 
+      : bookmarkLoadingStates[key] || false;
+  }, [getStateKey, likeLoadingStates, bookmarkLoadingStates]);
+
   return {
     likedItems,
     bookmarkedItems,
-    loadingStates,
+    getStateKey,
+    isItemLiked,
+    isItemBookmarked,
     setLikeState,
     setBookmarkState,
     setLikeLoadingState,
     setBookmarkLoadingState,
     getLoadingState,
-    isInteractionLoading,
-    isItemLiked,
-    isItemBookmarked
+    isInteractionLoading
   };
-}
+};

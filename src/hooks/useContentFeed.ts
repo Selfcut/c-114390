@@ -4,8 +4,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 import { useNavigate } from 'react-router-dom';
-import { useContentInteractions } from './useContentInteractions';
-import { getContentStateKey } from '@/hooks/content-interactions/contentTypeUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { ContentType } from '@/types/contentTypes';
+import { toggleLike, toggleBookmark } from '@/lib/utils/content-operations';
 
 // Define the content feed item structure
 export interface ContentFeedItem {
@@ -32,175 +33,320 @@ export interface ContentFeedItem {
   mediaType?: 'image' | 'video' | 'youtube' | 'document' | 'text';
 }
 
-// Generate mock data for demo purposes
-const generateMockFeedItems = (): ContentFeedItem[] => {
-  return [
-    {
-      id: '1',
-      type: ContentItemType.Knowledge,
-      title: 'Understanding Quantum Mechanics',
-      summary: 'An introduction to quantum mechanics concepts for beginners',
-      author: {
-        name: 'Dr. Richard Feynman',
-        avatar: '/lovable-uploads/e9db2be9-f0a3-4506-b387-ce20bea67ba9.png'
-      },
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      tags: ['Physics', 'Quantum', 'Science'],
-      metrics: {
-        likes: 42,
-        views: 1024,
-        comments: 13
-      }
-    },
-    {
-      id: '2',
-      type: ContentItemType.Media,
-      title: 'Mathematical Beauty in Nature',
-      summary: 'Exploring the Fibonacci sequence and golden ratio in natural patterns',
-      author: {
-        name: 'Prof. Ada Lovelace',
-        avatar: '/lovable-uploads/a3dc041f-fb55-4108-807b-ca52164461d8.png'
-      },
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      coverImage: '/lovable-uploads/8827d443-a68b-4bd9-998f-3c4c410510e9.png',
-      mediaType: 'image',
-      tags: ['Mathematics', 'Nature', 'Patterns'],
-      metrics: {
-        likes: 89,
-        views: 2456,
-        comments: 32
-      }
-    },
-    {
-      id: '3',
-      type: ContentItemType.Quote,
-      title: 'On the Nature of Knowledge',
-      content: "The true sign of intelligence is not knowledge but imagination.",
-      author: {
-        name: 'Albert Einstein',
-        avatar: '/lovable-uploads/fab013d4-833b-4739-a13d-9492c0dea259.png'
-      },
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-      tags: ['Wisdom', 'Intelligence', 'Knowledge'],
-      metrics: {
-        likes: 276,
-        views: 5432,
-        bookmarks: 54
-      }
-    },
-    {
-      id: '4',
-      type: ContentItemType.AI,
-      title: 'Future of Machine Learning',
-      summary: 'AI-generated exploration of the next decade in machine learning advancements',
-      author: {
-        name: 'AI Assistant',
-        avatar: '/lovable-uploads/d8b5e246-d962-466e-ad7d-61985e448fb9.png',
-      },
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      tags: ['AI', 'Machine Learning', 'Future Tech'],
-      metrics: {
-        likes: 127,
-        views: 3218,
-        comments: 48
-      }
-    }
-  ];
-};
-
 export const useContentFeed = () => {
   const [feedItems, setFeedItems] = useState<ContentFeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
+  const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
+  const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Use the content interactions hook
-  const {
-    userLikes,
-    userBookmarks,
-    handleLike,
-    handleBookmark,
-    checkUserInteractions
-  } = useContentInteractions({ userId: user?.id });
+  // Get state key for content items
+  const getStateKey = useCallback((id: string, type: ContentItemType | string) => {
+    return `${type}:${id}`;
+  }, []);
   
-  // Fetch content items
-  const fetchContent = useCallback(async () => {
+  // Check user interactions for content items
+  const checkUserInteractions = useCallback(async (items: ContentFeedItem[]) => {
+    if (!user || items.length === 0) return;
+    
     try {
-      setIsLoading(true);
-      setError(null);
+      const likesPromises = [];
+      const bookmarksPromises = [];
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Generate mock data
-      const mockData = generateMockFeedItems();
-      const totalItems = 20; // Total available items
-      
-      const itemsPerPage = 4;
-      const start = (page - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
-      const pageItems = mockData.slice(0, end); // Simulate growing set of items
-      
-      setFeedItems(prevItems => {
-        if (page === 1) {
-          return pageItems;
-        }
-        // Avoid duplicates when adding more items
-        const existingIds = new Set(prevItems.map(item => item.id));
-        const newItems = pageItems.filter(item => !existingIds.has(item.id));
-        return [...prevItems, ...newItems];
-      });
-      
-      setHasMore(pageItems.length < totalItems);
-      
-      // Check user interactions for the items if user is logged in
-      if (user && pageItems.length > 0) {
-        const itemIds = pageItems.map(item => item.id);
-        const contentTypes = pageItems.map(item => item.type);
-        
-        // Check interactions for each item
-        for (let i = 0; i < itemIds.length; i++) {
-          const itemKey = getContentStateKey(itemIds[i], contentTypes[i]);
-          // We don't need to await here as we're just updating UI state
-          checkUserInteractions([itemKey], contentTypes[i].toString());
+      // Process each content item
+      for (const item of items) {
+        // Check for quote likes
+        if (item.type === ContentItemType.Quote) {
+          const { data: likesData } = await supabase
+            .from('quote_likes')
+            .select('id')
+            .eq('quote_id', item.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+          const { data: bookmarksData } = await supabase
+            .from('quote_bookmarks')
+            .select('id')
+            .eq('quote_id', item.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+          const key = getStateKey(item.id, item.type);
+          setUserLikes(prev => ({ ...prev, [key]: !!likesData }));
+          setUserBookmarks(prev => ({ ...prev, [key]: !!bookmarksData }));
+        } 
+        // Check for other content types
+        else {
+          const { data: likesData } = await supabase
+            .from('content_likes')
+            .select('id')
+            .eq('content_id', item.id)
+            .eq('user_id', user.id)
+            .eq('content_type', item.type.toString())
+            .maybeSingle();
+            
+          const { data: bookmarksData } = await supabase
+            .from('content_bookmarks')
+            .select('id')
+            .eq('content_id', item.id)
+            .eq('user_id', user.id)
+            .eq('content_type', item.type.toString())
+            .maybeSingle();
+            
+          const key = getStateKey(item.id, item.type);
+          setUserLikes(prev => ({ ...prev, [key]: !!likesData }));
+          setUserBookmarks(prev => ({ ...prev, [key]: !!bookmarksData }));
         }
       }
+    } catch (err) {
+      console.error('Error checking user interactions:', err);
+    }
+  }, [user, getStateKey]);
+  
+  // Map knowledge entry to feed item
+  const mapKnowledgeEntry = useCallback((item: any): ContentFeedItem => {
+    return {
+      id: item.id,
+      type: ContentItemType.Knowledge,
+      title: item.title,
+      summary: item.summary,
+      content: item.content,
+      author: {
+        name: item.profiles?.name || 'Unknown',
+        avatar: item.profiles?.avatar_url,
+        username: item.profiles?.username
+      },
+      createdAt: item.created_at,
+      metrics: {
+        likes: item.likes || 0,
+        comments: item.comments || 0,
+        views: item.views || 0
+      },
+      tags: item.categories || [],
+      coverImage: item.cover_image
+    };
+  }, []);
+  
+  // Map quote to feed item
+  const mapQuote = useCallback((item: any): ContentFeedItem => {
+    return {
+      id: item.id,
+      type: ContentItemType.Quote,
+      title: item.author,
+      content: item.text,
+      summary: item.source,
+      author: {
+        name: item.profiles?.name || 'Unknown',
+        avatar: item.profiles?.avatar_url,
+        username: item.profiles?.username
+      },
+      createdAt: item.created_at,
+      metrics: {
+        likes: item.likes || 0,
+        comments: item.comments || 0,
+        bookmarks: item.bookmarks || 0
+      },
+      tags: item.tags || []
+    };
+  }, []);
+  
+  // Map media post to feed item
+  const mapMediaPost = useCallback((item: any): ContentFeedItem => {
+    return {
+      id: item.id,
+      type: ContentItemType.Media,
+      title: item.title,
+      content: item.content,
+      author: {
+        name: item.profiles?.name || 'Unknown',
+        avatar: item.profiles?.avatar_url,
+        username: item.profiles?.username
+      },
+      createdAt: item.created_at,
+      metrics: {
+        likes: item.likes || 0,
+        comments: item.comments || 0,
+        views: item.views || 0
+      },
+      mediaUrl: item.url,
+      mediaType: item.type
+    };
+  }, []);
+  
+  // Fetch content from database
+  const fetchContent = useCallback(async (reset: boolean = false) => {
+    if (reset) {
+      setPage(0);
+      setFeedItems([]);
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const pageSize = 10;
+      const currentPage = reset ? 0 : page;
       
+      // Fetch knowledge entries
+      const { data: knowledgeData, error: knowledgeError } = await supabase
+        .from('knowledge_entries')
+        .select(`
+          id,
+          title,
+          summary,
+          content,
+          created_at,
+          categories,
+          cover_image,
+          views,
+          likes,
+          comments,
+          user_id,
+          profiles:user_id(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Fetch quotes
+      const { data: quotesData, error: quotesError } = await supabase
+        .from('quotes')
+        .select(`
+          id,
+          text,
+          author,
+          source,
+          created_at,
+          tags,
+          likes,
+          comments,
+          bookmarks,
+          user_id,
+          profiles:user_id(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Fetch media posts
+      const { data: mediaData, error: mediaError } = await supabase
+        .from('media_posts')
+        .select(`
+          id,
+          title,
+          content,
+          created_at,
+          tags,
+          url,
+          type,
+          likes,
+          comments,
+          views,
+          user_id,
+          profiles:user_id(name, avatar_url, username)
+        `)
+        .order('created_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      // Handle errors
+      if (knowledgeError && quotesError && mediaError) {
+        throw new Error('Failed to fetch content from any source');
+      }
+      
+      // Map data to content items
+      const knowledgeItems = knowledgeData ? knowledgeData.map(mapKnowledgeEntry) : [];
+      const quoteItems = quotesData ? quotesData.map(mapQuote) : [];
+      const mediaItems = mediaData ? mediaData.map(mapMediaPost) : [];
+      
+      // Combine and sort items
+      const allItems = [...knowledgeItems, ...quoteItems, ...mediaItems]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      // Update state
+      setFeedItems(prev => reset ? allItems : [...prev, ...allItems]);
+      setHasMore(allItems.length >= pageSize);
+      setPage(prev => reset ? 1 : prev + 1);
+      
+      // Check user interactions
+      if (user) {
+        await checkUserInteractions(allItems);
+      }
     } catch (err) {
       console.error('Error fetching content:', err);
-      setError('Failed to load content. Please try again later.');
+      setError('Failed to load content. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [page, user, checkUserInteractions]);
+  }, [page, user, mapKnowledgeEntry, mapQuote, mapMediaPost, checkUserInteractions]);
   
-  // Load initial content
+  // Initial content fetch
   useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
+    fetchContent(true);
+  }, []);
   
-  // Function to load more content
-  const loadMore = useCallback(() => {
-    if (!isLoading && hasMore) {
-      setPage(prevPage => prevPage + 1);
+  // Handle like action
+  const handleLike = useCallback(async (contentId: string, contentType: ContentItemType) => {
+    if (!user) return;
+    
+    try {
+      const key = getStateKey(contentId, contentType);
+      const currentState = userLikes[key] || false;
+      
+      // Optimistic update
+      setUserLikes(prev => ({ ...prev, [key]: !currentState }));
+      
+      // Perform database update
+      const success = await toggleLike(user.id, contentId, contentType.toString());
+      
+      // Revert if unsuccessful
+      if (!success) {
+        setUserLikes(prev => ({ ...prev, [key]: currentState }));
+      }
+    } catch (err) {
+      console.error('Error handling like:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive"
+      });
     }
-  }, [isLoading, hasMore]);
+  }, [user, userLikes, getStateKey, toast]);
   
-  // Refresh content (reset and fetch again)
-  const refetch = useCallback(() => {
-    setPage(1);
-    setFeedItems([]);
-    fetchContent();
-  }, [fetchContent]);
+  // Handle bookmark action
+  const handleBookmark = useCallback(async (contentId: string, contentType: ContentItemType) => {
+    if (!user) return;
+    
+    try {
+      const key = getStateKey(contentId, contentType);
+      const currentState = userBookmarks[key] || false;
+      
+      // Optimistic update
+      setUserBookmarks(prev => ({ ...prev, [key]: !currentState }));
+      
+      // Perform database update
+      const success = await toggleBookmark(user.id, contentId, contentType.toString());
+      
+      // Revert if unsuccessful
+      if (!success) {
+        setUserBookmarks(prev => ({ ...prev, [key]: currentState }));
+      }
+    } catch (err) {
+      console.error('Error handling bookmark:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark status",
+        variant: "destructive"
+      });
+    }
+  }, [user, userBookmarks, getStateKey, toast]);
   
   // Handle content click (navigation)
   const handleContentClick = useCallback((contentId: string, contentType: ContentItemType) => {
-    // Determine the appropriate route based on content type
-    let route;
+    let route = '/';
+    
     switch (contentType) {
       case ContentItemType.Knowledge:
         route = `/knowledge/${contentId}`;
@@ -212,7 +358,13 @@ export const useContentFeed = () => {
         route = `/quotes/${contentId}`;
         break;
       case ContentItemType.AI:
-        route = `/ai/${contentId}`;
+        route = `/ai-content/${contentId}`;
+        break;
+      case ContentItemType.Forum:
+        route = `/forum/post/${contentId}`;
+        break;
+      case ContentItemType.Wiki:
+        route = `/wiki/${contentId}`;
         break;
       default:
         route = '/';
@@ -220,6 +372,18 @@ export const useContentFeed = () => {
     
     navigate(route);
   }, [navigate]);
+  
+  // Load more content
+  const loadMore = useCallback(() => {
+    if (!isLoading && hasMore) {
+      fetchContent(false);
+    }
+  }, [isLoading, hasMore, fetchContent]);
+  
+  // Refetch content
+  const refetch = useCallback(() => {
+    fetchContent(true);
+  }, [fetchContent]);
   
   return {
     feedItems,

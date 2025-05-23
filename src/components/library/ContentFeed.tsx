@@ -6,15 +6,16 @@ import { ContentFeedError } from './ContentFeedError';
 import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
 import { ContentFeedItemComponent } from './ContentFeedItem';
-import { ContentType as UIContentType } from './ContentTypeFilter';
+import { ContentType } from '@/types/contentTypes';
 import { ViewMode } from './ViewSwitcher';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ContentItemType } from './content-items/ContentItemTypes';
+import { mapUItoDBContentType } from '@/types/contentTypes';
 
 interface ContentFeedProps {
-  contentType: UIContentType;
+  contentType: string;
   viewMode: ViewMode;
   lastRefresh?: Date;
 }
@@ -55,7 +56,10 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     ? feedItems 
     : feedItems.filter(item => {
         const itemTypeString = item.type.toString().toLowerCase();
-        return contentType === 'quotes' ? itemTypeString === 'quote' : itemTypeString === contentType;
+        const dbContentType = mapUItoDBContentType(contentType);
+        return dbContentType === 'quotes' 
+          ? itemTypeString === 'quote' 
+          : itemTypeString === dbContentType;
       });
     
   // Handle authentication required actions
@@ -85,7 +89,7 @@ export const ContentFeed: React.FC<ContentFeedProps> = ({
     try {
       console.log(`User clicked ${contentType} content: ${contentId}`);
       // Call the original handler
-      handleContentClick(contentId,  contentType);
+      handleContentClick(contentId, contentType);
     } catch (err) {
       console.error("Error handling content click:", err);
       // Fallback if the main handler fails

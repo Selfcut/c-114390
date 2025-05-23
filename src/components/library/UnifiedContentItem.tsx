@@ -20,6 +20,6 @@ export const UnifiedContentItem: React.FC<ContentItemProps> = (props) => {
     case 'feed':
       return <ContentItemFeed {...props} />;
     default:
-      return <ContentItemGrid {...props} />;
+      return <ContentItemList {...props} />;
   }
 };
