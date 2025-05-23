@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { UnifiedContentItem } from './UnifiedContentItem';
 import { ContentItemProps, ContentItemType, ContentViewMode, MediaType } from './content-items/ContentItemTypes';
 
-// Import the interface from the hook
-export { ContentFeedItem } from '@/hooks/useContentFeed';
+// Import and re-export the interface from the hook using proper type syntax
+export type { ContentFeedItem } from '@/hooks/useContentFeed';
 
 interface ContentFeedItemComponentProps {
   item: import('@/hooks/useContentFeed').ContentFeedItem;
