@@ -41,21 +41,7 @@ const normalizeType = (contentType: string | ContentType): string => {
 };
 
 /**
- * Get table names for content type
- */
-const getTableNames = (contentType: string) => {
-  const isQuote = contentType === 'quote';
-  return {
-    contentTable: isQuote ? 'quotes' : getContentTableName(contentType),
-    likesTable: isQuote ? 'quote_likes' : 'content_likes',
-    bookmarksTable: isQuote ? 'quote_bookmarks' : 'content_bookmarks',
-    contentIdField: isQuote ? 'quote_id' : 'content_id',
-    likesColumn: contentType === 'forum' ? 'upvotes' : 'likes'
-  };
-};
-
-/**
- * Get content table name
+ * Get content table name based on content type
  */
 const getContentTableName = (contentType: string): string => {
   switch (contentType) {
@@ -67,6 +53,13 @@ const getContentTableName = (contentType: string): string => {
     case 'ai': return 'ai_content';
     default: return 'forum_posts';
   }
+};
+
+/**
+ * Get likes column name for content type
+ */
+const getLikesColumnName = (contentType: string): string => {
+  return contentType === 'forum' ? 'upvotes' : 'likes';
 };
 
 /**
@@ -83,19 +76,18 @@ export const checkUserInteractions = async (
 
   try {
     const normalizedType = normalizeType(contentType);
-    const { likesTable, bookmarksTable, contentIdField } = getTableNames(normalizedType);
     
     if (normalizedType === 'quote') {
       // Handle quotes
       const [likeResult, bookmarkResult] = await Promise.all([
         supabase
-          .from('quote_likes' as const)
+          .from('quote_likes')
           .select('id')
           .eq('quote_id', contentId)
           .eq('user_id', userId)
           .maybeSingle(),
         supabase
-          .from('quote_bookmarks' as const)
+          .from('quote_bookmarks')
           .select('id')
           .eq('quote_id', contentId)
           .eq('user_id', userId)
@@ -110,14 +102,14 @@ export const checkUserInteractions = async (
       // Handle other content types
       const [likeResult, bookmarkResult] = await Promise.all([
         supabase
-          .from('content_likes' as const)
+          .from('content_likes')
           .select('id')
           .eq('content_id', contentId)
           .eq('user_id', userId)
           .eq('content_type', normalizedType)
           .maybeSingle(),
         supabase
-          .from('content_bookmarks' as const)
+          .from('content_bookmarks')
           .select('id')
           .eq('content_id', contentId)
           .eq('user_id', userId)
@@ -148,12 +140,13 @@ export const toggleLike = async (
   
   try {
     const normalizedType = normalizeType(contentType);
-    const { contentTable, likesColumn } = getTableNames(normalizedType);
+    const contentTable = getContentTableName(normalizedType);
+    const likesColumn = getLikesColumnName(normalizedType);
     
     if (normalizedType === 'quote') {
       // Handle quotes
       const { data: existingLike } = await supabase
-        .from('quote_likes' as const)
+        .from('quote_likes')
         .select('id')
         .eq('quote_id', contentId)
         .eq('user_id', userId)
@@ -162,14 +155,14 @@ export const toggleLike = async (
       if (existingLike) {
         // Remove like
         await supabase
-          .from('quote_likes' as const)
+          .from('quote_likes')
           .delete()
           .eq('id', existingLike.id);
           
         await supabase.rpc('decrement_counter_fn', {
           row_id: contentId,
           column_name: likesColumn,
-          table_name: contentTable
+          table_name: 'quotes'
         });
         
         return false;
@@ -181,13 +174,13 @@ export const toggleLike = async (
         };
         
         await supabase
-          .from('quote_likes' as const)
+          .from('quote_likes')
           .insert(likeRecord);
           
         await supabase.rpc('increment_counter_fn', {
           row_id: contentId,
           column_name: likesColumn,
-          table_name: contentTable
+          table_name: 'quotes'
         });
         
         return true;
@@ -195,7 +188,7 @@ export const toggleLike = async (
     } else {
       // Handle other content types
       const { data: existingLike } = await supabase
-        .from('content_likes' as const)
+        .from('content_likes')
         .select('id')
         .eq('content_id', contentId)
         .eq('user_id', userId)
@@ -205,7 +198,7 @@ export const toggleLike = async (
       if (existingLike) {
         // Remove like
         await supabase
-          .from('content_likes' as const)
+          .from('content_likes')
           .delete()
           .eq('id', existingLike.id);
           
@@ -225,7 +218,7 @@ export const toggleLike = async (
         };
         
         await supabase
-          .from('content_likes' as const)
+          .from('content_likes')
           .insert(likeRecord);
           
         await supabase.rpc('increment_counter_fn', {
@@ -255,12 +248,11 @@ export const toggleBookmark = async (
   
   try {
     const normalizedType = normalizeType(contentType);
-    const { contentTable } = getTableNames(normalizedType);
     
     if (normalizedType === 'quote') {
       // Handle quotes
       const { data: existingBookmark } = await supabase
-        .from('quote_bookmarks' as const)
+        .from('quote_bookmarks')
         .select('id')
         .eq('quote_id', contentId)
         .eq('user_id', userId)
@@ -269,7 +261,7 @@ export const toggleBookmark = async (
       if (existingBookmark) {
         // Remove bookmark
         await supabase
-          .from('quote_bookmarks' as const)
+          .from('quote_bookmarks')
           .delete()
           .eq('id', existingBookmark.id);
           
@@ -277,7 +269,7 @@ export const toggleBookmark = async (
         await supabase.rpc('decrement_counter_fn', {
           row_id: contentId,
           column_name: 'bookmarks',
-          table_name: contentTable
+          table_name: 'quotes'
         });
         
         return false;
@@ -289,13 +281,13 @@ export const toggleBookmark = async (
         };
         
         await supabase
-          .from('quote_bookmarks' as const)
+          .from('quote_bookmarks')
           .insert(bookmarkRecord);
           
         await supabase.rpc('increment_counter_fn', {
           row_id: contentId,
           column_name: 'bookmarks',
-          table_name: contentTable
+          table_name: 'quotes'
         });
         
         return true;
@@ -303,7 +295,7 @@ export const toggleBookmark = async (
     } else {
       // Handle other content types
       const { data: existingBookmark } = await supabase
-        .from('content_bookmarks' as const)
+        .from('content_bookmarks')
         .select('id')
         .eq('content_id', contentId)
         .eq('user_id', userId)
@@ -313,7 +305,7 @@ export const toggleBookmark = async (
       if (existingBookmark) {
         // Remove bookmark
         await supabase
-          .from('content_bookmarks' as const)
+          .from('content_bookmarks')
           .delete()
           .eq('id', existingBookmark.id);
         
@@ -327,7 +319,7 @@ export const toggleBookmark = async (
         };
         
         await supabase
-          .from('content_bookmarks' as const)
+          .from('content_bookmarks')
           .insert(bookmarkRecord);
         
         return true;
@@ -362,12 +354,12 @@ export const batchCheckInteractions = async (
       // Handle quotes
       const [likesData, bookmarksData] = await Promise.all([
         supabase
-          .from('quote_likes' as const)
+          .from('quote_likes')
           .select('quote_id')
           .eq('user_id', userId)
           .in('quote_id', contentIds),
         supabase
-          .from('quote_bookmarks' as const)
+          .from('quote_bookmarks')
           .select('quote_id')
           .eq('user_id', userId)
           .in('quote_id', contentIds)
@@ -392,13 +384,13 @@ export const batchCheckInteractions = async (
       // Handle other content types
       const [likesData, bookmarksData] = await Promise.all([
         supabase
-          .from('content_likes' as const)
+          .from('content_likes')
           .select('content_id')
           .eq('user_id', userId)
           .eq('content_type', normalizedType)
           .in('content_id', contentIds),
         supabase
-          .from('content_bookmarks' as const)
+          .from('content_bookmarks')
           .select('content_id')
           .eq('user_id', userId)
           .eq('content_type', normalizedType)

@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { toggleLike, checkUserInteractions } from '@/lib/utils/content-db-operations';
 import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { normalizeContentType, getContentTableInfo } from '@/lib/utils/content-type-utils';
+import { normalizeContentType } from '@/lib/utils/content-type-utils';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,7 +30,11 @@ export const useLikeInteractions = ({
   const { toast } = useToast();
   
   const normalizedType = normalizeContentType(contentType);
-  const { likesColumnName } = getContentTableInfo(normalizedType);
+  
+  // Get the column name for likes based on content type
+  const getLikesColumnName = (type: string): string => {
+    return type === 'forum' ? 'upvotes' : 'likes';
+  };
 
   // Fetch initial like state on mount if authenticated
   useEffect(() => {
@@ -103,9 +107,9 @@ export const useLikeInteractions = ({
       setLikeCount(prevCount => (isLiked ? prevCount - 1 : prevCount + 1));
       
       toast({
-        title: 'Error',
-        description: 'Failed to update like. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to update like. Please try again.",
+        variant: "destructive"
       });
       
       return isLiked;
