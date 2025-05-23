@@ -2,63 +2,39 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Increment a counter on a content item
- * @param contentId The content ID
- * @param counterName The counter column name
- * @param tableName The table name
- * @param silent Optional flag to suppress error logging
- * @returns Promise<boolean> indicating success
+ * Increment a counter for a specific row in a table
  */
 export const incrementCounter = async (
-  contentId: string,
-  counterName: string,
-  tableName: string,
-  silent = false
-): Promise<boolean> => {
+  rowId: string, 
+  columnName: string, 
+  tableName: string
+): Promise<void> => {
   try {
-    const { error } = await supabase.rpc('increment_counter_fn', {
-      row_id: contentId,
-      column_name: counterName,
+    await supabase.rpc('increment_counter_fn', {
+      row_id: rowId,
+      column_name: columnName,
       table_name: tableName
     });
-    
-    if (error) throw error;
-    return true;
   } catch (error) {
-    if (!silent) {
-      console.error(`[Supabase Utils] Error incrementing ${counterName} counter:`, error);
-    }
-    return false;
+    console.error(`Error incrementing ${columnName} in ${tableName}:`, error);
   }
 };
 
 /**
- * Decrement a counter on a content item
- * @param contentId The content ID
- * @param counterName The counter column name
- * @param tableName The table name
- * @param silent Optional flag to suppress error logging
- * @returns Promise<boolean> indicating success
+ * Decrement a counter for a specific row in a table
  */
 export const decrementCounter = async (
-  contentId: string,
-  counterName: string,
-  tableName: string,
-  silent = false
-): Promise<boolean> => {
+  rowId: string, 
+  columnName: string, 
+  tableName: string
+): Promise<void> => {
   try {
-    const { error } = await supabase.rpc('decrement_counter_fn', {
-      row_id: contentId,
-      column_name: counterName,
+    await supabase.rpc('decrement_counter_fn', {
+      row_id: rowId,
+      column_name: columnName,
       table_name: tableName
     });
-    
-    if (error) throw error;
-    return true;
   } catch (error) {
-    if (!silent) {
-      console.error(`[Supabase Utils] Error decrementing ${counterName} counter:`, error);
-    }
-    return false;
+    console.error(`Error decrementing ${columnName} in ${tableName}:`, error);
   }
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType } from '@/types/contentTypes';
@@ -39,7 +40,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
         if (normalizedType === ContentType.Quote) {
           // Check quote likes
           const { data: likeData, error: likeError } = await supabase
-            .from('quote_likes')
+            .from('quote_likes' as any)
             .select('id')
             .eq('quote_id', contentId)
             .eq('user_id', userId)
@@ -50,7 +51,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
           
           // Check quote bookmarks
           const { data: bookmarkData, error: bookmarkError } = await supabase
-            .from('quote_bookmarks')
+            .from('quote_bookmarks' as any)
             .select('id')
             .eq('quote_id', contentId)
             .eq('user_id', userId)
@@ -61,7 +62,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
         } else {
           // Check content likes
           const { data: likeData, error: likeError } = await supabase
-            .from('content_likes')
+            .from('content_likes' as any)
             .select('id')
             .eq('content_id', contentId)
             .eq('user_id', userId)
@@ -73,7 +74,7 @@ export const useInteractionsCheck = ({ userId, contentId, contentType }: UseInte
           
           // Check content bookmarks
           const { data: bookmarkData, error: bookmarkError } = await supabase
-            .from('content_bookmarks')
+            .from('content_bookmarks' as any)
             .select('id')
             .eq('content_id', contentId)
             .eq('user_id', userId)

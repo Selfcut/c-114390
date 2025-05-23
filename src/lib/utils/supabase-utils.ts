@@ -38,7 +38,7 @@ export const toggleUserInteraction = async (
     
     const idField = normalizedType === 'quote' ? 'quote_id' : 'content_id';
 
-    // Use explicit table name in query to prevent type inference issues
+    // Use type assertions to help TypeScript understand the table names
     let checkData;
     let checkError;
     
@@ -46,7 +46,7 @@ export const toggleUserInteraction = async (
       if (isLike) {
         // Quote likes
         const result = await supabase
-          .from('quote_likes')
+          .from('quote_likes' as any)
           .select('id')
           .eq('quote_id', contentId)
           .eq('user_id', userId)
@@ -56,7 +56,7 @@ export const toggleUserInteraction = async (
       } else {
         // Quote bookmarks
         const result = await supabase
-          .from('quote_bookmarks')
+          .from('quote_bookmarks' as any)
           .select('id')
           .eq('quote_id', contentId)
           .eq('user_id', userId)
@@ -68,7 +68,7 @@ export const toggleUserInteraction = async (
       // Use content_likes or content_bookmarks table with content_type field
       const tableToQuery = isLike ? 'content_likes' : 'content_bookmarks';
       const result = await supabase
-        .from(tableToQuery)
+        .from(tableToQuery as any)
         .select('id')
         .eq('content_id', contentId)
         .eq('user_id', userId)
@@ -86,14 +86,14 @@ export const toggleUserInteraction = async (
       
       if (normalizedType === 'quote') {
         const removeResult = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .delete()
           .eq(idField, contentId)
           .eq('user_id', userId);
         removeError = removeResult.error;
       } else {
         const removeResult = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .delete()
           .eq(idField, contentId)
           .eq('user_id', userId)
@@ -118,7 +118,7 @@ export const toggleUserInteraction = async (
       return false;
     } else {
       // Add interaction if it doesn't exist
-      const insertPayload: Record<string, any> = {
+      const insertPayload: any = {
         user_id: userId
       };
       
@@ -130,9 +130,9 @@ export const toggleUserInteraction = async (
         insertPayload.content_type = normalizedType;
       }
       
-      // Perform the insert operation
+      // Perform the insert operation - using type assertions to avoid TS errors
       const insertResult = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .insert(insertPayload);
       
       const insertError = insertResult.error;
@@ -157,4 +157,11 @@ export const toggleUserInteraction = async (
     toast.error(`Could not ${type} the content. Please try again.`);
     return false;
   }
+};
+
+/**
+ * Batch fetch operations for content interactions
+ */
+export const batchOperations = {
+  // Implementation will go here
 };

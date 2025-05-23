@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType } from '@/types/contentTypes';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
@@ -26,18 +27,18 @@ export const useLikeInteractions = ({
   const { user, isAuthenticated } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
-  const { getTableNames } = useContentTables({ contentType });
+  const { getTableNames } = useContentTables({ contentType: normalizeContentType(contentType) });
   const tableNames = getTableNames();
   
   const { contentTable, likesTable, contentIdField } = tableNames;
 
   // Fetch initial like state on mount if authenticated
-  useState(() => {
+  useEffect(() => {
     if (isAuthenticated && user) {
       const fetchInitialLikeState = async () => {
         try {
           const { data, error } = await supabase
-            .from(likesTable)
+            .from(likesTable as any) // Type assertion to bypass TypeScript restriction
             .select('id')
             .eq(contentIdField, contentId)
             .eq('user_id', user.id)
@@ -77,7 +78,7 @@ export const useLikeInteractions = ({
       if (isLiked) {
         // Unlike: Delete the like
         const { error } = await supabase
-          .from(likesTable)
+          .from(likesTable as any) // Type assertion to bypass TypeScript restriction
           .delete()
           .eq(contentIdField, contentId)
           .eq('user_id', user.id);
@@ -94,19 +95,21 @@ export const useLikeInteractions = ({
         });
       } else {
         // Like: Insert a new like
-        const insertData = {
+        const insertData: any = {
           user_id: user.id,
-          [contentIdField]: contentId,
         };
         
+        // Add the proper content ID field
+        insertData[contentIdField] = contentId;
+        
         // Conditionally add content_type if it's not a quote
-        if (contentType !== 'quote') {
+        if (normalizeContentType(contentType) !== 'quote') {
           insertData['content_type'] = normalizeContentType(contentType);
         }
         
         const { error } = await supabase
-          .from(likesTable)
-          .insert([insertData]);
+          .from(likesTable as any) // Type assertion to bypass TypeScript restriction
+          .insert(insertData);
         
         if (error) {
           throw error;

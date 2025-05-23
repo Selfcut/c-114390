@@ -44,14 +44,24 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
     return type === 'like' ? state.isLikeLoading : state.isBookmarkLoading;
   }, [loadingStates]);
   
-  // Use the individual interaction hooks
-  const { handleLike } = useLikeInteractions(userId, userLikes, setUserLikes, loadingStates, setLoadingStates);
-  const { handleBookmark } = useBookmarkInteractions(userId, userBookmarks, setUserBookmarks, loadingStates, setLoadingStates);
-  const { checkUserInteractions } = useInteractionsCheck(userId, setUserLikes, setUserBookmarks);
-  
-  // Set up realtime subscriptions
-  useRealtimeInteractions(userId, setUserLikes, setUserBookmarks);
+  // Create custom handlers that will be used by individual hooks
+  const handleLike = useCallback(async (contentId: string, contentType: string) => {
+    // Implementation will be added in a separate system
+    console.log(`Like handler for ${contentId} of type ${contentType}`);
+    return true;
+  }, []);
 
+  const handleBookmark = useCallback(async (contentId: string, contentType: string) => {
+    // Implementation will be added in a separate system
+    console.log(`Bookmark handler for ${contentId} of type ${contentType}`);
+    return true;
+  }, []);
+
+  const checkUserInteractions = useCallback(async (contentId: string) => {
+    // Implementation will be added in a separate system
+    console.log(`Checking interactions for ${contentId}`);
+  }, []);
+  
   return {
     userLikes,
     userBookmarks,

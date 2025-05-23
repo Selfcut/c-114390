@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType } from '@/types/contentTypes';
@@ -33,12 +34,13 @@ export const useBookmarkInteractions = ({
     }
     
     try {
-      const table = normalizedContentType === 'quote' ? 'quote_bookmarks' : 'content_bookmarks';
-      const contentIdField = normalizedContentType === 'quote' ? 'quote_id' : 'content_id';
+      const isQuote = normalizedContentType === 'quote';
+      const table = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
+      const contentIdField = isQuote ? 'quote_id' : 'content_id';
       
       // Check if the content is already bookmarked
       const { data: existingBookmark, error: checkError } = await supabase
-        .from(table)
+        .from(table as any) // Type assertion to bypass TypeScript restriction
         .select('id')
         .eq('user_id', userId)
         .eq(contentIdField, contentId)
@@ -51,7 +53,7 @@ export const useBookmarkInteractions = ({
       if (existingBookmark) {
         // Remove the bookmark
         const { error: deleteError } = await supabase
-          .from(table)
+          .from(table as any) // Type assertion to bypass TypeScript restriction
           .delete()
           .eq('id', existingBookmark.id);
         
@@ -63,18 +65,20 @@ export const useBookmarkInteractions = ({
         return false;
       } else {
         // Add the bookmark
-        const insertPayload: Record<string, any> = {
+        const insertPayload: any = {
           user_id: userId,
-          [contentIdField]: contentId,
         };
         
-        if (normalizedContentType !== 'quote') {
+        // Add the proper ID field based on content type
+        insertPayload[contentIdField] = contentId;
+        
+        if (!isQuote) {
           insertPayload.content_type = normalizedContentType;
         }
         
         const { error: insertError } = await supabase
-          .from(table)
-          .insert(insertPayload);
+          .from(table as any) // Type assertion to bypass TypeScript restriction
+          .insert(insertPayload); // Use typed payload
         
         if (insertError) {
           throw new Error(insertError.message);
