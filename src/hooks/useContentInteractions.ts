@@ -45,21 +45,33 @@ export const useContentInteractions = ({ userId }: UseContentInteractionsProps):
   }, [loadingStates]);
   
   // Create custom handlers that will be used by individual hooks
-  const handleLike = useCallback(async (contentId: string, contentType: string) => {
+  const handleLike = useCallback(async (id: string, itemType: string): Promise<ContentInteractionResult> => {
     // Implementation will be added in a separate system
-    console.log(`Like handler for ${contentId} of type ${contentType}`);
-    return true;
+    console.log(`Like handler for ${id} of type ${itemType}`);
+    
+    // Return proper ContentInteractionResult type
+    return {
+      isLiked: true,
+      id: id,
+      contentType: itemType
+    };
   }, []);
 
-  const handleBookmark = useCallback(async (contentId: string, contentType: string) => {
+  const handleBookmark = useCallback(async (id: string, itemType: string): Promise<ContentBookmarkResult> => {
     // Implementation will be added in a separate system
-    console.log(`Bookmark handler for ${contentId} of type ${contentType}`);
-    return true;
+    console.log(`Bookmark handler for ${id} of type ${itemType}`);
+    
+    // Return proper ContentBookmarkResult type
+    return {
+      isBookmarked: true,
+      id: id,
+      contentType: itemType
+    };
   }, []);
 
-  const checkUserInteractions = useCallback(async (contentId: string) => {
+  const checkUserInteractions = useCallback(async (itemIds: string[], itemType?: string) => {
     // Implementation will be added in a separate system
-    console.log(`Checking interactions for ${contentId}`);
+    console.log(`Checking interactions for ${itemIds.join(', ')}${itemType ? ` of type ${itemType}` : ''}`);
   }, []);
   
   return {

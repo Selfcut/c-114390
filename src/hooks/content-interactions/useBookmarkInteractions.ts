@@ -50,7 +50,8 @@ export const useBookmarkInteractions = ({
         throw new Error(checkError.message);
       }
       
-      if (existingBookmark) {
+      // Fix: Check if existingBookmark exists AND has an id property
+      if (existingBookmark && 'id' in existingBookmark) {
         // Remove the bookmark
         const { error: deleteError } = await supabase
           .from(table as any) // Type assertion to bypass TypeScript restriction
