@@ -38,7 +38,7 @@ export async function checkUserInteractions(
   userId: string, 
   contentId: string, 
   contentType: string
-) {
+): Promise<{ isLiked: boolean, isBookmarked: boolean }> {
   const normalizedType = normalizeContentType(contentType);
   
   try {
@@ -50,23 +50,42 @@ export async function checkUserInteractions(
     const bookmarksTable = isQuote ? 'quote_bookmarks' : 'content_bookmarks';
     const idField = isQuote ? 'quote_id' : 'content_id';
     
-    // Build queries manually to avoid type recursion
-    let likesQuery = supabase.from(likesTable).select('id');
-    let bookmarksQuery = supabase.from(bookmarksTable).select('id');
+    let likesResult;
+    let bookmarksResult;
     
     if (isQuote) {
-      likesQuery = likesQuery.eq(idField, contentId).eq('user_id', userId);
-      bookmarksQuery = bookmarksQuery.eq(idField, contentId).eq('user_id', userId);
+      // For quotes, use the specific tables without content_type field
+      likesResult = await supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      bookmarksResult = await supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
     } else {
-      likesQuery = likesQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
-      bookmarksQuery = bookmarksQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
+      // For other content types, include the content_type field
+      likesResult = await supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
+        
+      bookmarksResult = await supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
     }
-    
-    // Execute both queries
-    const [likesResult, bookmarksResult] = await Promise.all([
-      likesQuery.maybeSingle(), 
-      bookmarksQuery.maybeSingle()
-    ]);
     
     // Return interaction status
     return {
@@ -86,7 +105,7 @@ export async function toggleLike(
   userId: string,
   contentId: string,
   contentType: string
-) {
+): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
   
@@ -98,29 +117,57 @@ export async function toggleLike(
     const likesColumn = normalizedType === 'forum' ? 'upvotes' : 'likes';
     
     // Check if like already exists
-    let likeQuery = supabase.from(likesTable).select('id');
+    let existingLike;
+    let checkError;
     
     if (isQuote) {
-      likeQuery = likeQuery.eq(idField, contentId).eq('user_id', userId);
+      const result = await supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      existingLike = result.data;
+      checkError = result.error;
     } else {
-      likeQuery = likeQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
+      const result = await supabase
+        .from(likesTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
+        
+      existingLike = result.data;
+      checkError = result.error;
     }
-    
-    const { data: existingLike, error: checkError } = await likeQuery.maybeSingle();
     
     if (checkError) throw checkError;
     
     if (existingLike) {
       // Remove like if it exists
-      let deleteQuery = supabase.from(likesTable).delete();
+      let deleteError;
       
       if (isQuote) {
-        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId);
+        const result = await supabase
+          .from(likesTable)
+          .delete()
+          .eq(idField, contentId)
+          .eq('user_id', userId);
+          
+        deleteError = result.error;
       } else {
-        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
+        const result = await supabase
+          .from(likesTable)
+          .delete()
+          .eq(idField, contentId)
+          .eq('user_id', userId)
+          .eq('content_type', normalizedType);
+          
+        deleteError = result.error;
       }
       
-      const { error: deleteError } = await deleteQuery;
       if (deleteError) throw deleteError;
       
       // Decrement likes count in content table
@@ -133,20 +180,31 @@ export async function toggleLike(
       return false;
     } else {
       // Add like if it doesn't exist
-      const insertData: Record<string, any> = {
-        user_id: userId,
-        [idField]: contentId
-      };
+      let insertError;
       
-      // Add content_type for non-quote tables
-      if (!isQuote) {
-        insertData.content_type = normalizedType;
+      if (isQuote) {
+        // For quotes, we use quote_id
+        const result = await supabase
+          .from(likesTable)
+          .insert({
+            user_id: userId,
+            quote_id: contentId
+          });
+          
+        insertError = result.error;
+      } else {
+        // For other content, we use content_id and content_type
+        const result = await supabase
+          .from(likesTable)
+          .insert({
+            user_id: userId,
+            content_id: contentId,
+            content_type: normalizedType
+          });
+          
+        insertError = result.error;
       }
       
-      const { error: insertError } = await supabase
-        .from(likesTable)
-        .insert(insertData);
-        
       if (insertError) throw insertError;
       
       // Increment likes count in content table
@@ -171,7 +229,7 @@ export async function toggleBookmark(
   userId: string,
   contentId: string,
   contentType: string
-) {
+): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
   const isQuote = normalizedType === 'quote';
   
@@ -183,29 +241,57 @@ export async function toggleBookmark(
     const bookmarksColumn = isQuote ? 'bookmarks' : undefined;
     
     // Check if bookmark already exists
-    let bookmarkQuery = supabase.from(bookmarksTable).select('id');
+    let existingBookmark;
+    let checkError;
     
     if (isQuote) {
-      bookmarkQuery = bookmarkQuery.eq(idField, contentId).eq('user_id', userId);
+      const result = await supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      existingBookmark = result.data;
+      checkError = result.error;
     } else {
-      bookmarkQuery = bookmarkQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
+      const result = await supabase
+        .from(bookmarksTable)
+        .select('id')
+        .eq(idField, contentId)
+        .eq('user_id', userId)
+        .eq('content_type', normalizedType)
+        .maybeSingle();
+        
+      existingBookmark = result.data;
+      checkError = result.error;
     }
-    
-    const { data: existingBookmark, error: checkError } = await bookmarkQuery.maybeSingle();
     
     if (checkError) throw checkError;
     
     if (existingBookmark) {
       // Remove bookmark if it exists
-      let deleteQuery = supabase.from(bookmarksTable).delete();
+      let deleteError;
       
       if (isQuote) {
-        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId);
+        const result = await supabase
+          .from(bookmarksTable)
+          .delete()
+          .eq(idField, contentId)
+          .eq('user_id', userId);
+          
+        deleteError = result.error;
       } else {
-        deleteQuery = deleteQuery.eq(idField, contentId).eq('user_id', userId).eq('content_type', normalizedType);
+        const result = await supabase
+          .from(bookmarksTable)
+          .delete()
+          .eq(idField, contentId)
+          .eq('user_id', userId)
+          .eq('content_type', normalizedType);
+          
+        deleteError = result.error;
       }
       
-      const { error: deleteError } = await deleteQuery;
       if (deleteError) throw deleteError;
       
       // Decrement bookmarks count in content table if column exists
@@ -220,20 +306,31 @@ export async function toggleBookmark(
       return false;
     } else {
       // Add bookmark if it doesn't exist
-      const insertData: Record<string, any> = {
-        user_id: userId,
-        [idField]: contentId
-      };
+      let insertError;
       
-      // Add content_type for non-quote tables
-      if (!isQuote) {
-        insertData.content_type = normalizedType;
+      if (isQuote) {
+        // For quotes, we use quote_id
+        const result = await supabase
+          .from(bookmarksTable)
+          .insert({
+            user_id: userId,
+            quote_id: contentId
+          });
+          
+        insertError = result.error;
+      } else {
+        // For other content, we use content_id and content_type
+        const result = await supabase
+          .from(bookmarksTable)
+          .insert({
+            user_id: userId,
+            content_id: contentId,
+            content_type: normalizedType
+          });
+          
+        insertError = result.error;
       }
       
-      const { error: insertError } = await supabase
-        .from(bookmarksTable)
-        .insert(insertData);
-        
       if (insertError) throw insertError;
       
       // Increment bookmarks count in content table if column exists
