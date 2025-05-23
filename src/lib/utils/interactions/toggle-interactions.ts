@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType } from '@/types/unified-content-types';
-import { getContentTableInfo } from '@/types/contentTypes';
+import { getContentTypeInfo } from '@/types/contentTypes';
 
 export async function toggleUserInteraction(
   interactionType: 'like' | 'bookmark',
@@ -14,8 +14,8 @@ export async function toggleUserInteraction(
   }
 
   try {
-    const tableInfo = getContentTableInfo(contentType);
-    const isQuote = contentType === 'quote';
+    const tableInfo = getContentTypeInfo(contentType);
+    const isQuote = contentType === ContentType.Quote;
     
     if (interactionType === 'like') {
       // Handle likes

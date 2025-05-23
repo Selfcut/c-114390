@@ -5,7 +5,7 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useContentInteractions } from '../../../hooks/useContentInteractions';
 import { supabase } from '@/integrations/supabase/client';
-import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
+import { ContentType } from '@/types/unified-content-types';
 
 // Mock Supabase client
 jest.mock('@/integrations/supabase/client', () => ({
@@ -26,14 +26,12 @@ jest.mock('@/integrations/supabase/client', () => ({
 }));
 
 describe('useContentInteractions Hook', () => {
-  const userId = 'test-user-id';
-  
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('should initialize with empty interactions', () => {
-    const { result } = renderHook(() => useContentInteractions({ userId }));
+    const { result } = renderHook(() => useContentInteractions());
     
     expect(result.current.userLikes).toEqual({});
     expect(result.current.userBookmarks).toEqual({});
@@ -51,10 +49,10 @@ describe('useContentInteractions Hook', () => {
       };
     });
 
-    const { result } = renderHook(() => useContentInteractions({ userId }));
+    const { result } = renderHook(() => useContentInteractions());
     
     await act(async () => {
-      await result.current.handleLike('test-id', ContentItemType.Forum);
+      await result.current.handleLike('test-id', ContentType.Forum);
     });
     
     // Check if supabase.from was called with the right table
@@ -65,7 +63,7 @@ describe('useContentInteractions Hook', () => {
       'increment_counter_fn',
       expect.objectContaining({
         row_id: 'test-id',
-        column_name: 'likes',
+        column_name: 'upvotes',
         table_name: 'forum_posts'
       })
     );
@@ -83,10 +81,10 @@ describe('useContentInteractions Hook', () => {
       };
     });
 
-    const { result } = renderHook(() => useContentInteractions({ userId }));
+    const { result } = renderHook(() => useContentInteractions());
     
     await act(async () => {
-      await result.current.handleBookmark('test-id', ContentItemType.Forum);
+      await result.current.handleBookmark('test-id', ContentType.Forum);
     });
     
     // Check if supabase.from was called with the right table

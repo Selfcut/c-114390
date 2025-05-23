@@ -13,6 +13,32 @@ export { incrementCounter, decrementCounter } from './counter-operations';
 export type InteractionType = 'like' | 'bookmark';
 
 /**
+ * Convert string to ContentType enum
+ */
+function stringToContentType(type: string): ContentType {
+  const normalizedType = normalizeContentType(type);
+  
+  switch (normalizedType) {
+    case 'quote':
+      return ContentType.Quote;
+    case 'media':
+      return ContentType.Media;
+    case 'knowledge':
+      return ContentType.Knowledge;
+    case 'wiki':
+      return ContentType.Wiki;
+    case 'forum':
+      return ContentType.Forum;
+    case 'research':
+      return ContentType.Research;
+    case 'ai':
+      return ContentType.AI;
+    default:
+      return ContentType.Forum;
+  }
+}
+
+/**
  * Toggle a user interaction (like or bookmark) on content with improved type safety
  * @param type The interaction type ('like' or 'bookmark')
  * @param userId The user ID
@@ -27,8 +53,11 @@ export const toggleUserInteraction = async (
   contentType: string | ContentType
 ): Promise<boolean> => {
   try {
-    const normalizedType = normalizeContentType(contentType);
-    const typeInfo = getContentTypeInfo(normalizedType);
+    const contentTypeEnum = typeof contentType === 'string' 
+      ? stringToContentType(contentType) 
+      : contentType;
+    const normalizedType = normalizeContentType(contentType as string);
+    const typeInfo = getContentTypeInfo(contentTypeEnum);
     
     // Determine which table to use
     const isLike = type === 'like';

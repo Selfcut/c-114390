@@ -33,6 +33,32 @@ export function normalizeContentType(type: string): string {
 }
 
 /**
+ * Convert string to ContentType enum
+ */
+function stringToContentType(type: string): ContentType {
+  const normalizedType = normalizeContentType(type);
+  
+  switch (normalizedType) {
+    case 'quote':
+      return ContentType.Quote;
+    case 'media':
+      return ContentType.Media;
+    case 'knowledge':
+      return ContentType.Knowledge;
+    case 'wiki':
+      return ContentType.Wiki;
+    case 'forum':
+      return ContentType.Forum;
+    case 'research':
+      return ContentType.Research;
+    case 'ai':
+      return ContentType.AI;
+    default:
+      return ContentType.Forum;
+  }
+}
+
+/**
  * Check if a user has liked or bookmarked a piece of content
  */
 export async function checkUserInteractions(
@@ -111,11 +137,12 @@ export async function toggleLike(
   contentType: string
 ): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
+  const contentTypeEnum = stringToContentType(normalizedType);
   const isQuote = normalizedType === 'quote';
   
   try {
     // Determine tables and fields
-    const contentTable = getContentTableName(normalizedType);
+    const contentTable = getContentTableName(contentTypeEnum);
     const likesColumn = normalizedType === 'forum' ? 'upvotes' : 'likes';
     let existingLike;
     
@@ -216,11 +243,12 @@ export async function toggleBookmark(
   contentType: string
 ): Promise<boolean> {
   const normalizedType = normalizeContentType(contentType);
+  const contentTypeEnum = stringToContentType(normalizedType);
   const isQuote = normalizedType === 'quote';
   
   try {
     // Determine tables and fields
-    const contentTable = getContentTableName(normalizedType);
+    const contentTable = getContentTableName(contentTypeEnum);
     const bookmarksColumn = isQuote ? 'bookmarks' : undefined;
     let existingBookmark;
     
