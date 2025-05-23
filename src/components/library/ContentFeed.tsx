@@ -7,7 +7,7 @@ import { ContentFeedEmpty } from './ContentFeedEmpty';
 import { ContentFeedLoading, LoadMoreButton } from './ContentFeedLoading';
 import { ContentFeedItemComponent } from './ContentFeedItem';
 import { ContentType } from '@/types/contentTypes';
-import { ViewMode } from './ViewSwitcher';
+import { ContentViewMode } from '@/types/unified-content-types';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +16,7 @@ import { mapUItoDBContentType } from '@/types/contentTypes';
 
 interface ContentFeedProps {
   contentType: string;
-  viewMode: ViewMode;
+  viewMode: ContentViewMode;
   lastRefresh?: Date;
 }
 

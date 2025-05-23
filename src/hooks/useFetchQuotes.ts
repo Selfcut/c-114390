@@ -1,10 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ContentItemProps, ContentItemType } from '@/components/library/content-items/ContentItemTypes';
-import { ViewMode } from '@/components/library/ViewSwitcher';
+import { ContentViewMode } from '@/types/unified-content-types';
 
 export const useFetchQuotes = () => {
-  const fetchQuotes = async (page: number, viewMode: ViewMode): Promise<ContentItemProps[]> => {
+  const fetchQuotes = async (page: number, viewMode: ContentViewMode): Promise<ContentItemProps[]> => {
     // Helper function to format date strings
     const formatDate = (dateStr: string) => new Date(dateStr);
     

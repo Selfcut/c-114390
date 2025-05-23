@@ -1,14 +1,13 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ContentItemProps, ContentItemType } from "@/components/library/content-items/ContentItemTypes";
-import { ViewMode } from "@/components/library/ViewSwitcher";
+import { ContentViewMode } from "@/types/unified-content-types";
 
 interface FetchMediaResult {
   data: ContentItemProps[] | null;
   error: Error | null;
 }
 
-export const fetchMediaPosts = async (page: number, viewMode: ViewMode): Promise<FetchMediaResult> => {
+export const fetchMediaPosts = async (page: number, viewMode: ContentViewMode): Promise<FetchMediaResult> => {
   try {
     const { data, error } = await supabase
       .from("media_posts")

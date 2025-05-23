@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ViewMode } from './ViewSwitcher';
+import { ContentViewMode } from '@/types/unified-content-types';
 
 interface ContentFeedSkeletonProps {
-  viewMode: ViewMode;
+  viewMode: ContentViewMode;
   count?: number;
 }
 

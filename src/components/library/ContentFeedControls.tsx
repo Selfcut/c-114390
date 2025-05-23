@@ -2,14 +2,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ContentTypeFilter } from './ContentTypeFilter';
-import { ViewSwitcher, ViewMode } from './ViewSwitcher';
+import { ViewSwitcher } from './ViewSwitcher';
+import { ContentViewMode } from '@/types/unified-content-types';
 import { RefreshCw } from 'lucide-react';
 
 interface ContentFeedControlsProps {
   contentType: string;
-  viewMode: ViewMode;
+  viewMode: ContentViewMode;
   onContentTypeChange: (type: string) => void;
-  onViewModeChange: (mode: ViewMode) => void;
+  onViewModeChange: (mode: ContentViewMode) => void;
   onRefresh: () => void;
 }
 
