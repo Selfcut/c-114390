@@ -1,103 +1,104 @@
 
 import React from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface LoadingSkeletonProps {
-  variant?: 'card' | 'list' | 'detail' | 'feed';
+  variant?: 'default' | 'card' | 'list' | 'detail' | 'grid';
   count?: number;
+  className?: string;
 }
 
-export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({ 
-  variant = 'card', 
-  count = 1 
+const SkeletonLine = ({ className }: { className?: string }) => (
+  <div className={cn('animate-pulse bg-muted rounded', className)} />
+);
+
+export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
+  variant = 'default',
+  count = 1,
+  className
 }) => {
-  const renderCardSkeleton = () => (
-    <div className="space-y-4 p-4 border rounded-lg">
-      <div className="flex items-center space-x-3">
-        <Skeleton className="h-10 w-10 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-3 w-16" />
-        </div>
-      </div>
-      <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="h-32 w-full" />
-      <div className="flex space-x-4">
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="h-8 w-16" />
-      </div>
-    </div>
-  );
+  const renderSkeleton = () => {
+    switch (variant) {
+      case 'card':
+        return (
+          <div className="space-y-4">
+            <SkeletonLine className="h-48 w-full" />
+            <div className="space-y-2">
+              <SkeletonLine className="h-4 w-3/4" />
+              <SkeletonLine className="h-4 w-1/2" />
+            </div>
+          </div>
+        );
 
-  const renderListSkeleton = () => (
-    <div className="space-y-3 p-4 border-b">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-5 w-1/2" />
-        <Skeleton className="h-4 w-16" />
-      </div>
-      <Skeleton className="h-4 w-3/4" />
-      <div className="flex space-x-2">
-        <Skeleton className="h-6 w-12" />
-        <Skeleton className="h-6 w-12" />
-      </div>
-    </div>
-  );
+      case 'list':
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center space-x-4">
+              <SkeletonLine className="h-12 w-12 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <SkeletonLine className="h-4 w-1/2" />
+                <SkeletonLine className="h-3 w-1/3" />
+              </div>
+            </div>
+          </div>
+        );
 
-  const renderDetailSkeleton = () => (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <Skeleton className="h-12 w-12 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-      </div>
-      <Skeleton className="h-8 w-2/3" />
-      <Skeleton className="h-64 w-full" />
-      <div className="space-y-3">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-4/5" />
-      </div>
-      <div className="flex justify-between">
-        <div className="flex space-x-4">
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-        <div className="flex space-x-2">
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-16" />
-        </div>
-      </div>
-    </div>
-  );
+      case 'detail':
+        return (
+          <div className="space-y-6">
+            <SkeletonLine className="h-8 w-2/3" />
+            <div className="flex items-center space-x-4">
+              <SkeletonLine className="h-10 w-10 rounded-full" />
+              <div className="space-y-2">
+                <SkeletonLine className="h-4 w-24" />
+                <SkeletonLine className="h-3 w-16" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <SkeletonLine className="h-4 w-full" />
+              <SkeletonLine className="h-4 w-full" />
+              <SkeletonLine className="h-4 w-3/4" />
+            </div>
+          </div>
+        );
 
-  const renderFeedSkeleton = () => (
-    <div className="space-y-6">
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i}>{renderCardSkeleton()}</div>
-      ))}
-    </div>
-  );
+      case 'grid':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array(count).fill(0).map((_, i) => (
+              <div key={i} className="space-y-4">
+                <SkeletonLine className="h-32 w-full" />
+                <div className="space-y-2">
+                  <SkeletonLine className="h-4 w-3/4" />
+                  <SkeletonLine className="h-4 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
 
-  const skeletonMap = {
-    card: renderCardSkeleton,
-    list: renderListSkeleton,
-    detail: renderDetailSkeleton,
-    feed: renderFeedSkeleton
+      default:
+        return (
+          <div className="space-y-3">
+            <SkeletonLine className="h-4 w-full" />
+            <SkeletonLine className="h-4 w-3/4" />
+            <SkeletonLine className="h-4 w-1/2" />
+          </div>
+        );
+    }
   };
 
-  if (variant === 'feed') {
-    return <>{skeletonMap[variant]()}</>;
-  }
-
   return (
-    <div className="space-y-4">
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i}>{skeletonMap[variant]()}</div>
-      ))}
+    <div className={cn('w-full', className)}>
+      {variant === 'grid' ? (
+        renderSkeleton()
+      ) : (
+        Array(count).fill(0).map((_, i) => (
+          <div key={i} className={cn('w-full', i > 0 && 'mt-6')}>
+            {renderSkeleton()}
+          </div>
+        ))
+      )}
     </div>
   );
 };
