@@ -15,9 +15,9 @@ export const MediaDetailContent: React.FC<MediaDetailContentProps> = ({ post }) 
   const renderMediaContent = (post: MediaPost) => {
     switch (post.type) {
       case "youtube":
-        return <YoutubeEmbed url={post.url || ""} />;
+        return <YoutubeEmbed url={post.url || ""} title={post.title} />;
       case "image":
-        return <ImagePost url={post.url || ""} alt={post.title} />;
+        return <ImagePost src={post.url || ""} alt={post.title} />;
       case "document":
         return <DocumentPost url={post.url || ""} title={post.title} />;
       case "text":

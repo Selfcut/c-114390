@@ -50,7 +50,7 @@ const MediaDetail = () => {
                 <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Media Not Found</h2>
                 <p className="text-muted-foreground">
-                  {error || 'The media item you requested could not be found.'}
+                  {typeof error === 'string' ? error : 'The media item you requested could not be found.'}
                 </p>
               </div>
             </CardContent>
