@@ -1,26 +1,44 @@
 
 import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ErrorMessageProps {
-  title: string;
+  title?: string;
   message: string;
-  retry?: () => void;
+  onRetry?: () => void;
+  showIcon?: boolean;
+  variant?: 'destructive' | 'default';
 }
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({ title, message, retry }) => {
+export const ErrorMessage: React.FC<ErrorMessageProps> = ({
+  title = 'Error',
+  message,
+  onRetry,
+  showIcon = true,
+  variant = 'destructive'
+}) => {
   return (
-    <div className="flex flex-col items-center text-center py-8">
-      <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-      <h3 className="text-lg font-medium mb-2">{title}</h3>
-      <p className="text-muted-foreground mb-6 max-w-md">{message}</p>
-      {retry && (
-        <Button onClick={retry} variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Try Again
-        </Button>
-      )}
-    </div>
+    <Alert variant={variant}>
+      {showIcon && <AlertTriangle className="h-4 w-4" />}
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription className="mt-2">
+        {message}
+        {onRetry && (
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRetry}
+              className="h-8"
+            >
+              <RefreshCw className="w-3 h-3 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 };

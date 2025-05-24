@@ -15,6 +15,11 @@ import { ImagePost } from './ImagePost';
 import { YoutubeEmbed } from './YoutubeEmbed';
 import { DocumentPost } from './DocumentPost';
 import { TextPost } from './TextPost';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { ResponsiveContainer } from '@/components/ui/ResponsiveContainer';
+import { AccessibleButton } from '@/components/ui/AccessibleButton';
+import { useNotification } from '@/hooks/useNotification';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface MediaFeedProps {
   posts: MediaPost[];
@@ -23,6 +28,7 @@ interface MediaFeedProps {
   loadMore: () => void;
   currentUser: UserProfile | null;
   error?: string;
+  onRetry?: () => void;
 }
 
 export const MediaFeed: React.FC<MediaFeedProps> = ({
@@ -31,9 +37,12 @@ export const MediaFeed: React.FC<MediaFeedProps> = ({
   hasMore,
   loadMore,
   currentUser,
-  error
+  error,
+  onRetry
 }) => {
   const navigate = useNavigate();
+  const { error: notifyError, success } = useNotification();
+  const { isMobile } = useResponsive();
 
   const handlePostClick = (postId: string) => {
     navigate(`/media/${postId}`);
@@ -48,7 +57,12 @@ export const MediaFeed: React.FC<MediaFeedProps> = ({
       case 'video':
         return (
           <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-            <video src={post.url} controls className="w-full h-full" />
+            <video 
+              src={post.url} 
+              controls 
+              className="w-full h-full"
+              aria-label={`Video: ${post.title}`}
+            />
           </div>
         );
       case 'youtube':
@@ -64,134 +78,200 @@ export const MediaFeed: React.FC<MediaFeedProps> = ({
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-destructive">{error}</p>
-      </div>
+      <ResponsiveContainer>
+        <ErrorMessage
+          title="Failed to Load Posts"
+          message={error}
+          onRetry={onRetry}
+        />
+      </ResponsiveContainer>
     );
   }
 
   if (isLoading && posts.length === 0) {
-    return <LoadingSkeleton variant="feed" count={3} />;
+    return (
+      <ResponsiveContainer>
+        <LoadingSkeleton variant="feed" count={3} />
+      </ResponsiveContainer>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {posts.map((post) => {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const { interactions, isLoading: interactionsLoading, toggleLike, toggleBookmark } = useMediaInteractions(
-          post.id,
-          {
-            likesCount: post.likes,
-            commentsCount: post.comments,
-            viewsCount: post.views,
-          }
-        );
+    <ResponsiveContainer>
+      <div className="space-y-6">
+        {posts.map((post) => {
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          const { interactions, isLoading: interactionsLoading, toggleLike, toggleBookmark } = useMediaInteractions(
+            post.id,
+            {
+              likesCount: post.likes,
+              commentsCount: post.comments,
+              viewsCount: post.views,
+            }
+          );
 
-        return (
-          <Card key={post.id} className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={post.author?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {post.author?.name?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold">{post.author?.name || 'Unknown'}</h3>
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>{formatDate(post.created_at)}</span>
+          const handleLike = async () => {
+            try {
+              await toggleLike();
+              success('Post liked successfully');
+            } catch (error) {
+              notifyError('Failed to like post. Please try again.');
+            }
+          };
+
+          const handleBookmark = async () => {
+            try {
+              await toggleBookmark();
+              success(interactions.isBookmarked ? 'Bookmark removed' : 'Post bookmarked');
+            } catch (error) {
+              notifyError('Failed to bookmark post. Please try again.');
+            }
+          };
+
+          return (
+            <Card 
+              key={post.id} 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 focus-within:ring-2 focus-within:ring-primary"
+              role="article"
+              aria-label={`Media post: ${post.title}`}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage 
+                        src={post.author?.avatar_url || undefined} 
+                        alt={`${post.author?.name || 'User'} avatar`}
+                      />
+                      <AvatarFallback>
+                        {post.author?.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold text-sm sm:text-base">
+                        {post.author?.name || 'Unknown'}
+                      </h3>
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <time dateTime={post.created_at}>
+                          {formatDate(post.created_at)}
+                        </time>
+                      </div>
                     </div>
                   </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {post.type}
+                  </Badge>
                 </div>
-                <Badge variant="secondary">{post.type}</Badge>
-              </div>
-            </CardHeader>
+              </CardHeader>
 
-            <CardContent 
-              className="space-y-4"
-              onClick={() => handlePostClick(post.id)}
-            >
-              <div>
-                <h2 className="text-xl font-bold mb-2">{post.title}</h2>
-                {post.content && (
-                  <p className="text-muted-foreground line-clamp-3">{post.content}</p>
+              <CardContent 
+                className="space-y-4 cursor-pointer"
+                onClick={() => handlePostClick(post.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handlePostClick(post.id);
+                  }
+                }}
+                aria-label={`Open ${post.title}`}
+              >
+                <div>
+                  <h2 className={`font-bold mb-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
+                    {post.title}
+                  </h2>
+                  {post.content && (
+                    <p className="text-muted-foreground line-clamp-3 text-sm sm:text-base">
+                      {post.content}
+                    </p>
+                  )}
+                </div>
+                
+                {renderMediaContent(post)}
+              </CardContent>
+
+              <CardFooter className="flex items-center justify-between pt-4 border-t">
+                <div className={`flex items-center space-x-4 sm:space-x-6 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <Eye className="w-4 h-4" aria-hidden="true" />
+                    <span>{interactions.viewsCount}</span>
+                    <span className="sr-only">views</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <Heart className="w-4 h-4" aria-hidden="true" />
+                    <span>{interactions.likesCount}</span>
+                    <span className="sr-only">likes</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                    <span>{interactions.commentsCount}</span>
+                    <span className="sr-only">comments</span>
+                  </div>
+                </div>
+                
+                {currentUser && (
+                  <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
+                    <AccessibleButton
+                      variant={interactions.isLiked ? "default" : "ghost"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLike();
+                      }}
+                      loading={interactionsLoading}
+                      ariaLabel={interactions.isLiked ? 'Unlike post' : 'Like post'}
+                      className="h-8"
+                    >
+                      <Heart className={`w-4 h-4 ${isMobile ? '' : 'mr-1'} ${interactions.isLiked ? 'fill-current' : ''}`} />
+                      {!isMobile && (interactions.isLiked ? 'Liked' : 'Like')}
+                    </AccessibleButton>
+                    <AccessibleButton
+                      variant={interactions.isBookmarked ? "default" : "ghost"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookmark();
+                      }}
+                      loading={interactionsLoading}
+                      ariaLabel={interactions.isBookmarked ? 'Remove bookmark' : 'Bookmark post'}
+                      className="h-8"
+                    >
+                      <Bookmark className={`w-4 h-4 ${isMobile ? '' : 'mr-1'} ${interactions.isBookmarked ? 'fill-current' : ''}`} />
+                      {!isMobile && (interactions.isBookmarked ? 'Saved' : 'Save')}
+                    </AccessibleButton>
+                  </div>
                 )}
-              </div>
-              
-              {renderMediaContent(post)}
-            </CardContent>
+              </CardFooter>
+            </Card>
+          );
+        })}
 
-            <CardFooter className="flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                  <Eye className="w-4 h-4" />
-                  <span>{interactions.viewsCount}</span>
-                </div>
-                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                  <Heart className="w-4 h-4" />
-                  <span>{interactions.likesCount}</span>
-                </div>
-                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{interactions.commentsCount}</span>
-                </div>
-              </div>
-              
-              {currentUser && (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={interactions.isLiked ? "default" : "ghost"}
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike();
-                    }}
-                    disabled={interactionsLoading}
-                  >
-                    <Heart className={`w-4 h-4 mr-1 ${interactions.isLiked ? 'fill-current' : ''}`} />
-                    {interactions.isLiked ? 'Liked' : 'Like'}
-                  </Button>
-                  <Button
-                    variant={interactions.isBookmarked ? "default" : "ghost"}
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleBookmark();
-                    }}
-                    disabled={interactionsLoading}
-                  >
-                    <Bookmark className={`w-4 h-4 mr-1 ${interactions.isBookmarked ? 'fill-current' : ''}`} />
-                    {interactions.isBookmarked ? 'Saved' : 'Save'}
-                  </Button>
-                </div>
-              )}
-            </CardFooter>
-          </Card>
-        );
-      })}
+        {isLoading && posts.length > 0 && (
+          <div className="text-center py-8">
+            <LoadingSkeleton variant="card" count={2} />
+          </div>
+        )}
 
-      {isLoading && posts.length > 0 && (
-        <div className="text-center py-8">
-          <LoadingSkeleton variant="card" count={2} />
-        </div>
-      )}
+        {!isLoading && hasMore && (
+          <div className="text-center py-4">
+            <AccessibleButton 
+              onClick={loadMore} 
+              variant="outline"
+              ariaLabel="Load more posts"
+            >
+              Load More
+            </AccessibleButton>
+          </div>
+        )}
 
-      {!isLoading && hasMore && (
-        <div className="text-center py-4">
-          <Button onClick={loadMore} variant="outline">
-            Load More
-          </Button>
-        </div>
-      )}
-
-      {!isLoading && !hasMore && posts.length > 0 && (
-        <div className="text-center py-4 text-muted-foreground">
-          You've reached the end
-        </div>
-      )}
-    </div>
+        {!isLoading && !hasMore && posts.length > 0 && (
+          <div className="text-center py-4 text-muted-foreground">
+            You've reached the end
+          </div>
+        )}
+      </div>
+    </ResponsiveContainer>
   );
 };
