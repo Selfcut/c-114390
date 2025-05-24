@@ -1,80 +1,34 @@
 
-// Unified content type system to replace scattered type definitions
-export type ContentViewMode = 'list' | 'grid' | 'feed';
-
-// Unified ContentType enum - replace all string literal usage
 export enum ContentType {
   Quote = 'quote',
-  Knowledge = 'knowledge', 
-  Media = 'media',
   Forum = 'forum',
+  Media = 'media',
   Wiki = 'wiki',
-  AI = 'ai',
+  Knowledge = 'knowledge',
   Research = 'research',
-  All = 'all'
+  AI = 'ai'
 }
 
-// Legacy values object for backward compatibility
-export const ContentTypeValues = {
-  Quote: ContentType.Quote,
-  Knowledge: ContentType.Knowledge,
-  Media: ContentType.Media,
-  Forum: ContentType.Forum,
-  Wiki: ContentType.Wiki,
-  AI: ContentType.AI,
-  Research: ContentType.Research,
-  All: ContentType.All,
-} as const;
-
-export interface UnifiedContentItem {
+export interface UnifiedContent {
   id: string;
   type: ContentType;
   title: string;
   content?: string;
   summary?: string;
   author: {
+    id: string;
     name: string;
     avatar?: string;
-    username?: string;
   };
   createdAt: Date;
+  updatedAt?: Date;
   metrics: {
-    likes?: number;
-    comments?: number;
+    likes: number;
+    comments: number;
+    views: number;
     bookmarks?: number;
-    views?: number;
-    upvotes?: number;
   };
   tags?: string[];
-  viewMode: ContentViewMode;
-  mediaUrl?: string;
-  mediaType?: string;
-  coverImage?: string;
-  categories?: string[];
-}
-
-export interface ContentFilters {
-  searchQuery?: string;
-  contentType?: ContentType;
-  tags?: string[];
-  category?: string;
-  sortBy?: 'newest' | 'oldest' | 'popular' | 'most_liked' | 'most_bookmarked';
-}
-
-export interface ContentFeedState {
-  items: UnifiedContentItem[];
-  isLoading: boolean;
-  error: string | null;
-  hasMore: boolean;
-  page: number;
-  totalCount: number;
-}
-
-export interface UserInteractionState {
-  likes: Record<string, boolean>;
-  bookmarks: Record<string, boolean>;
-  loadingStates: Record<string, {
-    isLikeLoading: boolean;
-    isBookmarkLoading: boolean;
-  }>;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
 }

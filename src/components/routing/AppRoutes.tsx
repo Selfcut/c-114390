@@ -11,7 +11,7 @@ import { AuthCallback } from './AuthCallback';
 import Welcome from '@/pages/Welcome';
 import Dashboard from '@/pages/Dashboard';
 import Forum from '@/pages/Forum';
-import ForumPost from '@/pages/ForumPost';
+import { ForumPostDetail } from '@/components/forum/ForumPostDetail';
 import Library from '@/pages/Library';
 import Research from '@/pages/Research';
 import BookReviews from '@/pages/BookReviews';
@@ -73,9 +73,9 @@ export function AppRoutes() {
           <Profile />
         } />
         
-        {/* Forum routes */}
+        {/* Forum routes - using only the optimized ForumPostDetail component */}
         <Route path="/forum" element={<Forum />} />
-        <Route path="/forum/:id" element={<ForumPost />} />
+        <Route path="/forum/:postId" element={<ForumPostDetail />} />
         
         {/* Library & Research routes */}
         <Route path="/library" element={<Library />} />

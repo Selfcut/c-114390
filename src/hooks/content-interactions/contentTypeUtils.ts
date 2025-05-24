@@ -1,55 +1,64 @@
 
-import { ContentType } from '@/types/contentTypes';
+import { ContentType } from '@/types/unified-content-types';
 
-/**
- * Normalize content type to use with database operations
- * This ensures consistent representation regardless of the source enum
- */
-export function normalizeContentType(type: string | ContentType): string {
-  // Handle various types of input
-  let normalizedType: string;
+export const normalizeContentType = (type: string): string => {
+  const normalized = type.toLowerCase().trim();
   
-  if (typeof type === 'string') {
-    normalizedType = type.toLowerCase();
-  } else {
-    normalizedType = String(type).toLowerCase();
-  }
-  
-  // Map types to ensure consistency
-  switch (normalizedType) {
-    case 'quotes':
+  switch (normalized) {
     case 'quote':
+    case 'quotes':
       return 'quote';
-    case 'media':
-      return 'media';
-    case 'knowledge':
-      return 'knowledge';
-    case 'wiki':
-      return 'wiki';
     case 'forum':
+    case 'forum_post':
+    case 'forum_posts':
       return 'forum';
+    case 'media':
+    case 'media_post':
+    case 'media_posts':
+      return 'media';
+    case 'wiki':
+    case 'wiki_article':
+    case 'wiki_articles':
+      return 'wiki';
+    case 'knowledge':
+    case 'knowledge_entry':
+    case 'knowledge_entries':
+      return 'knowledge';
     case 'research':
+    case 'research_paper':
+    case 'research_papers':
       return 'research';
     case 'ai':
       return 'ai';
     default:
-      console.warn(`Unknown content type: ${normalizedType}, using as-is`);
-      return normalizedType;
+      return 'forum';
   }
-}
+};
 
-/**
- * Get a consistent state key for content interactions
- */
-export function getContentStateKey(id: string, type: string | ContentType): string {
-  const normalizedType = normalizeContentType(type);
-  return `${normalizedType}:${id}`;
-}
+export const getContentKey = (contentId: string, contentType: string): string => {
+  const normalized = normalizeContentType(contentType);
+  return `${contentId}_${normalized}`;
+};
 
-/**
- * Create a consistent content key format for state tracking
- * Alias of getContentStateKey for backward compatibility
- */
-export function getContentKey(id: string, type: string | ContentType): string {
-  return getContentStateKey(id, type);
-}
+export const stringToContentType = (type: string): ContentType => {
+  const normalized = normalizeContentType(type);
+  
+  switch (normalized) {
+    case 'quote':
+      return ContentType.Quote;
+    case 'media':
+      return ContentType.Media;
+    case 'knowledge':
+      return ContentType.Knowledge;
+    case 'wiki':
+      return ContentType.Wiki;
+    case 'forum':
+      return ContentType.Forum;
+    case 'research':
+      return ContentType.Research;
+    case 'ai':
+      return ContentType.AI;
+    default:
+      return ContentType.Forum;
+  }
+};

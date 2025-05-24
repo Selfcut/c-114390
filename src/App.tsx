@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/lib/auth/auth-context';
+import { UserInteractionProvider } from '@/contexts/UserInteractionContext';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { performanceMonitor } from '@/lib/utils/performance';
@@ -49,23 +50,25 @@ function App() {
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Router>
-            <div className="min-h-screen bg-background flex flex-col">
-              <NavBar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/forum" element={<Forum />} />
-                  <Route path="/forum/:postId" element={<ForumPostDetail />} />
-                  <Route path="/research" element={<Research />} />
-                  <Route path="/media/:id" element={<MediaDetail />} />
-                  {/* Add other routes as needed */}
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-            <Toaster />
-          </Router>
+          <UserInteractionProvider>
+            <Router>
+              <div className="min-h-screen bg-background flex flex-col">
+                <NavBar />
+                <main className="flex-1">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/forum" element={<Forum />} />
+                    <Route path="/forum/:postId" element={<ForumPostDetail />} />
+                    <Route path="/research" element={<Research />} />
+                    <Route path="/media/:id" element={<MediaDetail />} />
+                    {/* Add other routes as needed */}
+                  </Routes>
+                </main>
+                <Footer />
+              </div>
+              <Toaster />
+            </Router>
+          </UserInteractionProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GlobalErrorBoundary>

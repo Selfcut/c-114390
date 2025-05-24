@@ -7,15 +7,20 @@ export async function toggleUserInteraction(
   interactionType: 'like' | 'bookmark',
   userId: string,
   contentId: string,
-  contentType: ContentType
+  contentType: ContentType | string
 ): Promise<boolean> {
   if (!userId || !contentId) {
     throw new Error('User ID and content ID are required');
   }
 
   try {
-    const tableInfo = getContentTypeInfo(contentType);
-    const isQuote = contentType === ContentType.Quote;
+    // Convert string to ContentType if needed
+    const contentTypeEnum = typeof contentType === 'string' 
+      ? contentType as ContentType 
+      : contentType;
+    
+    const tableInfo = getContentTypeInfo(contentTypeEnum);
+    const isQuote = contentTypeEnum === ContentType.Quote;
     
     if (interactionType === 'like') {
       // Handle likes
