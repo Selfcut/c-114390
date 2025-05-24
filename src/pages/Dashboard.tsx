@@ -10,9 +10,56 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { BookOpen, MessageSquare, Calendar, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useProgressTracking } from '@/hooks/use-progress-tracking';
+import { fetchLearningProgress, extractTopicsFromActivities, createProgressDataFromTopics, addDefaultTopics } from '@/lib/utils/data-utils';
+import { useEffect, useState } from 'react';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [progressData, setProgressData] = useState<any[]>([]);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+
+  // Load progress data
+  useEffect(() => {
+    const loadProgressData = async () => {
+      if (!user?.id) {
+        // Use default topics for non-authenticated users
+        setProgressData(addDefaultTopics());
+        setIsLoadingProgress(false);
+        return;
+      }
+
+      try {
+        setIsLoadingProgress(true);
+        const activities = await fetchLearningProgress(user.id);
+        
+        if (activities.length > 0) {
+          const topics = extractTopicsFromActivities(activities);
+          const progress = createProgressDataFromTopics(topics);
+          
+          if (progress.length > 0) {
+            setProgressData(progress);
+          } else {
+            setProgressData(addDefaultTopics());
+          }
+        } else {
+          setProgressData(addDefaultTopics());
+        }
+      } catch (error) {
+        console.error('Error loading progress data:', error);
+        setProgressData(addDefaultTopics());
+      } finally {
+        setIsLoadingProgress(false);
+      }
+    };
+
+    loadProgressData();
+  }, [user?.id]);
+
+  const handleProgressCardClick = (item: any) => {
+    // Navigate to relevant content based on the topic
+    window.location.href = `/library?search=${encodeURIComponent(item.title)}`;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -90,7 +137,10 @@ const Dashboard = () => {
         </div>
         
         <div className="space-y-6">
-          <LearningProgress />
+          <LearningProgress 
+            progressData={progressData}
+            onCardClick={handleProgressCardClick}
+          />
           <UpcomingEventsCard />
           <QuickNotesCard />
         </div>
