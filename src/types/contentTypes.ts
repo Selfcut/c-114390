@@ -12,6 +12,36 @@ export interface ContentTypeInfo {
   bookmarksColumnName: string;
 }
 
+export const getContentTableName = (contentType: ContentType | string): string => {
+  const normalizedType = typeof contentType === 'string' ? contentType.toLowerCase() : contentType;
+  
+  switch (normalizedType) {
+    case ContentType.Quote:
+    case 'quote':
+      return 'quotes';
+    case ContentType.Forum:
+    case 'forum':
+      return 'forum_posts';
+    case ContentType.Media:
+    case 'media':
+      return 'media_posts';
+    case ContentType.Knowledge:
+    case 'knowledge':
+      return 'knowledge_entries';
+    case ContentType.Wiki:
+    case 'wiki':
+      return 'wiki_articles';
+    case ContentType.Research:
+    case 'research':
+      return 'research_papers';
+    case ContentType.AI:
+    case 'ai':
+      return 'ai_content';
+    default:
+      return 'forum_posts';
+  }
+};
+
 export const getContentTypeInfo = (contentType: ContentType | string): ContentTypeInfo => {
   const normalizedType = typeof contentType === 'string' ? contentType.toLowerCase() : contentType;
   

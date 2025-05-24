@@ -30,3 +30,7 @@ export const getContentTypeFromString = (type: string): ContentType => {
       return ContentType.All;
   }
 };
+
+export const getContentKey = (id: string, type: string | ContentType): string => {
+  return `${normalizeContentType(type)}:${id}`;
+};
