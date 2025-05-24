@@ -32,7 +32,8 @@ class RealtimeManager {
         filter: config.filter
       },
       (payload) => {
-        const { eventType } = payload;
+        // Use the event property from the payload for postgres_changes
+        const eventType = payload.event;
         
         // Call specific event handlers
         switch (eventType) {
