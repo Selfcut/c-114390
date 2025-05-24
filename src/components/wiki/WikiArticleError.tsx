@@ -27,7 +27,7 @@ export const WikiArticleError: React.FC<WikiArticleErrorProps> = ({
           <ErrorMessage
             title="Article Not Found"
             message={error || "The article you're looking for doesn't exist or has been removed."}
-            retry={onRetry}
+            onRetry={onRetry}
           />
           <div className="mt-4">
             <Button onClick={onBack}>

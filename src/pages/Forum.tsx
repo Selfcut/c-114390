@@ -108,7 +108,9 @@ const Forum = () => {
         />
         
         {isLoading ? (
-          <LoadingSpinner text="Loading discussions..." centered />
+          <div className="flex justify-center py-8">
+            <LoadingSpinner text="Loading discussions..." />
+          </div>
         ) : (
           <ForumContent
             filteredDiscussions={filteredDiscussions}

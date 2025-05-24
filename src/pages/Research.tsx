@@ -294,7 +294,7 @@ const Research = () => {
               <ErrorMessage 
                 title="Error loading research papers"
                 message={error instanceof Error ? error.message : String(error)}
-                retry={() => refetch()}
+                onRetry={() => refetch()}
               />
             </CardContent>
           </Card>
