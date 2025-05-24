@@ -42,7 +42,7 @@ export const useNotes = () => {
   };
 
   const createNote = useMutation({
-    mutationFn: async ({ content }: { content: string }) => {
+    mutationFn: async (content: string) => {
       if (!user) throw new Error('No user found');
 
       const { data, error } = await supabase
@@ -69,13 +69,13 @@ export const useNotes = () => {
   });
 
   const updateNote = useMutation({
-    mutationFn: async ({ id, noteData }: { id: string; noteData: { content: string } }) => {
+    mutationFn: async ({ id, content }: { id: string; content: string }) => {
       if (!user) throw new Error('No user found');
 
       const { data, error } = await supabase
         .from('user_notes')
         .update({ 
-          content: noteData.content, 
+          content, 
           updated_at: new Date().toISOString() 
         })
         .eq('id', id)
@@ -125,46 +125,41 @@ export const useNotes = () => {
     fetchNotes();
   }, [user]);
 
+  const useAutoSaveNote = (noteId?: string, content?: string) => {
+    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const debouncedContent = useDebounce(content, 2000);
+
+    useEffect(() => {
+      if (!noteId || !debouncedContent || !updateNote) return;
+
+      const saveNote = async () => {
+        setAutoSaveStatus('saving');
+        try {
+          await updateNote.mutateAsync({
+            id: noteId,
+            content: debouncedContent
+          });
+          setAutoSaveStatus('saved');
+          setTimeout(() => setAutoSaveStatus('idle'), 2000);
+        } catch (error) {
+          setAutoSaveStatus('error');
+          setTimeout(() => setAutoSaveStatus('idle'), 3000);
+        }
+      };
+
+      saveNote();
+    }, [debouncedContent, noteId]);
+
+    return { autoSaveStatus };
+  };
+
   return {
     notes,
     isLoading,
-    createNote,
-    updateNote,
-    deleteNote,
+    createNote: (content: string) => createNote.mutateAsync(content),
+    updateNote: (id: string, content: string) => updateNote.mutateAsync({ id, content }),
+    deleteNote: (id: string) => deleteNote.mutateAsync(id),
     refreshNotes: fetchNotes,
-    useAutoSaveNote: (noteId?: string, content?: string) => useAutoSaveNote(noteId, content, updateNote)
+    useAutoSaveNote
   };
-};
-
-// Auto-save hook for notes
-export const useAutoSaveNote = (
-  noteId?: string, 
-  content?: string, 
-  updateNoteMutation?: any
-) => {
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const debouncedContent = useDebounce(content, 2000);
-
-  useEffect(() => {
-    if (!noteId || !debouncedContent || !updateNoteMutation) return;
-
-    const saveNote = async () => {
-      setAutoSaveStatus('saving');
-      try {
-        await updateNoteMutation.mutateAsync({
-          id: noteId,
-          noteData: { content: debouncedContent }
-        });
-        setAutoSaveStatus('saved');
-        setTimeout(() => setAutoSaveStatus('idle'), 2000);
-      } catch (error) {
-        setAutoSaveStatus('error');
-        setTimeout(() => setAutoSaveStatus('idle'), 3000);
-      }
-    };
-
-    saveNote();
-  }, [debouncedContent, noteId, updateNoteMutation]);
-
-  return { autoSaveStatus };
 };

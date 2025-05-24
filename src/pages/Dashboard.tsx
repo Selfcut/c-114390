@@ -1,123 +1,186 @@
 
-import React from 'react';
-import { PageLayout } from '@/components/layouts/PageLayout';
-import { useAuth } from '@/lib/auth';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { QuickNotesCard } from '@/components/dashboard/QuickNotesCard';
+import React from "react";
+import { PageLayout } from "@/components/layouts/PageLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { QuickNotesCard } from "@/components/dashboard/QuickNotesCard";
 import { 
   BookOpen, 
-  Users, 
   MessageSquare, 
-  Calendar, 
-  TrendingUp, 
-  Award,
-  Book 
-} from 'lucide-react';
+  Image, 
+  Heart, 
+  Bookmark, 
+  TrendingUp,
+  Calendar,
+  Users,
+  BookmarkIcon,
+  CalendarDays
+} from "lucide-react";
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const { isLoading, stats, activities, notifications, recommendations } = useDashboardStats();
+  const { stats, activities, notifications, recommendations, isLoading, refreshStats } = useDashboardStats();
+
+  if (isLoading) {
+    return (
+      <PageLayout>
+        <div className="container mx-auto py-8 space-y-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-48"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-muted rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const statCards = [
+    {
+      title: "Discussions",
+      value: stats.discussions_count,
+      icon: MessageSquare,
+      description: "Forum posts created"
+    },
+    {
+      title: "Contributions", 
+      value: stats.contributions_count,
+      icon: TrendingUp,
+      description: "Total content shared"
+    },
+    {
+      title: "Reading List",
+      value: stats.reading_list_count,
+      icon: BookmarkIcon,
+      description: "Bookmarked items"
+    },
+    {
+      title: "Events",
+      value: stats.events_count,
+      icon: CalendarDays,
+      description: "Upcoming events"
+    }
+  ];
 
   return (
     <PageLayout>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
-        <p className="text-muted-foreground mb-6">Welcome{user ? `, ${user.name || 'Scholar'}` : ''}</p>
+      <div className="container mx-auto py-8 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <Button onClick={refreshStats} variant="outline">
+            Refresh Stats
+          </Button>
+        </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statCards.map((stat, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quick Notes - Full width on mobile, 2/3 on desktop */}
+          <div className="lg:col-span-2">
+            <QuickNotesCard />
+          </div>
+
+          {/* Recent Activity */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Discussions</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? "..." : stats.discussions_count}</div>
-              <p className="text-xs text-muted-foreground">
-                Active conversations
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Contributions</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? "..." : stats.contributions_count}</div>
-              <p className="text-xs text-muted-foreground">
-                Knowledge contributions
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Reading List</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? "..." : stats.reading_list_count}</div>
-              <p className="text-xs text-muted-foreground">
-                Saved for later
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Events</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? "..." : stats.events_count}</div>
-              <p className="text-xs text-muted-foreground">
-                Upcoming events
-              </p>
+              <div className="space-y-3">
+                {activities.length > 0 ? (
+                  activities.slice(0, 5).map((activity) => (
+                    <div key={activity.id} className="flex items-center space-x-3 text-sm">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      <div className="flex-1">
+                        <p>{activity.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(activity.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No recent activity
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Activity Feed */}
-          <div className="md:col-span-2">
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activities.map(activity => (
-                    <div key={activity.id} className="flex items-start">
-                      <div className="mr-2 mt-0.5">
-                        {activity.type === 'comment' ? (
-                          <MessageSquare className="h-5 w-5 text-blue-500" />
-                        ) : activity.type === 'read' ? (
-                          <BookOpen className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <Book className="h-5 w-5 text-purple-500" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(activity.created_at).toLocaleString()}
-                        </p>
-                      </div>
+        {/* Additional Content Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Notifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {notifications.length > 0 ? (
+                  notifications.slice(0, 3).map((notification) => (
+                    <div key={notification.id} className="border-l-2 border-primary pl-3">
+                      <h4 className="font-medium text-sm">{notification.title}</h4>
+                      <p className="text-xs text-muted-foreground">{notification.message}</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Quick Notes */}
-          <div className="md:col-span-1">
-            <QuickNotesCard />
-          </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No notifications
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recommendations */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recommendations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recommendations.length > 0 ? (
+                  recommendations.slice(0, 3).map((rec) => (
+                    <div key={rec.id} className="space-y-1">
+                      <h4 className="font-medium text-sm">{rec.title}</h4>
+                      <p className="text-xs text-muted-foreground">{rec.description}</p>
+                      <span className="inline-block text-xs bg-secondary px-2 py-1 rounded">
+                        {rec.type}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No recommendations
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </PageLayout>

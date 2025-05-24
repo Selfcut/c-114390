@@ -207,5 +207,31 @@ export const ensureUserProfile = async (userId: string, userData?: any): Promise
  * Fetch user profile by ID
  */
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  return getUserByUsername(''); // This will be handled by ID lookup in the actual implementation
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      username: data.username,
+      name: data.name,
+      email: '', // Email not stored in profiles table
+      avatar: data.avatar_url,
+      avatar_url: data.avatar_url,
+      bio: data.bio,
+      website: data.website,
+      status: data.status,
+      isGhostMode: data.is_ghost_mode,
+      role: data.role as UserRole,
+      isAdmin: data.role === 'admin'
+    };
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return null;
+  }
 };

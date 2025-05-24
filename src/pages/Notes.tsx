@@ -1,210 +1,206 @@
 
-import React, { useState } from 'react';
-import { PageLayout } from '@/components/layouts/PageLayout';
-import { useNotes, Note } from '@/hooks/useNotes';
-import { 
-  Card, 
-  CardContent, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, Calendar, Save } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import React, { useState } from "react";
+import { PageLayout } from "@/components/layouts/PageLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useNotes } from "@/hooks/useNotes";
+import { Plus, Save, Trash2, Search } from "lucide-react";
 
-const NotesPage = () => {
-  const { 
-    notes, 
-    isLoading, 
-    createNote, 
-    updateNote, 
-    deleteNote,
-    useAutoSaveNote
-  } = useNotes();
-  
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [content, setContent] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const { autoSaveStatus } = useAutoSaveNote(
-    selectedNote?.id,
-    content
-  );
-  
+const Notes = () => {
+  const { notes, isLoading, createNote, updateNote, deleteNote, useAutoSaveNote } = useNotes();
+  const [newNote, setNewNote] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+
+  // Auto-save for editing note
+  const { autoSaveStatus } = useAutoSaveNote(editingId || undefined, editContent);
+
+  // Filter notes based on search term
   const filteredNotes = notes.filter(note => 
-    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+    note.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleSelectNote = (note: Note) => {
-    setSelectedNote(note);
-    setContent(note.content);
-  };
 
   const handleCreateNote = async () => {
+    if (!newNote.trim()) return;
+    
     try {
-      const newNote = await createNote.mutateAsync({
-        content: ''
-      });
-      
-      setSelectedNote(newNote);
-      setContent('');
+      await createNote(newNote);
+      setNewNote('');
     } catch (error) {
       console.error('Error creating note:', error);
     }
   };
 
-  const handleUpdateContent = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+  const handleEditNote = (id: string, content: string) => {
+    setEditingId(id);
+    setEditContent(content);
   };
 
-  const handleManualSave = async () => {
-    if (!selectedNote) return;
+  const handleSaveEdit = async () => {
+    if (!editingId || !editContent.trim()) return;
     
     try {
-      await updateNote.mutateAsync({
-        id: selectedNote.id,
-        noteData: { content }
-      });
+      await updateNote(editingId, editContent);
+      setEditingId(null);
+      setEditContent('');
     } catch (error) {
-      console.error('Error saving note:', error);
+      console.error('Error updating note:', error);
     }
   };
 
   const handleDeleteNote = async (id: string) => {
-    if (confirm('Are you sure you want to delete this note?')) {
-      try {
-        await deleteNote.mutateAsync(id);
-        
-        if (selectedNote?.id === id) {
-          setSelectedNote(null);
-          setContent('');
-        }
-      } catch (error) {
-        console.error('Error deleting note:', error);
-      }
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    
+    try {
+      await deleteNote(id);
+    } catch (error) {
+      console.error('Error deleting note:', error);
     }
   };
 
-  const renderSaveStatus = () => {
-    switch (autoSaveStatus) {
-      case 'saving':
-        return <span className="text-xs text-muted-foreground">Saving...</span>;
-      case 'saved':
-        return <span className="text-xs text-green-500">Saved</span>;
-      case 'error':
-        return <span className="text-xs text-destructive">Error saving</span>;
-      default:
-        return null;
-    }
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditContent('');
   };
 
   return (
     <PageLayout>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-6">Your Notes</h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <div className="flex items-center justify-between mb-4">
+      <div className="container mx-auto py-8 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Notes</h1>
+          {autoSaveStatus === 'saving' && (
+            <span className="text-sm text-muted-foreground">Saving...</span>
+          )}
+          {autoSaveStatus === 'saved' && (
+            <span className="text-sm text-green-600">Saved</span>
+          )}
+          {autoSaveStatus === 'error' && (
+            <span className="text-sm text-red-600">Error saving</span>
+          )}
+        </div>
+
+        {/* Create New Note */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Note</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Textarea
+              placeholder="Write your note here..."
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+            <Button 
+              onClick={handleCreateNote} 
+              className="w-full"
+              disabled={!newNote.trim() || isLoading}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Note
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Search */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search notes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-grow"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
-              <Button 
-                onClick={handleCreateNote} 
-                className="ml-2"
-                size="sm"
-              >
-                <Plus size={16} className="mr-1" />
-                New
-              </Button>
             </div>
-            
-            <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {isLoading ? (
-                <div className="p-4 text-center">Loading notes...</div>
-              ) : filteredNotes.length === 0 ? (
-                <div className="p-4 text-center">
-                  {searchQuery ? 'No matching notes found' : 'No notes yet, create your first one!'}
-                </div>
-              ) : (
-                filteredNotes.map((note) => (
-                  <div 
-                    key={note.id}
-                    className={`cursor-pointer border p-3 rounded-md ${
-                      selectedNote?.id === note.id ? 'border-primary bg-muted/50' : 'border-border'
-                    }`}
-                    onClick={() => handleSelectNote(note)}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="text-xs text-muted-foreground flex items-center">
-                        <Calendar size={12} className="mr-1" />
-                        {formatDistanceToNow(new Date(note.updated_at), { addSuffix: true })}
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteNote(note.id);
-                        }}
-                      >
-                        <Trash2 size={14} />
-                        <span className="sr-only">Delete note</span>
-                      </Button>
+          </CardContent>
+        </Card>
+
+        {/* Notes List */}
+        <div className="space-y-4">
+          {isLoading ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="animate-pulse space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="h-4 bg-muted rounded w-3/4"></div>
+                      <div className="h-4 bg-muted rounded w-1/2"></div>
                     </div>
-                    <p className="text-sm line-clamp-2">
-                      {note.content || 'Empty note'}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-          
-          <div className="lg:col-span-2">
-            <Card className="h-full flex flex-col">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>
-                    {selectedNote ? 'Edit Note' : 'Select a note to edit'}
-                  </CardTitle>
-                  {selectedNote && renderSaveStatus()}
+                  ))}
                 </div>
-              </CardHeader>
-              
-              <CardContent className="flex-grow">
-                <Textarea
-                  value={content}
-                  onChange={handleUpdateContent}
-                  placeholder="Write your note here..."
-                  className="min-h-[400px]"
-                  disabled={!selectedNote}
-                />
               </CardContent>
-              
-              <CardFooter className="justify-end">
-                <Button 
-                  disabled={!selectedNote || !content.trim()}
-                  onClick={handleManualSave}
-                >
-                  <Save size={16} className="mr-2" />
-                  Save
-                </Button>
-              </CardFooter>
             </Card>
-          </div>
+          ) : filteredNotes.length > 0 ? (
+            filteredNotes.map((note) => (
+              <Card key={note.id}>
+                <CardContent className="pt-6">
+                  {editingId === note.id ? (
+                    <div className="space-y-4">
+                      <Textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="min-h-[120px]"
+                      />
+                      <div className="flex gap-2">
+                        <Button onClick={handleSaveEdit}>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button onClick={handleCancelEdit} variant="outline">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="whitespace-pre-wrap">{note.content}</p>
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-muted-foreground">
+                          <p>Created: {new Date(note.created_at).toLocaleDateString()}</p>
+                          <p>Updated: {new Date(note.updated_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleEditNote(note.id, note.content)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteNote(note.id)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    {searchTerm ? 'No notes found matching your search.' : 'No notes yet. Create your first note above!'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </PageLayout>
   );
 };
 
-export default NotesPage;
+export default Notes;

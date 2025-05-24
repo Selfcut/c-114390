@@ -1,262 +1,95 @@
 
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { UserProfileComponent } from "../components/profile/UserProfileComponent";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PageLayout } from "../components/layouts/PageLayout";
-import { UserProfile as UserProfileType, UserStatus, UserRole } from "../types/user";
-import { useToast } from "@/hooks/use-toast";
-import { trackActivity } from "@/lib/activity-tracker";
-import { fetchUserProfile, ensureUserProfile } from "@/lib/auth/profiles-service";
+import React, { useState, useEffect } from "react";
+import { PageLayout } from "@/components/layouts/PageLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/auth";
+import { fetchUserProfile } from "@/lib/auth/profiles-service";
+import { toast } from "sonner";
+import { Loader2, Save, User, Mail, Globe, FileText } from "lucide-react";
 
 const Profile = () => {
-  const { username } = useParams();
-  const { user: currentUser, updateUserProfile } = useAuth();
-  const [profileData, setProfileData] = useState<UserProfileType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { user, updateProfile, isLoading: authLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    username: '',
+    bio: '',
+    website: '',
+    avatar_url: ''
+  });
 
-  // Fetch profile data from Supabase
-  const fetchProfile = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      let userData = null;
-      
-      // If username is provided, fetch that profile, otherwise fetch current user's profile
-      if (username) {
-        // Get user by username
-        const { data, error: fetchError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', username)
-          .maybeSingle();
-        
-        if (fetchError) throw fetchError;
-        if (!data) throw new Error("Profile not found");
-        
-        userData = data;
-      } else if (currentUser?.id) {
-        // For current user, we can use the profile from auth context
-        setProfileData(currentUser);
-        setIsLoading(false);
-        return;
-      } else {
-        throw new Error("No user ID or username available");
-      }
-      
-      // Convert Supabase profile to our UserProfile type
-      const userProfile: UserProfileType = {
-        id: userData.id,
-        name: userData.name || "",
-        username: userData.username,
-        email: currentUser?.email || "",
-        avatar: userData.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${userData.username}`,
-        avatar_url: userData.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${userData.username}`,
-        bio: userData.bio || "",
-        website: userData.website || "",
-        status: (userData.status as UserStatus) || "offline",
-        isGhostMode: userData.is_ghost_mode || false,
-        role: (userData.role as UserRole) || "user",
-        isAdmin: userData.role === "admin",
-        notificationSettings: {
-          desktopNotifications: true,
-          soundNotifications: true,
-          emailNotifications: true
-        }
-      };
-      
-      setProfileData(userProfile);
-      
-      // Track profile view if viewing someone else's profile
-      if (currentUser && username && username !== currentUser.username) {
-        await trackActivity(currentUser.id, 'view', { 
-          section: 'profile',
-          profile: username
-        });
-      }
-    } catch (err: any) {
-      console.error("Error fetching profile:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   useEffect(() => {
-    if (currentUser || username) {
-      fetchProfile();
-    } else {
-      // Redirect to login if no current user and no username provided
-      navigate('/auth');
-    }
-  }, [username, currentUser, navigate]);
-
-  // Handle profile update - creating a wrapper to adapt between function signatures
-  const handleUpdateProfile = async (updates: Partial<UserProfileType>): Promise<void> => {
-    try {
-      if (!currentUser?.id) {
-        toast({
-          title: "Not authorized",
-          description: "You must be logged in to update your profile",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check if this is the current user's profile
-      if (profileData?.id !== currentUser.id) {
-        toast({
-          title: "Not authorized",
-          description: "You can only edit your own profile",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Ensure notificationSettings is properly structured
-      if (updates.notificationSettings) {
-        // Make sure all required fields are present
-        updates.notificationSettings = {
-          desktopNotifications: updates.notificationSettings.desktopNotifications ?? true,
-          soundNotifications: updates.notificationSettings.soundNotifications ?? true,
-          emailNotifications: updates.notificationSettings.emailNotifications ?? true
-        };
-      }
-      
-      // Call the updateUserProfile function from the auth context
-      if (updateUserProfile) {
-        try {
-          await updateUserProfile(updates);
-        } catch (updateError: any) {
-          throw updateError;
-        }
-      }
-      
-      // Update local state
-      setProfileData(prev => prev ? { ...prev, ...updates } : null);
-      
-      // Track profile update activity
-      await trackActivity(currentUser.id, 'update', { 
-        section: 'profile',
-        fields: Object.keys(updates).join(',')
-      });
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
-    } catch (err: any) {
-      console.error("Error updating profile:", err);
-      toast({
-        title: "Update failed",
-        description: err.message,
-        variant: "destructive",
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        username: user.username || '',
+        bio: user.bio || '',
+        website: user.website || '',
+        avatar_url: user.avatar_url || ''
       });
     }
+  }, [user]);
+
+  const handleInputChange = (field: string) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
   };
 
-  // Handle creation of missing profile
-  const handleCreateProfile = async () => {
-    if (!currentUser?.id) {
-      navigate('/auth');
-      return;
-    }
-    
-    setIsLoading(true);
+  const handleSave = async () => {
+    if (!user) return;
+
+    setIsSaving(true);
     try {
-      const profile = await ensureUserProfile(currentUser.id, {
-        email: currentUser.email,
-        name: currentUser.name,
-        username: currentUser.username
-      });
+      const { error } = await updateProfile(formData);
       
-      if (profile) {
-        setProfileData(profile);
-        toast({
-          title: "Profile created",
-          description: "Your profile has been successfully created.",
-        });
+      if (error) {
+        toast.error('Failed to update profile');
+        console.error('Profile update error:', error);
       } else {
-        throw new Error("Failed to create profile");
+        toast.success('Profile updated successfully');
       }
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to create your profile.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      toast.error('Failed to update profile');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <PageLayout>
         <div className="container mx-auto py-8">
-          <div className="space-y-8">
-            <div className="flex flex-col md:flex-row gap-6">
-              <Skeleton className="h-40 w-40 rounded-full" />
-              <div className="space-y-4 flex-1">
-                <Skeleton className="h-8 w-1/3" />
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-1/2" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-9 w-24" />
-                  <Skeleton className="h-9 w-24" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-6">
-              <Skeleton className="h-6 w-40" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Skeleton className="h-40" />
-                <Skeleton className="h-40" />
-                <Skeleton className="h-40" />
-              </div>
-            </div>
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         </div>
       </PageLayout>
     );
   }
 
-  if (error) {
+  if (!user) {
     return (
       <PageLayout>
         <div className="container mx-auto py-8">
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              {error}
-            </AlertDescription>
-          </Alert>
-          
-          {currentUser && !profileData && (
-            <div className="text-center p-8">
-              <h2 className="text-2xl font-bold mb-4">Create Your Profile</h2>
-              <p className="mb-6">Your profile information is missing. Would you like to create one now?</p>
-              <Button onClick={handleCreateProfile} className="mr-2">
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Create Profile
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
-            </div>
-          )}
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground">
+                Please sign in to view your profile.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </PageLayout>
     );
@@ -264,14 +97,152 @@ const Profile = () => {
 
   return (
     <PageLayout>
-      <div className="container mx-auto py-8">
-        {profileData && (
-          <UserProfileComponent
-            profile={profileData}
-            isCurrentUser={currentUser?.id === profileData.id}
-            onUpdateProfile={handleUpdateProfile}
-          />
-        )}
+      <div className="container mx-auto py-8 max-w-4xl">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Profile</h1>
+            <Badge variant={user.isAdmin ? "default" : "secondary"}>
+              {user.role}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Profile Info Card */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Profile Info
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage src={user.avatar_url} alt={user.name} />
+                      <AvatarFallback className="text-lg">
+                        {user.name?.charAt(0) || user.username?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    <div className="text-center">
+                      <h3 className="font-semibold text-lg">{user.name || user.username}</h3>
+                      <p className="text-sm text-muted-foreground">@{user.username}</p>
+                      {user.bio && (
+                        <p className="text-sm mt-2">{user.bio}</p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                      {user.email}
+                    </div>
+
+                    {user.website && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Globe className="h-4 w-4" />
+                        <a 
+                          href={user.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {user.website}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Edit Profile Form */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Edit Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={handleInputChange('name')}
+                        placeholder="Your full name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        value={formData.username}
+                        onChange={handleInputChange('username')}
+                        placeholder="Your username"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      value={formData.bio}
+                      onChange={handleInputChange('bio')}
+                      placeholder="Tell us about yourself"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={formData.website}
+                      onChange={handleInputChange('website')}
+                      placeholder="https://yourwebsite.com"
+                      type="url"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="avatar_url">Avatar URL</Label>
+                    <Input
+                      id="avatar_url"
+                      value={formData.avatar_url}
+                      onChange={handleInputChange('avatar_url')}
+                      placeholder="https://example.com/avatar.jpg"
+                      type="url"
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="w-full"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Profile
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     </PageLayout>
   );
