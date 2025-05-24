@@ -40,26 +40,22 @@ const Library = () => {
   }, []);
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="p-6 space-y-6">
       <LibraryHeader onCreateEntry={handleCreateEntry} />
       
-      <div className="my-6">
-        <LibrarySearchBar
-          searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
-          placeholder="Search content..."
-        />
-      </div>
+      <LibrarySearchBar
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        placeholder="Search content..."
+      />
 
-      <div className="mb-6">
-        <ContentFeedControls
-          contentType={contentType}
-          viewMode={viewMode}
-          onContentTypeChange={handleContentTypeChange}
-          onViewModeChange={handleViewModeChange}
-          onRefresh={handleRefresh}
-        />
-      </div>
+      <ContentFeedControls
+        contentType={contentType}
+        viewMode={viewMode}
+        onContentTypeChange={handleContentTypeChange}
+        onViewModeChange={handleViewModeChange}
+        onRefresh={handleRefresh}
+      />
 
       <ContentFeed
         contentType={contentType}

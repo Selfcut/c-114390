@@ -5,9 +5,11 @@ import { MediaErrorBoundary } from "@/components/ui/MediaErrorBoundary";
 
 const Media = () => {
   return (
-    <MediaErrorBoundary>
-      <MediaContainer />
-    </MediaErrorBoundary>
+    <div className="p-6">
+      <MediaErrorBoundary>
+        <MediaContainer />
+      </MediaErrorBoundary>
+    </div>
   );
 };
 

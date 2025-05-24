@@ -63,43 +63,37 @@ const MediaDetail = () => {
 
   if (isLoading) {
     return (
-      <ResponsiveContainer>
-        <div className="py-8">
-          <AccessibleButton 
-            onClick={handleBack} 
-            variant="ghost" 
-            className="mb-4"
-            ariaLabel="Go back to media feed"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Media
-          </AccessibleButton>
-          <LoadingSkeleton variant="detail" />
-        </div>
-      </ResponsiveContainer>
+      <div className="p-6 space-y-6">
+        <AccessibleButton 
+          onClick={handleBack} 
+          variant="ghost" 
+          ariaLabel="Go back to media feed"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Media
+        </AccessibleButton>
+        <LoadingSkeleton variant="detail" />
+      </div>
     );
   }
 
   if (error || !data?.post) {
     return (
-      <ResponsiveContainer>
-        <div className="py-8">
-          <AccessibleButton 
-            onClick={handleBack} 
-            variant="ghost" 
-            className="mb-4"
-            ariaLabel="Go back to media feed"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Media
-          </AccessibleButton>
-          <ErrorMessage
-            title="Media Not Found"
-            message={error instanceof Error ? error.message : 'The media item you requested could not be found.'}
-            onRetry={refetch}
-          />
-        </div>
-      </ResponsiveContainer>
+      <div className="p-6 space-y-6">
+        <AccessibleButton 
+          onClick={handleBack} 
+          variant="ghost" 
+          ariaLabel="Go back to media feed"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Media
+        </AccessibleButton>
+        <ErrorMessage
+          title="Media Not Found"
+          message={error instanceof Error ? error.message : 'The media item you requested could not be found.'}
+          onRetry={refetch}
+        />
+      </div>
     );
   }
 
@@ -107,97 +101,94 @@ const MediaDetail = () => {
 
   return (
     <MediaErrorBoundary>
-      <ResponsiveContainer>
-        <div className="py-8">
-          <AccessibleButton 
-            onClick={handleBack} 
-            variant="ghost" 
-            className="mb-6"
-            ariaLabel="Go back to media feed"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Media
-          </AccessibleButton>
+      <div className="p-6 space-y-6">
+        <AccessibleButton 
+          onClick={handleBack} 
+          variant="ghost" 
+          ariaLabel="Go back to media feed"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Media
+        </AccessibleButton>
 
-          <Card className="focus-within:ring-2 focus-within:ring-primary">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2 flex-1">
-                  <h1 className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-                    {post.title}
-                  </h1>
-                  <div className={`flex items-center space-x-4 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage 
-                          src={post.author?.avatar_url || undefined} 
-                          alt={`${post.author?.name || 'User'} avatar`}
-                        />
-                        <AvatarFallback>
-                          {post.author?.name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{post.author?.name || 'Unknown'}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" aria-hidden="true" />
-                      <time dateTime={post.created_at}>
-                        {formatDate(post.created_at)}
-                      </time>
-                    </div>
+        <Card className="focus-within:ring-2 focus-within:ring-primary">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2 flex-1">
+                <h1 className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>
+                  {post.title}
+                </h1>
+                <div className={`flex items-center space-x-4 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage 
+                        src={post.author?.avatar_url || undefined} 
+                        alt={`${post.author?.name || 'User'} avatar`}
+                      />
+                      <AvatarFallback>
+                        {post.author?.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{post.author?.name || 'Unknown'}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-4 h-4" aria-hidden="true" />
+                    <time dateTime={post.created_at}>
+                      {formatDate(post.created_at)}
+                    </time>
                   </div>
                 </div>
               </div>
-            </CardHeader>
+            </div>
+          </CardHeader>
 
-            <CardContent className="space-y-6">
-              <MediaDetailContent post={post} />
-            </CardContent>
+          <CardContent className="space-y-6">
+            <MediaDetailContent post={post} />
+          </CardContent>
 
-            <CardFooter className={`flex items-center justify-between ${isMobile ? 'flex-col space-y-4' : ''}`}>
-              <div className={`flex items-center space-x-6 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
-                <div className="flex items-center space-x-1">
-                  <Eye className="w-4 h-4" aria-hidden="true" />
-                  <span>{interactions.viewsCount} views</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <ThumbsUp className="w-4 h-4" aria-hidden="true" />
-                  <span>{interactions.likesCount} likes</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <MessageSquare className="w-4 h-4" aria-hidden="true" />
-                  <span>{interactions.commentsCount} comments</span>
-                </div>
+          <CardFooter className={`flex items-center justify-between ${isMobile ? 'flex-col space-y-4' : ''}`}>
+            <div className={`flex items-center space-x-6 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+              <div className="flex items-center space-x-1">
+                <Eye className="w-4 h-4" aria-hidden="true" />
+                <span>{interactions.viewsCount} views</span>
               </div>
-              
-              {user && (
-                <div className="flex items-center space-x-2">
-                  <AccessibleButton
-                    variant={interactions.isLiked ? "default" : "outline"}
-                    size="sm"
-                    onClick={handleLike}
-                    loading={interactionsLoading}
-                    ariaLabel={interactions.isLiked ? 'Unlike this post' : 'Like this post'}
-                  >
-                    <ThumbsUp className="w-4 h-4 mr-1" />
-                    {interactions.isLiked ? 'Liked' : 'Like'}
-                  </AccessibleButton>
-                  <AccessibleButton
-                    variant={interactions.isBookmarked ? "default" : "outline"}
-                    size="sm"
-                    onClick={handleBookmark}
-                    loading={interactionsLoading}
-                    ariaLabel={interactions.isBookmarked ? 'Remove bookmark' : 'Bookmark this post'}
-                  >
-                    <Bookmark className="w-4 h-4 mr-1" />
-                    {interactions.isBookmarked ? 'Saved' : 'Save'}
-                  </AccessibleButton>
-                </div>
-              )}
-            </CardFooter>
-          </Card>
-        </div>
-      </ResponsiveContainer>
+              <div className="flex items-center space-x-1">
+                <ThumbsUp className="w-4 h-4" aria-hidden="true" />
+                <span>{interactions.likesCount} likes</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                <span>{interactions.commentsCount} comments</span>
+              </div>
+            </div>
+            
+            {user && (
+              <div className="flex items-center space-x-2">
+                <AccessibleButton
+                  variant={interactions.isLiked ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleLike}
+                  loading={interactionsLoading}
+                  ariaLabel={interactions.isLiked ? 'Unlike this post' : 'Like this post'}
+                >
+                  <ThumbsUp className="w-4 h-4 mr-1" />
+                  {interactions.isLiked ? 'Liked' : 'Like'}
+                </AccessibleButton>
+                <AccessibleButton
+                  variant={interactions.isBookmarked ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleBookmark}
+                  loading={interactionsLoading}
+                  ariaLabel={interactions.isBookmarked ? 'Remove bookmark' : 'Bookmark this post'}
+                >
+                  <Bookmark className="w-4 h-4 mr-1" />
+                  {interactions.isBookmarked ? 'Saved' : 'Save'}
+                </AccessibleButton>
+              </div>
+            )}
+          </CardFooter>
+        </Card>
+      </div>
     </MediaErrorBoundary>
   );
 };

@@ -25,7 +25,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <CollapsibleSidebar />
         
         <div 
-          className="flex-1 flex flex-col transition-all duration-300"
+          className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
           style={{ 
             marginLeft: 'var(--sidebar-width, 256px)',
             marginRight: 'var(--content-margin-right, 0)'
@@ -33,7 +33,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         >
           {!hideHeader && <NavBar />}
           
-          <main className={`flex-1 ${className}`}>
+          <main className={`flex-1 overflow-auto ${className}`}>
             {children}
           </main>
           

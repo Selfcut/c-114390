@@ -129,8 +129,8 @@ const Wiki = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <BookOpen size={28} className="text-primary" />
           Knowledge Wiki
@@ -144,7 +144,7 @@ const Wiki = () => {
         </Button>
       </div>
 
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle>Semantic Search</CardTitle>
           <CardDescription>
@@ -197,7 +197,6 @@ const Wiki = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar with categories */}
         <div className="lg:col-span-1">
           <CategorySidebar 
             selectedCategory={selectedCategory} 
@@ -206,7 +205,6 @@ const Wiki = () => {
           />
         </div>
 
-        {/* Main content */}
         <div className="lg:col-span-3">
           <WikiSearchBar 
             searchQuery={searchQuery} 
@@ -233,7 +231,6 @@ const Wiki = () => {
         </div>
       </div>
 
-      {/* Create Article Dialog */}
       <CreateArticleDialog 
         isOpen={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}

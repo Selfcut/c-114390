@@ -64,7 +64,7 @@ const Forum = () => {
   // Handle error fetching forum data
   if (isError) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="p-6">
         <div className="text-center py-16">
           <h2 className="text-2xl font-bold mb-4">Error Loading Forum</h2>
           <p className="text-muted-foreground mb-6">
@@ -82,7 +82,7 @@ const Forum = () => {
   }
   
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="p-6 space-y-6">
       <ForumHeader onCreateDiscussion={handleCreateDiscussion} />
       
       <DiscussionFilters 

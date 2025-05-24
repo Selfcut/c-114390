@@ -26,10 +26,12 @@ interface LayoutProviderProps {
 
 export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
     return localStorage.getItem('sidebar-collapsed') === 'true';
   });
   
   const [chatSidebarOpen, setChatSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
     return localStorage.getItem('chatSidebarOpen') === 'true';
   });
 
@@ -51,13 +53,17 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const toggleSidebar = () => {
     const newState = !sidebarCollapsed;
     setSidebarCollapsed(newState);
-    localStorage.setItem('sidebar-collapsed', String(newState));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar-collapsed', String(newState));
+    }
   };
 
   const toggleChatSidebar = () => {
     const newState = !chatSidebarOpen;
     setChatSidebarOpen(newState);
-    localStorage.setItem('chatSidebarOpen', String(newState));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chatSidebarOpen', String(newState));
+    }
   };
 
   const value: LayoutContextType = {
