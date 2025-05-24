@@ -26,11 +26,11 @@ nav a:hover {
   text-decoration: none !important;
 }
 
-/* Layout responsiveness */
+/* Layout responsiveness - ensure sidebars work properly */
 @media (max-width: 768px) {
-  .main-layout {
-    margin-left: 0;
-    margin-right: 0;
+  :root {
+    --sidebar-width: 0px !important;
+    --content-margin-right: 0 !important;
   }
   
   .sidebar {
@@ -127,4 +127,16 @@ nav a:hover {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* Fix layout container to ensure proper positioning */
+.main-layout {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Ensure content adapts to sidebar changes */
+.content-area {
+  transition: margin-left 0.3s ease, margin-right 0.3s ease;
 }

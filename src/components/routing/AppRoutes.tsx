@@ -43,7 +43,7 @@ export function AppRoutes() {
         {/* Welcome page without layout */}
         <Route path="/" element={<Welcome />} />
         
-        {/* Authentication pages without main layout */}
+        {/* Authentication pages with PageLayout only */}
         <Route path="/auth" element={
           <PageLayout hideHeader>
             <Auth />
@@ -51,7 +51,7 @@ export function AppRoutes() {
         } />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
-        {/* Main application routes with MainLayout */}
+        {/* All main application routes with MainLayout */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <MainLayout>
@@ -60,7 +60,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        {/* User Profile */}
         <Route path="/profile" element={
           <ProtectedRoute>
             <MainLayout>
@@ -74,7 +73,6 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Forum routes with MainLayout */}
         <Route path="/forum" element={
           <MainLayout>
             <Forum />
@@ -86,7 +84,6 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Library & Research routes */}
         <Route path="/library" element={
           <MainLayout>
             <Library />
@@ -98,7 +95,6 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Book review routes */}
         <Route path="/book-reviews" element={
           <MainLayout>
             <BookReviews />
@@ -110,14 +106,12 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Chat route */}
         <Route path="/chat" element={
           <MainLayout>
             <Chat />
           </MainLayout>
         } />
         
-        {/* Media routes - NOW USING MAINLAYOUT */}
         <Route path="/media" element={
           <MainLayout>
             <Media />
@@ -129,7 +123,6 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Problems routes */}
         <Route path="/problems" element={
           <MainLayout>
             <Problems />
@@ -141,14 +134,12 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Events route */}
         <Route path="/events" element={
           <MainLayout>
             <Events />
           </MainLayout>
         } />
         
-        {/* Quotes routes */}
         <Route path="/quotes" element={
           <MainLayout>
             <Quotes />
@@ -165,7 +156,6 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Words routes */}
         <Route path="/words" element={
           <ProtectedRoute>
             <MainLayout>
@@ -193,7 +183,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        {/* Notes route */}
         <Route path="/notes" element={
           <ProtectedRoute>
             <MainLayout>
@@ -202,7 +191,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        {/* Wiki routes - NOW USING MAINLAYOUT */}
         <Route path="/wiki" element={
           <MainLayout>
             <Wiki />
@@ -214,7 +202,6 @@ export function AppRoutes() {
           </MainLayout>
         } />
 
-        {/* Admin route */}
         <Route path="/admin" element={
           <ProtectedRoute requiredRole="admin">
             <MainLayout>
@@ -223,7 +210,7 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        {/* Catch all route */}
+        {/* Catch all route with PageLayout */}
         <Route path="*" element={
           <PageLayout>
             <NotFound />

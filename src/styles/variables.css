@@ -40,7 +40,7 @@
   --promo: 260 60% 30%;
   --promo-foreground: 0 0% 100%;
 
-  /* Layout variables */
+  /* Layout variables - managed by LayoutContext */
   --sidebar-width: 256px;
   --chat-sidebar-width: 360px;
   --content-margin-right: 0;

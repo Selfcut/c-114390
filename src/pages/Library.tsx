@@ -1,6 +1,5 @@
 
 import React, { useState, useCallback } from 'react';
-import { PageLayout } from '@/components/layouts/PageLayout';
 import { LibraryHeader } from '@/components/library/LibraryHeader';
 import { LibrarySearchBar } from '@/components/library/LibrarySearchBar';
 import { ContentFeedControls } from '@/components/library/ContentFeedControls';
@@ -38,45 +37,42 @@ const Library = () => {
 
   const handleSearchChange = useCallback((term: string) => {
     setSearchTerm(term);
-    // TODO: Implement search functionality
   }, []);
 
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8 px-4">
-        <LibraryHeader onCreateEntry={handleCreateEntry} />
-        
-        <div className="my-6">
-          <LibrarySearchBar
-            searchTerm={searchTerm}
-            onSearchChange={handleSearchChange}
-            placeholder="Search content..."
-          />
-        </div>
-
-        <div className="mb-6">
-          <ContentFeedControls
-            contentType={contentType}
-            viewMode={viewMode}
-            onContentTypeChange={handleContentTypeChange}
-            onViewModeChange={handleViewModeChange}
-            onRefresh={handleRefresh}
-          />
-        </div>
-
-        <ContentFeed
-          contentType={contentType}
-          viewMode={viewMode}
-          lastRefresh={lastRefresh}
-        />
-
-        <QuoteSubmissionModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onQuoteAdded={handleContentCreated}
+    <div className="container mx-auto py-8 px-4">
+      <LibraryHeader onCreateEntry={handleCreateEntry} />
+      
+      <div className="my-6">
+        <LibrarySearchBar
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          placeholder="Search content..."
         />
       </div>
-    </PageLayout>
+
+      <div className="mb-6">
+        <ContentFeedControls
+          contentType={contentType}
+          viewMode={viewMode}
+          onContentTypeChange={handleContentTypeChange}
+          onViewModeChange={handleViewModeChange}
+          onRefresh={handleRefresh}
+        />
+      </div>
+
+      <ContentFeed
+        contentType={contentType}
+        viewMode={viewMode}
+        lastRefresh={lastRefresh}
+      />
+
+      <QuoteSubmissionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onQuoteAdded={handleContentCreated}
+      />
+    </div>
   );
 };
 
