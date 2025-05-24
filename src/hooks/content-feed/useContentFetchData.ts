@@ -25,12 +25,12 @@ export const useContentFetchData = ({
       setIsLoading(true);
       setError(null);
 
-      // Fetch quotes with profiles
+      // Fetch quotes with profiles using proper foreign key reference
       const { data: quotes, error: quotesError } = await supabase
         .from('quotes')
         .select(`
           *,
-          profiles!quotes_user_id_fkey(id, name, username, avatar_url)
+          profiles!inner(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -39,12 +39,12 @@ export const useContentFetchData = ({
         console.error('Error fetching quotes:', quotesError);
       }
 
-      // Fetch forum posts with profiles
+      // Fetch forum posts with profiles using proper foreign key reference
       const { data: forumPosts, error: forumError } = await supabase
         .from('forum_posts')
         .select(`
           *,
-          profiles!forum_posts_user_id_fkey(id, name, username, avatar_url)
+          profiles!inner(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -53,12 +53,12 @@ export const useContentFetchData = ({
         console.error('Error fetching forum posts:', forumError);
       }
 
-      // Fetch media posts with profiles
+      // Fetch media posts with profiles using proper foreign key reference
       const { data: mediaPosts, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
           *,
-          profiles!media_posts_user_id_fkey(id, name, username, avatar_url)
+          profiles!inner(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -67,12 +67,12 @@ export const useContentFetchData = ({
         console.error('Error fetching media posts:', mediaError);
       }
 
-      // Fetch knowledge entries with profiles
+      // Fetch knowledge entries with profiles using proper foreign key reference
       const { data: knowledgeEntries, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
           *,
-          profiles!knowledge_entries_user_id_fkey(id, name, username, avatar_url)
+          profiles!inner(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);

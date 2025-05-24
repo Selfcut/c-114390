@@ -13,6 +13,7 @@ export function mapKnowledgeToFeedItem(knowledgeEntry: any, viewMode: ContentVie
     summary: knowledgeEntry.summary,
     content: knowledgeEntry.content,
     author: {
+      id: knowledgeEntry.profiles?.id || knowledgeEntry.user_id || 'unknown',
       name: knowledgeEntry.profiles?.name || 'Unknown',
       avatar: knowledgeEntry.profiles?.avatar_url,
       username: knowledgeEntry.profiles?.username
@@ -39,6 +40,7 @@ export function mapQuoteToFeedItem(quote: any, viewMode: ContentViewMode): Unifi
     title: quote.author ? `Quote from ${quote.author}` : 'Quote',
     content: quote.text,
     author: {
+      id: quote.profiles?.id || quote.user_id || 'unknown',
       name: quote.profiles?.name || 'Unknown',
       avatar: quote.profiles?.avatar_url,
       username: quote.profiles?.username
@@ -49,6 +51,7 @@ export function mapQuoteToFeedItem(quote: any, viewMode: ContentViewMode): Unifi
     metrics: {
       likes: quote.likes || 0,
       comments: quote.comments || 0,
+      views: 0,
       bookmarks: quote.bookmarks || 0
     }
   };
@@ -85,6 +88,7 @@ export function mapMediaToFeedItem(media: any, viewMode: ContentViewMode): Unifi
     title: media.title,
     summary: media.content,
     author: {
+      id: media.profiles?.id || media.user_id || 'unknown',
       name: media.profiles?.name || 'Unknown',
       avatar: media.profiles?.avatar_url,
       username: media.profiles?.username
@@ -113,8 +117,10 @@ export function mapAIContentToFeedItem(aiContent: any, viewMode: ContentViewMode
     summary: aiContent.summary,
     content: aiContent.content,
     author: {
+      id: 'ai-assistant',
       name: 'AI Assistant',
-      avatar: '/lovable-uploads/d8b5e246-d962-466e-ad7d-61985e448fb9.png'
+      avatar: '/lovable-uploads/d8b5e246-d962-466e-ad7d-61985e448fb9.png',
+      username: 'ai-assistant'
     },
     createdAt: new Date(aiContent.created_at),
     tags: aiContent.tags || [],

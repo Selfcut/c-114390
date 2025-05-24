@@ -2,7 +2,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentType, UnifiedContentItem } from '@/types/unified-content-types';
-import { Quote } from '@/types/content';
 import { useAuth } from '@/lib/auth';
 
 interface ContentFetchOptions {
@@ -38,12 +37,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('quotes')
       .select(`
         *,
-        profiles:user_id (
-          id,
-          username,
-          name,
-          avatar_url
-        )
+        profiles!inner(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -86,6 +80,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       title: `Quote by ${quote.author}`,
       content: quote.text,
       author: {
+        id: quote.profiles?.id || quote.user_id || 'unknown',
         name: quote.profiles?.name || quote.profiles?.username || 'Anonymous',
         avatar: quote.profiles?.avatar_url,
         username: quote.profiles?.username
@@ -113,12 +108,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('forum_posts')
       .select(`
         *,
-        profiles:user_id (
-          id,
-          username,
-          name,
-          avatar_url
-        )
+        profiles!inner(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -157,6 +147,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       content: post.content,
       summary: post.content.substring(0, 200) + '...',
       author: {
+        id: post.profiles?.id || post.user_id || 'unknown',
         name: post.profiles?.name || post.profiles?.username || 'Anonymous',
         avatar: post.profiles?.avatar_url,
         username: post.profiles?.username
@@ -165,7 +156,8 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       metrics: {
         upvotes: post.upvotes || 0,
         comments: post.comments || 0,
-        views: post.views || 0
+        views: post.views || 0,
+        likes: post.upvotes || 0
       },
       tags: post.tags || [],
       viewMode: 'list'
@@ -183,12 +175,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('media_posts')
       .select(`
         *,
-        profiles:user_id (
-          id,
-          username,
-          name,
-          avatar_url
-        )
+        profiles!inner(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -222,6 +209,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       title: post.title,
       content: post.content,
       author: {
+        id: post.profiles?.id || post.user_id || 'unknown',
         name: post.profiles?.name || post.profiles?.username || 'Anonymous',
         avatar: post.profiles?.avatar_url,
         username: post.profiles?.username
@@ -249,12 +237,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('knowledge_entries')
       .select(`
         *,
-        profiles:user_id (
-          id,
-          username,
-          name,
-          avatar_url
-        )
+        profiles!inner(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -293,6 +276,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       content: entry.content,
       summary: entry.summary,
       author: {
+        id: entry.profiles?.id || entry.user_id || 'unknown',
         name: entry.profiles?.name || entry.profiles?.username || 'Anonymous',
         avatar: entry.profiles?.avatar_url,
         username: entry.profiles?.username
