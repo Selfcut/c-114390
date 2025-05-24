@@ -1,59 +1,38 @@
 
 import React from 'react';
-import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FileText, Download } from 'lucide-react';
 
 interface DocumentPostProps {
   url: string;
   title: string;
+  className?: string;
 }
 
-export const DocumentPost = ({ url, title }: DocumentPostProps) => {
-  // Get file extension
-  const getFileExtension = () => {
-    try {
-      const urlObj = new URL(url);
-      const pathname = urlObj.pathname;
-      const extension = pathname.split('.').pop()?.toLowerCase() || 'doc';
-      return extension;
-    } catch (e) {
-      return 'doc';
-    }
-  };
-  
-  // Get document type label based on extension
-  const getDocumentType = () => {
-    const ext = getFileExtension();
-    
-    switch (ext) {
-      case 'pdf':
-        return 'PDF Document';
-      case 'doc':
-      case 'docx':
-        return 'Word Document';
-      case 'xls':
-      case 'xlsx':
-        return 'Excel Spreadsheet';
-      case 'ppt':
-      case 'pptx':
-        return 'PowerPoint Presentation';
-      default:
-        return 'Document';
-    }
-  };
-
+export const DocumentPost: React.FC<DocumentPostProps> = ({ url, title, className = "" }) => {
   return (
-    <div className="w-full aspect-video bg-muted/30 flex flex-col items-center justify-center p-6 text-center">
-      <div className="w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
-        <FileText className="h-8 w-8 text-primary" />
+    <div className={`relative aspect-video bg-muted/30 rounded-lg flex items-center justify-center p-8 ${className}`}>
+      <div className="text-center space-y-4">
+        <div className="bg-primary/10 p-6 rounded-full inline-flex">
+          <FileText className="h-12 w-12 text-primary" />
+        </div>
+        <div className="space-y-2">
+          <h3 className="font-semibold text-lg">{title}</h3>
+          <div className="flex gap-2 justify-center">
+            <Button asChild variant="default">
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                View Document
+              </a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href={url} download>
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </a>
+            </Button>
+          </div>
+        </div>
       </div>
-      <h3 className="text-lg font-medium mb-2 line-clamp-1">{title}</h3>
-      <p className="text-sm text-muted-foreground mb-4">{getDocumentType()}</p>
-      <Button asChild size="sm">
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          View Document
-        </a>
-      </Button>
     </div>
   );
 };

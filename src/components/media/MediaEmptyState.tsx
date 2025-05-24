@@ -1,26 +1,29 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, ImageIcon } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Image } from 'lucide-react';
 
 interface MediaEmptyStateProps {
   onCreatePost: () => void;
 }
 
-export const MediaEmptyState = ({ onCreatePost }: MediaEmptyStateProps) => {
+export const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({ onCreatePost }) => {
   return (
-    <div className="text-center py-10">
-      <div className="mx-auto w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
-        <ImageIcon className="h-8 w-8 text-primary" />
-      </div>
-      <h3 className="text-lg font-medium mb-2">No media posts yet</h3>
-      <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-        Be the first to share content with the community
-      </p>
-      <Button onClick={onCreatePost}>
-        <Plus className="mr-2 h-4 w-4" />
-        Create Post
-      </Button>
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="text-center py-12">
+          <Image className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No media posts yet</h3>
+          <p className="text-muted-foreground mb-6">
+            Start sharing your images, videos, and documents with the community.
+          </p>
+          <Button onClick={onCreatePost}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Your First Post
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

@@ -3,37 +3,39 @@ import { MediaPost } from '@/utils/mediaUtils';
 
 export interface CreatePostData {
   title: string;
-  content: string;
+  content?: string;
   type: string;
-  user_id: string;
+  url?: string;
   file?: File;
-  tags?: string[]; // Add tags property that was missing
+  user_id: string;
+  tags?: string[];
 }
 
-// Add the missing CreatePostResponse interface
 export interface CreatePostResponse {
   id: string;
   title: string;
   content?: string;
-  url?: string;
   type: string;
+  url?: string;
   user_id: string;
   created_at: string;
-}
-
-export interface MediaQueryResult {
-  posts: MediaPost[];
-  hasMore: boolean;
-  total: number;
-  error: string | null;
+  updated_at: string;
+  likes: number;
+  comments: number;
+  views: number;
 }
 
 export interface UseMediaPostsReturn {
-  postsData: MediaQueryResult;
+  postsData: {
+    posts: MediaPost[];
+    hasMore: boolean;
+    total: number;
+    error: string | null;
+  };
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
-  refetch: any;
+  refetch: () => void;
   loadMore: () => void;
   hasMore: boolean;
   total: number;

@@ -9,170 +9,183 @@ import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/lib/auth';
 import { useMediaDetails } from '@/hooks/media/useMediaDetails';
-import { ImagePost } from '@/components/media/ImagePost';
-import { YoutubeEmbed } from '@/components/media/YoutubeEmbed';
-import { DocumentPost } from '@/components/media/DocumentPost';
-import { TextPost } from '@/components/media/TextPost';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const MediaDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data, isLoading } = useMediaDetails(id);
-  const [isLiked, setIsLiked] = useState(false);
   const { toast } = useToast();
+  const { data, isLoading, error } = useMediaDetails(id);
 
   const handleBack = () => {
     navigate('/media');
   };
-  
-  const handleLike = () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to like content",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsLiked(!isLiked);
-    toast({
-      description: isLiked ? "Post unliked" : "Post liked",
-    });
-    // Here we would normally implement the API call to like/unlike
-  };
-  
-  const renderContent = () => {
-    if (!data?.post) return null;
-    
-    switch (data.post.type) {
-      case 'image':
-        return <ImagePost url={data.post.url || ''} alt={data.post.title} />;
-      case 'youtube':
-        return <YoutubeEmbed url={data.post.url || ''} />;
-      case 'document':
-        return <DocumentPost url={data.post.url || ''} title={data.post.title} />;
-      case 'text':
-      default:
-        return <TextPost content={data.post.content || ''} />;
-    }
-  };
-  
-  // Loading state
+
   if (isLoading) {
     return (
       <PageLayout>
         <div className="container mx-auto py-8">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 w-32 bg-muted rounded"></div>
-            <div className="h-14 w-3/4 bg-muted rounded"></div>
-            <div className="h-64 w-full bg-muted rounded"></div>
-            <div className="h-6 w-40 bg-muted rounded"></div>
+            <div className="h-8 bg-muted rounded w-32"></div>
+            <div className="h-64 bg-muted rounded"></div>
+            <div className="h-32 bg-muted rounded"></div>
           </div>
         </div>
       </PageLayout>
     );
   }
-  
-  // Error state
-  if (data?.error || !data?.post) {
+
+  if (error || !data?.post) {
     return (
       <PageLayout>
         <div className="container mx-auto py-8">
-          <Button variant="ghost" onClick={handleBack} className="mb-6">
-            <ArrowLeft size={16} className="mr-2" /> Back to Media
+          <Button onClick={handleBack} variant="ghost" className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Media
           </Button>
-          
-          <div className="flex flex-col items-center justify-center text-center py-12">
-            <AlertTriangle className="w-12 h-12 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Media Not Found</h2>
-            <p className="text-muted-foreground mb-6">
-              {data?.error || "The media you're looking for doesn't exist or has been removed."}
-            </p>
-            <Button onClick={handleBack}>Return to Media</Button>
-          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Media Not Found</h2>
+                <p className="text-muted-foreground">
+                  {error || 'The media item you requested could not be found.'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </PageLayout>
     );
   }
-  
+
+  const { post } = data;
+
+  const renderMediaContent = () => {
+    switch (post.type) {
+      case 'image':
+        return (
+          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+            <img 
+              src={post.url} 
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+            <video 
+              src={post.url} 
+              controls
+              className="w-full h-full"
+            />
+          </div>
+        );
+      case 'youtube':
+        const embedUrl = post.url?.includes('embed') 
+          ? post.url 
+          : post.url?.replace('watch?v=', 'embed/').split('&')[0];
+        return (
+          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+            <iframe
+              src={embedUrl}
+              title={post.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </div>
+        );
+      case 'document':
+        return (
+          <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="mb-4 bg-primary/10 p-4 rounded-full inline-flex">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
+              <Button asChild>
+                <a href={post.url} target="_blank" rel="noopener noreferrer">
+                  View Document
+                </a>
+              </Button>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="aspect-video bg-muted/30 rounded-lg p-6">
+            <div className="prose prose-sm dark:prose-invert">
+              <p>{post.content || 'No content available'}</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
     <PageLayout>
-      <div className="container mx-auto py-8">
-        <Button variant="ghost" onClick={handleBack} className="mb-6">
-          <ArrowLeft size={16} className="mr-2" /> Back to Media
+      <div className="container mx-auto py-8 max-w-4xl">
+        <Button onClick={handleBack} variant="ghost" className="mb-6">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Media
         </Button>
-        
+
         <Card>
-          <CardHeader className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar>
-                <AvatarImage src={data.post.author?.avatar_url || ""} alt={data.post.author?.name} />
-                <AvatarFallback>{data.post.author?.name?.charAt(0) || "U"}</AvatarFallback>
-              </Avatar>
-              
-              <div>
-                <h1 className="text-2xl font-bold">{data.post.title}</h1>
-                <p className="text-muted-foreground">
-                  Posted by {data.post.author?.name || "Unknown"} • {
-                    format(new Date(data.post.created_at), 'MMMM d, yyyy')
-                  }
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-2" />
-                {format(new Date(data.post.created_at), 'MMMM d, yyyy')}
-              </div>
-              
-              <div className="flex items-center">
-                <Eye className="h-4 w-4 mr-2" />
-                {data.post.views} views
-              </div>
-              
-              <div className="flex items-center">
-                <ThumbsUp className="h-4 w-4 mr-2" />
-                {data.post.likes} likes
-              </div>
-              
-              <div className="flex items-center">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {data.post.comments} comments
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold">{post.title}</h1>
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={post.author?.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {post.author?.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{post.author?.name || 'Unknown'}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardHeader>
-          
-          <CardContent className="space-y-8">
-            <div className="overflow-hidden rounded-md">
-              {renderContent()}
-            </div>
+
+          <CardContent className="space-y-6">
+            {renderMediaContent()}
             
-            {data.post.content && data.post.type !== 'text' && (
-              <div className="prose max-w-none dark:prose-invert">
-                <h3>Description</h3>
-                <p>{data.post.content}</p>
+            {post.content && (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <p>{post.content}</p>
               </div>
             )}
           </CardContent>
-          
-          <CardFooter className="flex justify-between border-t p-6">
-            <Button
-              variant={isLiked ? "default" : "outline"}
-              onClick={handleLike}
-              disabled={!user}
-            >
-              <ThumbsUp className="h-4 w-4 mr-2" />
-              {isLiked ? "Liked" : "Like"}
-            </Button>
-            
-            <Button variant="outline" onClick={() => navigate('/media')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Media
-            </Button>
+
+          <CardFooter className="flex items-center justify-between">
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-1">
+                <Eye className="w-4 h-4" />
+                <span>{post.views} views</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <ThumbsUp className="w-4 h-4" />
+                <span>{post.likes} likes</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <MessageSquare className="w-4 h-4" />
+                <span>{post.comments} comments</span>
+              </div>
+            </div>
           </CardFooter>
         </Card>
       </div>

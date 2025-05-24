@@ -1,44 +1,21 @@
 
-import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import React from 'react';
 
 interface ImagePostProps {
-  url: string;
+  src: string;
   alt: string;
+  className?: string;
 }
 
-export const ImagePost = ({ url, alt }: ImagePostProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
+export const ImagePost: React.FC<ImagePostProps> = ({ src, alt, className = "" }) => {
   return (
-    <div className="relative w-full aspect-video bg-muted overflow-hidden">
-      {isLoading && (
-        <div className="absolute inset-0">
-          <Skeleton className="w-full h-full" />
-        </div>
-      )}
-      
-      {hasError ? (
-        <div className="w-full h-full flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">Unable to load image</p>
-        </div>
-      ) : (
-        <img
-          src={url}
-          alt={alt}
-          className={cn(
-            "w-full h-full object-cover transition-opacity",
-            isLoading ? "opacity-0" : "opacity-100"
-          )}
-          onLoad={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            setHasError(true);
-          }}
-        />
-      )}
+    <div className={`relative aspect-video bg-muted rounded-lg overflow-hidden ${className}`}>
+      <img 
+        src={src} 
+        alt={alt}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
     </div>
   );
 };

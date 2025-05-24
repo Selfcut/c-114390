@@ -3,17 +3,14 @@ import React from 'react';
 
 interface TextPostProps {
   content: string;
+  className?: string;
 }
 
-export const TextPost = ({ content }: TextPostProps) => {
+export const TextPost: React.FC<TextPostProps> = ({ content, className = "" }) => {
   return (
-    <div className="w-full aspect-video p-6 bg-muted/20 overflow-hidden flex items-center justify-center">
-      <div className="prose prose-sm dark:prose-invert max-w-none overflow-hidden line-clamp-[12]">
-        {content ? (
-          <div dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
-        ) : (
-          <span className="text-muted-foreground">No content provided</span>
-        )}
+    <div className={`relative bg-muted/20 rounded-lg p-6 ${className}`}>
+      <div className="prose prose-sm dark:prose-invert max-w-none">
+        <div dangerouslySetInnerHTML={{ __html: content }} />
       </div>
     </div>
   );
