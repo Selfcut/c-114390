@@ -117,7 +117,7 @@ export function AppRoutes() {
           </MainLayout>
         } />
         
-        {/* Media routes */}
+        {/* Media routes - NOW USING MAINLAYOUT */}
         <Route path="/media" element={
           <MainLayout>
             <Media />
@@ -202,7 +202,7 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        {/* Wiki routes */}
+        {/* Wiki routes - NOW USING MAINLAYOUT */}
         <Route path="/wiki" element={
           <MainLayout>
             <Wiki />

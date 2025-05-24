@@ -34,11 +34,6 @@ const queryClient = new QueryClient({
 function App() {
   React.useEffect(() => {
     performanceMonitor.trackPageLoad('App');
-    
-    // Initialize CSS variables
-    document.documentElement.style.setProperty('--sidebar-width', '256px');
-    document.documentElement.style.setProperty('--chat-sidebar-width', '360px');
-    document.documentElement.style.setProperty('--content-margin-right', '0');
   }, []);
 
   return (

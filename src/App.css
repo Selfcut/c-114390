@@ -1,13 +1,7 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --sidebar-width: 256px;
-  --header-height: 4rem;
-  --chat-sidebar-width: 360px;
-  --content-margin-right: 0;
-}
 
 /* Reset link styles */
 a {
@@ -30,33 +24,6 @@ a[role="button"]:hover,
 .nav-link:hover,
 nav a:hover {
   text-decoration: none !important;
-}
-
-/* Main layout positioning */
-.main-layout {
-  margin-left: var(--sidebar-width);
-  margin-right: var(--content-margin-right);
-  transition: margin 0.3s ease;
-}
-
-/* Sidebar positioning */
-.sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
-  z-index: 40;
-  transition: width 0.3s ease;
-}
-
-/* Chat sidebar positioning */
-.chat-container {
-  position: fixed;
-  right: 0;
-  top: 0;
-  height: 100vh;
-  z-index: 40;
-  transition: transform 0.3s ease, width 0.3s ease;
 }
 
 /* Layout responsiveness */
