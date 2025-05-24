@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload } from 'lucide-react';
 import { CreatePostData } from '@/hooks/media/types';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -22,6 +24,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   onSubmit,
   isSubmitting = false
 }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState<{
     title: string;
     content: string;
@@ -39,7 +43,23 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim()) return;
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create a post",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!formData.title.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please enter a title for your post",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       await onSubmit({
@@ -48,11 +68,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         type: formData.type,
         url: formData.url || undefined,
         file: formData.file || undefined,
-        user_id: '', // This will be set in the hook
+        user_id: user.id,
         tags: []
       });
       
-      // Reset form
+      // Reset form on success
       setFormData({
         title: '',
         content: '',
@@ -60,19 +80,57 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         url: '',
         file: null
       });
-    } catch (error) {
+      
+      onOpenChange(false);
+      
+      toast({
+        title: "Success",
+        description: "Your media post has been created successfully"
+      });
+    } catch (error: any) {
       console.error('Error creating post:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create post. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, file: e.target.files![0] }));
+      const file = e.target.files[0];
+      
+      // Basic file validation
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast({
+          title: "File Too Large",
+          description: "Please select a file smaller than 10MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setFormData(prev => ({ ...prev, file }));
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      content: '',
+      type: 'text',
+      url: '',
+      file: null
+    });
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      onOpenChange(open);
+      if (!open) resetForm();
+    }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create New Media Post</DialogTitle>
@@ -87,6 +145,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Enter post title"
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -98,6 +157,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
               placeholder="Add a description (optional)"
               rows={3}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -106,6 +166,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
             <Select 
               value={formData.type} 
               onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+              disabled={isSubmitting}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -128,6 +189,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 value={formData.url}
                 onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
                 placeholder="https://www.youtube.com/watch?v=..."
+                disabled={isSubmitting}
               />
             </div>
           ) : formData.type !== 'text' ? (
@@ -139,6 +201,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                   value={formData.url}
                   onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
                   placeholder="Or provide a direct URL"
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -156,6 +219,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                       '*/*'
                     }
                     className="w-full cursor-pointer"
+                    disabled={isSubmitting}
                   />
                   {formData.file && (
                     <p className="text-sm text-muted-foreground mt-2">

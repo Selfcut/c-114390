@@ -1,15 +1,18 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { ArrowLeft, Calendar, Eye, ThumbsUp, MessageSquare, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Calendar, Eye, ThumbsUp, MessageSquare, AlertTriangle, Bookmark } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/lib/auth';
 import { useMediaDetails } from '@/hooks/media/useMediaDetails';
+import { useMediaInteractions } from '@/hooks/useMediaInteractions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MediaDetailContent } from '@/components/media/MediaDetailContent';
+import { MediaErrorBoundary } from '@/components/ui/MediaErrorBoundary';
 
 const MediaDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +20,15 @@ const MediaDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data, isLoading, error } = useMediaDetails(id);
+  
+  const { interactions, isLoading: interactionsLoading, toggleLike, toggleBookmark } = useMediaInteractions(
+    id || '',
+    {
+      likesCount: data?.post?.likes || 0,
+      commentsCount: data?.post?.comments || 0,
+      viewsCount: data?.post?.views || 0,
+    }
+  );
 
   const handleBack = () => {
     navigate('/media');
@@ -62,134 +74,86 @@ const MediaDetail = () => {
 
   const { post } = data;
 
-  const renderMediaContent = () => {
-    switch (post.type) {
-      case 'image':
-        return (
-          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-            <img 
-              src={post.url} 
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        );
-      case 'video':
-        return (
-          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-            <video 
-              src={post.url} 
-              controls
-              className="w-full h-full"
-            />
-          </div>
-        );
-      case 'youtube':
-        const embedUrl = post.url?.includes('embed') 
-          ? post.url 
-          : post.url?.replace('watch?v=', 'embed/').split('&')[0];
-        return (
-          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-            <iframe
-              src={embedUrl}
-              title={post.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            />
-          </div>
-        );
-      case 'document':
-        return (
-          <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center p-8">
-            <div className="text-center">
-              <div className="mb-4 bg-primary/10 p-4 rounded-full inline-flex">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
-              <Button asChild>
-                <a href={post.url} target="_blank" rel="noopener noreferrer">
-                  View Document
-                </a>
-              </Button>
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <div className="aspect-video bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm dark:prose-invert">
-              <p>{post.content || 'No content available'}</p>
-            </div>
-          </div>
-        );
-    }
-  };
-
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8 max-w-4xl">
-        <Button onClick={handleBack} variant="ghost" className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Media
-        </Button>
+    <MediaErrorBoundary>
+      <PageLayout>
+        <div className="container mx-auto py-8 max-w-4xl">
+          <Button onClick={handleBack} variant="ghost" className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Media
+          </Button>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <h1 className="text-2xl font-bold">{post.title}</h1>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={post.author?.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {post.author?.name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{post.author?.name || 'Unknown'}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-bold">{post.title}</h1>
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={post.author?.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {post.author?.name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{post.author?.name || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
-          <CardContent className="space-y-6">
-            {renderMediaContent()}
-            
-            {post.content && (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p>{post.content}</p>
-              </div>
-            )}
-          </CardContent>
+            <CardContent className="space-y-6">
+              <MediaDetailContent post={post} />
+            </CardContent>
 
-          <CardFooter className="flex items-center justify-between">
-            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-              <div className="flex items-center space-x-1">
-                <Eye className="w-4 h-4" />
-                <span>{post.views} views</span>
+            <CardFooter className="flex items-center justify-between">
+              <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+                <div className="flex items-center space-x-1">
+                  <Eye className="w-4 h-4" />
+                  <span>{interactions.viewsCount} views</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <ThumbsUp className="w-4 h-4" />
+                  <span>{interactions.likesCount} likes</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>{interactions.commentsCount} comments</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-1">
-                <ThumbsUp className="w-4 h-4" />
-                <span>{post.likes} likes</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <MessageSquare className="w-4 h-4" />
-                <span>{post.comments} comments</span>
-              </div>
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-    </PageLayout>
+              
+              {user && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={interactions.isLiked ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleLike}
+                    disabled={interactionsLoading}
+                  >
+                    <ThumbsUp className="w-4 h-4 mr-1" />
+                    {interactions.isLiked ? 'Liked' : 'Like'}
+                  </Button>
+                  <Button
+                    variant={interactions.isBookmarked ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleBookmark}
+                    disabled={interactionsLoading}
+                  >
+                    <Bookmark className="w-4 h-4 mr-1" />
+                    {interactions.isBookmarked ? 'Saved' : 'Save'}
+                  </Button>
+                </div>
+              )}
+            </CardFooter>
+          </Card>
+        </div>
+      </PageLayout>
+    </MediaErrorBoundary>
   );
 };
 

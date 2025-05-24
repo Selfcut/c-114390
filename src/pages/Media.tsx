@@ -2,12 +2,15 @@
 import React from "react";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { MediaContainer } from "@/components/media/MediaContainer";
+import { MediaErrorBoundary } from "@/components/ui/MediaErrorBoundary";
 
 const Media = () => {
   return (
-    <PageLayout>
-      <MediaContainer />
-    </PageLayout>
+    <MediaErrorBoundary>
+      <PageLayout>
+        <MediaContainer />
+      </PageLayout>
+    </MediaErrorBoundary>
   );
 };
 

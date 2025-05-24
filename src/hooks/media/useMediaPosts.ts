@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MediaPost, validateMediaType } from '@/utils/mediaUtils';
 import { CreatePostData } from './types';
+import { useAuth } from '@/lib/auth';
 
 export interface MediaPosts {
   posts: MediaPost[];
@@ -40,6 +41,7 @@ export const useMediaPosts = (
   sortOrder: 'asc' | 'desc' = 'desc',
   searchTerm = ''
 ): UseMediaPostsReturn => {
+  const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -142,6 +144,10 @@ export const useMediaPosts = (
   // Create a new media post
   const createPostMutation = useMutation({
     mutationFn: async (postData: CreatePostData) => {
+      if (!user?.id) {
+        throw new Error('User must be authenticated to create a post');
+      }
+
       // Upload file if included
       let fileUrl = '';
       if (postData.file) {
@@ -149,28 +155,39 @@ export const useMediaPosts = (
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `media/${fileName}`;
         
-        // Use the upload method without unsupported options
+        // Create storage bucket if it doesn't exist
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const mediaExists = buckets?.some(bucket => bucket.name === 'media');
+        
+        if (!mediaExists) {
+          await supabase.storage.createBucket('media', {
+            public: true,
+            allowedMimeTypes: ['image/*', 'video/*', 'application/pdf', 'application/msword'],
+            fileSizeLimit: 10485760 // 10MB
+          });
+        }
+        
         const { error: uploadError } = await supabase.storage
-          .from('content')
+          .from('media')
           .upload(filePath, postData.file, {
             upsert: false
           });
         
         if (uploadError) throw new Error(uploadError.message);
         
-        const { data } = supabase.storage.from('content').getPublicUrl(filePath);
+        const { data } = supabase.storage.from('media').getPublicUrl(filePath);
         fileUrl = data.publicUrl;
       }
       
-      // Create the post
+      // Create the post with proper user ID
       const { data, error } = await supabase
         .from('media_posts')
         .insert({
           title: postData.title,
           content: postData.content,
           type: postData.type,
-          url: fileUrl || null,
-          user_id: postData.user_id,
+          url: postData.url || fileUrl || null,
+          user_id: user.id,
         })
         .select()
         .single();
@@ -189,7 +206,10 @@ export const useMediaPosts = (
   });
   
   const handleCreatePost = async (data: CreatePostData) => {
-    return await createPostMutation.mutateAsync(data);
+    return await createPostMutation.mutateAsync({
+      ...data,
+      user_id: user?.id || ''
+    });
   };
   
   const loadMore = useCallback(() => {
