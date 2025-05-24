@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Image, MessageSquare, BookOpen, Users, Brain, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Plus, RefreshCw } from 'lucide-react';
 import { ContentType } from '@/types/unified-content-types';
 
 interface ContentEmptyStateProps {
@@ -11,78 +11,69 @@ interface ContentEmptyStateProps {
   onCreateContent?: () => void;
 }
 
-export const ContentEmptyState: React.FC<ContentEmptyStateProps> = ({
-  contentType,
+export const ContentEmptyState: React.FC<ContentEmptyStateProps> = ({ 
+  contentType, 
   onRefresh,
-  onCreateContent
+  onCreateContent 
 }) => {
-  const getEmptyStateConfig = () => {
+  const getEmptyMessage = () => {
     switch (contentType) {
-      case 'quote':
-        return {
-          icon: <FileText className="h-16 w-16 text-gray-300" />,
-          title: "No quotes found",
-          description: "Be the first to share an inspiring quote with the community.",
-          actionText: "Share a Quote"
-        };
-      case 'media':
-        return {
-          icon: <Image className="h-16 w-16 text-gray-300" />,
-          title: "No media found",
-          description: "Upload images, videos, or documents to share with others.",
-          actionText: "Upload Media"
-        };
-      case 'forum':
-        return {
-          icon: <MessageSquare className="h-16 w-16 text-gray-300" />,
-          title: "No forum posts found",
-          description: "Start a discussion or ask a question to engage with the community.",
-          actionText: "Create Post"
-        };
-      case 'knowledge':
-        return {
-          icon: <BookOpen className="h-16 w-16 text-gray-300" />,
-          title: "No knowledge entries found",
-          description: "Share your expertise by creating detailed knowledge articles.",
-          actionText: "Create Article"
-        };
-      case 'ai':
-        return {
-          icon: <Brain className="h-16 w-16 text-gray-300" />,
-          title: "No AI content found",
-          description: "Generate content using AI or explore AI-powered features.",
-          actionText: "Generate Content"
-        };
+      case ContentType.Quote:
+        return 'No quotes found';
+      case ContentType.Knowledge:
+        return 'No knowledge entries found';
+      case ContentType.Media:
+        return 'No media posts found';
+      case ContentType.Forum:
+        return 'No forum posts found';
+      case ContentType.Wiki:
+        return 'No wiki articles found';
+      case ContentType.Research:
+        return 'No research papers found';
+      case ContentType.AI:
+        return 'No AI content found';
       default:
-        return {
-          icon: <Users className="h-16 w-16 text-gray-300" />,
-          title: "No content found",
-          description: "No content matches your current filters. Try adjusting your search criteria.",
-          actionText: "Create Content"
-        };
+        return 'No content found';
     }
   };
 
-  const config = getEmptyStateConfig();
+  const getCreateLabel = () => {
+    switch (contentType) {
+      case ContentType.Quote:
+        return 'Add Quote';
+      case ContentType.Knowledge:
+        return 'Create Entry';
+      case ContentType.Media:
+        return 'Upload Media';
+      case ContentType.Forum:
+        return 'Create Post';
+      case ContentType.Wiki:
+        return 'Create Article';
+      default:
+        return 'Create Content';
+    }
+  };
 
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center justify-center py-12">
-        {config.icon}
-        <h3 className="text-xl font-semibold text-gray-700 mt-4 mb-2">
-          {config.title}
-        </h3>
-        <p className="text-gray-500 text-center mb-6 max-w-md">
-          {config.description}
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+        <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">{getEmptyMessage()}</h3>
+        <p className="text-muted-foreground mb-6">
+          {contentType === ContentType.All 
+            ? "Content will appear here as it's created"
+            : "Be the first to contribute!"
+          }
         </p>
-        <div className="flex gap-3">
-          <Button onClick={onRefresh} variant="outline" className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" />
+        <div className="flex gap-2">
+          <Button onClick={onRefresh} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
           {onCreateContent && (
             <Button onClick={onCreateContent}>
-              {config.actionText}
+              <Plus className="h-4 w-4 mr-2" />
+              {getCreateLabel()}
             </Button>
           )}
         </div>

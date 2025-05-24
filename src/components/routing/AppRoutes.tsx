@@ -1,7 +1,6 @@
 
 import React, { Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/lib/auth';
+import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -31,21 +30,12 @@ import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
 import Profile from '@/pages/Profile';
 import AdminPanel from '@/pages/AdminPanel';
-
-// Import our new pages
 import Words from '@/pages/Words';
 import WordDetail from '@/pages/WordDetail';
 import WordEditor from '@/pages/WordEditor';
 import Notes from '@/pages/Notes';
 
 export function AppRoutes() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Show loading state while authentication is being determined
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
@@ -69,11 +59,9 @@ export function AppRoutes() {
             <Profile />
           </ProtectedRoute>
         } />
-        <Route path="/profile/:username" element={
-          <Profile />
-        } />
+        <Route path="/profile/:username" element={<Profile />} />
         
-        {/* Forum routes - using only the optimized ForumPostDetail component */}
+        {/* Forum routes */}
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:postId" element={<ForumPostDetail />} />
         
@@ -102,8 +90,6 @@ export function AppRoutes() {
         {/* Quotes routes */}
         <Route path="/quotes" element={<Quotes />} />
         <Route path="/quotes/:id" element={<QuoteDetail />} />
-        
-        {/* Saved Quotes route */}
         <Route path="/saved-quotes" element={<SavedQuotes />} />
         
         {/* Words routes */}
@@ -136,7 +122,11 @@ export function AppRoutes() {
         <Route path="/wiki/:id" element={<WikiArticle />} />
 
         {/* Admin route */}
-        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminPanel />
+          </ProtectedRoute>
+        } />
         
         {/* Catch all route */}
         <Route path="*" element={<NotFound />} />

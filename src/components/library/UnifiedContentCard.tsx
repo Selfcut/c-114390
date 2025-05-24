@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Bookmark, MessageCircle, Eye } from 'lucide-react';
-import { UnifiedContentItem, ContentViewMode } from '@/types/unified-content-types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Heart, MessageSquare, Eye, Bookmark, BookOpen, Image as ImageIcon, Quote as QuoteIcon, Brain } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { UnifiedContentItem, ContentType, ContentViewMode } from '@/types/unified-content-types';
 
 interface UnifiedContentCardProps {
   item: UnifiedContentItem;
@@ -28,203 +29,131 @@ export const UnifiedContentCard: React.FC<UnifiedContentCardProps> = ({
   onClick
 }) => {
   const getTypeIcon = () => {
-    switch (item.type) {
-      case 'quote': return '💭';
-      case 'knowledge': return '📚';
-      case 'media': return '🎬';
-      case 'forum': return '💬';
-      case 'wiki': return '📝';
-      case 'research': return '🔬';
-      default: return '📄';
+    switch(item.type) {
+      case ContentType.Knowledge:
+        return <BookOpen className="h-4 w-4 text-blue-500" />;
+      case ContentType.Media:
+        return <ImageIcon className="h-4 w-4 text-green-500" />;
+      case ContentType.Quote:
+        return <QuoteIcon className="h-4 w-4 text-purple-500" />;
+      case ContentType.AI:
+        return <Brain className="h-4 w-4 text-amber-500" />;
+      case ContentType.Forum:
+        return <MessageSquare className="h-4 w-4 text-orange-500" />;
+      default:
+        return <BookOpen className="h-4 w-4 text-blue-500" />;
     }
   };
 
-  const getActionMetrics = () => {
-    const metrics = item.metrics;
-    return {
-      likes: metrics.likes || metrics.upvotes || 0,
-      comments: metrics.comments || 0,
-      bookmarks: metrics.bookmarks || 0,
-      views: metrics.views || 0
-    };
+  const getCardLayout = () => {
+    if (viewMode === 'grid') {
+      return 'max-w-sm';
+    } else if (viewMode === 'feed') {
+      return 'max-w-2xl mx-auto';
+    }
+    return 'w-full';
   };
 
-  const actionMetrics = getActionMetrics();
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onLike();
-  };
-
-  const handleBookmark = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onBookmark();
-  };
-
-  if (viewMode === 'grid') {
-    return (
-      <Card className="cursor-pointer hover:shadow-lg transition-shadow group" onClick={onClick}>
-        {item.coverImage && (
-          <div className="aspect-video overflow-hidden rounded-t-lg">
-            <img 
-              src={item.coverImage} 
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
-          </div>
-        )}
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">{getTypeIcon()}</span>
-            <Badge variant="secondary" className="text-xs">
-              {item.type}
-            </Badge>
-          </div>
-          
-          <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.title}</h3>
-          
-          {item.content && (
-            <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
-              {item.content}
-            </p>
-          )}
-
-          <div className="flex items-center gap-2 mb-3">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={item.author.avatar} alt={item.author.name} />
-              <AvatarFallback className="text-xs">
-                {item.author.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground">{item.author.name}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-            <span>{formatDistanceToNow(item.createdAt, { addSuffix: true })}</span>
-            {actionMetrics.views > 0 && (
-              <div className="flex items-center gap-1">
-                <Eye className="h-3 w-3" />
-                <span>{actionMetrics.views}</span>
-              </div>
-            )}
-          </div>
-
-          {item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {item.tags.slice(0, 3).map(tag => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="flex items-center justify-between border-t pt-3">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLike}
-                className={`h-8 px-2 ${isLiked ? 'text-red-500' : ''}`}
-              >
-                <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
-                <span className="text-xs">{actionMetrics.likes}</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBookmark}
-                className={`h-8 px-2 ${isBookmarked ? 'text-yellow-500' : ''}`}
-              >
-                <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MessageCircle className="h-3 w-3" />
-              <span>{actionMetrics.comments}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // List view
   return (
-    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all hover:shadow-md cursor-pointer",
+        getCardLayout()
+      )}
+      onClick={onClick}
+    >
+      {item.coverImage && viewMode === 'grid' && (
+        <div className="aspect-video w-full overflow-hidden">
+          <img 
+            src={item.coverImage} 
+            alt={item.title} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      
       <CardContent className="p-4">
-        <div className="flex gap-4">
-          {(item.coverImage || item.mediaUrl) && (
-            <div className="flex-shrink-0">
-              <img 
-                src={item.coverImage || item.mediaUrl} 
-                alt={item.title}
-                className="w-20 h-20 object-cover rounded-lg"
-              />
-            </div>
-          )}
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base">{getTypeIcon()}</span>
-              <Badge variant="secondary" className="text-xs">
-                {item.type}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(item.createdAt, { addSuffix: true })}
-              </span>
-            </div>
-
-            <h3 className="font-semibold text-lg mb-2 line-clamp-1">{item.title}</h3>
-            
-            {item.content && (
-              <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                {item.content}
-              </p>
-            )}
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={item.author.avatar} alt={item.author.name} />
-                  <AvatarFallback className="text-xs">
-                    {item.author.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm text-muted-foreground">{item.author.name}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLike}
-                  className={`h-8 px-2 ${isLiked ? 'text-red-500' : ''}`}
-                >
-                  <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
-                  <span className="text-xs">{actionMetrics.likes}</span>
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBookmark}
-                  className={`h-8 px-2 ${isBookmarked ? 'text-yellow-500' : ''}`}
-                >
-                  <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                </Button>
-
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MessageCircle className="h-3 w-3" />
-                  <span>{actionMetrics.comments}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 mb-2">
+          {getTypeIcon()}
+          <Badge variant="secondary" className="text-xs">
+            {item.type}
+          </Badge>
+        </div>
+        
+        <h3 className={cn(
+          "font-semibold mb-2",
+          viewMode === 'feed' ? "text-xl" : "text-lg line-clamp-2"
+        )}>
+          {item.title}
+        </h3>
+        
+        {item.summary && (
+          <p className={cn(
+            "text-muted-foreground text-sm mb-3",
+            viewMode === 'grid' ? "line-clamp-2" : "line-clamp-3"
+          )}>
+            {item.summary}
+          </p>
+        )}
+        
+        {item.type === ContentType.Quote && item.content && (
+          <blockquote className="pl-3 border-l-2 border-muted-foreground/40 italic text-muted-foreground mb-3">
+            {item.content}
+          </blockquote>
+        )}
+        
+        <div className="flex items-center gap-2 mt-auto">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={item.author.avatar} alt={item.author.name} />
+            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <span className="text-xs text-muted-foreground">
+            {item.author.name}
+          </span>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+          </span>
         </div>
       </CardContent>
+      
+      <CardFooter className="p-4 pt-0 flex justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onLike();
+            }}
+            className="flex items-center gap-1 text-xs"
+          >
+            <Heart className={cn("h-4 w-4", isLiked && "fill-red-500 text-red-500")} />
+            <span>{item.metrics.likes}</span>
+          </Button>
+          
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MessageSquare className="h-4 w-4" />
+            <span>{item.metrics.comments}</span>
+          </div>
+          
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Eye className="h-4 w-4" />
+            <span>{item.metrics.views}</span>
+          </div>
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onBookmark();
+          }}
+          className={cn("text-muted-foreground", isBookmarked && "text-primary")}
+        >
+          <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+        </Button>
+      </CardFooter>
     </Card>
   );
 };
