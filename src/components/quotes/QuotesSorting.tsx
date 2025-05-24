@@ -1,40 +1,25 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { QuoteSortOption } from '@/lib/quotes/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface QuotesSortingProps {
-  value?: QuoteSortOption;
-  sortOption?: QuoteSortOption;
-  onChange?: (value: QuoteSortOption) => void;
-  onSortChange?: (value: QuoteSortOption) => void;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const QuotesSorting: React.FC<QuotesSortingProps> = ({ value, sortOption, onChange, onSortChange }) => {
-  // Use either value or sortOption prop (for backward compatibility)
-  const currentValue = value || sortOption || "newest";
-
-  // Use either onChange or onSortChange callback (for backward compatibility)
-  const handleValueChange = (newValue: string) => {
-    if (onChange) {
-      onChange(newValue as QuoteSortOption);
-    } else if (onSortChange) {
-      onSortChange(newValue as QuoteSortOption);
-    }
-  };
-
+export const QuotesSorting: React.FC<QuotesSortingProps> = ({ value, onChange }) => {
   return (
-    <div className="flex items-center space-x-2">
-      <span className="text-sm text-muted-foreground">Sort by:</span>
-      <Select value={currentValue} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-[140px] h-8">
-          <SelectValue placeholder="Sort by" />
+    <div className="space-y-2">
+      <h3 className="font-medium">Sort by</h3>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger>
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="newest">Newest</SelectItem>
-          <SelectItem value="oldest">Oldest</SelectItem>
-          <SelectItem value="most_liked">Most Liked</SelectItem>
-          <SelectItem value="most_bookmarked">Most Bookmarked</SelectItem>
+          <SelectItem value="newest">Newest first</SelectItem>
+          <SelectItem value="oldest">Oldest first</SelectItem>
+          <SelectItem value="most_liked">Most liked</SelectItem>
+          <SelectItem value="most_bookmarked">Most bookmarked</SelectItem>
         </SelectContent>
       </Select>
     </div>

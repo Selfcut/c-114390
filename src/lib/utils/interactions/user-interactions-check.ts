@@ -1,100 +1,75 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContentInteractions } from './types';
+import { ContentType } from '@/types/unified-content-types';
 
-export const checkUserContentInteractions = async (
+export interface ContentInteractions {
+  likes: Record<string, boolean>;
+  bookmarks: Record<string, boolean>;
+}
+
+export async function checkUserContentInteractions(
   userId: string,
-  contentIds: string[]
-): Promise<ContentInteractions> => {
-  const interactions: ContentInteractions = {
-    likes: {},
-    bookmarks: {}
-  };
-
-  if (!userId || !contentIds.length) {
-    return interactions;
+  itemIds: string[]
+): Promise<ContentInteractions> {
+  if (!userId || itemIds.length === 0) {
+    return { likes: {}, bookmarks: {} };
   }
 
   try {
-    // Check likes across all content types
-    const [quoteLikes, contentLikes, mediaLikes] = await Promise.all([
-      // Quote likes
-      supabase
-        .from('quote_likes')
-        .select('quote_id')
-        .eq('user_id', userId)
-        .in('quote_id', contentIds),
-      
-      // Content likes (knowledge, forum, etc.)
-      supabase
-        .from('content_likes')
-        .select('content_id, content_type')
-        .eq('user_id', userId)
-        .in('content_id', contentIds),
-      
-      // Media likes
-      supabase
-        .from('media_likes')
-        .select('post_id')
-        .eq('user_id', userId)
-        .in('post_id', contentIds)
-    ]);
+    // Check likes for quotes
+    const { data: quoteLikes } = await supabase
+      .from('quote_likes')
+      .select('quote_id')
+      .in('quote_id', itemIds)
+      .eq('user_id', userId);
+
+    // Check bookmarks for quotes
+    const { data: quoteBookmarks } = await supabase
+      .from('quote_bookmarks')
+      .select('quote_id')
+      .in('quote_id', itemIds)
+      .eq('user_id', userId);
+
+    // Check likes for other content types
+    const { data: contentLikes } = await supabase
+      .from('content_likes')
+      .select('content_id, content_type')
+      .in('content_id', itemIds)
+      .eq('user_id', userId);
+
+    // Check bookmarks for other content types
+    const { data: contentBookmarks } = await supabase
+      .from('content_bookmarks')
+      .select('content_id, content_type')
+      .in('content_id', itemIds)
+      .eq('user_id', userId);
+
+    const likes: Record<string, boolean> = {};
+    const bookmarks: Record<string, boolean> = {};
 
     // Process quote likes
-    if (quoteLikes.data) {
-      quoteLikes.data.forEach(like => {
-        interactions.likes[`quote:${like.quote_id}`] = true;
-      });
-    }
-
-    // Process content likes
-    if (contentLikes.data) {
-      contentLikes.data.forEach(like => {
-        interactions.likes[`${like.content_type}:${like.content_id}`] = true;
-      });
-    }
-
-    // Process media likes
-    if (mediaLikes.data) {
-      mediaLikes.data.forEach(like => {
-        interactions.likes[`media:${like.post_id}`] = true;
-      });
-    }
-
-    // Check bookmarks
-    const [quoteBookmarks, contentBookmarks] = await Promise.all([
-      // Quote bookmarks
-      supabase
-        .from('quote_bookmarks')
-        .select('quote_id')
-        .eq('user_id', userId)
-        .in('quote_id', contentIds),
-      
-      // Content bookmarks
-      supabase
-        .from('content_bookmarks')
-        .select('content_id, content_type')
-        .eq('user_id', userId)
-        .in('content_id', contentIds)
-    ]);
+    quoteLikes?.forEach(like => {
+      likes[`${ContentType.Quote}:${like.quote_id}`] = true;
+    });
 
     // Process quote bookmarks
-    if (quoteBookmarks.data) {
-      quoteBookmarks.data.forEach(bookmark => {
-        interactions.bookmarks[`quote:${bookmark.quote_id}`] = true;
-      });
-    }
+    quoteBookmarks?.forEach(bookmark => {
+      bookmarks[`${ContentType.Quote}:${bookmark.quote_id}`] = true;
+    });
+
+    // Process content likes
+    contentLikes?.forEach(like => {
+      likes[`${like.content_type}:${like.content_id}`] = true;
+    });
 
     // Process content bookmarks
-    if (contentBookmarks.data) {
-      contentBookmarks.data.forEach(bookmark => {
-        interactions.bookmarks[`${bookmark.content_type}:${bookmark.content_id}`] = true;
-      });
-    }
+    contentBookmarks?.forEach(bookmark => {
+      bookmarks[`${bookmark.content_type}:${bookmark.content_id}`] = true;
+    });
 
+    return { likes, bookmarks };
   } catch (error) {
     console.error('Error checking user interactions:', error);
+    return { likes: {}, bookmarks: {} };
   }
-
-  return interactions;
-};
+}

@@ -1,21 +1,31 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { QuoteWithUser } from '@/lib/quotes/types';
-import { QuoteCard } from './QuoteCard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCcw } from 'lucide-react';
+import { Heart, Bookmark, MessageCircle } from 'lucide-react';
+import { LoadingScreen } from '@/components/LoadingScreen';
+
+interface Quote {
+  id: string;
+  text: string;
+  author: string;
+  source?: string;
+  category: string;
+  tags: string[];
+  likes: number;
+  bookmarks: number;
+  comments: number;
+  created_at: string;
+}
 
 interface QuotesGridProps {
-  quotes: QuoteWithUser[];
+  quotes: Quote[];
   isLoading: boolean;
   userLikes: Record<string, boolean>;
   userBookmarks: Record<string, boolean>;
   onLike: (quoteId: string) => Promise<boolean | null>;
   onBookmark: (quoteId: string) => Promise<boolean | null>;
   onTagClick: (tag: string) => void;
-  onResetFilters?: () => void;
 }
 
 export const QuotesGrid: React.FC<QuotesGridProps> = ({
@@ -25,58 +35,86 @@ export const QuotesGrid: React.FC<QuotesGridProps> = ({
   userBookmarks,
   onLike,
   onBookmark,
-  onTagClick,
-  onResetFilters
+  onTagClick
 }) => {
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {Array(8).fill(0).map((_, i) => (
-          <div key={i} className="rounded-lg border p-4">
-            <Skeleton className="h-24 w-full mb-4" />
-            <Skeleton className="h-4 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ))}
-      </div>
-    );
+    return <LoadingScreen message="Loading quotes..." fullScreen={false} />;
   }
 
   if (quotes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No Quotes Found</h3>
-        <p className="text-muted-foreground mb-6 max-w-md">
-          No quotes match your current filters or search criteria.
-        </p>
-        {onResetFilters && (
-          <Button 
-            variant="outline" 
-            onClick={onResetFilters}
-            className="flex items-center gap-2"
-          >
-            <RefreshCcw size={16} />
-            Reset Filters
-          </Button>
-        )}
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">No quotes found. Try adjusting your search or filters.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {quotes.map((quote) => (
-        <Link to={`/quotes/${quote.id}`} key={quote.id} className="transition-transform hover:scale-[1.01]">
-          <QuoteCard
-            quote={quote}
-            isLiked={userLikes[quote.id] || false}
-            isBookmarked={userBookmarks[quote.id] || false}
-            onLike={onLike}
-            onBookmark={onBookmark}
-            onTagClick={onTagClick}
-          />
-        </Link>
+        <Card key={quote.id} className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6">
+            <blockquote className="text-lg font-medium italic mb-4 leading-relaxed">
+              "{quote.text}"
+            </blockquote>
+            
+            <div className="space-y-3">
+              <div className="text-sm">
+                <span className="font-medium">— {quote.author}</span>
+                {quote.source && <span className="text-muted-foreground">, {quote.source}</span>}
+              </div>
+              
+              {quote.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {quote.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => onTagClick(tag)}
+                      className="px-2 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between pt-3 border-t">
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onLike(quote.id)}
+                    className="flex items-center space-x-1"
+                  >
+                    <Heart 
+                      size={16} 
+                      className={userLikes[quote.id] ? "fill-red-500 text-red-500" : ""} 
+                    />
+                    <span>{quote.likes}</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onBookmark(quote.id)}
+                    className="flex items-center space-x-1"
+                  >
+                    <Bookmark 
+                      size={16} 
+                      className={userBookmarks[quote.id] ? "fill-blue-500 text-blue-500" : ""} 
+                    />
+                    <span>{quote.bookmarks}</span>
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <MessageCircle size={16} />
+                    <span>{quote.comments}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
