@@ -25,12 +25,12 @@ export const useContentFetchData = ({
       setIsLoading(true);
       setError(null);
 
-      // Fetch quotes with profiles using proper foreign key reference
+      // Fetch quotes with profiles using proper join syntax
       const { data: quotes, error: quotesError } = await supabase
         .from('quotes')
         .select(`
           *,
-          profiles!inner(id, name, username, avatar_url)
+          profiles:user_id(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -39,12 +39,12 @@ export const useContentFetchData = ({
         console.error('Error fetching quotes:', quotesError);
       }
 
-      // Fetch forum posts with profiles using proper foreign key reference
+      // Fetch forum posts with profiles using proper join syntax
       const { data: forumPosts, error: forumError } = await supabase
         .from('forum_posts')
         .select(`
           *,
-          profiles!inner(id, name, username, avatar_url)
+          profiles:user_id(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -53,12 +53,12 @@ export const useContentFetchData = ({
         console.error('Error fetching forum posts:', forumError);
       }
 
-      // Fetch media posts with profiles using proper foreign key reference
+      // Fetch media posts with profiles using proper join syntax
       const { data: mediaPosts, error: mediaError } = await supabase
         .from('media_posts')
         .select(`
           *,
-          profiles!inner(id, name, username, avatar_url)
+          profiles:user_id(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -67,12 +67,12 @@ export const useContentFetchData = ({
         console.error('Error fetching media posts:', mediaError);
       }
 
-      // Fetch knowledge entries with profiles using proper foreign key reference
+      // Fetch knowledge entries with profiles using proper join syntax
       const { data: knowledgeEntries, error: knowledgeError } = await supabase
         .from('knowledge_entries')
         .select(`
           *,
-          profiles!inner(id, name, username, avatar_url)
+          profiles:user_id(id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);

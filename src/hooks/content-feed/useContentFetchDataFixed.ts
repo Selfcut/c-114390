@@ -37,7 +37,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('quotes')
       .select(`
         *,
-        profiles!inner(id, username, name, avatar_url)
+        profiles:user_id(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -108,7 +108,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('forum_posts')
       .select(`
         *,
-        profiles!inner(id, username, name, avatar_url)
+        profiles:user_id(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -175,7 +175,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('media_posts')
       .select(`
         *,
-        profiles!inner(id, username, name, avatar_url)
+        profiles:user_id(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
@@ -237,7 +237,7 @@ export const useContentFetchDataFixed = (options: ContentFetchOptions = {}) => {
       .from('knowledge_entries')
       .select(`
         *,
-        profiles!inner(id, username, name, avatar_url)
+        profiles:user_id(id, username, name, avatar_url)
       `);
 
     if (searchQuery) {
