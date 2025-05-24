@@ -48,10 +48,8 @@ const Quotes = () => {
       
       {/* Search and filters */}
       <QuotesSearch 
-        searchQuery={searchQuery}
+        search={searchQuery}
         onSearchChange={setSearchQuery}
-        filterTag={filterTag}
-        onTagClear={() => setFilterTag(null)}
       />
 
       {/* Tags scroller */}
@@ -70,7 +68,6 @@ const Quotes = () => {
         onLike={onLike}
         onBookmark={onBookmark}
         onTagClick={setFilterTag}
-        onResetFilters={resetFilters}
       />
       
       {/* Quote submission modal */}

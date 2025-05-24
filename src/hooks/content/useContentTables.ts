@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react';
-import { ContentType, isValidContentType } from '@/types/contentTypes';
+import { ContentType } from '@/types/unified-content-types';
 import { normalizeContentType } from '@/hooks/content-interactions/contentTypeUtils';
 
 export interface ContentTypeOptions {
