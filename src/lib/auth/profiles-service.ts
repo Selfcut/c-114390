@@ -3,4 +3,4 @@
 export * from './auth-utils';
 
 // Explicitly re-export the ensureUserProfile function to ensure TypeScript sees it
-export { ensureUserProfile } from './auth-utils';
+export { ensureUserProfile, fetchUserProfile } from './auth-utils';

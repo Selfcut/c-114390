@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User, AuthError } from '@supabase/supabase-js';
-import { UserProfile, AuthContextType, UserStatus } from '@/types/user';
+import { UserProfile, AuthContextType, UserStatus, UserRole } from '@/types/user';
 import { toast } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,7 +39,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         website: data.website,
         status: data.status as UserStatus,
         isGhostMode: data.is_ghost_mode,
-        role: data.role,
+        role: data.role as UserRole,
         isAdmin: data.role === 'admin'
       };
     } catch (error) {

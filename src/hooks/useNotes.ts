@@ -1,8 +1,10 @@
 
 import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { useDebounce } from './useDebounce';
 
 export interface Note {
   id: string;
@@ -16,6 +18,7 @@ export const useNotes = () => {
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const fetchNotes = async () => {
     if (!user) return;
@@ -38,10 +41,10 @@ export const useNotes = () => {
     }
   };
 
-  const createNote = async (content: string) => {
-    if (!user) return null;
+  const createNote = useMutation({
+    mutationFn: async ({ content }: { content: string }) => {
+      if (!user) throw new Error('No user found');
 
-    try {
       const { data, error } = await supabase
         .from('user_notes')
         .insert({
@@ -52,45 +55,52 @@ export const useNotes = () => {
         .single();
 
       if (error) throw error;
-
+      return data;
+    },
+    onSuccess: (data) => {
       setNotes(prev => [data, ...prev]);
       toast.success('Note created');
-      return data;
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
+    onError: (error) => {
       console.error('Error creating note:', error);
       toast.error('Failed to create note');
-      return null;
     }
-  };
+  });
 
-  const updateNote = async (id: string, content: string) => {
-    if (!user) return false;
+  const updateNote = useMutation({
+    mutationFn: async ({ id, noteData }: { id: string; noteData: { content: string } }) => {
+      if (!user) throw new Error('No user found');
 
-    try {
       const { data, error } = await supabase
         .from('user_notes')
-        .update({ content, updated_at: new Date().toISOString() })
+        .update({ 
+          content: noteData.content, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
         .single();
 
       if (error) throw error;
-
-      setNotes(prev => prev.map(note => note.id === id ? data : note));
+      return data;
+    },
+    onSuccess: (data) => {
+      setNotes(prev => prev.map(note => note.id === data.id ? data : note));
       toast.success('Note updated');
-      return true;
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
+    onError: (error) => {
       console.error('Error updating note:', error);
       toast.error('Failed to update note');
-      return false;
     }
-  };
+  });
 
-  const deleteNote = async (id: string) => {
-    if (!user) return false;
+  const deleteNote = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('No user found');
 
-    try {
       const { error } = await supabase
         .from('user_notes')
         .delete()
@@ -98,16 +108,18 @@ export const useNotes = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-
+      return id;
+    },
+    onSuccess: (id) => {
       setNotes(prev => prev.filter(note => note.id !== id));
       toast.success('Note deleted');
-      return true;
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
+    onError: (error) => {
       console.error('Error deleting note:', error);
       toast.error('Failed to delete note');
-      return false;
     }
-  };
+  });
 
   useEffect(() => {
     fetchNotes();
@@ -119,6 +131,40 @@ export const useNotes = () => {
     createNote,
     updateNote,
     deleteNote,
-    refreshNotes: fetchNotes
+    refreshNotes: fetchNotes,
+    useAutoSaveNote: (noteId?: string, content?: string) => useAutoSaveNote(noteId, content, updateNote)
   };
+};
+
+// Auto-save hook for notes
+export const useAutoSaveNote = (
+  noteId?: string, 
+  content?: string, 
+  updateNoteMutation?: any
+) => {
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const debouncedContent = useDebounce(content, 2000);
+
+  useEffect(() => {
+    if (!noteId || !debouncedContent || !updateNoteMutation) return;
+
+    const saveNote = async () => {
+      setAutoSaveStatus('saving');
+      try {
+        await updateNoteMutation.mutateAsync({
+          id: noteId,
+          noteData: { content: debouncedContent }
+        });
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      } catch (error) {
+        setAutoSaveStatus('error');
+        setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      }
+    };
+
+    saveNote();
+  }, [debouncedContent, noteId, updateNoteMutation]);
+
+  return { autoSaveStatus };
 };
