@@ -9,11 +9,13 @@ import {
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "./providers/ThemeProvider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const CollapsibleSidebar = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const { theme } = useTheme();
   const [collapsed, setCollapsed] = useState(() => {
     return localStorage.getItem('sidebar-collapsed') === 'true';
   });
@@ -50,8 +52,7 @@ export const CollapsibleSidebar = () => {
   }, [collapsed]);
 
   const navItems = [
-    { path: "/welcome", icon: Home, label: "Home" },
-    { path: "/dashboard", icon: Settings, label: "Dashboard" },
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/forum", icon: MessageSquare, label: "Forum" },
     { path: "/library", icon: Library, label: "Library" },
     { path: "/wiki", icon: Book, label: "Wiki" },
@@ -69,23 +70,21 @@ export const CollapsibleSidebar = () => {
   }
 
   // User routes
-  if (user) {
-    navItems.push(
-      { path: "/profile", icon: User, label: "Profile" },
-      { path: "/settings", icon: Settings, label: "Settings" }
-    );
-  }
+  navItems.push(
+    { path: "/profile", icon: User, label: "Profile" },
+    { path: "/settings", icon: Settings, label: "Settings" }
+  );
 
   return (
     <aside 
       className={cn(
-        "bg-background border-r border-border h-screen fixed left-0 top-0 z-40 transition-all duration-300",
+        "bg-sidebar-background border-r border-sidebar-border h-screen fixed left-0 top-0 z-40 transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
       aria-label="Main navigation"
       role="navigation"
     >
-      <div className="p-4 flex items-center justify-between border-b border-border">
+      <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
         {!collapsed && (
           <h2 className="font-semibold text-lg">Polymath</h2>
         )}
@@ -112,7 +111,7 @@ export const CollapsibleSidebar = () => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
                   isActive
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/10 text-primary sidebar-item active"
                     : "hover:bg-accent/50 text-foreground"
                 )}
                 aria-current={isActive ? "page" : undefined}

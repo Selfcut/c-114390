@@ -1,8 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUserInteraction } from '@/contexts/UserInteractionContext';
-import { ContentType, UnifiedContentItem, ContentViewMode } from '@/types/unified-content-types';
-import { useNavigate } from 'react-router-dom';
+import { ContentType, ContentViewMode } from '@/types/unified-content-types';
+import { useContentFetchData } from './content-feed/useContentFetchData';
+import { useAuth } from '@/lib/auth';
+import { toggleUserInteraction, checkUserContentInteractions } from '@/lib/utils/content-interactions';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserInteractions {
   likes: Record<string, boolean>;
@@ -13,91 +15,117 @@ export const useUnifiedContentFeed = (
   contentType: ContentType = ContentType.All,
   viewMode: ContentViewMode = 'list'
 ) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [userInteractions, setUserInteractions] = useState<UserInteractions>({
     likes: {},
     bookmarks: {}
   });
-  const [feedItems, setFeedItems] = useState<UnifiedContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
 
-  const { likedItems, bookmarkedItems, checkInteractions, likeContent, bookmarkContent } = useUserInteraction();
-  const navigate = useNavigate();
+  // Check user interactions for content items
+  const checkUserInteractions = useCallback(async (itemIds: string[]) => {
+    if (!user?.id) return;
 
-  useEffect(() => {
-    setUserInteractions({
-      likes: likedItems,
-      bookmarks: bookmarkedItems
-    });
-  }, [likedItems, bookmarkedItems]);
+    try {
+      const interactions = await checkUserContentInteractions(user.id, itemIds);
+      setUserInteractions(interactions);
+    } catch (error) {
+      console.error('Error checking user interactions:', error);
+    }
+  }, [user?.id]);
 
-  const checkContentInteractions = async (contentId: string, contentType: string) => {
-    await checkInteractions(contentId, contentType);
-  };
+  // Use the content fetch data hook
+  const {
+    feedItems,
+    isLoading,
+    error,
+    hasMore,
+    loadMore,
+    refetch,
+    isInitialLoad
+  } = useContentFetchData({
+    userId: user?.id,
+    checkUserInteractions,
+    viewMode
+  });
 
-  const loadMore = useCallback(() => {
-    // TODO: Implement pagination
-    console.log('Load more items');
-  }, []);
-
-  const refetch = useCallback(() => {
-    setIsLoading(true);
-    setError(null);
-    // TODO: Implement data fetching
-    setTimeout(() => {
-      setFeedItems([]);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
-
+  // Handle like toggle
   const handleLike = useCallback(async (contentId: string, contentType: ContentType) => {
-    try {
-      await likeContent(contentId, contentType);
-    } catch (error) {
-      console.error('Error liking content:', error);
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to like content",
+        variant: "destructive",
+      });
+      return false;
     }
-  }, [likeContent]);
 
+    try {
+      const stateKey = `${contentType}:${contentId}`;
+      const newLikeState = await toggleUserInteraction('like', user.id, contentId, contentType);
+      
+      setUserInteractions(prev => ({
+        ...prev,
+        likes: {
+          ...prev.likes,
+          [stateKey]: newLikeState
+        }
+      }));
+      
+      return newLikeState;
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [user?.id, toast]);
+
+  // Handle bookmark toggle
   const handleBookmark = useCallback(async (contentId: string, contentType: ContentType) => {
-    try {
-      await bookmarkContent(contentId, contentType);
-    } catch (error) {
-      console.error('Error bookmarking content:', error);
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to bookmark content",
+        variant: "destructive",
+      });
+      return false;
     }
-  }, [bookmarkContent]);
 
-  const handleContentClick = useCallback((contentId: string, contentType: ContentType) => {
     try {
-      switch (contentType) {
-        case ContentType.Knowledge:
-          navigate(`/knowledge/${contentId}`);
-          break;
-        case ContentType.Media:
-          navigate(`/media/${contentId}`);
-          break;
-        case ContentType.Quote:
-          navigate(`/quotes/${contentId}`);
-          break;
-        case ContentType.Forum:
-          navigate(`/forum/${contentId}`);
-          break;
-        default:
-          navigate(`/content/${contentId}`);
-      }
+      const stateKey = `${contentType}:${contentId}`;
+      const newBookmarkState = await toggleUserInteraction('bookmark', user.id, contentId, contentType);
+      
+      setUserInteractions(prev => ({
+        ...prev,
+        bookmarks: {
+          ...prev.bookmarks,
+          [stateKey]: newBookmarkState
+        }
+      }));
+      
+      return newBookmarkState;
     } catch (error) {
-      console.error('Navigation error:', error);
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark. Please try again.",
+        variant: "destructive"
+      });
+      return false;
     }
-  }, [navigate]);
+  }, [user?.id, toast]);
 
-  // Initial load
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  // Handle content click navigation
+  const handleContentClick = useCallback((id: string, type: ContentType) => {
+    // This will be handled by the component using this hook
+    console.log(`Content clicked: ${type}:${id}`);
+  }, []);
 
   return {
-    userInteractions,
-    checkContentInteractions,
     feedItems,
     isLoading,
     error,
@@ -108,6 +136,7 @@ export const useUnifiedContentFeed = (
     userBookmarks: userInteractions.bookmarks,
     handleLike,
     handleBookmark,
-    handleContentClick
+    handleContentClick,
+    isInitialLoad
   };
 };
