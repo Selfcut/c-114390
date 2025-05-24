@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +15,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { EditQuoteModal } from './EditQuoteModal';
 import { DeleteQuoteDialog } from './DeleteQuoteDialog';
-import { PageLayout } from '@/components/layouts/PageLayout';
 import { useUserContentInteractions } from '@/hooks/useUserContentInteractions';
 import { ContentItemType } from '@/components/library/content-items/ContentItemTypes';
 
@@ -200,187 +198,181 @@ export function QuoteDetail() {
   
   if (isLoading) {
     return (
-      <PageLayout>
-        <div className="container mx-auto py-8 px-4 animate-pulse">
-          <Card className="p-6">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
-            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          </Card>
-        </div>
-      </PageLayout>
+      <div className="container mx-auto py-8 px-4 animate-pulse">
+        <Card className="p-6">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
+          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+        </Card>
+      </div>
     );
   }
   
   if (!quote) {
     return (
-      <PageLayout>
-        <div className="container mx-auto py-8 px-4">
-          <Card className="p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Quote Not Found</h2>
-            <p className="mb-4">Sorry, the quote you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/quotes')}>Back to Quotes</Button>
-          </Card>
-        </div>
-      </PageLayout>
+      <div className="container mx-auto py-8 px-4">
+        <Card className="p-6 text-center">
+          <h2 className="text-2xl font-bold mb-4">Quote Not Found</h2>
+          <p className="mb-4">Sorry, the quote you're looking for doesn't exist or has been removed.</p>
+          <Button onClick={() => navigate('/quotes')}>Back to Quotes</Button>
+        </Card>
+      </div>
     );
   }
   
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8 px-4">
-        <Card className="p-6 mb-6">
-          {/* Quote Content */}
-          <div className="mb-6">
-            <blockquote className="text-2xl font-serif italic mb-4">
-              "{quote?.text}"
-            </blockquote>
+    <div className="container mx-auto py-8 px-4">
+      <Card className="p-6 mb-6">
+        {/* Quote Content */}
+        <div className="mb-6">
+          <blockquote className="text-2xl font-serif italic mb-4">
+            "{quote?.text}"
+          </blockquote>
+          
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-lg font-semibold">— {quote?.author}</p>
+              {quote?.source && (
+                <p className="text-sm text-muted-foreground">from {quote.source}</p>
+              )}
+            </div>
             
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-lg font-semibold">— {quote?.author}</p>
-                {quote?.source && (
-                  <p className="text-sm text-muted-foreground">from {quote.source}</p>
-                )}
+            {user && quote?.user_id === user.id && (
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
+                  Edit
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+                  Delete
+                </Button>
               </div>
-              
-              {user && quote?.user_id === user.id && (
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
-                    Edit
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
-                    Delete
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Actions & Stats */}
-          <div className="flex flex-wrap justify-between items-center border-t pt-4 mt-4">
-            <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-              <Button 
-                variant={isLiked ? "default" : "outline"} 
-                size="sm"
-                onClick={handleLike}
-                className="flex items-center space-x-1"
-              >
-                <HeartIcon size={16} className={isLiked ? "fill-white" : ""} />
-                <span>{likeCount}</span>
-              </Button>
-              
-              <Button 
-                variant={isBookmarked ? "default" : "outline"} 
-                size="sm"
-                onClick={handleBookmark}
-                className="flex items-center space-x-1"
-              >
-                <BookmarkIcon size={16} className={isBookmarked ? "fill-white" : ""} />
-                <span>{bookmarkCount}</span>
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowShareDialog(true)}
-                className="flex items-center space-x-1"
-              >
-                <Share2Icon size={16} />
-                <span>Share</span>
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setActiveTab('comments')}
-                className="flex items-center space-x-1"
-              >
-                <MessageCircleIcon size={16} />
-                <span>{quote?.comments || 0}</span>
-              </Button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {quote?.tags && quote.tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="mr-1">
-                  {tag}
-                </Badge>
-              ))}
-              {quote?.category && (
-                <Badge variant="outline" className="bg-primary/10 text-primary">
-                  {quote.category}
-                </Badge>
-              )}
-            </div>
-          </div>
-          
-          {/* User Info */}
-          <div className="flex items-center mt-6 pt-4 border-t">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={quote?.user?.avatar_url ?? undefined} alt={quote?.user?.name ?? 'User'} />
-              <AvatarFallback>{quote?.user?.name?.charAt(0) ?? 'U'}</AvatarFallback>
-            </Avatar>
-            <div className="ml-3">
-              <p className="text-sm font-medium">{quote?.user?.name ?? 'Unknown User'}</p>
-              <p className="text-xs text-muted-foreground">
-                Shared {quote && formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
-              </p>
-            </div>
-          </div>
-        </Card>
-        
-        {/* Tabs for Comments */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="quote">Quote</TabsTrigger>
-            <TabsTrigger value="comments">Comments ({quote?.comments || 0})</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="quote">
-            {/* Additional quote context could go here */}
-          </TabsContent>
-          
-          <TabsContent value="comments">
-            {quote && (
-              <QuoteComments 
-                quoteId={quote.id} 
-                updateQuoteCommentCount={updateQuoteCommentCount}
-              />
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
         
-        {/* Share Dialog */}
-        {quote && (
-          <ShareQuoteDialog
-            isOpen={showShareDialog}
-            onClose={() => setShowShareDialog(false)}
-            quote={quote}
-          />
-        )}
+        {/* Actions & Stats */}
+        <div className="flex flex-wrap justify-between items-center border-t pt-4 mt-4">
+          <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+            <Button 
+              variant={isLiked ? "default" : "outline"} 
+              size="sm"
+              onClick={handleLike}
+              className="flex items-center space-x-1"
+            >
+              <HeartIcon size={16} className={isLiked ? "fill-white" : ""} />
+              <span>{likeCount}</span>
+            </Button>
+            
+            <Button 
+              variant={isBookmarked ? "default" : "outline"} 
+              size="sm"
+              onClick={handleBookmark}
+              className="flex items-center space-x-1"
+            >
+              <BookmarkIcon size={16} className={isBookmarked ? "fill-white" : ""} />
+              <span>{bookmarkCount}</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowShareDialog(true)}
+              className="flex items-center space-x-1"
+            >
+              <Share2Icon size={16} />
+              <span>Share</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setActiveTab('comments')}
+              className="flex items-center space-x-1"
+            >
+              <MessageCircleIcon size={16} />
+              <span>{quote?.comments || 0}</span>
+            </Button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {quote?.tags && quote.tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="mr-1">
+                {tag}
+              </Badge>
+            ))}
+            {quote?.category && (
+              <Badge variant="outline" className="bg-primary/10 text-primary">
+                {quote.category}
+              </Badge>
+            )}
+          </div>
+        </div>
         
-        {/* Edit Modal */}
-        {showEditModal && quote && (
-          <EditQuoteModal 
-            isOpen={showEditModal} 
-            onClose={() => setShowEditModal(false)} 
-            quote={quote}
-            onQuoteUpdated={handleQuoteUpdated}
-          />
-        )}
+        {/* User Info */}
+        <div className="flex items-center mt-6 pt-4 border-t">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={quote?.user?.avatar_url ?? undefined} alt={quote?.user?.name ?? 'User'} />
+            <AvatarFallback>{quote?.user?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+          </Avatar>
+          <div className="ml-3">
+            <p className="text-sm font-medium">{quote?.user?.name ?? 'Unknown User'}</p>
+            <p className="text-xs text-muted-foreground">
+              Shared {quote && formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
+            </p>
+          </div>
+        </div>
+      </Card>
+      
+      {/* Tabs for Comments */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="quote">Quote</TabsTrigger>
+          <TabsTrigger value="comments">Comments ({quote?.comments || 0})</TabsTrigger>
+        </TabsList>
         
-        {/* Delete Dialog */}
-        {showDeleteDialog && quote && (
-          <DeleteQuoteDialog
-            isOpen={showDeleteDialog}
-            onClose={() => setShowDeleteDialog(false)}
-            quoteId={quote.id}
-            onQuoteDeleted={handleQuoteDeleted}
-          />
-        )}
-      </div>
-    </PageLayout>
+        <TabsContent value="quote">
+          {/* Additional quote context could go here */}
+        </TabsContent>
+        
+        <TabsContent value="comments">
+          {quote && (
+            <QuoteComments 
+              quoteId={quote.id} 
+              updateQuoteCommentCount={updateQuoteCommentCount}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
+      
+      {/* Share Dialog */}
+      {quote && (
+        <ShareQuoteDialog
+          isOpen={showShareDialog}
+          onClose={() => setShowShareDialog(false)}
+          quote={quote}
+        />
+      )}
+      
+      {/* Edit Modal */}
+      {showEditModal && quote && (
+        <EditQuoteModal 
+          isOpen={showEditModal} 
+          onClose={() => setShowEditModal(false)} 
+          quote={quote}
+          onQuoteUpdated={handleQuoteUpdated}
+        />
+      )}
+      
+      {/* Delete Dialog */}
+      {showDeleteDialog && quote && (
+        <DeleteQuoteDialog
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          quoteId={quote.id}
+          onQuoteDeleted={handleQuoteDeleted}
+        />
+      )}
+    </div>
   );
 }

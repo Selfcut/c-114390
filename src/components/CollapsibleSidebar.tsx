@@ -58,9 +58,9 @@ export const CollapsibleSidebar = () => {
   return (
     <aside 
       className={cn(
-        "bg-sidebar border-r border-sidebar-border h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out",
-        sidebarCollapsed ? "w-16" : "w-64",
-        "md:translate-x-0" // Always visible on desktop
+        "fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out md:translate-x-0",
+        "bg-sidebar border-r border-sidebar-border",
+        sidebarCollapsed ? "w-16" : "w-64"
       )}
       aria-label="Main navigation"
       role="navigation"
@@ -73,7 +73,7 @@ export const CollapsibleSidebar = () => {
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="ml-auto hover:bg-sidebar-accent"
+          className="ml-auto hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title="Toggle sidebar (Alt+S)"
         >

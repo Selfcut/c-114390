@@ -16,8 +16,9 @@ export const HeaderActions = () => {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="mr-1 text-amber-500" 
+        className="mr-1 text-amber-500 hover:text-amber-600 hover:bg-accent transition-colors" 
         aria-label="Premium"
+        title="Premium Features"
       >
         <Star size={20} />
         <span className="sr-only">Premium</span>
@@ -27,8 +28,9 @@ export const HeaderActions = () => {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="mr-1" 
+        className="mr-1 hover:bg-accent hover:text-accent-foreground transition-colors" 
         aria-label="Help"
+        title="Help & Support"
       >
         <HelpCircle size={20} />
         <span className="sr-only">Help</span>
