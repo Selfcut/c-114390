@@ -1,120 +1,66 @@
 
-import React, { useCallback } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React from 'react';
+import { useAuth } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import {
-  User,
-  Settings,
-  LogOut,
-  Crown,
-  Loader2
-} from "lucide-react";
-import { useAuth } from '@/lib/auth';
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/dropdown-menu';
+import { User, Settings, LogOut, LogIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const UserMenu = () => {
-  const { user, signOut, isAuthenticated, isLoading } = useAuth();
-  
-  // Memoized avatar generation for better performance
-  const getAvatarFallback = useCallback(() => {
-    if (!user) return 'U';
-    return user.name?.charAt(0) || user.email?.charAt(0) || 'U';
-  }, [user]);
-  
-  // Memoized avatar URL generation
-  const getAvatarUrl = useCallback(() => {
-    if (!user) return '';
-    return user.avatar_url || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.username || user.email || 'user')}`;
-  }, [user]);
-  
-  // Show optimized loading skeleton during authentication
-  if (isLoading) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) {
     return (
-      <div className="flex items-center justify-center h-8 w-8">
-        <Skeleton className="h-8 w-8 rounded-full" />
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated || !user) {
-    return (
-      <Button variant="default" asChild>
-        <Link to="/auth">
-          Login
-        </Link>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => navigate('/auth')}
+        className="flex items-center gap-2"
+      >
+        <LogIn size={16} />
+        Sign In
       </Button>
     );
   }
-  
+
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("[UserMenu] Error signing out:", error);
-    }
+    await signOut();
+    navigate('/welcome');
   };
-  
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={getAvatarUrl()} alt={user.name || 'User'} />
-            <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
+            <AvatarImage src={user.avatar_url || user.avatar} alt={user.username} />
+            <AvatarFallback>
+              {user.username?.charAt(0).toUpperCase() || 'U'}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuItem onClick={() => navigate('/profile')}>
+          <User className="mr-2 h-4 w-4" />
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/settings')}>
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link to="/profile" className="flex items-center cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </Link>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem asChild>
-            <Link to="/settings" className="flex items-center cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenuItem>
-          
-          {(user?.isAdmin || user?.role === 'admin') && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin" className="flex items-center cursor-pointer">
-                <Crown className="mr-2 h-4 w-4" />
-                <span>Admin Panel</span>
-              </Link>
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={handleSignOut}
-        >
+        <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

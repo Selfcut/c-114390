@@ -33,6 +33,15 @@
     /* Layout-specific variables */
     --sidebar-width: 256px;
     --header-height: 4rem;
+    --chat-sidebar-width: 360px;
+    --content-margin-right: 0;
+    
+    /* Sidebar theme variables */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 14% 20%;
+    --sidebar-border: 220 14% 90%;
+    --sidebar-muted: 220 14% 96%;
+    --sidebar-muted-foreground: 220 14% 50%;
   }
 
   .dark {
@@ -55,6 +64,13 @@
     --border: 225 6% 20%;
     --input: 225 6% 20%;
     --ring: 210 100% 60%;
+    
+    /* Dark sidebar theme variables */
+    --sidebar-background: 225 6% 16%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-border: 225 6% 20%;
+    --sidebar-muted: 225 6% 20%;
+    --sidebar-muted-foreground: 220 14% 75%;
   }
 }
 
