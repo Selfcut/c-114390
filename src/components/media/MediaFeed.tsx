@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageSquare, Eye, Calendar } from 'lucide-react';
+import { Heart, MessageSquare, Eye, Calendar, Bookmark } from 'lucide-react';
 import { MediaPost } from '@/utils/mediaUtils';
 import { UserProfile } from '@/types/user';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useMediaInteractions } from '@/hooks/useMediaInteractions';
+import { formatDate } from '@/utils/dateUtils';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ImagePost } from './ImagePost';
 import { YoutubeEmbed } from './YoutubeEmbed';
 import { DocumentPost } from './DocumentPost';
@@ -68,67 +70,112 @@ export const MediaFeed: React.FC<MediaFeedProps> = ({
     );
   }
 
+  if (isLoading && posts.length === 0) {
+    return <LoadingSkeleton variant="feed" count={3} />;
+  }
+
   return (
     <div className="space-y-6">
-      {posts.map((post) => (
-        <Card key={post.id} className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={post.author?.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {post.author?.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold">{post.author?.name || 'Unknown'}</h3>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Calendar className="w-3 h-3" />
-                    <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+      {posts.map((post) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const { interactions, isLoading: interactionsLoading, toggleLike, toggleBookmark } = useMediaInteractions(
+          post.id,
+          {
+            likesCount: post.likes,
+            commentsCount: post.comments,
+            viewsCount: post.views,
+          }
+        );
+
+        return (
+          <Card key={post.id} className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={post.author?.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {post.author?.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">{post.author?.name || 'Unknown'}</h3>
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
+                      <span>{formatDate(post.created_at)}</span>
+                    </div>
                   </div>
                 </div>
+                <Badge variant="secondary">{post.type}</Badge>
               </div>
-              <Badge variant="secondary">{post.type}</Badge>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
-          <CardContent 
-            className="space-y-4"
-            onClick={() => handlePostClick(post.id)}
-          >
-            <div>
-              <h2 className="text-xl font-bold mb-2">{post.title}</h2>
-              {post.content && (
-                <p className="text-muted-foreground line-clamp-3">{post.content}</p>
+            <CardContent 
+              className="space-y-4"
+              onClick={() => handlePostClick(post.id)}
+            >
+              <div>
+                <h2 className="text-xl font-bold mb-2">{post.title}</h2>
+                {post.content && (
+                  <p className="text-muted-foreground line-clamp-3">{post.content}</p>
+                )}
+              </div>
+              
+              {renderMediaContent(post)}
+            </CardContent>
+
+            <CardFooter className="flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                  <Eye className="w-4 h-4" />
+                  <span>{interactions.viewsCount}</span>
+                </div>
+                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                  <Heart className="w-4 h-4" />
+                  <span>{interactions.likesCount}</span>
+                </div>
+                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>{interactions.commentsCount}</span>
+                </div>
+              </div>
+              
+              {currentUser && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={interactions.isLiked ? "default" : "ghost"}
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLike();
+                    }}
+                    disabled={interactionsLoading}
+                  >
+                    <Heart className={`w-4 h-4 mr-1 ${interactions.isLiked ? 'fill-current' : ''}`} />
+                    {interactions.isLiked ? 'Liked' : 'Like'}
+                  </Button>
+                  <Button
+                    variant={interactions.isBookmarked ? "default" : "ghost"}
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleBookmark();
+                    }}
+                    disabled={interactionsLoading}
+                  >
+                    <Bookmark className={`w-4 h-4 mr-1 ${interactions.isBookmarked ? 'fill-current' : ''}`} />
+                    {interactions.isBookmarked ? 'Saved' : 'Save'}
+                  </Button>
+                </div>
               )}
-            </div>
-            
-            {renderMediaContent(post)}
-          </CardContent>
+            </CardFooter>
+          </Card>
+        );
+      })}
 
-          <CardFooter className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <Button variant="ghost" size="sm">
-                <Heart className="w-4 h-4 mr-1" />
-                {post.likes}
-              </Button>
-              <Button variant="ghost" size="sm">
-                <MessageSquare className="w-4 h-4 mr-1" />
-                {post.comments}
-              </Button>
-              <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                <Eye className="w-4 h-4" />
-                <span>{post.views}</span>
-              </div>
-            </div>
-          </CardFooter>
-        </Card>
-      ))}
-
-      {isLoading && (
+      {isLoading && posts.length > 0 && (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <LoadingSkeleton variant="card" count={2} />
         </div>
       )}
 

@@ -5,7 +5,6 @@ import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { ArrowLeft, Calendar, Eye, ThumbsUp, MessageSquare, AlertTriangle, Bookmark } from 'lucide-react';
-import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/lib/auth';
 import { useMediaDetails } from '@/hooks/media/useMediaDetails';
@@ -13,6 +12,8 @@ import { useMediaInteractions } from '@/hooks/useMediaInteractions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MediaDetailContent } from '@/components/media/MediaDetailContent';
 import { MediaErrorBoundary } from '@/components/ui/MediaErrorBoundary';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { formatDate } from '@/utils/dateUtils';
 
 const MediaDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,11 +39,11 @@ const MediaDetail = () => {
     return (
       <PageLayout>
         <div className="container mx-auto py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-32"></div>
-            <div className="h-64 bg-muted rounded"></div>
-            <div className="h-32 bg-muted rounded"></div>
-          </div>
+          <Button onClick={handleBack} variant="ghost" className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Media
+          </Button>
+          <LoadingSkeleton variant="detail" />
         </div>
       </PageLayout>
     );
@@ -62,7 +63,7 @@ const MediaDetail = () => {
                 <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Media Not Found</h2>
                 <p className="text-muted-foreground">
-                  {typeof error === 'string' ? error : 'The media item you requested could not be found.'}
+                  {error instanceof Error ? error.message : 'The media item you requested could not be found.'}
                 </p>
               </div>
             </CardContent>
@@ -100,7 +101,7 @@ const MediaDetail = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+                      <span>{formatDate(post.created_at)}</span>
                     </div>
                   </div>
                 </div>
