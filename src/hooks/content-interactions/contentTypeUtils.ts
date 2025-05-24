@@ -2,10 +2,8 @@
 import { ContentType } from '@/types/unified-content-types';
 
 export const normalizeContentType = (contentType: string | ContentType): string => {
-  if (typeof contentType === 'string') {
-    return contentType.toLowerCase();
-  }
-  return contentType.toLowerCase();
+  // Convert to string first, then toLowerCase
+  return String(contentType).toLowerCase();
 };
 
 export const getContentTypeFromString = (type: string): ContentType => {
