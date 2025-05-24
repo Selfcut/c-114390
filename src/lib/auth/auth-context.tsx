@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,7 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           avatar_url: authUser.user_metadata?.avatar_url || '',
           status: 'online',
           isGhostMode: false,
-          role: 'user',
+          role: 'user' as const,
           isAdmin: false,
           notificationSettings: {
             desktopNotifications: true,
@@ -116,9 +115,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           username: profile.username,
           name: profile.name || '',
           avatar_url: profile.avatar_url || '',
-          status: profile.status || 'online',
+          status: (profile.status || 'online') as 'online' | 'offline' | 'away' | 'busy',
           isGhostMode: profile.is_ghost_mode || false,
-          role: profile.role || 'user',
+          role: (profile.role === 'admin' || profile.role === 'moderator') ? profile.role as 'admin' | 'moderator' : 'user',
           isAdmin: profile.role === 'admin',
           notificationSettings: {
             desktopNotifications: true,
