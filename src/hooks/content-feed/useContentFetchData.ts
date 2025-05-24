@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { UnifiedContentItem, ContentViewMode } from '@/types/unified-content-types';
+import { UnifiedContentItem, ContentViewMode, ContentType } from '@/types/unified-content-types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UseContentFetchDataProps {
@@ -26,18 +26,26 @@ export const useContentFetchData = ({
       setError(null);
 
       // Fetch quotes
-      const { data: quotes } = await supabase
+      const { data: quotes, error: quotesError } = await supabase
         .from('quotes')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Fetch forum posts
-      const { data: forumPosts } = await supabase
-        .from('forum_discussions')
+      if (quotesError) {
+        console.error('Error fetching quotes:', quotesError);
+      }
+
+      // Fetch forum posts (corrected table name)
+      const { data: forumPosts, error: forumError } = await supabase
+        .from('forum_posts')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
+
+      if (forumError) {
+        console.error('Error fetching forum posts:', forumError);
+      }
 
       const items: UnifiedContentItem[] = [];
 
@@ -46,15 +54,23 @@ export const useContentFetchData = ({
         quotes.forEach(quote => {
           items.push({
             id: quote.id,
-            type: 'quote',
+            type: ContentType.Quote,
             title: quote.text.substring(0, 50) + '...',
             content: quote.text,
-            author: quote.author || 'Unknown',
-            createdAt: quote.created_at,
-            metadata: {
-              category: quote.category,
-              tags: quote.tags || []
-            }
+            author: {
+              name: quote.author || 'Unknown',
+              username: quote.author || 'unknown'
+            },
+            createdAt: new Date(quote.created_at),
+            metrics: {
+              likes: quote.likes || 0,
+              comments: quote.comments || 0,
+              bookmarks: quote.bookmarks || 0,
+              views: 0
+            },
+            tags: quote.tags || [],
+            viewMode: viewMode,
+            categories: [quote.category]
           });
         });
       }
@@ -64,15 +80,23 @@ export const useContentFetchData = ({
         forumPosts.forEach(post => {
           items.push({
             id: post.id,
-            type: 'forum',
+            type: ContentType.Forum,
             title: post.title,
             content: post.content,
-            author: post.author || 'Anonymous',
-            createdAt: post.created_at,
-            metadata: {
-              category: post.category,
-              tags: post.tags || []
-            }
+            author: {
+              name: 'User',
+              username: 'user'
+            },
+            createdAt: new Date(post.created_at),
+            metrics: {
+              likes: post.upvotes || 0,
+              comments: post.comments || 0,
+              views: post.views || 0,
+              upvotes: post.upvotes || 0
+            },
+            tags: post.tags || [],
+            viewMode: viewMode,
+            categories: []
           });
         });
       }
@@ -94,7 +118,7 @@ export const useContentFetchData = ({
       setIsLoading(false);
       setIsInitialLoad(false);
     }
-  }, [userId, checkUserInteractions]);
+  }, [userId, checkUserInteractions, viewMode]);
 
   const loadMore = useCallback(() => {
     // TODO: Implement pagination
