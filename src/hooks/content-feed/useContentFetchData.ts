@@ -30,7 +30,7 @@ export const useContentFetchData = ({
         .from('quotes')
         .select(`
           *,
-          profiles:user_id(id, name, username, avatar_url)
+          profiles (id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -44,7 +44,7 @@ export const useContentFetchData = ({
         .from('forum_posts')
         .select(`
           *,
-          profiles:user_id(id, name, username, avatar_url)
+          profiles (id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -58,7 +58,7 @@ export const useContentFetchData = ({
         .from('media_posts')
         .select(`
           *,
-          profiles:user_id(id, name, username, avatar_url)
+          profiles (id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -72,7 +72,7 @@ export const useContentFetchData = ({
         .from('knowledge_entries')
         .select(`
           *,
-          profiles:user_id(id, name, username, avatar_url)
+          profiles (id, name, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -86,16 +86,19 @@ export const useContentFetchData = ({
       // Transform quotes
       if (quotes) {
         quotes.forEach(quote => {
+          // Safely access profile data - it could be null if no profile exists
+          const profile = Array.isArray(quote.profiles) ? quote.profiles[0] : quote.profiles;
+          
           items.push({
             id: quote.id,
             type: ContentType.Quote,
             title: quote.text.length > 50 ? quote.text.substring(0, 50) + '...' : quote.text,
             content: quote.text,
             author: {
-              id: quote.profiles?.id || quote.user_id || 'unknown',
-              name: quote.profiles?.name || quote.author || 'Unknown',
-              username: quote.profiles?.username || 'unknown',
-              avatar: quote.profiles?.avatar_url
+              id: profile?.id || quote.user_id || 'unknown',
+              name: profile?.name || quote.author || 'Unknown',
+              username: profile?.username || 'unknown',
+              avatar: profile?.avatar_url
             },
             createdAt: new Date(quote.created_at),
             metrics: {
@@ -114,6 +117,8 @@ export const useContentFetchData = ({
       // Transform forum posts
       if (forumPosts) {
         forumPosts.forEach(post => {
+          const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+          
           items.push({
             id: post.id,
             type: ContentType.Forum,
@@ -121,10 +126,10 @@ export const useContentFetchData = ({
             content: post.content,
             summary: post.content.length > 200 ? post.content.substring(0, 200) + '...' : post.content,
             author: {
-              id: post.profiles?.id || post.user_id || 'unknown',
-              name: post.profiles?.name || 'User',
-              username: post.profiles?.username || 'user',
-              avatar: post.profiles?.avatar_url
+              id: profile?.id || post.user_id || 'unknown',
+              name: profile?.name || 'User',
+              username: profile?.username || 'user',
+              avatar: profile?.avatar_url
             },
             createdAt: new Date(post.created_at),
             metrics: {
@@ -142,16 +147,18 @@ export const useContentFetchData = ({
       // Transform media posts
       if (mediaPosts) {
         mediaPosts.forEach(media => {
+          const profile = Array.isArray(media.profiles) ? media.profiles[0] : media.profiles;
+          
           items.push({
             id: media.id,
             type: ContentType.Media,
             title: media.title,
             content: media.content,
             author: {
-              id: media.profiles?.id || media.user_id || 'unknown',
-              name: media.profiles?.name || 'User',
-              username: media.profiles?.username || 'user',
-              avatar: media.profiles?.avatar_url
+              id: profile?.id || media.user_id || 'unknown',
+              name: profile?.name || 'User',
+              username: profile?.username || 'user',
+              avatar: profile?.avatar_url
             },
             createdAt: new Date(media.created_at),
             metrics: {
@@ -169,6 +176,8 @@ export const useContentFetchData = ({
       // Transform knowledge entries
       if (knowledgeEntries) {
         knowledgeEntries.forEach(entry => {
+          const profile = Array.isArray(entry.profiles) ? entry.profiles[0] : entry.profiles;
+          
           items.push({
             id: entry.id,
             type: ContentType.Knowledge,
@@ -176,10 +185,10 @@ export const useContentFetchData = ({
             summary: entry.summary,
             content: entry.content,
             author: {
-              id: entry.profiles?.id || entry.user_id || 'unknown',
-              name: entry.profiles?.name || 'User',
-              username: entry.profiles?.username || 'user',
-              avatar: entry.profiles?.avatar_url
+              id: profile?.id || entry.user_id || 'unknown',
+              name: profile?.name || 'User',
+              username: profile?.username || 'user',
+              avatar: profile?.avatar_url
             },
             createdAt: new Date(entry.created_at),
             metrics: {
