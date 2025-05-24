@@ -11,6 +11,29 @@ export interface ContentTypeInfo {
   bookmarksColumnName: string;
 }
 
+export const getContentTableName = (contentType: string): string => {
+  const normalizedType = contentType.toLowerCase();
+  
+  switch (normalizedType) {
+    case 'quote':
+      return 'quotes';
+    case 'forum':
+      return 'forum_posts';
+    case 'media':
+      return 'media_posts';
+    case 'wiki':
+      return 'wiki_articles';
+    case 'knowledge':
+      return 'knowledge_entries';
+    case 'research':
+      return 'research_papers';
+    case 'ai':
+      return 'ai_content';
+    default:
+      return 'forum_posts';
+  }
+};
+
 export const getContentTypeInfo = (contentType: ContentType): ContentTypeInfo => {
   switch (contentType) {
     case ContentType.Quote:

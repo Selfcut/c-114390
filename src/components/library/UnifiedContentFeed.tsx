@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { UnifiedContentFeedComponent } from './UnifiedContentFeedComponent';
 import { ContentTypeFilter } from './ContentTypeFilter';
 import { ViewSwitcher } from './ViewSwitcher';
-import { ContentType, ContentViewMode, ContentTypeValues } from '@/types/unified-content-types';
+import { ContentType, ContentViewMode } from '@/types/unified-content-types';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
@@ -14,7 +14,7 @@ interface UnifiedContentFeedProps {
 }
 
 export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({ 
-  defaultContentType = ContentTypeValues.All, 
+  defaultContentType = ContentType.All, 
   defaultViewMode = 'list',
   onCreateContent
 }) => {
@@ -29,19 +29,19 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
   // Map our unified ContentType to the string values expected by ContentTypeFilter
   const mapToFilterType = (type: ContentType): string => {
     switch (type) {
-      case ContentTypeValues.All:
+      case ContentType.All:
         return 'all';
-      case ContentTypeValues.Knowledge:
+      case ContentType.Knowledge:
         return 'knowledge';
-      case ContentTypeValues.Media:
+      case ContentType.Media:
         return 'media';
-      case ContentTypeValues.Quote:
+      case ContentType.Quote:
         return 'quote';
-      case ContentTypeValues.Forum:
+      case ContentType.Forum:
         return 'forum';
-      case ContentTypeValues.Wiki:
+      case ContentType.Wiki:
         return 'wiki';
-      case ContentTypeValues.AI:
+      case ContentType.AI:
         return 'ai';
       default:
         return 'all';
@@ -51,21 +51,21 @@ export const UnifiedContentFeed: React.FC<UnifiedContentFeedProps> = ({
   const mapFromFilterType = (type: string): ContentType => {
     switch (type) {
       case 'all':
-        return ContentTypeValues.All;
+        return ContentType.All;
       case 'knowledge':
-        return ContentTypeValues.Knowledge;
+        return ContentType.Knowledge;
       case 'media':
-        return ContentTypeValues.Media;
+        return ContentType.Media;
       case 'quote':
-        return ContentTypeValues.Quote;
+        return ContentType.Quote;
       case 'forum':
-        return ContentTypeValues.Forum;
+        return ContentType.Forum;
       case 'wiki':
-        return ContentTypeValues.Wiki;
+        return ContentType.Wiki;
       case 'ai':
-        return ContentTypeValues.AI;
+        return ContentType.AI;
       default:
-        return ContentTypeValues.All;
+        return ContentType.All;
     }
   };
 

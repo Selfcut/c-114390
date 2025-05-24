@@ -5,7 +5,7 @@ import { UnifiedContentCard } from './UnifiedContentCard';
 import { ContentFeedSkeleton } from './ContentFeedSkeleton';
 import { ContentFeedError } from './ContentFeedError';
 import { ContentEmptyState } from './ContentEmptyState';
-import { ContentType, ContentViewMode, ContentTypeValues } from '@/types/unified-content-types';
+import { ContentType, ContentViewMode } from '@/types/unified-content-types';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +17,7 @@ interface UnifiedContentFeedComponentProps {
 }
 
 export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentProps> = ({
-  contentType = ContentTypeValues.All,
+  contentType = ContentType.All,
   viewMode = 'list',
   onCreateContent
 }) => {
@@ -38,16 +38,16 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
   const handleContentClick = (id: string, type: ContentType) => {
     try {
       switch (type) {
-        case 'knowledge':
+        case ContentType.Knowledge:
           navigate(`/knowledge/${id}`);
           break;
-        case 'media':
+        case ContentType.Media:
           navigate(`/media/${id}`);
           break;
-        case 'quote':
+        case ContentType.Quote:
           navigate(`/quotes/${id}`);
           break;
-        case 'forum':
+        case ContentType.Forum:
           navigate(`/forum/${id}`);
           break;
         default:
@@ -59,7 +59,7 @@ export const UnifiedContentFeedComponent: React.FC<UnifiedContentFeedComponentPr
   };
 
   // Filter items based on content type
-  const filteredItems = contentType === 'all' 
+  const filteredItems = contentType === ContentType.All 
     ? feedItems 
     : feedItems.filter(item => item.type === contentType);
 

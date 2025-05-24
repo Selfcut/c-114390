@@ -1,5 +1,6 @@
 
 export enum ContentType {
+  All = 'all',
   Quote = 'quote',
   Forum = 'forum',
   Media = 'media',
@@ -8,6 +9,10 @@ export enum ContentType {
   Research = 'research',
   AI = 'ai'
 }
+
+export const ContentTypeValues = ContentType;
+
+export type ContentViewMode = 'list' | 'grid' | 'feed';
 
 export interface UnifiedContent {
   id: string;
@@ -19,6 +24,7 @@ export interface UnifiedContent {
     id: string;
     name: string;
     avatar?: string;
+    username?: string;
   };
   createdAt: Date;
   updatedAt?: Date;
@@ -27,8 +33,17 @@ export interface UnifiedContent {
     comments: number;
     views: number;
     bookmarks?: number;
+    upvotes?: number;
   };
   tags?: string[];
   isLiked?: boolean;
   isBookmarked?: boolean;
+}
+
+export interface UnifiedContentItem extends UnifiedContent {
+  viewMode?: ContentViewMode;
+  coverImage?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'youtube' | 'document' | 'text';
+  categories?: string[];
 }

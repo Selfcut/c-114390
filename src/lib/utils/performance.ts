@@ -23,7 +23,8 @@ class PerformanceMonitor {
         entries.forEach((entry) => {
           if (entry.entryType === 'navigation') {
             const navEntry = entry as PerformanceNavigationTiming;
-            const loadTime = navEntry.loadEventEnd - navEntry.navigationStart;
+            // Use startTime instead of navigationStart which is deprecated
+            const loadTime = navEntry.loadEventEnd - navEntry.startTime;
             this.metrics.set('navigation', loadTime);
           }
         });
