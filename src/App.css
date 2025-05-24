@@ -6,7 +6,8 @@
 :root {
   --sidebar-width: 256px;
   --header-height: 4rem;
-  --chat-sidebar-width: 300px;
+  --chat-sidebar-width: 360px;
+  --content-margin-right: 0;
 }
 
 /* Reset link styles */
@@ -32,9 +33,31 @@ nav a:hover {
   text-decoration: none !important;
 }
 
-/* For proper layout with fixed sidebars */
+/* Main layout positioning */
 .main-layout {
   margin-left: var(--sidebar-width);
+  margin-right: var(--content-margin-right);
+  transition: margin 0.3s ease;
+}
+
+/* Sidebar positioning */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+  transition: width 0.3s ease;
+}
+
+/* Chat sidebar positioning */
+.chat-container {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+  transition: transform 0.3s ease, width 0.3s ease;
 }
 
 /* Empty state styling */
@@ -118,4 +141,24 @@ nav a:hover {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main-layout {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .chat-container {
+    width: 100% !important;
+  }
 }

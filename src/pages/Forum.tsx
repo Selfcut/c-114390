@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { PageSEO } from '@/components/layouts/PageSEO';
 import { DiscussionFilters } from "../components/DiscussionFilters";
 import { ForumHeader } from "../components/forum/ForumHeader";
 import { ForumContent } from "../components/forum/ForumContent";
@@ -65,71 +64,60 @@ const Forum = () => {
   // Handle error fetching forum data
   if (isError) {
     return (
-      <PageSEO 
-        title="Forum | Error - Polymath Community"
-        description="An error occurred while loading forum discussions."
-      >
-        <div className="container mx-auto py-8 px-4">
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-bold mb-4">Error Loading Forum</h2>
-            <p className="text-muted-foreground mb-6">
-              We're having trouble loading the forum discussions. Please try again.
-            </p>
-            <button 
-              onClick={() => refetch()} 
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-            >
-              Try Again
-            </button>
-          </div>
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center py-16">
+          <h2 className="text-2xl font-bold mb-4">Error Loading Forum</h2>
+          <p className="text-muted-foreground mb-6">
+            We're having trouble loading the forum discussions. Please try again.
+          </p>
+          <button 
+            onClick={() => refetch()} 
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Try Again
+          </button>
         </div>
-      </PageSEO>
+      </div>
     );
   }
   
   return (
-    <PageSEO 
-      title="Forum | Polymath Community"
-      description="Join discussions on topics across multiple disciplines. Share your insights and learn from others."
-      keywords="forum, discussions, polymath, community, knowledge sharing"
-    >
-      <div className="container mx-auto py-8 px-4">
-        <ForumHeader onCreateDiscussion={handleCreateDiscussion} />
-        
-        <DiscussionFilters 
-          onSortChange={setSortOption}
-          onFilterChange={setActiveTag}
-          onSearchChange={setSearchTerm}
-          availableTags={allTags}
-          currentSort={sortOption}
-          currentTag={activeTag}
-          currentSearch={searchTerm}
-          isLoading={isLoading}
+    <div className="container mx-auto py-8 px-4">
+      <ForumHeader onCreateDiscussion={handleCreateDiscussion} />
+      
+      <DiscussionFilters 
+        onSortChange={setSortOption}
+        onFilterChange={setActiveTag}
+        onSearchChange={setSearchTerm}
+        availableTags={allTags}
+        currentSort={sortOption}
+        currentTag={activeTag}
+        currentSearch={searchTerm}
+        isLoading={isLoading}
+      />
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <LoadingSpinner text="Loading discussions..." />
+        </div>
+      ) : (
+        <ForumContent
+          filteredDiscussions={filteredDiscussions}
+          activeTag={activeTag}
+          setActiveTag={setActiveTag}
+          setSearchTerm={setSearchTerm}
+          onDiscussionClick={handleDiscussionClick}
         />
-        
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner text="Loading discussions..." />
-          </div>
-        ) : (
-          <ForumContent
-            filteredDiscussions={filteredDiscussions}
-            activeTag={activeTag}
-            setActiveTag={setActiveTag}
-            setSearchTerm={setSearchTerm}
-            onDiscussionClick={handleDiscussionClick}
-          />
-        )}
-        
-        {!isAuthenticated && <GuestPrompt />}
-        
-        <NewDiscussionDialog
-          isOpen={isCreateDialogOpen} 
-          onClose={() => setIsCreateDialogOpen(false)}
-          onSuccess={handleDiscussionCreated}
-        />
-      </div>
-    </PageSEO>
+      )}
+      
+      {!isAuthenticated && <GuestPrompt />}
+      
+      <NewDiscussionDialog
+        isOpen={isCreateDialogOpen} 
+        onClose={() => setIsCreateDialogOpen(false)}
+        onSuccess={handleDiscussionCreated}
+      />
+    </div>
   );
 };
 
