@@ -2,7 +2,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { PageLayout } from '@/components/layouts/PageLayout';
+import { SimpleLayout } from '@/components/layouts/SimpleLayout';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AuthCallback } from './AuthCallback';
@@ -40,14 +40,18 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        {/* Welcome page without layout */}
-        <Route path="/" element={<Welcome />} />
+        {/* Welcome page with simple layout */}
+        <Route path="/" element={
+          <SimpleLayout>
+            <Welcome />
+          </SimpleLayout>
+        } />
         
-        {/* Authentication pages with PageLayout only */}
+        {/* Authentication pages with simple layout */}
         <Route path="/auth" element={
-          <PageLayout hideHeader>
+          <SimpleLayout hideHeader>
             <Auth />
-          </PageLayout>
+          </SimpleLayout>
         } />
         <Route path="/auth/callback" element={<AuthCallback />} />
         
@@ -210,11 +214,11 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        {/* Catch all route with PageLayout */}
+        {/* Catch all route with simple layout */}
         <Route path="*" element={
-          <PageLayout>
+          <SimpleLayout>
             <NotFound />
-          </PageLayout>
+          </SimpleLayout>
         } />
       </Routes>
     </Suspense>

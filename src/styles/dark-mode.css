@@ -54,20 +54,3 @@
 .dark .hover-lift:hover {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
-
-/* Specific dark mode component fixes */
-.dark .card {
-  border-color: hsl(var(--border));
-}
-
-.dark .button {
-  border-color: hsl(var(--border));
-}
-
-.dark input {
-  border-color: hsl(var(--border));
-}
-
-.dark textarea {
-  border-color: hsl(var(--border));
-}

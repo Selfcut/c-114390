@@ -11,42 +11,31 @@ export const NavBar: React.FC = () => {
   const { user } = useAuth();
   const { toggleSidebar } = useLayout();
 
+  // Only show sidebar toggle on app pages (when user is authenticated and layout context exists)
+  const showSidebarToggle = user && toggleSidebar;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <div className="mr-4 hidden md:flex">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="mr-2"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
-          <Link to="/dashboard" className="mr-6 flex items-center space-x-2">
-            <span className="hidden font-bold sm:inline-block">
-              Polymath
-            </span>
-          </Link>
-        </div>
-        
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {/* Mobile menu button */}
+        <div className="mr-4 flex items-center">
+          {showSidebarToggle && (
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
               onClick={toggleSidebar}
+              className="mr-2"
               aria-label="Toggle sidebar"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </Button>
-          </div>
-          <nav className="flex items-center">
-            <HeaderActions />
-          </nav>
+          )}
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-2">
+            <span className="font-bold text-lg">Polymath</span>
+          </Link>
+        </div>
+        
+        <div className="flex flex-1 items-center justify-end space-x-2">
+          <HeaderActions />
         </div>
       </div>
     </header>
