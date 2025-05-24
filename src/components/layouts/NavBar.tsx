@@ -2,55 +2,53 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { HeaderActions } from '@/components/header/HeaderActions';
 import { Button } from '@/components/ui/button';
-import { Home, MessageSquare, Library, Book, Youtube, FileText } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { useLayout } from '@/contexts/LayoutContext';
 
 export const NavBar: React.FC = () => {
   const { user } = useAuth();
-
-  const navItems = [
-    { path: "/", icon: Home, label: "Home" },
-    { path: "/forum", icon: MessageSquare, label: "Forum" },
-    { path: "/library", icon: Library, label: "Library" },
-    { path: "/wiki", icon: Book, label: "Wiki" },
-    { path: "/media", icon: Youtube, label: "Media" },
-    { path: "/quotes", icon: FileText, label: "Quotes" },
-  ];
+  const { toggleSidebar } = useLayout();
 
   return (
-    <nav className="bg-background border-b border-border">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="font-bold text-xl">
-            Polymath
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 max-w-screen-2xl items-center">
+        <div className="mr-4 hidden md:flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="mr-2"
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+          <Link to="/dashboard" className="mr-6 flex items-center space-x-2">
+            <span className="hidden font-bold sm:inline-block">
+              Polymath
+            </span>
           </Link>
-          
-          <div className="hidden md:flex items-center space-x-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+        </div>
+        
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={toggleSidebar}
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
-
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <span className="text-sm text-muted-foreground">
-                Welcome, {user.email}
-              </span>
-            ) : (
-              <Button asChild>
-                <Link to="/auth">Sign In</Link>
-              </Button>
-            )}
-          </div>
+          <nav className="flex items-center">
+            <HeaderActions />
+          </nav>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };

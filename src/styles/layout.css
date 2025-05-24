@@ -50,7 +50,7 @@
   color: hsl(var(--foreground));
 }
 
-/* Discord-like card layout */
+/* Card layout */
 .card-grid {
   display: grid;
   gap: 1rem;
@@ -66,15 +66,27 @@
 
 /* Mobile Styles */
 @media (max-width: 768px) {
+  :root {
+    --sidebar-width: 0px !important;
+    --content-margin-right: 0 !important;
+  }
+  
   .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid hsl(var(--border));
+    transform: translateX(-100%);
+    width: 256px !important;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
   }
   
   .content-container {
     padding: 1rem;
     width: 100%;
+  }
+
+  .chat-container {
+    width: 100% !important;
   }
 }
 
@@ -107,7 +119,7 @@
   width: 100%;
 }
 
-/* Discord-like list styling */
+/* List styling */
 .list-item {
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
@@ -122,4 +134,14 @@
 .list-item-active {
   background-color: hsl(var(--accent));
   font-weight: 500;
+}
+
+/* Fix sidebar colors */
+.sidebar {
+  background-color: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+}
+
+.sidebar .border {
+  border-color: hsl(var(--sidebar-border));
 }

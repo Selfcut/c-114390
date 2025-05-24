@@ -10,13 +10,11 @@ import { useAuth } from "@/lib/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/lib/theme-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const CollapsibleSidebar = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const { theme } = useTheme();
   const { sidebarCollapsed, toggleSidebar } = useLayout();
 
   // Handle keyboard shortcuts
@@ -24,6 +22,7 @@ export const CollapsibleSidebar = () => {
     const handleKeydown = (e: KeyboardEvent) => {
       // Toggle sidebar with Alt+S
       if (e.altKey && e.key === 's') {
+        e.preventDefault();
         toggleSidebar();
       }
     };
@@ -59,21 +58,22 @@ export const CollapsibleSidebar = () => {
   return (
     <aside 
       className={cn(
-        "bg-sidebar-background border-r border-sidebar-border h-screen fixed left-0 top-0 z-40 transition-all duration-300",
-        sidebarCollapsed ? "w-16" : "w-64"
+        "bg-sidebar border-r border-sidebar-border h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out",
+        sidebarCollapsed ? "w-16" : "w-64",
+        "md:translate-x-0" // Always visible on desktop
       )}
       aria-label="Main navigation"
       role="navigation"
     >
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
         {!sidebarCollapsed && (
-          <h2 className="font-semibold text-lg">Polymath</h2>
+          <h2 className="font-semibold text-lg text-sidebar-foreground">Polymath</h2>
         )}
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="ml-auto"
+          className="ml-auto hover:bg-sidebar-accent"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title="Toggle sidebar (Alt+S)"
         >
@@ -90,10 +90,10 @@ export const CollapsibleSidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sidebar-foreground",
                   isActive
-                    ? "bg-primary/10 text-primary sidebar-item active"
-                    : "hover:bg-accent/50 text-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

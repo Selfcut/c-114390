@@ -37,10 +37,6 @@
 }
 
 /* Override specific elements for dark mode */
-.dark .border {
-  border-color: hsl(var(--border));
-}
-
 .dark .sidebar-item.active {
   background-color: hsla(var(--primary), 0.2);
   color: hsl(var(--primary));
@@ -59,7 +55,19 @@
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Fix border colors in dark mode */
-.dark * {
+/* Specific dark mode component fixes */
+.dark .card {
+  border-color: hsl(var(--border));
+}
+
+.dark .button {
+  border-color: hsl(var(--border));
+}
+
+.dark input {
+  border-color: hsl(var(--border));
+}
+
+.dark textarea {
   border-color: hsl(var(--border));
 }
