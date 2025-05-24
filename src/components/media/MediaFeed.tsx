@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -91,7 +90,7 @@ export const MediaFeed: React.FC<MediaFeedProps> = ({
   if (isLoading && posts.length === 0) {
     return (
       <ResponsiveContainer>
-        <LoadingSkeleton variant="feed" count={3} />
+        <LoadingSkeleton variant="card" count={3} />
       </ResponsiveContainer>
     );
   }
