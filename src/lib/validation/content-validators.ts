@@ -43,16 +43,14 @@ export const mediaPostSchema = baseContentSchema.extend({
   url: z.string()
     .url('Must be a valid URL')
     .optional()
-    .refine((url, ctx) => {
-      const type = ctx.parent.type;
+    .superRefine((url, ctx) => {
+      const type = (ctx as any).parent?.type;
       if (type !== 'text' && !url) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'URL is required for non-text posts'
         });
-        return false;
       }
-      return true;
     }),
 });
 

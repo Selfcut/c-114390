@@ -33,83 +33,93 @@ export interface ForumPost {
 const fetchForumPost = withErrorBoundary(async (postId: string): Promise<ForumPost | null> => {
   if (!postId) return null;
 
-  const { data: postData, error: postError } = await supabase
-    .from('forum_posts')
-    .select('*')
-    .eq('id', postId)
-    .single();
-    
-  if (postError) throw postError;
-  if (!postData) return null;
+  try {
+    const { data: postData, error: postError } = await supabase
+      .from('forum_posts')
+      .select('*')
+      .eq('id', postId)
+      .single();
+      
+    if (postError) throw postError;
+    if (!postData) return null;
 
-  const { data: authorProfile } = await supabase
-    .from('profiles')
-    .select('id, name, username, avatar_url')
-    .eq('id', postData.user_id)
-    .maybeSingle();
-  
-  const authorName = authorProfile?.name || authorProfile?.username || 'Unknown User';
-  const authorAvatar = authorProfile?.avatar_url || 
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('id, name, username, avatar_url')
+      .eq('id', postData.user_id)
+      .maybeSingle();
     
-  return {
-    id: postData.id,
-    title: postData.title,
-    content: postData.content,
-    author: authorName,
-    authorId: postData.user_id,
-    authorAvatar,
-    createdAt: new Date(postData.created_at),
-    tags: postData.tags || [],
-    upvotes: postData.upvotes || 0,
-    views: postData.views || 0,
-    comments: postData.comments || 0,
-    isPinned: postData.is_pinned || false
-  };
+    const authorName = authorProfile?.name || authorProfile?.username || 'Unknown User';
+    const authorAvatar = authorProfile?.avatar_url || 
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
+      
+    return {
+      id: postData.id,
+      title: postData.title,
+      content: postData.content,
+      author: authorName,
+      authorId: postData.user_id,
+      authorAvatar,
+      createdAt: new Date(postData.created_at),
+      tags: postData.tags || [],
+      upvotes: postData.upvotes || 0,
+      views: postData.views || 0,
+      comments: postData.comments || 0,
+      isPinned: postData.is_pinned || false
+    };
+  } catch (error) {
+    console.error('Error fetching forum post:', error);
+    throw error;
+  }
 }, 'fetchForumPost');
 
 const fetchComments = withErrorBoundary(async (postId: string): Promise<Comment[]> => {
   if (!postId) return [];
 
-  const { data: commentsData, error: commentsError } = await supabase
-    .from('content_comments')
-    .select('id, comment, user_id, created_at')
-    .eq('content_id', postId)
-    .eq('content_type', 'forum')
-    .order('created_at', { ascending: true });
-    
-  if (commentsError) throw commentsError;
-  if (!commentsData || commentsData.length === 0) return [];
-  
-  const userIds = [...new Set(commentsData.map(comment => comment.user_id))];
-  const { data: commentProfiles } = await supabase
-    .from('profiles')
-    .select('id, name, username, avatar_url')
-    .in('id', userIds);
-    
-  const profilesMap: Record<string, any> = {};
-  if (commentProfiles) {
-    commentProfiles.forEach((profile: any) => {
-      profilesMap[profile.id] = profile;
-    });
-  }
-  
-  return commentsData.map(comment => {
-    const profile = profilesMap[comment.user_id];
-    const commentAuthorName = profile?.name || profile?.username || 'Unknown User';
-    const commentAuthorAvatar = profile?.avatar_url || 
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${commentAuthorName}`;
+  try {
+    const { data: commentsData, error: commentsError } = await supabase
+      .from('content_comments')
+      .select('id, comment, user_id, created_at')
+      .eq('content_id', postId)
+      .eq('content_type', 'forum')
+      .order('created_at', { ascending: true });
       
-    return {
-      id: comment.id,
-      content: comment.comment,
-      author: commentAuthorName,
-      authorId: comment.user_id,
-      authorAvatar: commentAuthorAvatar,
-      createdAt: new Date(comment.created_at),
-      isAuthor: false // Will be set by the hook
-    };
-  });
+    if (commentsError) throw commentsError;
+    if (!commentsData || commentsData.length === 0) return [];
+    
+    const userIds = [...new Set(commentsData.map(comment => comment.user_id))];
+    const { data: commentProfiles } = await supabase
+      .from('profiles')
+      .select('id, name, username, avatar_url')
+      .in('id', userIds);
+      
+    const profilesMap: Record<string, any> = {};
+    if (commentProfiles) {
+      commentProfiles.forEach((profile: any) => {
+        profilesMap[profile.id] = profile;
+      });
+    }
+    
+    return commentsData.map(comment => {
+      const profile = profilesMap[comment.user_id];
+      const commentAuthorName = profile?.name || profile?.username || 'Unknown User';
+      const commentAuthorAvatar = profile?.avatar_url || 
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${commentAuthorName}`;
+        
+      return {
+        id: comment.id,
+        content: comment.comment,
+        author: commentAuthorName,
+        authorId: comment.user_id,
+        authorAvatar: commentAuthorAvatar,
+        createdAt: new Date(comment.created_at),
+        isAuthor: false
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    throw error;
+  }
 }, 'fetchComments');
 
 export function useOptimizedForumPostDetails(postId?: string) {
@@ -248,7 +258,7 @@ export function useOptimizedForumPostDetails(postId?: string) {
         row_id: postId,
         column_name: 'views',
         table_name: 'forum_posts'
-      }).catch(err => console.error('Error incrementing view count:', err));
+      });
     }
   }, [postId, discussion]);
 

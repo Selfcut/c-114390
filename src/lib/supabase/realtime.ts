@@ -20,38 +20,38 @@ class RealtimeManager {
   subscribe(config: RealtimeSubscriptionConfig): string {
     const channelId = `${config.table}_${Date.now()}_${Math.random()}`;
     
-    const channel = supabase
-      .channel(`table-db-changes-${channelId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: config.event || '*',
-          schema: 'public',
-          table: config.table,
-          filter: config.filter
-        },
-        (payload) => {
-          const { eventType } = payload;
-          
-          // Call specific event handlers
-          switch (eventType) {
-            case 'INSERT':
-              config.onInsert?.(payload);
-              break;
-            case 'UPDATE':
-              config.onUpdate?.(payload);
-              break;
-            case 'DELETE':
-              config.onDelete?.(payload);
-              break;
-          }
-          
-          // Call general change handler
-          config.onChange?.(payload);
+    const channel = supabase.channel(`table-db-changes-${channelId}`);
+    
+    channel.on(
+      'postgres_changes',
+      {
+        event: config.event || '*',
+        schema: 'public',
+        table: config.table,
+        filter: config.filter
+      },
+      (payload) => {
+        const { eventType } = payload;
+        
+        // Call specific event handlers
+        switch (eventType) {
+          case 'INSERT':
+            config.onInsert?.(payload);
+            break;
+          case 'UPDATE':
+            config.onUpdate?.(payload);
+            break;
+          case 'DELETE':
+            config.onDelete?.(payload);
+            break;
         }
-      )
-      .subscribe();
+        
+        // Call general change handler
+        config.onChange?.(payload);
+      }
+    );
 
+    channel.subscribe();
     this.channels.set(channelId, channel);
     return channelId;
   }
