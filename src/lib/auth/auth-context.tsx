@@ -13,6 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData?: any) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: any }>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,7 +102,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           status: 'online',
           isGhostMode: false,
           role: 'user',
-          isAdmin: false
+          isAdmin: false,
+          notificationSettings: {
+            desktopNotifications: true,
+            soundNotifications: true,
+            emailNotifications: true
+          }
         });
       } else if (profile) {
         setUser({
@@ -113,11 +119,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           status: profile.status || 'online',
           isGhostMode: profile.is_ghost_mode || false,
           role: profile.role || 'user',
-          isAdmin: profile.role === 'admin'
+          isAdmin: profile.role === 'admin',
+          notificationSettings: {
+            desktopNotifications: true,
+            soundNotifications: true,
+            emailNotifications: true
+          }
         });
       }
     } catch (error) {
       console.error('[Auth] Exception fetching profile:', error);
+    }
+  };
+
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    // Update local state immediately
+    setUser(prev => prev ? { ...prev, ...updates } : null);
+
+    // Update in database
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.username !== undefined) dbUpdates.username = updates.username;
+    if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+    if (updates.website !== undefined) dbUpdates.website = updates.website;
+    if (updates.avatar_url !== undefined) dbUpdates.avatar_url = updates.avatar_url;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.isGhostMode !== undefined) dbUpdates.is_ghost_mode = updates.isGhostMode;
+
+    if (Object.keys(dbUpdates).length > 0) {
+      const { error } = await supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', user.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
     }
   };
 
@@ -175,6 +216,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signUp,
     signOut,
     resetPassword,
+    updateUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

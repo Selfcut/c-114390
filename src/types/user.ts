@@ -1,4 +1,13 @@
 
+export type UserStatus = 'online' | 'offline' | 'away' | 'busy' | 'do-not-disturb' | 'invisible';
+export type UserRole = 'user' | 'admin' | 'moderator';
+
+export interface NotificationSettings {
+  desktopNotifications: boolean;
+  soundNotifications: boolean;
+  emailNotifications: boolean;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -6,14 +15,15 @@ export interface UserProfile {
   name?: string;
   avatar?: string;
   avatar_url?: string;
-  status: 'online' | 'offline' | 'away' | 'busy';
+  status: UserStatus;
   isGhostMode: boolean;
-  role: 'user' | 'admin' | 'moderator';
+  role: UserRole;
   isAdmin: boolean;
   bio?: string;
   website?: string;
   created_at?: string;
   updated_at?: string;
+  notificationSettings?: NotificationSettings;
 }
 
 export interface UserInteractionState {

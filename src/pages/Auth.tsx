@@ -1,307 +1,158 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
-import { LoadingScreen } from '@/components/LoadingScreen';
+
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const Auth = () => {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { signIn, signUp, isAuthenticated, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { toast } = useToast();
-  
-  // Get the redirect path from location state or use default
-  const from = (location.state as { from?: string })?.from || '/dashboard';
-  
-  console.log("Auth page - isAuthenticated:", isAuthenticated, "redirecting to:", from);
-  
-  // Check for error param in URL
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'callback_error') {
-      setError('There was a problem processing your authentication. Please try again.');
-    }
-  }, [searchParams]);
-  
-  // Redirect authenticated users
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log("User is authenticated, redirecting to:", from);
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, from]);
 
-  const validateForm = () => {
-    if (!email) {
-      setError('Email is required.');
-      return false;
-    }
-    
-    if (!password) {
-      setError('Password is required.');
-      return false;
-    }
-    
-    if (activeTab === "signup") {
-      if (!name) {
-        setError('Name is required.');
-        return false;
-      }
-      
-      if (!username) {
-        setError('Username is required.');
-        return false;
-      }
-      
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters.');
-        return false;
-      }
-      
-      if (password !== confirmPassword) {
-        setError('Passwords do not match.');
-        return false;
-      }
-    }
-    
-    return true;
-  };
+  const from = location.state?.from?.pathname || "/dashboard";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setLoading(true);
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     try {
-      if (activeTab === "login") {
-        console.log("Signing in with email:", email);
-        const result = await signIn(email, password);
-        
-        if (result?.error) {
-          console.error("Sign in error:", result.error);
-          setError(result.error.message || 'Failed to sign in.');
-          setLoading(false);
-          return;
-        }
-        
-        toast({
-          title: "Signed in successfully",
-          description: "Welcome back!"
-        });
-        
-        // Will be redirected by the useEffect hook
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        toast.error(error.message || "Failed to sign in");
       } else {
-        console.log("Signing up with email:", email);
-        const result = await signUp(email, password, username, name);
-        
-        if (result?.error) {
-          console.error("Sign up error:", result.error);
-          setError(result.error.message || 'Failed to sign up.');
-          setLoading(false);
-          return;
-        }
-        
-        toast({
-          title: "Sign up successful",
-          description: "Please check your email to verify your account."
-        });
-        
-        // Switch to login tab after successful registration
-        setActiveTab("login");
-        setLoading(false);
+        toast.success("Welcome back!");
+        navigate(from, { replace: true });
       }
-    } catch (err: any) {
-      console.error("Auth error:", err);
-      setError(err.message || 'An unexpected error occurred.');
-      setLoading(false);
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleTabChange = (value: string) => {
-    setError(null);
-    setActiveTab(value as "login" | "signup");
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const name = formData.get("name") as string;
+
+    try {
+      const { error } = await signUp(email, password, {
+        name,
+        username: name.toLowerCase().replace(/\s+/g, '_')
+      });
+      
+      if (error) {
+        toast.error(error.message || "Failed to create account");
+      } else {
+        toast.success("Account created successfully!");
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Already showing loading state during redirect
-  if (isLoading) {
-    return <LoadingScreen message="Loading authentication state..." />;
-  }
-
-  // Redirect immediately if authenticated
-  if (isAuthenticated) {
-    return <LoadingScreen message={`Redirecting to ${from}...`} />;
-  }
-
   return (
-    <div className="container relative h-screen w-full flex items-center justify-center">
-      <div className="w-full max-w-md p-8 rounded-lg shadow-lg bg-background border">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-2">Polymath</h1>
-          <p className="text-muted-foreground">Intellectual Science Community</p>
-        </div>
-        
-        <Tabs defaultValue={activeTab} className="w-full" onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">
-              Login
-            </TabsTrigger>
-            <TabsTrigger value="signup">
-              Sign Up
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="login" className="space-y-4">
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  placeholder="Enter your email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  placeholder="Enter your password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <Button className="w-full mt-6" type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
-                  </>
-                ) : (
-                  'Login'
-                )}
-              </Button>
-            </form>
-            <div className="text-center text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link to="#" onClick={() => setActiveTab("signup")} className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </div>
-          </TabsContent>
-          <TabsContent value="signup" className="space-y-4">
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="Choose a username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  placeholder="Enter your email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input
-                  id="signup-password"
-                  placeholder="Create a password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  placeholder="Confirm your password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-              {error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <Button className="w-full mt-6" type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Account'
-                )}
-              </Button>
-            </form>
-            <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <Link to="#" onClick={() => setActiveTab("login")} className="text-primary hover:underline">
-                Login
-              </Link>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-6 pt-6 border-t text-center text-sm text-muted-foreground">
-          <p>By using this service, you agree to our</p>
-          <div className="flex justify-center gap-2 mt-1">
-            <Link to="#" className="text-primary hover:underline">Terms of Service</Link>
-            <span>and</span>
-            <Link to="#" className="text-primary hover:underline">Privacy Policy</Link>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center">Welcome</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div>
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input
+                    id="signin-email"
+                    name="email"
+                    type="email"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="signin-password">Password</Label>
+                  <Input
+                    id="signin-password"
+                    name="password"
+                    type="password"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign In
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div>
+                  <Label htmlFor="signup-name">Name</Label>
+                  <Input
+                    id="signup-name"
+                    name="name"
+                    type="text"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign Up
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

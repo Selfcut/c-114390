@@ -7,7 +7,7 @@ import { UserProfileComponent } from "../components/profile/UserProfileComponent
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageLayout } from "../components/layouts/PageLayout";
-import { UserProfile as UserProfileType, UserStatus, UserRole } from "../types/user";
+import { UserProfile as UserProfileType } from "../types/user";
 import { useToast } from "@/hooks/use-toast";
 import { trackActivity } from "@/lib/activity-tracker";
 import { fetchUserProfile, ensureUserProfile } from "@/lib/auth/profiles-service";
@@ -63,15 +63,10 @@ const Profile = () => {
         avatar_url: userData.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${userData.username}`,
         bio: userData.bio || "",
         website: userData.website || "",
-        status: (userData.status as UserStatus) || "offline",
+        status: userData.status || "offline",
         isGhostMode: userData.is_ghost_mode || false,
-        role: (userData.role as UserRole) || "user",
-        isAdmin: userData.role === "admin",
-        notificationSettings: {
-          desktopNotifications: true,
-          soundNotifications: true,
-          emailNotifications: true
-        }
+        role: userData.role || "user",
+        isAdmin: userData.role === "admin"
       };
       
       setProfileData(userProfile);
@@ -120,16 +115,6 @@ const Profile = () => {
           variant: "destructive",
         });
         return;
-      }
-      
-      // Ensure notificationSettings is properly structured
-      if (updates.notificationSettings) {
-        // Make sure all required fields are present
-        updates.notificationSettings = {
-          desktopNotifications: updates.notificationSettings.desktopNotifications ?? true,
-          soundNotifications: updates.notificationSettings.soundNotifications ?? true,
-          emailNotifications: updates.notificationSettings.emailNotifications ?? true
-        };
       }
       
       // Call the updateUserProfile function from the auth context

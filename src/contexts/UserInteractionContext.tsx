@@ -25,7 +25,7 @@ export const UserInteractionProvider: React.FC<{ children: ReactNode }> = ({ chi
   const [isLoading, setIsLoading] = useState(false);
 
   const getContentKey = useCallback((contentId: string, contentType: string | ContentType) => {
-    const typeStr = typeof contentType === 'string' ? contentType : contentType.toString();
+    const typeStr = typeof contentType === 'string' ? contentType : String(contentType);
     return `${typeStr}:${contentId}`;
   }, []);
 
@@ -37,7 +37,7 @@ export const UserInteractionProvider: React.FC<{ children: ReactNode }> = ({ chi
 
     setIsLoading(true);
     try {
-      const normalizedType = typeof contentType === 'string' ? contentType : contentType;
+      const normalizedType = typeof contentType === 'string' ? contentType : String(contentType);
       const newState = await toggleUserInteraction('like', user.id, contentId, normalizedType as ContentType);
       
       const key = getContentKey(contentId, contentType);
@@ -60,7 +60,7 @@ export const UserInteractionProvider: React.FC<{ children: ReactNode }> = ({ chi
 
     setIsLoading(true);
     try {
-      const normalizedType = typeof contentType === 'string' ? contentType : contentType;
+      const normalizedType = typeof contentType === 'string' ? contentType : String(contentType);
       const newState = await toggleUserInteraction('bookmark', user.id, contentId, normalizedType as ContentType);
       
       const key = getContentKey(contentId, contentType);
@@ -79,7 +79,7 @@ export const UserInteractionProvider: React.FC<{ children: ReactNode }> = ({ chi
     if (!user?.id) return;
 
     try {
-      const normalizedType = typeof contentType === 'string' ? contentType : contentType;
+      const normalizedType = typeof contentType === 'string' ? contentType : String(contentType);
       const { isLiked, isBookmarked } = await checkUserContentInteractions(user.id, contentId, normalizedType as ContentType);
       
       const key = getContentKey(contentId, contentType);
