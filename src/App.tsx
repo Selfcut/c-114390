@@ -4,6 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/lib/auth/auth-context';
 import { UserInteractionProvider } from '@/contexts/UserInteractionContext';
+import { ThemeProvider } from '@/lib/theme-context';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { performanceMonitor } from '@/lib/utils/performance';
@@ -43,16 +44,18 @@ function App() {
   return (
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <UserInteractionProvider>
-            <Router>
-              <div className="min-h-screen bg-background w-full">
-                <AppRoutes />
-              </div>
-              <Toaster />
-            </Router>
-          </UserInteractionProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <UserInteractionProvider>
+              <Router>
+                <div className="min-h-screen bg-background w-full">
+                  <AppRoutes />
+                </div>
+                <Toaster />
+              </Router>
+            </UserInteractionProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </GlobalErrorBoundary>
   );

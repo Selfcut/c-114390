@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home, Library, MessageSquare, User, Settings, 
@@ -7,36 +7,17 @@ import {
   Quote, Calendar, PenLine, StickyNote
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useLayout } from "@/contexts/LayoutContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "./providers/ThemeProvider";
+import { useTheme } from "@/lib/theme-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const CollapsibleSidebar = () => {
   const { user } = useAuth();
   const location = useLocation();
   const { theme } = useTheme();
-  const [collapsed, setCollapsed] = useState(() => {
-    return localStorage.getItem('sidebar-collapsed') === 'true';
-  });
-
-  const toggleSidebar = () => {
-    const newState = !collapsed;
-    setCollapsed(newState);
-    localStorage.setItem('sidebar-collapsed', String(newState));
-    document.documentElement.style.setProperty(
-      '--sidebar-width', 
-      newState ? '64px' : '256px'
-    );
-  };
-
-  // Set initial sidebar width on mount
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      '--sidebar-width', 
-      collapsed ? '64px' : '256px'
-    );
-  }, [collapsed]);
+  const { sidebarCollapsed, toggleSidebar } = useLayout();
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -49,7 +30,7 @@ export const CollapsibleSidebar = () => {
 
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
-  }, [collapsed]);
+  }, [toggleSidebar]);
 
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
@@ -79,13 +60,13 @@ export const CollapsibleSidebar = () => {
     <aside 
       className={cn(
         "bg-sidebar-background border-r border-sidebar-border h-screen fixed left-0 top-0 z-40 transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        sidebarCollapsed ? "w-16" : "w-64"
       )}
       aria-label="Main navigation"
       role="navigation"
     >
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
-        {!collapsed && (
+        {!sidebarCollapsed && (
           <h2 className="font-semibold text-lg">Polymath</h2>
         )}
         <Button
@@ -93,10 +74,10 @@ export const CollapsibleSidebar = () => {
           size="sm"
           onClick={toggleSidebar}
           className="ml-auto"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title="Toggle sidebar (Alt+S)"
         >
-          {collapsed ? <Menu size={20} /> : <X size={20} />}
+          {sidebarCollapsed ? <Menu size={20} /> : <X size={20} />}
         </Button>
       </div>
       
@@ -117,11 +98,11 @@ export const CollapsibleSidebar = () => {
                 aria-current={isActive ? "page" : undefined}
               >
                 <item.icon size={20} />
-                {!collapsed && <span>{item.label}</span>}
+                {!sidebarCollapsed && <span>{item.label}</span>}
               </Link>
             );
 
-            return collapsed ? (
+            return sidebarCollapsed ? (
               <TooltipProvider key={item.path}>
                 <Tooltip>
                   <TooltipTrigger asChild>

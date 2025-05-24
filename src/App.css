@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -58,6 +57,26 @@ nav a:hover {
   height: 100vh;
   z-index: 40;
   transition: transform 0.3s ease, width 0.3s ease;
+}
+
+/* Layout responsiveness */
+@media (max-width: 768px) {
+  .main-layout {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .chat-container {
+    width: 100% !important;
+  }
 }
 
 /* Empty state styling */
@@ -141,24 +160,4 @@ nav a:hover {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .main-layout {
-    margin-left: 0;
-    margin-right: 0;
-  }
-  
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.open {
-    transform: translateX(0);
-  }
-  
-  .chat-container {
-    width: 100% !important;
-  }
 }

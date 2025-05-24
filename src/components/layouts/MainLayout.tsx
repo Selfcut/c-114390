@@ -4,6 +4,7 @@ import { CollapsibleSidebar } from '../CollapsibleSidebar';
 import { FullHeightChatSidebar } from '../chat/FullHeightChatSidebar';
 import { NavBar } from './NavBar';
 import { Footer } from './Footer';
+import { LayoutProvider } from '@/contexts/LayoutContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -19,26 +20,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   className = ''
 }) => {
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      <CollapsibleSidebar />
-      
-      <div 
-        className="flex-1 flex flex-col transition-all duration-300"
-        style={{ 
-          marginLeft: 'var(--sidebar-width, 256px)',
-          marginRight: 'var(--content-margin-right, 0)'
-        }}
-      >
-        {!hideHeader && <NavBar />}
+    <LayoutProvider>
+      <div className="min-h-screen bg-background flex w-full">
+        <CollapsibleSidebar />
         
-        <main className={`flex-1 ${className}`}>
-          {children}
-        </main>
+        <div 
+          className="flex-1 flex flex-col transition-all duration-300"
+          style={{ 
+            marginLeft: 'var(--sidebar-width, 256px)',
+            marginRight: 'var(--content-margin-right, 0)'
+          }}
+        >
+          {!hideHeader && <NavBar />}
+          
+          <main className={`flex-1 ${className}`}>
+            {children}
+          </main>
+          
+          {!hideFooter && <Footer />}
+        </div>
         
-        {!hideFooter && <Footer />}
+        <FullHeightChatSidebar />
       </div>
-      
-      <FullHeightChatSidebar />
-    </div>
+    </LayoutProvider>
   );
 };
