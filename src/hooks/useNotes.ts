@@ -1,9 +1,7 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { useDebounce } from './useDebounce';
 import { toast } from 'sonner';
 
 export interface Note {
@@ -14,178 +12,113 @@ export interface Note {
   user_id: string;
 }
 
-export type NoteCreateInput = Omit<Note, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
-export type NoteUpdateInput = Partial<Omit<Note, 'id' | 'created_at' | 'updated_at' | 'user_id'>>;
-
 export const useNotes = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchNotes = async () => {
-    if (!user) return [];
-    
-    const { data, error } = await supabase
-      .from('user_notes')
-      .select('*')
-      .order('updated_at', { ascending: false });
-    
-    if (error) {
-      throw error;
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setNotes(data || []);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      toast.error('Failed to fetch notes');
+    } finally {
+      setIsLoading(false);
     }
-    
-    return data as Note[];
   };
 
-  const fetchNoteById = async (id: string) => {
-    const { data, error } = await supabase
-      .from('user_notes')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data as Note;
-  };
+  const createNote = async (content: string) => {
+    if (!user) return null;
 
-  const {
-    data: notes = [],
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ['notes'],
-    queryFn: fetchNotes,
-    enabled: !!user
-  });
-
-  const createNote = useMutation({
-    mutationFn: async (newNote: NoteCreateInput) => {
-      if (!user) throw new Error('User not authenticated');
-
+    try {
       const { data, error } = await supabase
         .from('user_notes')
         .insert({
-          ...newNote,
+          content,
           user_id: user.id
         })
         .select()
         .single();
-      
+
       if (error) throw error;
-      return data as Note;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-    onError: (error) => {
+
+      setNotes(prev => [data, ...prev]);
+      toast.success('Note created');
+      return data;
+    } catch (error) {
       console.error('Error creating note:', error);
-      toast.error('Failed to save note');
+      toast.error('Failed to create note');
+      return null;
     }
-  });
+  };
 
-  const updateNote = useMutation({
-    mutationFn: async ({ id, noteData }: { id: string, noteData: NoteUpdateInput }) => {
-      if (!user) throw new Error('User not authenticated');
+  const updateNote = async (id: string, content: string) => {
+    if (!user) return false;
 
+    try {
       const { data, error } = await supabase
         .from('user_notes')
-        .update(noteData)
+        .update({ content, updated_at: new Date().toISOString() })
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
-      
+
       if (error) throw error;
-      return data as Note;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      queryClient.invalidateQueries({ queryKey: ['note', variables.id] });
-    },
-    onError: (error) => {
+
+      setNotes(prev => prev.map(note => note.id === id ? data : note));
+      toast.success('Note updated');
+      return true;
+    } catch (error) {
       console.error('Error updating note:', error);
       toast.error('Failed to update note');
+      return false;
     }
-  });
+  };
 
-  const deleteNote = useMutation({
-    mutationFn: async (id: string) => {
-      if (!user) throw new Error('User not authenticated');
+  const deleteNote = async (id: string) => {
+    if (!user) return false;
 
+    try {
       const { error } = await supabase
         .from('user_notes')
         .delete()
-        .eq('id', id);
-      
+        .eq('id', id)
+        .eq('user_id', user.id);
+
       if (error) throw error;
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
+
+      setNotes(prev => prev.filter(note => note.id !== id));
       toast.success('Note deleted');
-    },
-    onError: (error) => {
+      return true;
+    } catch (error) {
       console.error('Error deleting note:', error);
       toast.error('Failed to delete note');
+      return false;
     }
-  });
-
-  // Auto-save functionality
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle' | 'error'>('idle');
-
-  const useAutoSaveNote = (
-    id: string | undefined,
-    content: string,
-    debounceMs: number = 1000
-  ) => {
-    const debouncedContent = useDebounce(content, debounceMs);
-
-    const autoSave = useCallback(async () => {
-      if (!id || !debouncedContent || !user) return;
-      
-      setAutoSaveStatus('saving');
-      try {
-        await updateNote.mutateAsync({ id, noteData: { content: debouncedContent } });
-        setAutoSaveStatus('saved');
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        setAutoSaveStatus('error');
-      }
-    }, [id, debouncedContent]);
-
-    // Effect to trigger auto-save when debounced content changes
-    useEffect(() => {
-      if (debouncedContent && id) {
-        autoSave();
-      }
-    }, [debouncedContent, id, autoSave]);
-
-    return {
-      autoSaveStatus,
-      resetStatus: () => setAutoSaveStatus('idle')
-    };
   };
 
-  const useNote = (id: string | undefined) => {
-    return useQuery({
-      queryKey: ['note', id],
-      queryFn: () => fetchNoteById(id!),
-      enabled: !!id && !!user
-    });
-  };
+  useEffect(() => {
+    fetchNotes();
+  }, [user]);
 
   return {
     notes,
     isLoading,
-    error,
-    refetch,
     createNote,
     updateNote,
     deleteNote,
-    useAutoSaveNote,
-    useNote,
-    autoSaveStatus
+    refreshNotes: fetchNotes
   };
 };
