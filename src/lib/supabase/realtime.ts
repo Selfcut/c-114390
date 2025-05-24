@@ -22,8 +22,9 @@ class RealtimeManager {
     
     const channel = supabase.channel(`table-db-changes-${channelId}`);
     
+    // Use the correct event type for Supabase realtime
     channel.on(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event: config.event || '*',
         schema: 'public',
