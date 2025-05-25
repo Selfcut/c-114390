@@ -51,7 +51,7 @@
   }
 
   .dark {
-    /* Dark Mode Variables */
+    /* Dark Mode Variables - Fixed borders */
     --background: 225 6% 13%;
     --foreground: 220 14% 96%;
     --card: 225 6% 15%;
@@ -68,14 +68,14 @@
     --accent-foreground: 220 14% 96%;
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 225 6% 20%;
+    --border: 225 6% 25%;
     --input: 225 6% 20%;
     --ring: 210 100% 60%;
     
     /* Sidebar Theme Variables - Dark */
     --sidebar-background: 225 6% 16%;
     --sidebar-foreground: 220 14% 96%;
-    --sidebar-border: 225 6% 20%;
+    --sidebar-border: 225 6% 25%;
     --sidebar-muted: 225 6% 20%;
     --sidebar-muted-foreground: 220 14% 75%;
     --sidebar-accent: 225 6% 18%;
@@ -101,6 +101,31 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  /* Enhanced Button Effects */
+  .btn-enhanced {
+    @apply relative overflow-hidden transition-all duration-200 ease-in-out;
+    @apply hover:shadow-md hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:shadow-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2;
+  }
+  
+  .btn-enhanced::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent;
+    @apply -translate-x-full transition-transform duration-500;
+  }
+  
+  .btn-enhanced:hover::before {
+    @apply translate-x-full;
+  }
+  
+  /* Card Enhancements */
+  .card-enhanced {
+    @apply transition-all duration-300 ease-in-out;
+    @apply hover:shadow-lg hover:-translate-y-1;
+    @apply border border-border/50 hover:border-border;
   }
   
   /* Animation utilities */
@@ -162,30 +187,15 @@
   width: 100%;
 }
 
-.section-container {
-  margin-bottom: 2rem;
-  width: 100%;
+/* Dark mode fixes for dropdowns and popovers */
+.dark .bg-popover {
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: hsl(var(--foreground));
-}
-
-/* Card layout */
-.card-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  width: 100%;
-}
-
-.item-grid {
-  display: grid;
-  gap: 0.75rem;
-  width: 100%;
+.dark .bg-card {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 /* Mobile Styles */
@@ -214,21 +224,35 @@
   }
 }
 
-/* List styling */
-.list-item {
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  transition: background-color 0.15s ease;
-  width: 100%;
+/* Enhanced button hover effects */
+button:not(.no-hover-effects) {
+  @apply transition-all duration-200 ease-in-out;
 }
 
-.list-item:hover {
-  background-color: hsl(var(--accent));
+button:not(.no-hover-effects):hover {
+  @apply transform -translate-y-0.5 shadow-md;
 }
 
-.list-item-active {
-  background-color: hsl(var(--accent));
-  font-weight: 500;
+button:not(.no-hover-effects):active {
+  @apply transform translate-y-0 shadow-sm;
+}
+
+/* Navbar button enhancements */
+nav button, .nav-button {
+  @apply relative overflow-hidden;
+  @apply transition-all duration-200 ease-in-out;
+  @apply hover:bg-accent/80 hover:text-accent-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
+}
+
+nav button::after, .nav-button::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent;
+  @apply opacity-0 transition-opacity duration-300;
+}
+
+nav button:hover::after, .nav-button:hover::after {
+  @apply opacity-100;
 }
 
 /* Fix sidebar colors */
@@ -239,6 +263,28 @@
 
 .sidebar .border {
   border-color: hsl(var(--sidebar-border));
+}
+
+/* Enhanced sidebar item effects */
+.sidebar-item {
+  @apply relative overflow-hidden;
+  @apply transition-all duration-200 ease-in-out;
+  @apply hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
+}
+
+.sidebar-item::before {
+  content: '';
+  @apply absolute left-0 top-0 h-full w-1 bg-primary;
+  @apply scale-y-0 transition-transform duration-200 origin-top;
+}
+
+.sidebar-item:hover::before {
+  @apply scale-y-100;
+}
+
+.sidebar-item.active::before {
+  @apply scale-y-100 bg-primary;
 }
 
 /* Dark mode specific overrides */
@@ -258,4 +304,20 @@
 
 .dark .hover-lift:hover {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure consistent border colors in dark mode */
+.dark input,
+.dark textarea,
+.dark select,
+.dark .border {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .bg-background {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark .text-foreground {
+  color: hsl(var(--foreground)) !important;
 }

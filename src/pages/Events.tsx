@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { format, addHours, isValid } from 'date-fns';
 import { EventsList } from '@/components/events/EventsList';
-import { PageLayout } from '@/components/layouts/PageLayout';
 import { useEvents } from '@/hooks/useEvents';
 import { EventsFilter } from '@/types/events';
 import { useSearchParams, useNavigate } from 'react-router-dom';

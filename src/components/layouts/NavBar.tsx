@@ -9,10 +9,10 @@ import { useLayout } from '@/contexts/LayoutContext';
 
 export const NavBar: React.FC = () => {
   const { user } = useAuth();
-  const { toggleSidebar } = useLayout();
+  const layoutContext = useLayout();
 
   // Only show sidebar toggle on app pages (when user is authenticated and layout context exists)
-  const showSidebarToggle = user && toggleSidebar;
+  const showSidebarToggle = user && layoutContext;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -22,15 +22,20 @@ export const NavBar: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleSidebar}
-              className="mr-2"
+              onClick={layoutContext.toggleSidebar}
+              className="mr-2 nav-button hover:bg-accent/80 hover:shadow-sm transition-all duration-200"
               aria-label="Toggle sidebar"
             >
               <Menu className="h-4 w-4" />
             </Button>
           )}
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-2">
-            <span className="font-bold text-lg">Polymath</span>
+          <Link 
+            to={user ? "/dashboard" : "/"} 
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200"
+          >
+            <span className="font-bold text-lg bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Polymath
+            </span>
           </Link>
         </div>
         
