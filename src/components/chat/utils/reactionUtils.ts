@@ -1,5 +1,5 @@
 
-import { ChatMessage } from "../types";
+import { ChatMessage, MessageReaction } from '../types';
 
 /**
  * Add a reaction to a message
@@ -8,53 +8,50 @@ export const addReactionToMessage = (
   messages: ChatMessage[], 
   messageId: string, 
   emoji: string, 
-  userId: string | null
+  userId: string
 ): ChatMessage[] => {
-  return messages.map(msg => {
-    if (msg.id !== messageId) return msg;
-    
-    // Use a safe fallback user ID
-    const safeUserId = userId || 'anonymous';
-    
-    // Initialize reactions array if it doesn't exist
-    const existingReactions = msg.reactions || [];
-    const existingReaction = existingReactions.find(r => r.emoji === emoji);
-    
-    let updatedReactions;
-    
-    if (existingReaction) {
-      // Check if user already reacted with this emoji
-      if (existingReaction.users && existingReaction.users.includes(safeUserId)) {
-        // User already reacted, don't change anything
-        return msg;
-      }
+  return messages.map(message => {
+    if (message.id === messageId) {
+      const reactions = message.reactions || [];
       
-      // Update existing reaction
-      updatedReactions = existingReactions.map(r => 
-        r.emoji === emoji 
-          ? { 
-              ...r, 
-              count: r.count + 1, 
-              users: [...(r.users || []), safeUserId] 
-            }
-          : r
-      );
-    } else {
-      // Add new reaction
-      updatedReactions = [
-        ...existingReactions, 
-        { 
-          emoji, 
-          count: 1, 
-          users: [safeUserId],
-          userId: safeUserId,
-          messageId: msg.id,
-          id: `reaction-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      // Check if user already reacted with this emoji
+      const existingReaction = reactions.find(r => r.emoji === emoji);
+      
+      if (existingReaction) {
+        // If user already reacted, increment count and add user
+        if (!existingReaction.users.includes(userId)) {
+          return {
+            ...message,
+            reactions: reactions.map(r => 
+              r.emoji === emoji 
+                ? { 
+                    ...r, 
+                    count: r.count + 1, 
+                    users: [...r.users, userId] 
+                  }
+                : r
+            )
+          };
         }
-      ];
+      } else {
+        // Create new reaction
+        const newReaction: MessageReaction = {
+          id: `reaction-${Date.now()}-${Math.random()}`,
+          emoji,
+          userId,
+          username: 'User', // Would get from user context
+          messageId,
+          users: [userId],
+          count: 1
+        };
+        
+        return {
+          ...message,
+          reactions: [...reactions, newReaction]
+        };
+      }
     }
-    
-    return { ...msg, reactions: updatedReactions };
+    return message;
   });
 };
 
@@ -65,78 +62,51 @@ export const removeReactionFromMessage = (
   messages: ChatMessage[], 
   messageId: string, 
   emoji: string, 
-  userId: string | null
+  userId: string
 ): ChatMessage[] => {
-  return messages.map(msg => {
-    if (msg.id !== messageId) return msg;
-    
-    // Use a safe fallback user ID
-    const safeUserId = userId || 'anonymous';
-    
-    // Check if reactions exist
-    const existingReactions = msg.reactions || [];
-    const existingReaction = existingReactions.find(r => r.emoji === emoji);
-    
-    // If no reaction exists or user hasn't reacted, don't change anything
-    if (!existingReaction || !existingReaction.users || !existingReaction.users.includes(safeUserId)) {
-      return msg;
-    }
-    
-    // Update reactions, removing the user from this emoji's users
-    const updatedReactions = existingReactions
-      .map(r => {
-        if (r.emoji !== emoji) return r;
-        
-        const updatedUsers = r.users.filter(id => id !== safeUserId);
-        
-        // If no users left, remove this reaction entirely
-        if (updatedUsers.length === 0) return null;
-        
-        return { 
-          ...r, 
-          count: r.count - 1, 
-          users: updatedUsers 
-        };
-      })
-      .filter(Boolean) as typeof existingReactions; // Remove null entries
-    
-    return { ...msg, reactions: updatedReactions };
-  });
-};
-
-/**
- * Get a count of reactions by emoji across all messages
- */
-export const getReactionCounts = (messages: ChatMessage[]): Record<string, number> => {
-  const counts: Record<string, number> = {};
-  
-  messages.forEach(msg => {
-    if (!msg.reactions) return;
-    
-    msg.reactions.forEach(reaction => {
-      if (!counts[reaction.emoji]) {
-        counts[reaction.emoji] = 0;
-      }
+  return messages.map(message => {
+    if (message.id === messageId) {
+      const reactions = message.reactions || [];
       
-      counts[reaction.emoji] += reaction.count;
-    });
+      return {
+        ...message,
+        reactions: reactions
+          .map(reaction => {
+            if (reaction.emoji === emoji && reaction.users.includes(userId)) {
+              const newUsers = reaction.users.filter(id => id !== userId);
+              return {
+                ...reaction,
+                users: newUsers,
+                count: Math.max(0, reaction.count - 1)
+              };
+            }
+            return reaction;
+          })
+          .filter(reaction => reaction.count > 0) // Remove reactions with 0 count
+      };
+    }
+    return message;
   });
-  
-  return counts;
 };
 
 /**
- * Check if the current user has reacted with a specific emoji to a message
+ * Toggle a reaction on a message
  */
-export const hasUserReacted = (
-  message: ChatMessage,
-  emoji: string,
-  userId: string | null
-): boolean => {
-  if (!message.reactions) return false;
+export const toggleReaction = (
+  messages: ChatMessage[], 
+  messageId: string, 
+  emoji: string, 
+  userId: string
+): ChatMessage[] => {
+  const message = messages.find(m => m.id === messageId);
+  if (!message) return messages;
   
-  const reaction = message.reactions.find(r => r.emoji === emoji);
-  if (!reaction || !reaction.users) return false;
+  const reactions = message.reactions || [];
+  const existingReaction = reactions.find(r => r.emoji === emoji);
   
-  return reaction.users.includes(userId || 'anonymous');
+  if (existingReaction && existingReaction.users.includes(userId)) {
+    return removeReactionFromMessage(messages, messageId, emoji, userId);
+  } else {
+    return addReactionToMessage(messages, messageId, emoji, userId);
+  }
 };

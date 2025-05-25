@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Smile, ImagePlus, Loader2, Edit, Reply } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { ChatMessage, ChatUser, MessageReaction } from '@/components/chat/types';
+import { ChatMessage, ChatUser, MessageReaction, ReplyTo } from '@/components/chat/types';
 import { useMessageHandlers } from '@/hooks/chat/useMessageHandlers';
 import { useConversations } from '@/hooks/chat/useConversations';
 import {
@@ -145,10 +145,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, users }) 
           return (
             <div key={message.id} className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
               {/* Replied Message */}
-              {message.replyTo && typeof message.replyTo === 'object' && message.replyTo.senderName && (
+              {message.replyTo && typeof message.replyTo === 'object' && (message.replyTo as ReplyTo).senderName && (
                 <div className="mb-1 p-2 rounded-md bg-secondary text-secondary-foreground text-sm">
-                  Replying to: {message.replyTo.senderName}
-                  <p className="italic">{message.replyTo.content}</p>
+                  Replying to: {(message.replyTo as ReplyTo).senderName}
+                  <p className="italic">{(message.replyTo as ReplyTo).content}</p>
                 </div>
               )}
               <div className={`flex items-start space-x-2 ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}>

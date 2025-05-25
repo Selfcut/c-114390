@@ -1,74 +1,31 @@
-import { useState, useCallback } from "react";
-import { ChatMessage, MessageReaction } from "../types";
 
-export const useMessageReactions = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+import { useState, useCallback } from "react";
+import { ChatMessage } from "@/components/chat/types";
+import { addReactionToMessage, removeReactionFromMessage } from "@/components/chat/utils/reactionUtils";
+
+export const useMessageReactions = (initialMessages: ChatMessage[] = []) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   
-  const handleReactionAdd = useCallback((messageId: string, emoji: string, userId: string | null) => {
-    setMessages(prev => {
-      return prev.map(message => {
-        if (message.id === messageId) {
-          // Find existing reaction or create new one
-          const existingReactionIndex = message.reactions?.findIndex(r => r.emoji === emoji) ?? -1;
-          const reactions = [...(message.reactions || [])];
-          
-          if (existingReactionIndex >= 0) {
-            // Update existing reaction
-            const reaction = reactions[existingReactionIndex];
-            const userIdToUse = userId || 'anonymous';
-            
-            if (!reaction.users.includes(userIdToUse)) {
-              reactions[existingReactionIndex] = {
-                ...reaction,
-                count: reaction.count + 1,
-                users: [...reaction.users, userIdToUse]
-              };
-            }
-          } else {
-            // Add new reaction
-            const newReaction: MessageReaction = {
-              id: `reaction-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-              emoji,
-              count: 1,
-              users: userId ? [userId] : ['anonymous'],
-              userId: userId || 'anonymous',
-              messageId
-            };
-            reactions.push(newReaction);
-          }
-          
-          return { ...message, reactions };
-        }
-        return message;
-      });
+  // Handle reaction add
+  const handleReactionAdd = useCallback((messageId: string, emoji: string, userId: string = "current-user") => {
+    console.log("Adding reaction:", emoji, "to message:", messageId, "by user:", userId);
+    setMessages(prevMessages => {
+      const updatedMessages = addReactionToMessage(prevMessages, messageId, emoji, userId);
+      console.log("Updated messages after adding reaction:", updatedMessages);
+      return updatedMessages;
     });
   }, []);
   
-  const handleReactionRemove = useCallback((messageId: string, emoji: string, userId: string | null) => {
-    setMessages(prev => {
-      return prev.map(message => {
-        if (message.id === messageId) {
-          const reactions = message.reactions?.filter(r => {
-            if (r.emoji === emoji) {
-              const userIdToUse = userId || 'anonymous';
-              // If user has reacted, remove them and decrease count
-              if (r.users.includes(userIdToUse)) {
-                r.users = r.users.filter(id => id !== userIdToUse);
-                r.count = r.count - 1;
-              }
-              // Only keep reactions with positive counts
-              return r.count > 0;
-            }
-            return true;
-          }) || [];
-          
-          return { ...message, reactions };
-        }
-        return message;
-      });
+  // Handle reaction remove
+  const handleReactionRemove = useCallback((messageId: string, emoji: string, userId: string = "current-user") => {
+    console.log("Removing reaction:", emoji, "from message:", messageId, "by user:", userId);
+    setMessages(prevMessages => {
+      const updatedMessages = removeReactionFromMessage(prevMessages, messageId, emoji, userId);
+      console.log("Updated messages after removing reaction:", updatedMessages);
+      return updatedMessages;
     });
   }, []);
-  
+
   return {
     messages,
     setMessages,

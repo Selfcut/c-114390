@@ -11,15 +11,17 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   message = "Loading...", 
   fullScreen = true 
 }) => {
-  const containerClass = fullScreen 
-    ? "fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center" 
-    : "flex items-center justify-center p-8";
+  const containerClasses = fullScreen 
+    ? "fixed inset-0 bg-background/80 backdrop-blur-sm z-50" 
+    : "w-full h-full min-h-[200px]";
 
   return (
-    <div className={containerClass}>
+    <div className={`${containerClasses} flex flex-col items-center justify-center`}>
       <div className="flex flex-col items-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-sm text-muted-foreground animate-pulse">
+          {message}
+        </p>
       </div>
     </div>
   );

@@ -16,7 +16,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Tips message
@@ -27,7 +29,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Events reminder
@@ -38,7 +42,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Tips for new users
@@ -49,7 +55,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Help message
@@ -60,7 +68,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Research insight
@@ -71,7 +81,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Quote of the day
@@ -82,7 +94,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Community guidelines reminder
@@ -93,7 +107,9 @@ export const AutomatedMessages: React.FC<AutomatedMessagesProps> = ({ addMessage
       userId: 'system',
       conversationId: 'global',
       senderName: 'System',
-      isSystem: true
+      isCurrentUser: false,
+      isSystem: true,
+      reactions: []
     };
     
     // Send messages at intervals

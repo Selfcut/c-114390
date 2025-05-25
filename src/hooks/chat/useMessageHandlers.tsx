@@ -1,14 +1,8 @@
 
 import { useState } from 'react';
-import { ChatMessage } from '@/components/chat/types';
+import { ChatMessage, ReplyTo } from '@/components/chat/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-
-interface ReplyTo {
-  id: string;
-  content: string;
-  senderName: string;
-}
 
 export const useMessageHandlers = (conversationId: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -51,6 +45,8 @@ export const useMessageHandlers = (conversationId: string) => {
         createdAt: new Date().toISOString(),
         conversationId,
         senderName: user.name,
+        isCurrentUser: true,
+        reactions: []
       };
       
       if (isEditing) {

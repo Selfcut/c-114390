@@ -1,135 +1,184 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Quote, Heart, Share2, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Quote, Heart, Share } from 'lucide-react';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { toast } from 'sonner';
 
-interface QuoteType {
-  id: number;
+interface Quote {
+  id: string;
   text: string;
   author: string;
+  category: string;
   likes: number;
-  shares: number;
-  isLiked: boolean;
 }
 
-const mockQuotes: QuoteType[] = [
-  {
-    id: 1,
-    text: "The only way to do great work is to love what you do.",
-    author: "Steve Jobs",
-    likes: 120,
-    shares: 30,
-    isLiked: false,
-  },
-  {
-    id: 2,
-    text: "Innovation distinguishes between a leader and a follower.",
-    author: "Steve Jobs",
-    likes: 150,
-    shares: 45,
-    isLiked: true,
-  },
-  {
-    id: 3,
-    text: "The future belongs to those who believe in the beauty of their dreams.",
-    author: "Eleanor Roosevelt",
-    likes: 90,
-    shares: 20,
-    isLiked: false,
-  },
-  {
-    id: 4,
-    text: "Strive not to be a success, but rather to be of value.",
-    author: "Albert Einstein",
-    likes: 180,
-    shares: 60,
-    isLiked: true,
-  },
-];
+interface EnhancedQuotesCarouselProps {
+  className?: string;
+}
 
-const EnhancedQuotesCarousel = () => {
-  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
-  const [quotes, setQuotes] = useState<QuoteType[]>(mockQuotes);
-  const [isLoading, setIsLoading] = useState(false);
+export const EnhancedQuotesCarousel: React.FC<EnhancedQuotesCarouselProps> = ({ className = '' }) => {
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [likedQuotes, setLikedQuotes] = useState<Set<string>>(new Set());
 
+  // Mock quotes data for now
   useEffect(() => {
-    setIsLoading(true);
+    const mockQuotes: Quote[] = [
+      {
+        id: '1',
+        text: 'The only way to do great work is to love what you do.',
+        author: 'Steve Jobs',
+        category: 'motivation',
+        likes: 342
+      },
+      {
+        id: '2',
+        text: 'In the middle of difficulty lies opportunity.',
+        author: 'Albert Einstein',
+        category: 'wisdom',
+        likes: 256
+      },
+      {
+        id: '3',
+        text: 'Success is not final, failure is not fatal: it is the courage to continue that counts.',
+        author: 'Winston Churchill',
+        category: 'perseverance',
+        likes: 189
+      }
+    ];
+
     setTimeout(() => {
+      setQuotes(mockQuotes);
       setIsLoading(false);
-    }, 500);
+    }, 1000);
   }, []);
 
-  const goToPreviousQuote = () => {
-    setCurrentQuoteIndex((prevIndex) =>
-      prevIndex === 0 ? quotes.length - 1 : prevIndex - 1
-    );
+  const nextQuote = () => {
+    setCurrentIndex((prev) => (prev + 1) % quotes.length);
   };
 
-  const goToNextQuote = () => {
-    setCurrentQuoteIndex((prevIndex) =>
-      prevIndex === quotes.length - 1 ? 0 : prevIndex + 1
-    );
+  const prevQuote = () => {
+    setCurrentIndex((prev) => (prev - 1 + quotes.length) % quotes.length);
   };
 
-  const toggleLike = (id: number) => {
-    setQuotes((prevQuotes) =>
-      prevQuotes.map((quote) =>
-        quote.id === id ? { ...quote, isLiked: !quote.isLiked, likes: quote.isLiked ? quote.likes - 1 : quote.likes + 1 } : quote
-      )
-    );
+  const handleLike = (quoteId: string) => {
+    setLikedQuotes(prev => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(quoteId)) {
+        newLiked.delete(quoteId);
+        toast.success('Quote unliked');
+      } else {
+        newLiked.add(quoteId);
+        toast.success('Quote liked');
+      }
+      return newLiked;
+    });
   };
 
-  const shareQuote = (id: number) => {
-    setQuotes((prevQuotes) =>
-      prevQuotes.map((quote) =>
-        quote.id === id ? { ...quote, shares: quote.shares + 1 } : quote
-      )
-    );
+  const handleShare = (quote: Quote) => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Inspirational Quote',
+        text: `"${quote.text}" - ${quote.author}`,
+      });
+    } else {
+      navigator.clipboard.writeText(`"${quote.text}" - ${quote.author}`);
+      toast.success('Quote copied to clipboard');
+    }
   };
-
-  const currentQuote = quotes[currentQuoteIndex];
 
   if (isLoading) {
     return (
-      <LoadingScreen 
-        fullScreen={false} 
-        message="Loading inspiring quotes..." 
-        className="min-h-[400px]"
-      />
+      <div className={`rounded-lg border bg-card ${className}`}>
+        <LoadingScreen 
+          fullScreen={false} 
+          message="Loading inspiring quotes..."
+        />
+      </div>
     );
   }
 
+  if (quotes.length === 0) {
+    return (
+      <div className={`rounded-lg border bg-card p-6 ${className}`}>
+        <p className="text-center text-muted-foreground">No quotes available</p>
+      </div>
+    );
+  }
+
+  const currentQuote = quotes[currentIndex];
+
   return (
-    <Card className="w-full max-w-2xl mx-auto my-8">
+    <Card className={`overflow-hidden ${className}`}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" size="icon" onClick={goToPreviousQuote}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={goToNextQuote}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          <Quote className="h-6 w-6 text-primary" />
+          <div className="flex space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={prevQuote}
+              disabled={quotes.length <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={nextQuote}
+              disabled={quotes.length <= 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="text-lg italic text-muted-foreground mb-4">
-          <Quote className="inline-block h-4 w-4 mr-2" />
-          {currentQuote.text}
+        
+        <blockquote className="text-lg font-medium leading-relaxed mb-4">
+          "{currentQuote.text}"
+        </blockquote>
+        
+        <div className="flex items-center justify-between">
+          <cite className="text-sm text-muted-foreground">
+            — {currentQuote.author}
+          </cite>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleLike(currentQuote.id)}
+              className={likedQuotes.has(currentQuote.id) ? 'text-red-500' : ''}
+            >
+              <Heart className={`h-4 w-4 ${likedQuotes.has(currentQuote.id) ? 'fill-current' : ''}`} />
+              <span className="ml-1 text-xs">{currentQuote.likes}</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleShare(currentQuote)}
+            >
+              <Share className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="text-right font-medium">- {currentQuote.author}</div>
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="ghost" onClick={() => toggleLike(currentQuote.id)}>
-            <Heart className={`h-4 w-4 mr-2 ${currentQuote.isLiked ? 'text-red-500' : ''}`} />
-            <span>{currentQuote.likes} Likes</span>
-          </Button>
-          <Button variant="ghost" onClick={() => shareQuote(currentQuote.id)}>
-            <Share2 className="h-4 w-4 mr-2" />
-            <span>{currentQuote.shares} Shares</span>
-          </Button>
-          <Button variant="link">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Learn More
-          </Button>
-        </div>
+        
+        {quotes.length > 1 && (
+          <div className="flex justify-center mt-4 space-x-1">
+            {quotes.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-primary' : 'bg-muted'
+                }`}
+                onClick={() => setCurrentIndex(index)}
+              />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

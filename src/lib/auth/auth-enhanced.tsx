@@ -1,13 +1,22 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User, AuthError } from '@supabase/supabase-js';
-import { UserProfile, AuthContextType, UserStatus, UserRole } from '@/types/user';
+import { User, Session } from '@supabase/supabase-js';
+import { UserProfile, UserStatus, AuthContextType } from '@/types/user';
 import { toast } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 interface AuthProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -15,41 +24,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        setSession(session);
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user);
+        } else {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserProfile = async (authUser: User) => {
     try {
-      const { data, error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', authUser.id)
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
+        console.error('Error fetching profile:', error);
+        return;
       }
 
-      return {
-        id: data.id,
-        username: data.username,
-        name: data.name,
-        email: session?.user?.email || '',
-        avatar: data.avatar_url,
-        avatar_url: data.avatar_url,
-        bio: data.bio,
-        website: data.website,
-        status: data.status as UserStatus,
-        isGhostMode: data.is_ghost_mode,
-        role: data.role as UserRole,
-        isAdmin: data.role === 'admin',
-        notificationSettings: {
-          emailNotifications: data.email_notifications || true,
-          pushNotifications: data.push_notifications || true,
-          soundEnabled: data.sound_enabled || true,
-        }
-      };
+      if (profile) {
+        const userProfile: UserProfile = {
+          id: profile.id,
+          username: profile.username,
+          name: profile.name,
+          email: authUser.email || '',
+          avatar_url: profile.avatar_url,
+          bio: profile.bio,
+          website: profile.website,
+          status: profile.status as UserStatus,
+          isGhostMode: profile.is_ghost_mode,
+          role: profile.role,
+          isAdmin: profile.role === 'admin',
+          notificationSettings: {
+            emailNotifications: true, // Default values since these don't exist in DB yet
+            pushNotifications: true,
+            soundEnabled: true
+          }
+        };
+        setUser(userProfile);
+      }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
-      return null;
     }
   };
 
@@ -60,18 +99,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         password,
       });
-
-      if (error) {
-        toast.error(error.message);
-        return { error };
-      }
-
-      toast.success('Signed in successfully!');
-      return { data, error: null };
-    } catch (error) {
-      const errorMessage = 'An unexpected error occurred during sign in';
-      toast.error(errorMessage);
-      return { error: error as AuthError };
+      
+      if (error) throw error;
+      
+      return { data };
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      return { error };
     } finally {
       setIsLoading(false);
     }
@@ -86,22 +120,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         options: {
           data: {
             username,
-            name,
-          },
-        },
+            name: name || username,
+          }
+        }
       });
-
-      if (error) {
-        toast.error(error.message);
-        return { error };
-      }
-
-      toast.success('Account created successfully! Please check your email to verify your account.');
-      return { data, error: null };
-    } catch (error) {
-      const errorMessage = 'An unexpected error occurred during sign up';
-      toast.error(errorMessage);
-      return { error: error as AuthError };
+      
+      if (error) throw error;
+      
+      return { data };
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      return { error };
     } finally {
       setIsLoading(false);
     }
@@ -109,29 +138,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
-      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error('Error signing out');
-        console.error('Sign out error:', error);
-      } else {
-        setUser(null);
-        setSession(null);
-        toast.success('Signed out successfully');
-      }
-    } catch (error) {
+      if (error) throw error;
+      
+      setUser(null);
+      setSession(null);
+    } catch (error: any) {
       console.error('Sign out error:', error);
       toast.error('Error signing out');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!user) {
-      return { error: new Error('No user logged in') };
-    }
-
+    if (!user) return { error: 'No user logged in' };
+    
     try {
       const { error } = await supabase
         .from('profiles')
@@ -142,147 +162,81 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           avatar_url: updates.avatar_url,
         })
         .eq('id', user.id);
-
-      if (error) {
-        toast.error(`Failed to update profile: ${error.message}`);
-        return { error };
-      }
-
-      // Update local user state
+      
+      if (error) throw error;
+      
       setUser(prev => prev ? { ...prev, ...updates } : null);
-      toast.success('Profile updated successfully!');
-      return { error: null };
-    } catch (error) {
-      toast.error('An unexpected error occurred while updating profile');
-      return { error: error as Error };
+      return {};
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      return { error };
     }
   };
 
-  const updateUserProfile = async (updates: Partial<UserProfile>) => {
-    return updateProfile(updates);
-  };
+  const updateUserProfile = updateProfile; // Alias for consistency
 
   const deleteAccount = async () => {
-    // Note: Supabase doesn't allow direct user deletion from client
-    // This would need to be implemented via an edge function or admin API
-    toast.error('Account deletion is not implemented in the client. Please contact support.');
-    return { error: new Error('Account deletion not implemented') };
+    // Implementation would depend on your requirements
+    return { error: 'Not implemented' };
   };
 
   const updateUserStatus = async (status: UserStatus) => {
     if (!user) return;
-
+    
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ status })
         .eq('id', user.id);
-
-      if (error) {
-        console.error('Error updating user status:', error);
-        toast.error(`Failed to update status: ${error.message}`);
-        return;
-      }
-
+      
+      if (error) throw error;
+      
       setUser(prev => prev ? { ...prev, status } : null);
-      toast.success(`Status updated to ${status}`);
     } catch (error) {
-      console.error('Error updating user status:', error);
-      toast.error('An unexpected error occurred while updating status');
+      console.error('Error updating status:', error);
     }
   };
 
   const toggleGhostMode = async () => {
     if (!user) return;
-
+    
     try {
       const newGhostMode = !user.isGhostMode;
       const { error } = await supabase
         .from('profiles')
         .update({ is_ghost_mode: newGhostMode })
         .eq('id', user.id);
-
-      if (error) {
-        console.error('Error toggling ghost mode:', error);
-        toast.error(`Failed to toggle ghost mode: ${error.message}`);
-        return;
-      }
-
+      
+      if (error) throw error;
+      
       setUser(prev => prev ? { ...prev, isGhostMode: newGhostMode } : null);
-      toast.success(`Ghost mode ${newGhostMode ? 'enabled' : 'disabled'}`);
     } catch (error) {
       console.error('Error toggling ghost mode:', error);
-      toast.error('An unexpected error occurred while toggling ghost mode');
     }
   };
 
   const toggleDoNotDisturb = async () => {
     if (!user) return;
-
+    
     const newStatus = user.status === 'do-not-disturb' ? 'online' : 'do-not-disturb';
     await updateUserStatus(newStatus);
   };
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUserProfile(session.user.id).then(profile => {
-          setUser(profile);
-          setIsLoading(false);
-        });
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        setUser(profile);
-      } else {
-        setUser(null);
-      }
-      
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const value: AuthContextType = {
     user,
     session,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!session && !!user,
     signIn,
     signUp,
     signOut,
-    updateProfile: async () => ({ error: null }),
-    updateUserProfile: async () => ({ error: null }),
-    deleteAccount: async () => ({ error: new Error('Not implemented') }),
-    updateUserStatus: async () => {},
-    toggleGhostMode: async () => {},
-    toggleDoNotDisturb: async () => {},
+    updateProfile,
+    updateUserProfile,
+    deleteAccount,
+    updateUserStatus,
+    toggleGhostMode,
+    toggleDoNotDisturb,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

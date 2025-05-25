@@ -5,39 +5,14 @@ import { MessageReaction } from './types';
 
 interface MessageReactionsProps {
   messageId: string;
+  reactions?: MessageReaction[];
 }
 
-export const MessageReactions = ({ messageId }: MessageReactionsProps) => {
-  // In a real app, this data would come from the database
-  const [reactions, setReactions] = useState<MessageReaction[]>([
-    { 
-      id: '1', 
-      emoji: '👍', 
-      count: 1, 
-      messageId, 
-      userId: 'system', 
-      users: ['system'] 
-    },
-    { 
-      id: '2', 
-      emoji: '❤️', 
-      count: 0, 
-      messageId, 
-      userId: 'system', 
-      users: [] 
-    },
-    { 
-      id: '3', 
-      emoji: '😂', 
-      count: 0, 
-      messageId, 
-      userId: 'system', 
-      users: [] 
-    },
-  ]);
+export const MessageReactions = ({ messageId, reactions = [] }: MessageReactionsProps) => {
+  const [localReactions, setLocalReactions] = useState<MessageReaction[]>(reactions);
 
   const toggleReaction = (emoji: string) => {
-    setReactions(prev => 
+    setLocalReactions(prev => 
       prev.map(reaction => {
         if (reaction.emoji === emoji) {
           const newUserReacted = !reaction.users.includes('current-user');
@@ -55,7 +30,7 @@ export const MessageReactions = ({ messageId }: MessageReactionsProps) => {
   };
   
   // Only show reactions with count > 0
-  const visibleReactions = reactions.filter(r => r.count > 0);
+  const visibleReactions = localReactions.filter(r => r.count > 0);
   
   if (visibleReactions.length === 0) {
     return null;

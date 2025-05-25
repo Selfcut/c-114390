@@ -33,7 +33,8 @@ export const useChatMessages = () => {
         senderName: msg.sender_name || 'Anonymous',
         isCurrentUser: msg.user_id === user?.id,
         isAdmin: msg.is_admin || false,
-        effectType: msg.effect_type
+        effectType: msg.effect_type,
+        reactions: []
       })) || [];
       
       setMessages(formattedMessages);
