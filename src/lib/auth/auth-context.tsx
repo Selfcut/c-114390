@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User, AuthError } from '@supabase/supabase-js';
@@ -21,10 +22,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      if (!data) {
+        // Profile doesn't exist, create one
+        const authUser = session?.user;
+        if (authUser) {
+          const newProfile = {
+            id: userId,
+            username: authUser.email?.split('@')[0] || `user_${userId.substring(0, 8)}`,
+            name: authUser.user_metadata?.name || `User ${userId.substring(0, 4)}`,
+            avatar_url: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${userId}`,
+            bio: '',
+            website: '',
+            status: 'online' as UserStatus,
+            is_ghost_mode: false,
+            role: 'user'
+          };
+
+          const { data: createdProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert(newProfile)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            return null;
+          }
+
+          return {
+            id: createdProfile.id,
+            username: createdProfile.username,
+            name: createdProfile.name,
+            email: authUser.email || '',
+            avatar: createdProfile.avatar_url,
+            avatar_url: createdProfile.avatar_url,
+            bio: createdProfile.bio,
+            website: createdProfile.website,
+            status: createdProfile.status as UserStatus,
+            isGhostMode: createdProfile.is_ghost_mode,
+            role: createdProfile.role as UserRole,
+            isAdmin: createdProfile.role === 'admin'
+          };
+        }
         return null;
       }
 
@@ -57,12 +103,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (error) {
+        toast.error(error.message);
         return { error };
       }
 
       return { data, error: null };
     } catch (error) {
-      return { error: error as AuthError };
+      const err = error as AuthError;
+      toast.error(err.message);
+      return { error: err };
     } finally {
       setIsLoading(false);
     }
@@ -77,18 +126,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         options: {
           data: {
             username,
-            name,
+            name: name || username,
           },
         },
       });
 
       if (error) {
+        toast.error(error.message);
         return { error };
+      }
+
+      if (data.user && !data.session) {
+        toast.success('Please check your email to confirm your account');
       }
 
       return { data, error: null };
     } catch (error) {
-      return { error: error as AuthError };
+      const err = error as AuthError;
+      toast.error(err.message);
+      return { error: err };
     } finally {
       setIsLoading(false);
     }
@@ -131,13 +187,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', user.id);
 
       if (error) {
+        toast.error('Failed to update profile');
         return { error };
       }
 
       // Update local user state
       setUser(prev => prev ? { ...prev, ...updates } : null);
+      toast.success('Profile updated successfully');
       return { error: null };
     } catch (error) {
+      toast.error('Failed to update profile');
       return { error: error as Error };
     }
   };
@@ -147,8 +206,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const deleteAccount = async () => {
-    // Note: Supabase doesn't allow direct user deletion from client
-    // This would need to be implemented via an edge function or admin API
     return { error: new Error('Account deletion not implemented') };
   };
 
@@ -201,6 +258,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        setSession(session);
+        
+        if (session?.user) {
+          // Defer profile fetching to avoid blocking the auth callback
+          setTimeout(async () => {
+            const profile = await fetchUserProfile(session.user.id);
+            setUser(profile);
+            setIsLoading(false);
+          }, 0);
+        } else {
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    );
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -212,22 +289,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         setIsLoading(false);
       }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        setUser(profile);
-      } else {
-        setUser(null);
-      }
-      
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();

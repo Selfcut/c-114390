@@ -10,6 +10,8 @@ import { NewDiscussionDialog } from "../components/forum/NewDiscussionDialog";
 import { useForumData } from '../hooks/forum/useForumData';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useToast } from "@/hooks/use-toast";
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 const Forum = () => {
   const navigate = useNavigate();
@@ -53,12 +55,16 @@ const Forum = () => {
 
   // Handle successful discussion creation
   const handleDiscussionCreated = (postId: string) => {
-    // Navigate to the new post
     toast({
       title: "Discussion Created",
       description: "Your discussion has been posted successfully!",
     });
     navigate(`/forum/${postId}`);
+  };
+
+  // Handle retry
+  const handleRetry = () => {
+    refetch();
   };
 
   // Handle error fetching forum data
@@ -70,12 +76,10 @@ const Forum = () => {
           <p className="text-muted-foreground mb-6">
             We're having trouble loading the forum discussions. Please try again.
           </p>
-          <button 
-            onClick={() => refetch()} 
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          >
+          <Button onClick={handleRetry} className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );

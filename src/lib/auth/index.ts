@@ -1,5 +1,5 @@
 
-// Export auth context and provider
+// Export auth context and provider from the main auth file
 export { AuthProvider, useAuth } from './auth-context';
 
 // Export utility functions

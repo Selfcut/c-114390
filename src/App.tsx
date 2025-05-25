@@ -7,7 +7,6 @@ import { UserInteractionProvider } from '@/contexts/UserInteractionContext';
 import { ThemeProvider } from '@/lib/theme-context';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
-import { performanceMonitor } from '@/lib/utils/performance';
 import { AppRoutes } from '@/components/routing/AppRoutes';
 
 // Create a client with optimized settings
@@ -32,10 +31,6 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  React.useEffect(() => {
-    performanceMonitor.trackPageLoad('App');
-  }, []);
-
   return (
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>

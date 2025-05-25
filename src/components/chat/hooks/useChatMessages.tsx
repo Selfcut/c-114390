@@ -13,9 +13,7 @@ interface DbChatMessage {
   sender_name: string | null;
   created_at: string;
   conversation_id: string;
-  is_admin?: boolean;
-  effect_type?: string;
-  reply_to?: string;
+  reactions_count?: number;
 }
 
 export const useChatMessages = () => {
@@ -34,7 +32,10 @@ export const useChatMessages = () => {
         .order('created_at', { ascending: true })
         .limit(50);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
       
       const formattedMessages: ChatMessage[] = data?.map((msg: DbChatMessage) => ({
         id: msg.id,
@@ -44,8 +45,7 @@ export const useChatMessages = () => {
         userId: msg.user_id || 'anonymous',
         senderName: msg.sender_name || 'Anonymous',
         isCurrentUser: msg.user_id === user?.id,
-        isAdmin: msg.is_admin || false,
-        effectType: msg.effect_type,
+        isAdmin: false,
         reactions: []
       })) || [];
       
@@ -57,6 +57,37 @@ export const useChatMessages = () => {
       setIsLoadingMessages(false);
     }
   }, [user]);
+
+  // Send a message
+  const sendMessage = useCallback(async (content: string, conversationId: string = 'global', replyToId?: string) => {
+    if (!user) {
+      toast.error('You must be logged in to send messages');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          content,
+          user_id: user.id,
+          sender_name: user.name || user.username || 'Anonymous',
+          conversation_id: conversationId,
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        toast.error('Failed to send message');
+        return;
+      }
+
+      // Refresh messages after sending
+      await fetchMessages(conversationId);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    }
+  }, [user, fetchMessages]);
 
   // Add a message to the state
   const addMessage = useCallback((message: ChatMessage) => {
@@ -74,6 +105,7 @@ export const useChatMessages = () => {
     setMessages,
     isLoadingMessages,
     fetchMessages,
-    addMessage
+    addMessage,
+    sendMessage
   };
 };
