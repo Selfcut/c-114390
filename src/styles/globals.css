@@ -1,0 +1,124 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 14% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 11%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 30%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 14% 50%;
+    --accent: 220 14% 94%;
+    --accent-foreground: 220 14% 30%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 210 100% 50%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 14% 11%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 220 14% 30%;
+    --sidebar-border: 220 14% 90%;
+    --sidebar-ring: 210 100% 50%;
+    --promo: 45 100% 51%;
+    --promo-foreground: 0 0% 0%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 220 14% 6%;
+    --foreground: 220 14% 95%;
+    --card: 220 14% 8%;
+    --card-foreground: 220 14% 95%;
+    --popover: 220 14% 8%;
+    --popover-foreground: 220 14% 95%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 220 14% 12%;
+    --secondary-foreground: 220 14% 80%;
+    --muted: 220 14% 12%;
+    --muted-foreground: 220 14% 60%;
+    --accent: 220 14% 16%;
+    --accent-foreground: 220 14% 90%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 210 100% 60%;
+    --sidebar-background: 220 14% 4%;
+    --sidebar-foreground: 220 14% 95%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 220 14% 12%;
+    --sidebar-accent-foreground: 220 14% 90%;
+    --sidebar-border: 220 14% 18%;
+    --sidebar-ring: 210 100% 60%;
+    --promo: 45 100% 51%;
+    --promo-foreground: 0 0% 0%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Enhanced sidebar styling */
+.sidebar-item {
+  @apply transition-all duration-200 rounded-md px-3 py-2 text-sm font-medium;
+}
+
+.sidebar-item:hover {
+  @apply bg-sidebar-accent text-sidebar-accent-foreground;
+}
+
+.sidebar-item.active {
+  @apply bg-sidebar-primary/20 text-sidebar-primary border border-sidebar-primary/30;
+}
+
+.dark .sidebar-item.active {
+  @apply bg-sidebar-primary/25 text-sidebar-primary border border-sidebar-primary/40;
+}
+
+.dark .sidebar-item:hover {
+  @apply bg-sidebar-accent/80 text-sidebar-accent-foreground;
+}
+
+/* Chat message improvements */
+.chat-message {
+  @apply border border-border rounded-lg;
+}
+
+.dark .chat-message {
+  @apply border-border bg-card;
+}
+
+/* Enhanced button visibility in dark mode */
+.dark .btn-secondary {
+  @apply bg-secondary/80 hover:bg-secondary text-secondary-foreground;
+}
+
+/* Forum and library border fixes */
+.content-card {
+  @apply border border-border bg-card;
+}
+
+.dark .content-card {
+  @apply border-border bg-card;
+}
