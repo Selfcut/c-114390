@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PageLayout } from '@/components/layouts/PageLayout';
 import { useWords, WordCreateInput, WordUpdateInput } from '@/hooks/useWords';
 import { WordEditor } from '@/components/words/WordEditor';
 
@@ -35,22 +34,20 @@ const WordEditorPage = () => {
   };
 
   return (
-    <PageLayout>
-      <div className="container py-8">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <p>Loading...</p>
-          </div>
-        ) : (
-          <WordEditor
-            word={word}
-            isEditing={isEditing}
-            onSubmit={handleSubmit}
-            isSubmitting={createWord.isPending || updateWord.isPending}
-          />
-        )}
-      </div>
-    </PageLayout>
+    <div className="container py-8">
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <p>Loading...</p>
+        </div>
+      ) : (
+        <WordEditor
+          word={word}
+          isEditing={isEditing}
+          onSubmit={handleSubmit}
+          isSubmitting={createWord.isPending || updateWord.isPending}
+        />
+      )}
+    </div>
   );
 };
 

@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect, useCallback } from "react";
-import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Bell, Check } from "lucide-react";
@@ -93,75 +91,73 @@ const Notifications = () => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <PageLayout>
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Notifications</h1>
-            <p className="text-muted-foreground">
-              {unreadCount > 0 
-                ? `You have ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
-                : 'No unread notifications'
-              }
-            </p>
-          </div>
-          
-          {unreadCount > 0 && (
-            <Button 
-              variant="outline" 
-              onClick={markAllAsRead}
-              className="flex items-center gap-2"
-            >
-              <Check size={16} />
-              <span>Mark all as read</span>
-            </Button>
-          )}
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Notifications</h1>
+          <p className="text-muted-foreground">
+            {unreadCount > 0 
+              ? `You have ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
+              : 'No unread notifications'
+            }
+          </p>
         </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        ) : notifications.length > 0 ? (
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <div 
-                key={notification.id}
-                className={`
-                  flex items-start gap-4 p-4 rounded-lg border
-                  ${notification.isRead ? 'bg-background' : 'bg-accent/10'}
-                  cursor-pointer hover:bg-accent/20 transition-colors
-                `}
-                onClick={() => markAsRead(notification.id)}
-              >
-                {getNotificationIcon(notification.type)}
-                
-                <div className="flex-1">
-                  <p className={`text-sm ${!notification.isRead ? 'font-medium' : ''}`}>
-                    {notification.content}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatNotificationTime(notification.timestamp)}
-                  </p>
-                </div>
-                
-                {!notification.isRead && (
-                  <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-2"></div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 border rounded-lg">
-            <Bell size={48} className="mx-auto mb-4 text-muted-foreground opacity-20" />
-            <h3 className="text-lg font-medium mb-1">No notifications yet</h3>
-            <p className="text-muted-foreground">
-              When you receive notifications, they will appear here.
-            </p>
-          </div>
+        
+        {unreadCount > 0 && (
+          <Button 
+            variant="outline" 
+            onClick={markAllAsRead}
+            className="flex items-center gap-2"
+          >
+            <Check size={16} />
+            <span>Mark all as read</span>
+          </Button>
         )}
       </div>
-    </PageLayout>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : notifications.length > 0 ? (
+        <div className="space-y-4">
+          {notifications.map((notification) => (
+            <div 
+              key={notification.id}
+              className={`
+                flex items-start gap-4 p-4 rounded-lg border
+                ${notification.isRead ? 'bg-background' : 'bg-accent/10'}
+                cursor-pointer hover:bg-accent/20 transition-colors
+              `}
+              onClick={() => markAsRead(notification.id)}
+            >
+              {getNotificationIcon(notification.type)}
+              
+              <div className="flex-1">
+                <p className={`text-sm ${!notification.isRead ? 'font-medium' : ''}`}>
+                  {notification.content}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatNotificationTime(notification.timestamp)}
+                </p>
+              </div>
+              
+              {!notification.isRead && (
+                <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-2"></div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 border rounded-lg">
+          <Bell size={48} className="mx-auto mb-4 text-muted-foreground opacity-20" />
+          <h3 className="text-lg font-medium mb-1">No notifications yet</h3>
+          <p className="text-muted-foreground">
+            When you receive notifications, they will appear here.
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -1,6 +1,4 @@
-
 import React, { useState } from "react";
-import { PageLayout } from "../components/layouts/PageLayout";
 import { TabNav } from "../components/TabNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AIChat from "@/components/ai/AIChat";
@@ -55,31 +53,29 @@ const AI = () => {
   ];
 
   return (
-    <PageLayout>
-      <main className="py-8 px-6 md:px-12">
-        <div className="flex items-center gap-2 mb-8">
-          <Bot size={24} className="text-primary" />
-          <h1 className="text-3xl font-bold">AI Features</h1>
-        </div>
-        
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Powered by Artificial Intelligence</CardTitle>
-            <CardDescription>
-              Explore our AI-powered features to enhance your experience
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Our AI tools leverage the latest in machine learning technology to help you generate content,
-              find information, get personalized recommendations, and chat with our intelligent assistant.
-            </p>
-          </CardContent>
-        </Card>
-        
-        <TabNav tabs={aiTabs} defaultTab="chat" />
-      </main>
-    </PageLayout>
+    <main className="py-8 px-6 md:px-12">
+      <div className="flex items-center gap-2 mb-8">
+        <Bot size={24} className="text-primary" />
+        <h1 className="text-3xl font-bold">AI Features</h1>
+      </div>
+      
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Powered by Artificial Intelligence</CardTitle>
+          <CardDescription>
+            Explore our AI-powered features to enhance your experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Our AI tools leverage the latest in machine learning technology to help you generate content,
+            find information, get personalized recommendations, and chat with our intelligent assistant.
+          </p>
+        </CardContent>
+      </Card>
+      
+      <TabNav tabs={aiTabs} defaultTab="chat" />
+    </main>
   );
 };
 

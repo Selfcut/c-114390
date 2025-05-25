@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageLayout } from '@/components/layouts/PageLayout';
 import { ProblemsHeader } from '@/components/problems/ProblemsHeader';
 import { ProblemsList } from '@/components/problems/ProblemsList';
 import { ProblemsFilters } from '@/components/problems/ProblemsFilters';
@@ -141,33 +139,31 @@ const Problems = () => {
   };
 
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8 px-4">
-        <ProblemsHeader />
-        
-        <DomainSelector 
-          currentDomain={domain}
-          domains={availableDomains}
-          onDomainChange={handleDomainChange}
-        />
-        
-        <ProblemsFilters 
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          category={category}
-          setCategory={setCategory}
-          categories={categories}
-        />
-        
-        <ProblemsList 
-          problems={filteredProblems} 
-          onProblemClick={handleProblemClick}
-          isLoading={isLoading}
-        />
-      </div>
-    </PageLayout>
+    <div className="container mx-auto py-8 px-4">
+      <ProblemsHeader />
+      
+      <DomainSelector 
+        currentDomain={domain}
+        domains={availableDomains}
+        onDomainChange={handleDomainChange}
+      />
+      
+      <ProblemsFilters 
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        category={category}
+        setCategory={setCategory}
+        categories={categories}
+      />
+      
+      <ProblemsList 
+        problems={filteredProblems} 
+        onProblemClick={handleProblemClick}
+        isLoading={isLoading}
+      />
+    </div>
   );
 };
 

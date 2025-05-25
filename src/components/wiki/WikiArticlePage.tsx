@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layouts/PageLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -156,76 +154,62 @@ const WikiArticlePage = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <PageLayout>
-        <WikiArticleLoading onBack={handleBack} />
-      </PageLayout>
-    );
+    return <WikiArticleLoading onBack={handleBack} />;
   }
 
   // Error state
   if (error || !article) {
-    return (
-      <PageLayout>
-        <WikiArticleError 
-          error={error} 
-          onBack={handleBack} 
-          onRetry={handleRetry} 
-        />
-      </PageLayout>
-    );
+    return <WikiArticleError error={error} onBack={handleBack} onRetry={handleRetry} />;
   }
 
   return (
-    <PageLayout>
-      <div className="container mx-auto py-8 px-4">
-        <Button variant="ghost" className="mb-6" onClick={handleBack}>
-          <ArrowLeft size={16} className="mr-2" /> Back to Wiki
-        </Button>
-        
-        <Card className="overflow-hidden">
-          <CardHeader className="border-b pb-6">
-            <WikiArticleHeader
-              title={article.title}
-              description={article.description}
-              category={article.category}
-              isUserAuthenticated={!!user}
-              onEditClick={() => setIsEditDialogOpen(true)}
-            />
-          </CardHeader>
-          
-          <CardContent className="pt-6 px-6 md:px-8">
-            <WikiArticleMeta
-              authorName={article.author_name}
-              lastUpdated={article.last_updated}
-              views={article.views}
-              contributors={article.contributors}
-              likes={article.likes}
-              isLiked={isLiked}
-            />
-            
-            <WikiArticleContent content={article.content} />
-            
-            <WikiArticleActions
-              authorName={article.author_name}
-              isLiked={isLiked}
-              isProcessingLike={isProcessing}
-              onLikeToggle={handleLikeToggle}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Edit Article Dialog */}
-        {article && (
-          <EditWikiArticleDialog
-            isOpen={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            article={article}
-            onSuccess={handleUpdateArticle}
+    <div className="container mx-auto py-8 px-4">
+      <Button variant="ghost" className="mb-6" onClick={handleBack}>
+        <ArrowLeft size={16} className="mr-2" /> Back to Wiki
+      </Button>
+      
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b pb-6">
+          <WikiArticleHeader
+            title={article.title}
+            description={article.description}
+            category={article.category}
+            isUserAuthenticated={!!user}
+            onEditClick={() => setIsEditDialogOpen(true)}
           />
-        )}
-      </div>
-    </PageLayout>
+        </CardHeader>
+        
+        <CardContent className="pt-6 px-6 md:px-8">
+          <WikiArticleMeta
+            authorName={article.author_name}
+            lastUpdated={article.last_updated}
+            views={article.views}
+            contributors={article.contributors}
+            likes={article.likes}
+            isLiked={isLiked}
+          />
+          
+          <WikiArticleContent content={article.content} />
+          
+          <WikiArticleActions
+            authorName={article.author_name}
+            isLiked={isLiked}
+            isProcessingLike={isProcessing}
+            onLikeToggle={handleLikeToggle}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Edit Article Dialog */}
+      {article && (
+        <EditWikiArticleDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          article={article}
+          onSuccess={handleUpdateArticle}
+        />
+      )}
+    </div>
   );
 };
 
