@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile, UserStatus, AuthContextType } from '@/types/user';
+import { UserProfile, UserStatus, AuthContextType, UserRole } from '@/types/user';
 import { toast } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,10 +76,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           website: profile.website,
           status: profile.status as UserStatus,
           isGhostMode: profile.is_ghost_mode,
-          role: profile.role,
+          role: (profile.role as UserRole) || 'user',
           isAdmin: profile.role === 'admin',
           notificationSettings: {
-            emailNotifications: true, // Default values since these don't exist in DB yet
+            emailNotifications: true,
             pushNotifications: true,
             soundEnabled: true
           }
@@ -173,10 +172,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const updateUserProfile = updateProfile; // Alias for consistency
+  const updateUserProfile = updateProfile;
 
   const deleteAccount = async () => {
-    // Implementation would depend on your requirements
     return { error: 'Not implemented' };
   };
 

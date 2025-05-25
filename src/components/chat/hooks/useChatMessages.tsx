@@ -4,7 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ChatMessage } from "../types";
 import { toast } from "sonner";
-import { DbChatMessage } from "@/hooks/useChatMessages";
+
+// Define the DB message type locally
+interface DbChatMessage {
+  id: string;
+  content: string;
+  user_id: string | null;
+  sender_name: string | null;
+  created_at: string;
+  conversation_id: string;
+  is_admin?: boolean;
+  effect_type?: string;
+  reply_to?: string;
+}
 
 export const useChatMessages = () => {
   const { user } = useAuth();

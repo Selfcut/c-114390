@@ -2,8 +2,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { ConversationItem } from '../types';
 
-export const useChatSidebarState = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface UseChatSidebarStateProps {
+  isOpen?: boolean;
+  messagesEndRef?: React.RefObject<HTMLDivElement>;
+}
+
+export const useChatSidebarState = (props?: UseChatSidebarStateProps) => {
+  const [isOpen, setIsOpen] = useState(props?.isOpen || false);
   const [selectedConversation, setSelectedConversation] = useState('global');
   const [conversations, setConversations] = useState<ConversationItem[]>([
     {
@@ -14,7 +19,7 @@ export const useChatSidebarState = () => {
       unreadCount: 0
     }
   ]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = props?.messagesEndRef || useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
