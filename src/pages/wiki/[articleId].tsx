@@ -259,20 +259,21 @@ const WikiArticlePage = () => {
                 <span>Discuss</span>
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Edit Article Dialog */}
-        {article && (
-          <EditWikiArticleDialog
-            isOpen={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            article={article}
-            onSuccess={handleUpdateArticle}
-          />
-        )}
-      </div>
-    );
-  };
+      {/* Edit Article Dialog */}
+      {article && (
+        <EditWikiArticleDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          article={article}
+          onSuccess={handleUpdateArticle}
+        />
+      )}
+    </div>
+  );
+};
 
 export default WikiArticlePage;
