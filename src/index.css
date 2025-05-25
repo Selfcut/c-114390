@@ -36,11 +36,14 @@
     /* Sidebar Theme Variables - Light */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 220 14% 20%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-border: 220 14% 90%;
     --sidebar-muted: 220 14% 96%;
     --sidebar-muted-foreground: 220 14% 50%;
     --sidebar-accent: 220 14% 94%;
     --sidebar-accent-foreground: 220 14% 30%;
+    --sidebar-ring: 210 100% 50%;
     
     /* Typography */
     --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -75,11 +78,14 @@
     /* Sidebar Theme Variables - Dark */
     --sidebar-background: 225 6% 16%;
     --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-border: 225 6% 25%;
     --sidebar-muted: 225 6% 20%;
     --sidebar-muted-foreground: 220 14% 75%;
     --sidebar-accent: 225 6% 18%;
     --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-ring: 210 100% 60%;
   }
 }
 
@@ -148,43 +154,98 @@
   }
 }
 
-/* Layout Components */
-.sidebar {
-  background-color: hsl(var(--sidebar-background));
-  border-right: 1px solid hsl(var(--sidebar-border));
-  transition: width 0.3s ease-out, background-color 0.3s ease, border-color 0.3s ease;
-}
+@layer components {
+  /* Layout Components */
+  .sidebar {
+    background-color: hsl(var(--sidebar-background));
+    border-right: 1px solid hsl(var(--sidebar-border));
+    transition: width 0.3s ease-out, background-color 0.3s ease, border-color 0.3s ease;
+  }
 
-.header {
-  background-color: hsl(var(--background));
-  padding: 0;
-  border-bottom: 1px solid hsl(var(--border));
-  height: 4rem;
-  display: flex;
-  align-items: center;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
+  .header {
+    background-color: hsl(var(--background));
+    padding: 0;
+    border-bottom: 1px solid hsl(var(--border));
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
 
-/* Application Layout */
-.app-layout {
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-}
+  /* Application Layout */
+  .app-layout {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+  }
 
-.main-content {
-  flex: 1;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
+  .main-content {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 
-/* Improved spacing and layout */
-.content-container {
-  padding: 1.5rem;
-  max-width: 1280px;
-  margin: 0 auto;
-  width: 100%;
+  /* Improved spacing and layout */
+  .content-container {
+    padding: 1.5rem;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Enhanced button hover effects */
+  button:not(.no-hover-effects) {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  button:not(.no-hover-effects):hover {
+    @apply transform -translate-y-0.5 shadow-md;
+  }
+
+  button:not(.no-hover-effects):active {
+    @apply transform translate-y-0 shadow-sm;
+  }
+
+  /* Navbar button enhancements */
+  .nav-button {
+    @apply relative overflow-hidden;
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:bg-accent/80 hover:text-accent-foreground;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
+  }
+
+  .nav-button::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent;
+    @apply opacity-0 transition-opacity duration-300;
+  }
+
+  .nav-button:hover::after {
+    @apply opacity-100;
+  }
+
+  /* Enhanced sidebar item effects */
+  .sidebar-item {
+    @apply relative overflow-hidden;
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
+  }
+
+  .sidebar-item::before {
+    content: '';
+    @apply absolute left-0 top-0 h-full w-1 bg-primary;
+    @apply scale-y-0 transition-transform duration-200 origin-top;
+  }
+
+  .sidebar-item:hover::before {
+    @apply scale-y-100;
+  }
+
+  .sidebar-item.active::before {
+    @apply scale-y-100 bg-primary;
+  }
 }
 
 /* Dark mode fixes for dropdowns and popovers */
@@ -224,37 +285,6 @@
   }
 }
 
-/* Enhanced button hover effects */
-button:not(.no-hover-effects) {
-  @apply transition-all duration-200 ease-in-out;
-}
-
-button:not(.no-hover-effects):hover {
-  @apply transform -translate-y-0.5 shadow-md;
-}
-
-button:not(.no-hover-effects):active {
-  @apply transform translate-y-0 shadow-sm;
-}
-
-/* Navbar button enhancements */
-nav button, .nav-button {
-  @apply relative overflow-hidden;
-  @apply transition-all duration-200 ease-in-out;
-  @apply hover:bg-accent/80 hover:text-accent-foreground;
-  @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
-}
-
-nav button::after, .nav-button::after {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent;
-  @apply opacity-0 transition-opacity duration-300;
-}
-
-nav button:hover::after, .nav-button:hover::after {
-  @apply opacity-100;
-}
-
 /* Fix sidebar colors */
 .sidebar {
   background-color: hsl(var(--sidebar-background));
@@ -263,28 +293,6 @@ nav button:hover::after, .nav-button:hover::after {
 
 .sidebar .border {
   border-color: hsl(var(--sidebar-border));
-}
-
-/* Enhanced sidebar item effects */
-.sidebar-item {
-  @apply relative overflow-hidden;
-  @apply transition-all duration-200 ease-in-out;
-  @apply hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
-  @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
-}
-
-.sidebar-item::before {
-  content: '';
-  @apply absolute left-0 top-0 h-full w-1 bg-primary;
-  @apply scale-y-0 transition-transform duration-200 origin-top;
-}
-
-.sidebar-item:hover::before {
-  @apply scale-y-100;
-}
-
-.sidebar-item.active::before {
-  @apply scale-y-100 bg-primary;
 }
 
 /* Dark mode specific overrides */
