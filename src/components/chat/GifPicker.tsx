@@ -67,19 +67,25 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
         <Button 
           variant="ghost" 
           size="icon"
-          className="h-7 w-7 rounded-full"
+          className="h-7 w-7 rounded-full hover:bg-accent hover:text-accent-foreground"
+          type="button"
         >
           <Image size={16} />
           <span className="sr-only">Add GIF</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-3" align="end" sideOffset={5}>
+      <PopoverContent 
+        className="w-72 p-3 bg-popover border-border shadow-lg" 
+        align="end" 
+        sideOffset={5}
+        side="top"
+      >
         <form onSubmit={handleSearch} className="mb-3 flex gap-2">
           <Input
             placeholder="Search GIFs..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="h-8"
+            className="h-8 bg-background border-border"
           />
           <Button type="submit" size="sm" className="px-2 h-8">
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
@@ -91,8 +97,9 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
             <Button
               key={`${gif.url}-${index}`}
               variant="outline"
-              className="p-0 h-auto aspect-video overflow-hidden"
+              className="p-0 h-auto aspect-video overflow-hidden border-border hover:border-accent"
               onClick={() => onGifSelect(gif)}
+              type="button"
             >
               <img 
                 src={gif.url} 

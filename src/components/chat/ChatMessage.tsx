@@ -27,6 +27,37 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onReactionRemove, 
   currentUserId 
 }) => {
+  // Improved time formatting with better error handling
+  const formatMessageTime = (timestamp: string) => {
+    if (!timestamp) return 'Just now';
+    
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Just now';
+      
+      if (formatTime) {
+        return formatTime(timestamp);
+      }
+      
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      
+      if (isToday) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        return date.toLocaleDateString([], { 
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      }
+    } catch (error) {
+      console.warn('Error formatting message time:', error);
+      return 'Just now';
+    }
+  };
+
   return (
     <div className={`flex mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`flex ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'} max-w-[80%]`}>
@@ -42,7 +73,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <div className={`flex items-center ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}>
             <span className="text-sm font-medium mr-2">{message.senderName || 'Anonymous'}</span>
             <span className="text-xs text-muted-foreground">
-              <FormattedDate date={message.createdAt} format="relative" fallback="Just now" />
+              {formatMessageTime(message.createdAt)}
             </span>
             {message.isAdmin && (
               <span className="ml-1 text-primary font-medium text-[10px] uppercase tracking-wider">

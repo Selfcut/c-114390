@@ -211,7 +211,7 @@
   .nav-button {
     @apply relative overflow-hidden;
     @apply transition-all duration-200 ease-in-out;
-    @apply hover:bg-accent/80 hover:text-accent-foreground;
+    @apply hover:bg-accent hover:text-accent-foreground;
     @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
   }
 
@@ -225,7 +225,7 @@
     @apply opacity-100;
   }
 
-  /* Enhanced sidebar item effects */
+  /* Enhanced sidebar item effects with better visibility */
   .sidebar-item {
     @apply relative overflow-hidden;
     @apply transition-all duration-200 ease-in-out;
@@ -243,12 +243,28 @@
     @apply scale-y-100;
   }
 
+  .sidebar-item.active {
+    @apply bg-primary/10 text-primary font-medium;
+    @apply border-l-2 border-primary;
+  }
+
   .sidebar-item.active::before {
     @apply scale-y-100 bg-primary;
   }
+
+  /* Better hover states for navigation items */
+  .nav-link {
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:bg-accent/80 hover:text-accent-foreground;
+    @apply active:bg-accent;
+  }
+
+  .nav-link.active {
+    @apply bg-primary/10 text-primary border-b-2 border-primary;
+  }
 }
 
-/* Dark mode fixes for dropdowns and popovers */
+/* Enhanced Dark mode fixes for dropdowns and popovers */
 .dark .bg-popover {
   background-color: hsl(var(--popover)) !important;
   border-color: hsl(var(--border)) !important;
@@ -295,10 +311,11 @@
   border-color: hsl(var(--sidebar-border));
 }
 
-/* Dark mode specific overrides */
+/* Dark mode specific overrides with better visibility */
 .dark .sidebar-item.active {
-  background-color: hsla(var(--primary), 0.2);
+  background-color: hsla(var(--primary), 0.15);
   color: hsl(var(--primary));
+  border-left: 2px solid hsl(var(--primary));
 }
 
 .dark .enhanced-card {
@@ -328,4 +345,14 @@
 
 .dark .text-foreground {
   color: hsl(var(--foreground)) !important;
+}
+
+/* Fix popover z-index and borders */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
+}
+
+.dark [data-radix-popper-content-wrapper] [role="dialog"] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
 }

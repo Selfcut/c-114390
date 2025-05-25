@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { HeaderActions } from '@/components/header/HeaderActions';
+import { HeaderLogo } from '@/components/header/HeaderLogo';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -23,7 +24,7 @@ export const NavBar: React.FC = () => {
               variant="ghost"
               size="icon"
               onClick={layoutContext.toggleSidebar}
-              className="mr-2 nav-button hover:bg-accent/80 hover:shadow-sm transition-all duration-200"
+              className="mr-3 nav-button hover:bg-accent hover:text-accent-foreground transition-all duration-200"
               aria-label="Toggle sidebar"
             >
               <Menu className="h-4 w-4" />
@@ -31,8 +32,9 @@ export const NavBar: React.FC = () => {
           )}
           <Link 
             to={user ? "/dashboard" : "/"} 
-            className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200"
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
           >
+            <HeaderLogo />
             <span className="font-bold text-lg bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
               Polymath
             </span>
