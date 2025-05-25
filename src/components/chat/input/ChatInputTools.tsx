@@ -1,48 +1,43 @@
 
 import React from 'react';
-import { EmojiPicker } from '../EmojiPicker';
-import { GifPicker } from '../GifPicker';
-import { AdminEffects } from '../AdminEffects';
+import { Button } from '@/components/ui/button';
+import { Paperclip, AtSign } from 'lucide-react';
 
 interface ChatInputToolsProps {
-  onEmojiPickerToggle: () => void;
-  onGifPickerToggle: () => void;
-  showEmojiPicker: boolean;
-  showGifPicker: boolean;
-  isAdmin: boolean;
-  onAdminEffectSelect?: (effectType: string, content?: string) => void;
+  onFileUpload?: () => void;
+  onMentionUser?: (username: string) => void;
 }
 
-export const ChatInputTools = ({
-  onEmojiPickerToggle,
-  onGifPickerToggle,
-  showEmojiPicker,
-  showGifPicker,
-  isAdmin,
-  onAdminEffectSelect
-}: ChatInputToolsProps) => {
+export const ChatInputTools: React.FC<ChatInputToolsProps> = ({
+  onFileUpload,
+  onMentionUser
+}) => {
   return (
     <div className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={onEmojiPickerToggle}
-        className="p-1 hover:bg-accent rounded-md transition-colors"
-        title="Add emoji"
-      >
-        😊
-      </button>
+      {onFileUpload && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full hover:bg-accent hover:text-accent-foreground"
+          onClick={onFileUpload}
+          type="button"
+        >
+          <Paperclip size={16} />
+          <span className="sr-only">Attach file</span>
+        </Button>
+      )}
       
-      <button
-        type="button"
-        onClick={onGifPickerToggle}
-        className="p-1 hover:bg-accent rounded-md transition-colors"
-        title="Add GIF"
-      >
-        GIF
-      </button>
-      
-      {isAdmin && onAdminEffectSelect && (
-        <AdminEffects onAdminEffectSelect={onAdminEffectSelect} />
+      {onMentionUser && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full hover:bg-accent hover:text-accent-foreground"
+          onClick={() => onMentionUser('user')}
+          type="button"
+        >
+          <AtSign size={16} />
+          <span className="sr-only">Mention user</span>
+        </Button>
       )}
     </div>
   );

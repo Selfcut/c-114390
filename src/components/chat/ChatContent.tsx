@@ -88,6 +88,7 @@ export const ChatContent = ({
         setMessage={actualSetMessage}
         handleSendMessage={handleSendMessage}
         handleKeyDown={handleKeyDown}
+        isSubmitting={isLoading}
         editingMessageId={editingMessageId}
         replyingToMessage={replyingToMessage}
         onCancelEdit={onCancelEdit}

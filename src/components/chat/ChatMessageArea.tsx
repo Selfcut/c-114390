@@ -1,8 +1,9 @@
 
-import React from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatMessageList } from "./ChatMessageList";
-import { ChatMessage } from "./types";
+import React from 'react';
+import { ChatMessage } from './types';
+import { MessageBubble } from './MessageBubble';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { MessageCircle } from 'lucide-react';
 
 interface ChatMessageAreaProps {
   isLoadingMessages: boolean;
@@ -18,41 +19,43 @@ interface ChatMessageAreaProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
 }
 
-export const ChatMessageArea = ({
+export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   isLoadingMessages,
   messages,
-  isLoading,
   formatTime,
   onMessageEdit,
-  onMessageDelete,
   onMessageReply,
-  onReactionAdd,
-  onReactionRemove,
-  currentUserId,
   messagesEndRef,
-}: ChatMessageAreaProps) => {
+}) => {
+  if (isLoadingMessages) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <LoadingScreen fullScreen={false} message="Loading messages..." />
+      </div>
+    );
+  }
+
+  if (messages.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground p-8">
+        <MessageCircle size={48} className="mb-4 opacity-50" />
+        <h3 className="text-lg font-medium mb-2">No messages yet</h3>
+        <p className="text-sm">Be the first to start the conversation!</p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {isLoadingMessages ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <ChatMessageList 
-            messages={messages}
-            isLoading={isLoading}
-            formatTime={formatTime}
-            onMessageEdit={onMessageEdit}
-            onMessageDelete={onMessageDelete}
-            onMessageReply={onMessageReply}
-            onReactionAdd={onReactionAdd}
-            onReactionRemove={onReactionRemove}
-            currentUserId={currentUserId}
-            messagesEndRef={messagesEndRef}
-          />
-        </ScrollArea>
-      )}
-    </>
+    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {messages.map((message) => (
+        <MessageBubble
+          key={message.id}
+          message={message}
+          onEdit={onMessageEdit}
+          onReply={onMessageReply}
+        />
+      ))}
+      <div ref={messagesEndRef} />
+    </div>
   );
 };

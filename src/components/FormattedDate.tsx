@@ -1,95 +1,68 @@
 
-import { formatDistanceToNow, format, isToday, isYesterday, isThisYear, isValid } from 'date-fns';
+import React from 'react';
 
 interface FormattedDateProps {
-  date: Date | string;
-  format?: 'relative' | 'standard' | 'full';
+  date: string | Date;
+  format?: 'relative' | 'short' | 'long';
   className?: string;
-  fallback?: string;
 }
 
-export const FormattedDate = ({ 
+export const FormattedDate: React.FC<FormattedDateProps> = ({ 
   date, 
-  format: formatType = 'relative',
-  className,
-  fallback = 'Invalid date'
-}: FormattedDateProps) => {
-  // First ensure we have a valid Date object
-  const ensureDate = (input: Date | string): Date | null => {
-    if (!input) return null;
-    
+  format = 'relative',
+  className = ''
+}) => {
+  const formatDate = (dateInput: string | Date) => {
     try {
-      const dateObj = input instanceof Date ? input : new Date(input);
-      return isValid(dateObj) ? dateObj : null;
+      const dateObj = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+      
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid date';
+      }
+
+      const now = new Date();
+      const diffInMs = now.getTime() - dateObj.getTime();
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      switch (format) {
+        case 'relative':
+          if (diffInMinutes < 1) return 'Just now';
+          if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+          if (diffInHours < 24) return `${diffInHours}h ago`;
+          if (diffInDays < 7) return `${diffInDays}d ago`;
+          return dateObj.toLocaleDateString();
+          
+        case 'short':
+          return dateObj.toLocaleDateString([], { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+        case 'long':
+          return dateObj.toLocaleDateString([], { 
+            year: 'numeric',
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+        default:
+          return dateObj.toLocaleDateString();
+      }
     } catch (error) {
-      console.error("Invalid date input:", input, error);
-      return null;
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
     }
   };
-  
-  const validDate = ensureDate(date);
-  if (!validDate) return <span className={className}>{fallback}</span>;
 
-  let formattedDate: string;
-
-  switch (formatType) {
-    case 'relative':
-      formattedDate = formatRelative(validDate);
-      break;
-    case 'standard':
-      formattedDate = formatStandard(validDate);
-      break;
-    case 'full':
-      formattedDate = formatFull(validDate);
-      break;
-    default:
-      formattedDate = formatRelative(validDate);
-  }
-
-  return <span className={className}>{formattedDate}</span>;
+  return (
+    <span className={className} title={new Date(date).toLocaleString()}>
+      {formatDate(date)}
+    </span>
+  );
 };
-
-// Helper functions for formatting dates
-function formatRelative(date: Date): string {
-  try {
-    if (isToday(date)) {
-      return `Today at ${format(date, 'h:mm a')}`;
-    } else if (isYesterday(date)) {
-      return `Yesterday at ${format(date, 'h:mm a')}`;
-    } else if (Date.now() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
-      // Less than 7 days ago
-      return formatDistanceToNow(date, { addSuffix: true });
-    } else if (isThisYear(date)) {
-      // This year but more than 7 days ago
-      return format(date, 'MMM d');
-    } else {
-      // Previous years
-      return format(date, 'MMM d, yyyy');
-    }
-  } catch (error) {
-    console.error("Date formatting error:", error);
-    return 'Invalid date';
-  }
-}
-
-function formatStandard(date: Date): string {
-  try {
-    if (isThisYear(date)) {
-      return format(date, 'MMM d');
-    } else {
-      return format(date, 'MMM d, yyyy');
-    }
-  } catch (error) {
-    console.error("Date formatting error:", error);
-    return 'Invalid date';
-  }
-}
-
-function formatFull(date: Date): string {
-  try {
-    return format(date, 'MMMM d, yyyy \'at\' h:mm a');
-  } catch (error) {
-    console.error("Date formatting error:", error);
-    return 'Invalid date';
-  }
-}

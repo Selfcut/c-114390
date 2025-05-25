@@ -12,25 +12,28 @@ interface MessageReplyIndicatorProps {
   onCancelReply: () => void;
 }
 
-export const MessageReplyIndicator = ({ replyingToMessage, onCancelReply }: MessageReplyIndicatorProps) => {
+export const MessageReplyIndicator: React.FC<MessageReplyIndicatorProps> = ({
+  replyingToMessage,
+  onCancelReply
+}) => {
   return (
-    <div className="flex items-start justify-between p-2 bg-muted/50 rounded-t-md border-0 mb-2">
-      <div className="flex items-start space-x-2 flex-1">
-        <Reply size={14} className="mt-0.5 text-muted-foreground" />
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-medium text-muted-foreground">
+    <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/30 border-l-4 border-green-500 mb-2 rounded">
+      <div className="flex items-center space-x-2 min-w-0 flex-1">
+        <Reply size={16} className="text-green-600 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <span className="text-sm font-medium text-green-700 dark:text-green-300 block">
             Replying to {replyingToMessage.senderName}
-          </div>
-          <div className="text-sm text-foreground truncate">
+          </span>
+          <span className="text-xs text-green-600 dark:text-green-400 truncate block">
             {replyingToMessage.content}
-          </div>
+          </span>
         </div>
       </div>
       <Button
         variant="ghost"
         size="sm"
         onClick={onCancelReply}
-        className="h-6 w-6 p-0 flex-shrink-0"
+        className="h-6 w-6 p-0 hover:bg-green-100 dark:hover:bg-green-900 flex-shrink-0"
       >
         <X size={14} />
       </Button>

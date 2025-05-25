@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { ChatMessage } from "@/components/chat/types";
 
-// Define the DB message type
+// Define the DB message type and export it
 export interface DbChatMessage {
   id: string;
   content: string;

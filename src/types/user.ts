@@ -1,5 +1,5 @@
 
-export type UserStatus = 'online' | 'away' | 'busy' | 'offline' | 'do-not-disturb';
+export type UserStatus = 'online' | 'away' | 'busy' | 'offline' | 'do-not-disturb' | 'invisible';
 export type UserRole = 'user' | 'moderator' | 'admin';
 
 export interface UserProfile {
@@ -15,6 +15,11 @@ export interface UserProfile {
   isGhostMode: boolean;
   role: UserRole;
   isAdmin: boolean;
+  notificationSettings?: {
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    soundEnabled: boolean;
+  };
 }
 
 export interface AuthContextType {
