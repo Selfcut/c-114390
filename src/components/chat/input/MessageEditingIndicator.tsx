@@ -1,7 +1,7 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface MessageEditingIndicatorProps {
   onCancelEdit: () => void;
@@ -9,16 +9,15 @@ interface MessageEditingIndicatorProps {
 
 export const MessageEditingIndicator = ({ onCancelEdit }: MessageEditingIndicatorProps) => {
   return (
-    <div className="mb-2 px-3 py-1.5 bg-primary/10 rounded-md flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">Editing message</span>
+    <div className="flex items-center justify-between p-2 bg-muted/50 rounded-t-md border-0 mb-2">
+      <span className="text-sm text-muted-foreground">Editing message</span>
       <Button
         variant="ghost"
         size="sm"
-        className="h-5 w-5 p-0"
         onClick={onCancelEdit}
+        className="h-6 w-6 p-0"
       >
         <X size={14} />
-        <span className="sr-only">Cancel edit</span>
       </Button>
     </div>
   );

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmojiPicker } from "./EmojiPicker";
@@ -51,51 +51,22 @@ export const ChatInputArea = ({
     maxHeight: 120
   });
 
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showGifPicker, setShowGifPicker] = useState(false);
-
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
   };
 
-  const handleEmojiPickerToggle = () => {
-    setShowEmojiPicker(!showEmojiPicker);
-    setShowGifPicker(false);
-  };
-
-  const handleGifPickerToggle = () => {
-    setShowGifPicker(!showGifPicker);
-    setShowEmojiPicker(false);
-  };
-
   const handleEmojiSelect = (emoji: string) => {
     onEmojiSelect(emoji);
-    setShowEmojiPicker(false);
   };
 
   const handleGifSelect = (gif: { url: string; alt: string }) => {
     onGifSelect(gif);
-    setShowGifPicker(false);
   };
 
   const isMessageEmpty = !message.trim();
 
   return (
-    <div className="border-t border-border p-2 bg-background sticky bottom-0">
-      {/* Emoji picker popup */}
-      {showEmojiPicker && (
-        <div className="absolute bottom-[80px] right-3 z-10">
-          <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-        </div>
-      )}
-      
-      {/* GIF picker popup */}
-      {showGifPicker && (
-        <div className="absolute bottom-[80px] right-3 z-10">
-          <GifPicker onGifSelect={handleGifSelect} />
-        </div>
-      )}
-
+    <div className="border-t p-2 bg-background sticky bottom-0 border-border dark:border-border">
       {/* Editing indicator */}
       {editingMessage && onCancelEdit && (
         <MessageEditingIndicator onCancelEdit={onCancelEdit} />
@@ -117,20 +88,20 @@ export const ChatInputArea = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-          className="min-h-[40px] max-h-[120px] resize-none py-2 overflow-hidden"
+          className="min-h-[40px] max-h-[120px] resize-none py-2 overflow-hidden border-border dark:border-border"
           style={{ height: `${textareaHeight}px` }}
         />
           
         {/* Controls positioned below textarea */}
         <div className="flex items-center justify-between">
-          <ChatInputTools
-            onEmojiPickerToggle={handleEmojiPickerToggle}
-            onGifPickerToggle={handleGifPickerToggle}
-            showEmojiPicker={showEmojiPicker}
-            showGifPicker={showGifPicker}
-            isAdmin={isAdmin}
-            onAdminEffectSelect={onAdminEffectSelect}
-          />
+          <div className="flex items-center gap-1">
+            <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+            <GifPicker onGifSelect={handleGifSelect} />
+            
+            {isAdmin && onAdminEffectSelect && (
+              <AdminEffects onAdminEffectSelect={onAdminEffectSelect} />
+            )}
+          </div>
 
           {/* Send button */}
           <Button 

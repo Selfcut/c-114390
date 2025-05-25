@@ -1,57 +1,49 @@
 
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 interface UseChatTextareaProps {
   message: string;
-  isEditing?: boolean;
+  isEditing: boolean;
   minHeight?: number;
   maxHeight?: number;
 }
 
 export const useChatTextarea = ({ 
   message, 
-  isEditing = false,
-  minHeight = 40,
-  maxHeight = 120
+  isEditing, 
+  minHeight = 40, 
+  maxHeight = 120 
 }: UseChatTextareaProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [textareaHeight, setTextareaHeight] = useState(minHeight);
-  
-  // Function to adjust height based on content
-  const adjustHeight = () => {
+
+  useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
+
+    // Reset height to get accurate scrollHeight
+    textarea.style.height = `${minHeight}px`;
     
-    // Reset height temporarily to get the correct scrollHeight
-    textarea.style.height = 'auto';
+    // Calculate new height based on content
+    const scrollHeight = textarea.scrollHeight;
+    const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
     
-    // Calculate the new height
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-    
-    // Set the new height
-    textarea.style.height = `${newHeight}px`;
     setTextareaHeight(newHeight);
-  };
-  
-  // Adjust height whenever message changes
+  }, [message, minHeight, maxHeight]);
+
   useEffect(() => {
-    adjustHeight();
-  }, [message]);
-  
-  // Focus textarea when editing starts
-  useEffect(() => {
+    // Focus textarea when editing
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
-      
-      // Place cursor at the end
-      const len = textareaRef.current.value.length;
-      textareaRef.current.setSelectionRange(len, len);
+      textareaRef.current.setSelectionRange(
+        textareaRef.current.value.length,
+        textareaRef.current.value.length
+      );
     }
   }, [isEditing]);
-  
+
   return {
     textareaRef,
-    textareaHeight,
-    adjustHeight
+    textareaHeight
   };
 };

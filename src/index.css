@@ -44,17 +44,10 @@
     --sidebar-accent: 220 14% 94%;
     --sidebar-accent-foreground: 220 14% 30%;
     --sidebar-ring: 210 100% 50%;
-    
-    /* Typography */
-    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --line-height-normal: 1.6;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 0.75rem;
-    --spacing-lg: 1rem;
   }
 
   .dark {
-    /* Dark Mode Variables - Fixed borders */
+    /* Dark Mode Variables - Fixed borders and improved contrast */
     --background: 225 6% 13%;
     --foreground: 220 14% 96%;
     --card: 225 6% 15%;
@@ -67,23 +60,23 @@
     --secondary-foreground: 220 14% 96%;
     --muted: 225 6% 20%;
     --muted-foreground: 220 14% 75%;
-    --accent: 225 6% 18%;
+    --accent: 225 6% 25%;
     --accent-foreground: 220 14% 96%;
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 225 6% 25%;
+    --border: 225 6% 30%;
     --input: 225 6% 20%;
     --ring: 210 100% 60%;
     
-    /* Sidebar Theme Variables - Dark */
+    /* Sidebar Theme Variables - Dark with improved contrast */
     --sidebar-background: 225 6% 16%;
     --sidebar-foreground: 220 14% 96%;
     --sidebar-primary: 210 100% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-border: 225 6% 25%;
+    --sidebar-border: 225 6% 30%;
     --sidebar-muted: 225 6% 20%;
     --sidebar-muted-foreground: 220 14% 75%;
-    --sidebar-accent: 225 6% 18%;
+    --sidebar-accent: 225 6% 28%;
     --sidebar-accent-foreground: 220 14% 96%;
     --sidebar-ring: 210 100% 60%;
   }
@@ -96,61 +89,6 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
-
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  /* Enhanced Button Effects */
-  .btn-enhanced {
-    @apply relative overflow-hidden transition-all duration-200 ease-in-out;
-    @apply hover:shadow-md hover:-translate-y-0.5;
-    @apply active:translate-y-0 active:shadow-sm;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2;
-  }
-  
-  .btn-enhanced::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent;
-    @apply -translate-x-full transition-transform duration-500;
-  }
-  
-  .btn-enhanced:hover::before {
-    @apply translate-x-full;
-  }
-  
-  /* Card Enhancements */
-  .card-enhanced {
-    @apply transition-all duration-300 ease-in-out;
-    @apply hover:shadow-lg hover:-translate-y-1;
-    @apply border border-border/50 hover:border-border;
-  }
-  
-  /* Animation utilities */
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  .animate-slide-in {
-    animation: slideIn 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes slideIn {
-    from { transform: translateY(10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
   }
 }
 
@@ -172,60 +110,7 @@
     transition: background-color 0.3s ease, border-color 0.3s ease;
   }
 
-  /* Application Layout */
-  .app-layout {
-    display: flex;
-    width: 100%;
-    min-height: 100vh;
-  }
-
-  .main-content {
-    flex: 1;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  /* Improved spacing and layout */
-  .content-container {
-    padding: 1.5rem;
-    max-width: 1280px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  /* Enhanced button hover effects */
-  button:not(.no-hover-effects) {
-    @apply transition-all duration-200 ease-in-out;
-  }
-
-  button:not(.no-hover-effects):hover {
-    @apply transform -translate-y-0.5 shadow-md;
-  }
-
-  button:not(.no-hover-effects):active {
-    @apply transform translate-y-0 shadow-sm;
-  }
-
-  /* Navbar button enhancements */
-  .nav-button {
-    @apply relative overflow-hidden;
-    @apply transition-all duration-200 ease-in-out;
-    @apply hover:bg-accent hover:text-accent-foreground;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary/50;
-  }
-
-  .nav-button::after {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent;
-    @apply opacity-0 transition-opacity duration-300;
-  }
-
-  .nav-button:hover::after {
-    @apply opacity-100;
-  }
-
-  /* Enhanced sidebar item effects with better visibility */
+  /* Enhanced sidebar item effects with better visibility in dark mode */
   .sidebar-item {
     @apply relative overflow-hidden;
     @apply transition-all duration-200 ease-in-out;
@@ -244,27 +129,37 @@
   }
 
   .sidebar-item.active {
-    @apply bg-primary/10 text-primary font-medium;
-    @apply border-l-2 border-primary;
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--primary));
+    font-weight: 500;
+    border-left: 2px solid hsl(var(--primary));
   }
 
   .sidebar-item.active::before {
     @apply scale-y-100 bg-primary;
   }
 
-  /* Better hover states for navigation items */
-  .nav-link {
-    @apply transition-all duration-200 ease-in-out;
-    @apply hover:bg-accent/80 hover:text-accent-foreground;
-    @apply active:bg-accent;
+  /* Dark mode specific overrides with better visibility */
+  .dark .sidebar-item {
+    @apply hover:bg-sidebar-accent;
   }
 
-  .nav-link.active {
-    @apply bg-primary/10 text-primary border-b-2 border-primary;
+  .dark .sidebar-item.active {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--primary));
+    border-left: 2px solid hsl(var(--primary));
   }
 }
 
-/* Enhanced Dark mode fixes for dropdowns and popovers */
+/* Fix border colors in dark mode for all components */
+.dark *,
+.dark input,
+.dark textarea,
+.dark select,
+.dark .border {
+  border-color: hsl(var(--border)) !important;
+}
+
 .dark .bg-popover {
   background-color: hsl(var(--popover)) !important;
   border-color: hsl(var(--border)) !important;
@@ -273,6 +168,16 @@
 .dark .bg-card {
   background-color: hsl(var(--card)) !important;
   border-color: hsl(var(--border)) !important;
+}
+
+/* Fix popover z-index and borders */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
+}
+
+.dark [data-radix-popper-content-wrapper] [role="dialog"] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
 }
 
 /* Mobile Styles */
@@ -290,69 +195,4 @@
   .sidebar.open {
     transform: translateX(0);
   }
-  
-  .content-container {
-    padding: 1rem;
-    width: 100%;
-  }
-
-  .chat-container {
-    width: 100% !important;
-  }
-}
-
-/* Fix sidebar colors */
-.sidebar {
-  background-color: hsl(var(--sidebar-background));
-  color: hsl(var(--sidebar-foreground));
-}
-
-.sidebar .border {
-  border-color: hsl(var(--sidebar-border));
-}
-
-/* Dark mode specific overrides with better visibility */
-.dark .sidebar-item.active {
-  background-color: hsla(var(--primary), 0.15);
-  color: hsl(var(--primary));
-  border-left: 2px solid hsl(var(--primary));
-}
-
-.dark .enhanced-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-color: hsl(var(--border));
-}
-
-.dark .enhanced-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-}
-
-.dark .hover-lift:hover {
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-}
-
-/* Ensure consistent border colors in dark mode */
-.dark input,
-.dark textarea,
-.dark select,
-.dark .border {
-  border-color: hsl(var(--border)) !important;
-}
-
-.dark .bg-background {
-  background-color: hsl(var(--background)) !important;
-}
-
-.dark .text-foreground {
-  color: hsl(var(--foreground)) !important;
-}
-
-/* Fix popover z-index and borders */
-[data-radix-popper-content-wrapper] {
-  z-index: 50 !important;
-}
-
-.dark [data-radix-popper-content-wrapper] [role="dialog"] {
-  background-color: hsl(var(--popover)) !important;
-  border: 1px solid hsl(var(--border)) !important;
 }

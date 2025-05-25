@@ -18,13 +18,13 @@ export const formatTime = (timestamp: string | Date) => {
       // Handle ISO strings and other timestamp formats
       if (typeof timestamp === 'string') {
         if (timestamp.toLowerCase() === 'invalid date') {
-          return 'Unknown time';
+          return 'Just now';
         }
         
         // Try parsing the date string
         date = new Date(timestamp);
       } else {
-        return 'Unknown time';
+        return 'Just now';
       }
     }
     

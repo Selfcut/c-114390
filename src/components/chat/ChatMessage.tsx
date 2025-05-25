@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { FormattedDate } from '../FormattedDate';
@@ -81,7 +80,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </span>
             )}
           </div>
-          <div className={`p-3 rounded-lg ${
+          <div className={`p-3 rounded-lg border-0 ${
             isCurrentUser 
               ? 'bg-primary text-primary-foreground rounded-tr-none' 
               : message.effectType 

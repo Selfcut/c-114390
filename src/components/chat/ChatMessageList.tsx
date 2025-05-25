@@ -32,19 +32,28 @@ export const ChatMessageList = ({
   const groupedMessages = useMemo(() => {
     return messages.reduce((groups: Record<string, ChatMessageType[]>, message) => {
       try {
-        const date = new Date(message.createdAt).toLocaleDateString();
-        if (!groups[date]) {
-          groups[date] = [];
+        const date = new Date(message.createdAt);
+        if (isNaN(date.getTime())) {
+          // Use current date as fallback for invalid dates
+          const fallbackDate = new Date().toLocaleDateString();
+          if (!groups[fallbackDate]) {
+            groups[fallbackDate] = [];
+          }
+          groups[fallbackDate].push(message);
+        } else {
+          const dateStr = date.toLocaleDateString();
+          if (!groups[dateStr]) {
+            groups[dateStr] = [];
+          }
+          groups[dateStr].push(message);
         }
-        groups[date].push(message);
       } catch (error) {
-        // Handle invalid dates gracefully
-        const fallbackDate = 'Unknown Date';
+        console.error('Error parsing message date:', error, message);
+        const fallbackDate = new Date().toLocaleDateString();
         if (!groups[fallbackDate]) {
           groups[fallbackDate] = [];
         }
         groups[fallbackDate].push(message);
-        console.error('Error parsing message date:', error, message);
       }
       return groups;
     }, {});
@@ -84,8 +93,8 @@ export const ChatMessageList = ({
       {dates.map(date => (
         <div key={date}>
           <div className="text-center my-2">
-            <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
-              {date === 'Unknown Date' ? date : new Date(date).toLocaleDateString(undefined, { 
+            <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground border-0">
+              {new Date(date).toLocaleDateString(undefined, { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 

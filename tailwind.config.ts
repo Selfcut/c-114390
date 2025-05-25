@@ -8,7 +8,7 @@ export default {
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
-    "./index.html",  // Explicitly include index.html
+    "./index.html",
   ],
   prefix: "",
   theme: {
