@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { PageLayout } from "@/components/layouts/PageLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Loader2, ArrowDownUp, Calendar, ExternalLink } from "lucide-react";
@@ -183,155 +181,153 @@ const Research = () => {
   };
 
   return (
-    <PageLayout>
-      <div className="container mx-auto max-w-7xl py-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-          <ResearchHeader onCreateResearch={handleCreateResearch} />
+    <div className="container mx-auto max-w-7xl py-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+        <ResearchHeader onCreateResearch={handleCreateResearch} />
+        
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="text-sm text-muted-foreground whitespace-nowrap">
+            Last updated: {format(lastUpdateTime, 'h:mm a')}
+          </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            <div className="text-sm text-muted-foreground whitespace-nowrap">
-              Last updated: {format(lastUpdateTime, 'h:mm a')}
-            </div>
-            
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleFetchLatestResearch}
+            className="whitespace-nowrap"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Fetch Latest Research
+          </Button>
+          
+          {user && (
             <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleFetchLatestResearch}
-              className="whitespace-nowrap"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Fetch Latest Research
-            </Button>
-            
-            {user && (
-              <Button 
-                size="sm"
-                onClick={handleCreateResearch} 
-                className="whitespace-nowrap"
-              >
-                Add Research Paper
-              </Button>
-            )}
-            
-            {/* Show this button to everyone */}
-            <Button 
-              variant="secondary"
               size="sm"
-              onClick={handleSetupCronJob} 
-              disabled={isSetupLoading}
+              onClick={handleCreateResearch} 
               className="whitespace-nowrap"
             >
-              {isSetupLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <ExternalLink className="h-4 w-4 mr-2" />
-              )}
-              Setup Auto-Fetch
+              Add Research Paper
             </Button>
-          </div>
+          )}
+          
+          {/* Show this button to everyone */}
+          <Button 
+            variant="secondary"
+            size="sm"
+            onClick={handleSetupCronJob} 
+            disabled={isSetupLoading}
+            className="whitespace-nowrap"
+          >
+            {isSetupLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ExternalLink className="h-4 w-4 mr-2" />
+            )}
+            Setup Auto-Fetch
+          </Button>
         </div>
-        
-        {/* Search and Sort Controls */}
-        <div className="mb-6">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="search"
-                placeholder="Search for research papers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-                disabled={isLoading}
-              />
-            </div>
-            
+      </div>
+      
+      {/* Search and Sort Controls */}
+      <div className="mb-6">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="search"
+              placeholder="Search for research papers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              disabled={isLoading}
+            />
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => setSortByDate(!sortByDate)}
+            title={sortByDate ? "Sort alphabetically" : "Sort by date"}
+          >
+            <ArrowDownUp className="h-4 w-4" />
+          </Button>
+          
+          {searchQuery && (
             <Button 
               variant="outline" 
-              size="icon"
-              onClick={() => setSortByDate(!sortByDate)}
-              title={sortByDate ? "Sort alphabetically" : "Sort by date"}
+              onClick={clearSearch}
+              disabled={isLoading}
             >
-              <ArrowDownUp className="h-4 w-4" />
+              Clear
             </Button>
-            
-            {searchQuery && (
-              <Button 
-                variant="outline" 
-                onClick={clearSearch}
-                disabled={isLoading}
-              >
-                Clear
-              </Button>
-            )}
-          </form>
-        </div>
-        
-        {/* Domains Tabs - Fixed scrolling issues */}
-        <div className="mb-6 border-b">
-          <div className="overflow-x-auto no-scrollbar">
-            <Tabs 
-              value={selectedDomain || "All Categories"} 
-              onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
-              className="w-full"
-            >
-              <TabsList className="inline-flex w-max min-w-full bg-transparent">
-                {RESEARCH_DOMAINS.map(domain => (
-                  <TabsTrigger key={domain} value={domain} className="py-2">
-                    {domain}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
-        
-        {isLoading ? (
-          <ResearchLoadingIndicator />
-        ) : error ? (
-          <Card className="text-center py-10">
-            <CardContent>
-              <ErrorMessage 
-                title="Error loading research papers"
-                message={error instanceof Error ? error.message : String(error)}
-                onRetry={() => refetch()}
-              />
-            </CardContent>
-          </Card>
-        ) : sortedPapers.length > 0 ? (
-          <ResearchGrid 
-            searchQuery={searchQuery}
-            selectedCategory={selectedDomain}
-            researchPapers={sortedPapers}
-          />
-        ) : (
-          <Card className="text-center py-12 border-dashed">
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-2">No research papers found</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery 
-                  ? "Try adjusting your search terms or filters" 
-                  : "Research papers from top journals and publications will appear here"}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Button onClick={handleFetchLatestResearch}>
-                  Fetch Latest Research
-                </Button>
-                <Button variant="outline" onClick={handleSetupCronJob} disabled={isSetupLoading}>
-                  Setup Automated Fetching
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          )}
+        </form>
       </div>
+      
+      {/* Domains Tabs - Fixed scrolling issues */}
+      <div className="mb-6 border-b">
+        <div className="overflow-x-auto no-scrollbar">
+          <Tabs 
+            value={selectedDomain || "All Categories"} 
+            onValueChange={value => setSelectedDomain(value === "All Categories" ? null : value)}
+            className="w-full"
+          >
+            <TabsList className="inline-flex w-max min-w-full bg-transparent">
+              {RESEARCH_DOMAINS.map(domain => (
+                <TabsTrigger key={domain} value={domain} className="py-2">
+                  {domain}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+      
+      {isLoading ? (
+        <ResearchLoadingIndicator />
+      ) : error ? (
+        <Card className="text-center py-10">
+          <CardContent>
+            <ErrorMessage 
+              title="Error loading research papers"
+              message={error instanceof Error ? error.message : String(error)}
+              onRetry={() => refetch()}
+            />
+          </CardContent>
+        </Card>
+      ) : sortedPapers.length > 0 ? (
+        <ResearchGrid 
+          searchQuery={searchQuery}
+          selectedCategory={selectedDomain}
+          researchPapers={sortedPapers}
+        />
+      ) : (
+        <Card className="text-center py-12 border-dashed">
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-medium mb-2">No research papers found</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery 
+                ? "Try adjusting your search terms or filters" 
+                : "Research papers from top journals and publications will appear here"}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button onClick={handleFetchLatestResearch}>
+                Fetch Latest Research
+              </Button>
+              <Button variant="outline" onClick={handleSetupCronJob} disabled={isSetupLoading}>
+                Setup Automated Fetching
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <CreateResearchDialog 
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSuccess={handleResearchCreated}
       />
-    </PageLayout>
+    </div>
   );
 };
 
